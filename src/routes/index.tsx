@@ -60,10 +60,6 @@ function HomePage() {
             <span className="inline-block label-caps text-primary mb-6">
               Creator economy · Brasil
             </span>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.95]">
-              Monetisex,<br />
-              <span className="text-gradient-primary">do seu jeito.</span>
-            </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
               A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
             </p>
@@ -95,7 +91,7 @@ function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
+            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
               <img
                 src={heroBg}
                 alt="Ilustração Monetisex"
@@ -103,6 +99,12 @@ function HomePage() {
                 height={1200}
                 className="w-full h-full object-cover"
               />
+              <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
+                <h1 className="text-3xl md:text-4xl font-black tracking-tighter leading-[0.95] text-center">
+                  Monetisex,<br />
+                  <span className="text-gradient-primary">do seu jeito.</span>
+                </h1>
+              </div>
             </div>
           </div>
         </div>
