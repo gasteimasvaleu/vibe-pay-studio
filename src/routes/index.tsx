@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
 import heroBg from "@/assets/hero-illustration.jpg";
 import { useState } from "react";
@@ -9,16 +9,20 @@ import {
   useTransform,
 } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
 function LoginCard() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [focusedInput, setFocusedInput] = useState<"email" | "password" | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -37,10 +41,45 @@ function LoginCard() {
     mouseY.set(0);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setErrorMsg(
+          error.message === "Invalid login credentials"
+            ? "E-mail ou senha inválidos."
+            : error.message,
+        );
+        return;
+      }
+      navigate({ to: "/" });
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao entrar. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setErrorMsg(null);
+    setGoogleLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) {
+        setErrorMsg(error.message);
+        setGoogleLoading(false);
+      }
+      // On success, browser redirects to Google — no need to reset loading.
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao entrar com Google.");
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -223,15 +262,27 @@ function LoginCard() {
             {/* Google */}
             <motion.button
               type="button"
+              onClick={handleGoogle}
+              disabled={googleLoading}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              className="relative w-full h-11 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium flex items-center justify-center gap-3 transition-colors"
+              className="relative w-full h-11 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium flex items-center justify-center gap-3 transition-colors disabled:opacity-70"
             >
               <span className="h-5 w-5 rounded-full bg-white text-[#2a1250] font-black text-xs flex items-center justify-center">
                 G
               </span>
-              Entrar com Google
+              {googleLoading ? "Redirecionando..." : "Entrar com Google"}
             </motion.button>
+
+            {/* Error */}
+            {errorMsg && (
+              <p
+                role="alert"
+                className="text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2"
+              >
+                {errorMsg}
+              </p>
+            )}
           </form>
 
           {/* Sign up */}
