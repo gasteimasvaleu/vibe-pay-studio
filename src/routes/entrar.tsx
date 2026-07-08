@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
@@ -12,11 +13,46 @@ export const Route = createFileRoute("/entrar")({
 });
 
 function EntrarPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const onSubmit = (e: FormEvent) => {
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
-    setTimeout(() => setLoading(false), 800);
+    try {
+      await signInWithEmail(email, password);
+      navigate({ to: "/" });
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao entrar. Tente novamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setErrorMsg(null);
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate({ to: "/" });
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao entrar com Google.",
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -32,8 +68,20 @@ function EntrarPage() {
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
             <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
             <form onSubmit={onSubmit} className="mt-8 space-y-4">
-              <Field label="E-mail ou usuário" type="text" placeholder="voce@email.com" />
-              <Field label="Senha" type="password" placeholder="••••••••" />
+              <Field
+                label="E-mail"
+                type="email"
+                placeholder="voce@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Field
+                label="Senha"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <div className="text-right">
                 <a href="#" className="text-xs text-primary hover:underline">
                   Esqueci minha senha
@@ -46,6 +94,11 @@ function EntrarPage() {
               >
                 {loading ? "Entrando..." : "Entrar"}
               </button>
+              {errorMsg && (
+                <p role="alert" className="text-sm text-red-500">
+                  {errorMsg}
+                </p>
+              )}
             </form>
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-border" />
@@ -53,11 +106,13 @@ function EntrarPage() {
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-3">
-              <button className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors">
-                Continuar com Google
-              </button>
-              <button className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors">
-                Continuar com Apple
+              <button
+                type="button"
+                disabled={googleLoading}
+                onClick={handleGoogle}
+                className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
+              >
+                {googleLoading ? "Redirecionando..." : "Continuar com Google"}
               </button>
             </div>
             <p className="mt-8 text-center text-sm text-muted-foreground">
