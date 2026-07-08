@@ -4,8 +4,8 @@ import { useState, type FormEvent } from "react";
 export const Route = createFileRoute("/entrar")({
   head: () => ({
     meta: [
-      { title: "Entrar · Monetize" },
-      { name: "description", content: "Acesse sua conta Monetize." },
+      { title: "Entrar · Monetisex" },
+      { name: "description", content: "Acesse sua conta Monetisex." },
     ],
   }),
   component: EntrarPage,
@@ -25,7 +25,7 @@ function EntrarPage() {
         <div className="w-full max-w-md">
           <Link to="/" className="block text-center mb-8">
             <span className="text-2xl font-black tracking-tight">
-              monet<span className="text-gradient-primary">ize</span>
+              monet<span className="text-gradient-primary">isex</span>
             </span>
           </Link>
           <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">

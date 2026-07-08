@@ -61,7 +61,7 @@ function HomePage() {
               Creator economy · Brasil
             </span>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.95]">
-              Monetize,<br />
+              Monetisex,<br />
               <span className="text-gradient-primary">do seu jeito.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
@@ -98,7 +98,7 @@ function HomePage() {
             <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
               <img
                 src={heroBg}
-                alt="Ilustração Monetize"
+                alt="Ilustração Monetisex"
                 width={1200}
                 height={1200}
                 className="w-full h-full object-cover"
