@@ -9,7 +9,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from "@/lib/auth";
+import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
