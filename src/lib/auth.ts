@@ -24,17 +24,19 @@ export async function signInWithGoogle(preferred?: {
   accountType?: AccountType;
   username?: string;
 }) {
-  const { lovable } = await import("@/integrations/lovable/index");
-  const result = await lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
+  // External Supabase: OAuth direto pelo Supabase (broker do Lovable exige Cloud).
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+      queryParams: preferred?.accountType
+        ? { account_type: preferred.accountType }
+        : undefined,
+    },
   });
 
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (!result.redirected) {
-    await ensureCurrentUserProfile(preferred);
+  if (error) {
+    throw error;
   }
 }
 
