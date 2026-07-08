@@ -124,7 +124,7 @@ function LoginCard() {
             <img
               src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisex2..png"
               alt="Monetisex"
-              className="mx-auto mb-4 h-12 w-12 rounded-2xl object-contain shadow-lg shadow-purple-500/50"
+              className="mx-auto mb-4 h-12 w-auto object-contain drop-shadow-lg"
             />
             <h2 className="text-2xl font-black tracking-tight text-white">
               Entrar no Monetisex
