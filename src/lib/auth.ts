@@ -3,8 +3,9 @@ import type { useNavigate } from "@tanstack/react-router";
 
 export type AccountType = "subscriber" | "creator";
 
-export function homeForAccountType(accountType: AccountType | string | null | undefined) {
-  return accountType === "creator" ? "/creator" : "/feed";
+export function homeForAccountType(_accountType?: AccountType | string | null) {
+  // Todos os usuários logados caem no feed por enquanto.
+  return "/feed" as const;
 }
 
 /**
