@@ -1,9 +1,9 @@
-Ajustar o título "Monetisex, do seu jeito." no hero para ficar em overlay dentro do card da imagem, posicionado um pouco acima do centro, e remover a separação com fundo gradiente que apareceu na última alteração.
+Reposicionar o parágrafo "A maior plataforma de creator economy do Brasil..." do hero para dentro do card da imagem, na parte inferior, abaixo da foto, com fonte menor.
 
 Detalhes técnicos:
-- Em `src/routes/index.tsx`, o card do hero será reestruturado: a imagem volta a preencher o card com `aspect-square` e `overflow-hidden`, e o `<h1>` fica absolutamente posicionado sobre a imagem.
-- O título será posicionado no topo/centro do card (ex: `absolute top-0 left-0 right-0 flex items-start justify-center p-6`) para ficar um pouco acima do centro visual da imagem.
-- Mantém o tamanho menor (`text-2xl md:text-3xl`) e o gradiente no span "do seu jeito.".
-- Remove o container flex que criou a faixa roxa/gradiente acima da imagem, fazendo o título flutuar diretamente sobre a imagem.
+- Em `src/routes/index.tsx`, o parágrafo atualmente fica na coluna esquerda (linha 82). Ele será removido de lá e inserido dentro do card da imagem (coluna direita).
+- No card da imagem, o parágrafo será posicionado na parte inferior, abaixo da imagem, usando posicionamento absoluto (`absolute bottom-0 left-0 right-0 p-6`) ou inserido após a imagem no fluxo do card.
+- Reduzir o tamanho da fonte (ex: `text-sm` ou `text-xs`) para ficar proporcional ao card.
+- Manter o texto centralizado e com boa legibilidade sobre o fundo do card.
 
-Resultado esperado: o título aparece dentro do mesmo card, sobrepondo a imagem na parte superior, sem fundo de cor sólido/gradiente por trás dele.
+Resultado esperado: o parágrafo aparece dentro do card da direita, na parte inferior, abaixo da imagem, com tamanho reduzido.

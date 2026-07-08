@@ -60,9 +60,6 @@ function HomePage() {
             <span className="inline-block label-caps text-primary mb-6">
               Creator economy · Brasil
             </span>
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
-            </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/cadastro"
@@ -104,6 +101,11 @@ function HomePage() {
                   Monetisex,<br />
                   <span className="text-gradient-primary">do seu jeito.</span>
                 </h1>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none bg-gradient-to-t from-background/70 via-background/30 to-transparent">
+                <p className="text-sm text-center text-foreground">
+                  A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
+                </p>
               </div>
             </div>
           </div>
