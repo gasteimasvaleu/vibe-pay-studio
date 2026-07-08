@@ -89,8 +89,8 @@ function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border flex flex-col items-center">
-              <div className="pt-8 pb-2 text-center pointer-events-none">
+            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-white shadow-card border border-border flex flex-col items-center">
+              <div className="pt-8 pb-2 text-center pointer-events-none bg-white">
                 <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
                   Monetisex,<br />
                   <span className="text-gradient-primary">do seu jeito.</span>
@@ -103,7 +103,7 @@ function HomePage() {
                 height={1200}
                 className="w-full h-[58%] object-cover mt-4"
               />
-              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none bg-gradient-to-t from-background/70 via-background/30 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none bg-white">
                 <p className="text-sm text-center text-foreground">
                   A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
                 </p>
