@@ -6,12 +6,12 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as
   | undefined;
 
 if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error(
-    "Supabase env vars ausentes. Defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY nas variáveis de ambiente do projeto.",
+  console.warn(
+    "[supabase] VITE_SUPABASE_URL ou VITE_SUPABASE_PUBLISHABLE_KEY ausentes. Configure em Project Settings → Environment Variables.",
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabase = createClient(supabaseUrl ?? "", supabasePublishableKey ?? "", {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
