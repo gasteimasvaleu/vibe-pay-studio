@@ -1,45 +1,9 @@
-## Objetivo
-Adaptar a página de cadastro (`/cadastro`) para suportar dois tipos de conta — **Assinante** e **Creator** — no estilo do Privacy (tabs no topo), com validação de username e regras de senha visíveis.
+Ajustar o título "Monetisex, do seu jeito." no hero para ficar em overlay dentro do card da imagem, posicionado um pouco acima do centro, e remover a separação com fundo gradiente que apareceu na última alteração.
 
-## Mudanças
+Detalhes técnicos:
+- Em `src/routes/index.tsx`, o card do hero será reestruturado: a imagem volta a preencher o card com `aspect-square` e `overflow-hidden`, e o `<h1>` fica absolutamente posicionado sobre a imagem.
+- O título será posicionado no topo/centro do card (ex: `absolute top-0 left-0 right-0 flex items-start justify-center p-6`) para ficar um pouco acima do centro visual da imagem.
+- Mantém o tamanho menor (`text-2xl md:text-3xl`) e o gradiente no span "do seu jeito.".
+- Remove o container flex que criou a faixa roxa/gradiente acima da imagem, fazendo o título flutuar diretamente sobre a imagem.
 
-### 1. `src/routes/cadastro.tsx` — Reestruturar formulário
-- Adicionar **tabs no topo** ("Seja assinante" / "Seja creator") com estado `accountType: "subscriber" | "creator"`.
-  - Tab ativa: fundo lilás claro (`bg-primary/10`), texto roxo.
-  - Tab inativa: transparente, texto cinza.
-  - Container arredondado (`rounded-full`) com borda sutil.
-- **Copy dinâmica** por tab:
-  - Assinante: "Crie sua conta e tenha acesso a conteúdos exclusivos dos seus criadores favoritos!"
-  - Creator: "Publique, se relacione com sua comunidade e comece a faturar."
-- **Campos**: Nome de usuário, E-mail, Senha (remover "Confirmar senha" — não aparece na referência).
-- **Username com validação/limites** (compatível com login Google, onde nome pode vir longo/com espaços):
-  - Regex: `^[a-zA-Z0-9_]+$` (letras, números, underscore)
-  - `minLength={3}`, `maxLength={20}`
-  - Contador de caracteres opcional abaixo do input
-  - Auto-strip de espaços/caracteres inválidos no `onChange`
-- **Checklist de regras de senha** (com ícone de check que fica roxo quando cumprido):
-  - Mínimo de 8 caracteres
-  - Pelo menos um número
-  - Pelo menos uma letra minúscula e uma maiúscula
-  - Pelo menos um caractere especial
-  - Estado derivado da senha digitada em tempo real.
-- **Checkbox de termos** mantido (18+, Termos, Privacidade).
-- **Botão "Confirmar"** com `bg-gradient-primary`, arredondado full (já está).
-- Enviar `accountType` no submit (apenas armazenar no state por enquanto — sem backend).
-
-### 2. Google login — limite de username
-- Ao "Continuar com Google" (placeholder atual), após autenticação real, o username derivado do email/nome do Google deverá passar pelo mesmo sanitizador (`sanitizeUsername`): lowercase, remover não-alfanuméricos, truncar a 20 chars.
-- Extrair helper `sanitizeUsername(input: string): string` em `src/lib/utils.ts` para ser reutilizado no fluxo Google futuramente e no `onChange` do input.
-
-### 3. `src/routes/entrar.tsx`
-- Sem mudanças estruturais (login é único para ambos os tipos). Manter como está.
-
-## Fora de escopo
-- Backend / persistência (Lovable Cloud não está ativado nesta iteração).
-- Fluxo OAuth real do Google (permanece como botão visual).
-- Página pós-cadastro diferenciada por tipo de conta.
-
-## Detalhes técnicos
-- Tema mantido: branco + roxo claro + cinza claro (tokens semânticos existentes em `src/styles.css`).
-- Sem novas dependências.
-- Componentes locais na própria rota (`Field`, `PasswordRules`, `AccountTypeTabs`).
+Resultado esperado: o título aparece dentro do mesmo card, sobrepondo a imagem na parte superior, sem fundo de cor sólido/gradiente por trás dele.
