@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
+import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authenticated/assinante'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 
 const SobreRoute = SobreRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
   path: '/creator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssinanteRoute = AuthenticatedAssinanteRouteImport.update({
+  id: '/assinante',
+  path: '/assinante',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPerfilUsernameRoute =
   AuthenticatedPerfilUsernameRouteImport.update({
     id: '/perfil/$username',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/assinante': typeof AuthenticatedAssinanteRoute
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/assinante': typeof AuthenticatedAssinanteRoute
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/_authenticated/assinante': typeof AuthenticatedAssinanteRoute
   '/_authenticated/creator': typeof AuthenticatedCreatorRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/assinante'
     | '/creator'
     | '/feed'
     | '/perfil/$username'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/assinante'
     | '/creator'
     | '/feed'
     | '/perfil/$username'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/_authenticated/assinante'
     | '/_authenticated/creator'
     | '/_authenticated/feed'
     | '/_authenticated/perfil/$username'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assinante': {
+      id: '/_authenticated/assinante'
+      path: '/assinante'
+      fullPath: '/assinante'
+      preLoaderRoute: typeof AuthenticatedAssinanteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil/$username': {
       id: '/_authenticated/perfil/$username'
       path: '/perfil/$username'
@@ -209,12 +228,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssinanteRoute: typeof AuthenticatedAssinanteRoute
   AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssinanteRoute: AuthenticatedAssinanteRoute,
   AuthenticatedCreatorRoute: AuthenticatedCreatorRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
