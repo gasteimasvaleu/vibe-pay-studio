@@ -1,17 +1,26 @@
-## Diagnóstico
-O client Supabase quebra a página inteira porque `createClient("", "")` valida a URL na hora do `import` e lança `supabaseUrl is required.`. Como as env vars `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` ainda não estão configuradas no ambiente, a home explode no boundary de erro.
+## Plano
 
-## Correção
-Tornar o client tolerante à ausência de env vars:
+1. **Confirmar o status da integração**
+   - Verificar se a organização Supabase aparece vinculada ao workspace Lovable.
+   - Confirmar se o projeto Supabase específico está dentro dessa organização e se o usuário tem permissão suficiente nele.
 
-1. Em `src/integrations/supabase/client.ts`, só chamar `createClient` se **ambas** as env vars estiverem presentes. Caso contrário, exportar um **proxy** que:
-   - Não quebra em `import` nem em acesso a propriedades.
-   - Lança um erro claro em português somente quando alguém tentar **usar** o client (ex.: `supabase.auth.signInWithPassword(...)`).
-   - Loga um `console.warn` explicando como configurar as variáveis.
+2. **Resolver o botão desabilitado**
+   - Se a organização já aparece, tentar fechar/reabrir o modal, atualizar a página e voltar em **Connectors > Supabase**.
+   - Se o botão continuar desabilitado, validar duas causas comuns:
+     - o projeto Supabase não pertence à organização conectada;
+     - a conta conectada não tem permissão de Owner/Admin no projeto ou organização.
 
-2. Nenhuma outra mudança: rotas, UI e lógica de login continuam iguais. Assim que você preencher `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em **Project Settings → Environment Variables**, o proxy passa a delegar para o client real automaticamente após o próximo reload.
+3. **Caminho alternativo se a UI continuar bloqueada**
+   - Usar a conexão via Lovable Cloud/Supabase gerenciado pelo Lovable, se disponível para este projeto.
+   - Caso precise manter o projeto Supabase existente e a integração nativa siga bloqueada, preparar SQL/migrations para você rodar manualmente no painel Supabase enquanto resolvemos a conexão.
 
-## Verificação
-- `bun run build`.
-- Abrir a home e confirmar que ela renderiza normalmente mesmo sem env vars.
-- Tentar submeter login sem env vars → mensagem de erro amigável no card, sem quebrar a página.
+4. **Depois que o projeto estiver conectado**
+   - Criar as tabelas necessárias.
+   - Aplicar permissões, RLS e policies.
+   - Ajustar o app para usar autenticação real, login email/senha e Google de forma integrada.
+
+## O que preciso que você confirme agora
+
+Pelo print, a organização já aparece conectada, mas o botão **Connect a project** ainda está cinza. Isso normalmente indica que não há projeto elegível visível nessa organização ou falta permissão.
+
+Verifique no Supabase se o projeto `zyoxtptkmhugxmdzmptd` está dentro da organização **gasteimasvaleu's Org** e se sua conta tem permissão de **Owner/Admin** nessa organização/projeto. Depois atualize a tela do Lovable e tente novamente.
