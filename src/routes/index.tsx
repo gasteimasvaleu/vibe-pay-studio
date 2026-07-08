@@ -91,19 +91,21 @@ function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
-              <img
-                src={heroBg}
-                alt="Ilustração Monetisex"
-                width={1200}
-                height={1200}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-                <h1 className="text-3xl md:text-4xl font-black tracking-tighter leading-[0.95] text-center">
+            <div className="rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border flex flex-col">
+              <div className="p-6 text-center">
+                <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
                   Monetisex,<br />
                   <span className="text-gradient-primary">do seu jeito.</span>
                 </h1>
+              </div>
+              <div className="relative aspect-square">
+                <img
+                  src={heroBg}
+                  alt="Ilustração Monetisex"
+                  width={1200}
+                  height={1200}
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
