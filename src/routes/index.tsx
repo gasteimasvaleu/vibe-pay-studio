@@ -4,18 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import heroBg from "@/assets/hero-illustration.jpg";
-import {
-  Target,
-  Zap,
-  Lock,
-  Bot,
-  Globe2,
-  CreditCard,
-  ArrowRight,
-  UserPlus,
-  Image as ImageIcon,
-  Wallet,
-} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
