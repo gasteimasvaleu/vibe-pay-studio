@@ -1,10 +1,10 @@
-Remover o conteúdo atual da coluna esquerda do hero (label, botões e avatar stack) e substituir por um card transparente/glassmorphism para login.
+Aumentar o espaço entre o título "Monetisex, do seu jeito." e a imagem no card da direita, para igualar o espaço visual entre a imagem e o texto inferior.
 
 Detalhes técnicos:
-- Em `src/routes/index.tsx`, a coluna esquerda do hero será esvaziada e receberá um card de login com visual translúcido.
-- O card usará fundo transparente/escuro com blur e borda sutil (`bg-background/40 backdrop-blur-xl border border-border/50` ou similar), alinhado ao tema atual.
-- O card conterá: título "Entrar", campos de e-mail e senha, botão de login e link para cadastro.
-- Mantém a responsividade: em mobile o card ocupa a largura, em desktop fica na coluna esquerda alinhado ao card de imagem da direita.
-- Remove os botões "Criar minha conta grátis" e "Como funciona" e o stack de avatares dessa seção.
+- Em `src/routes/index.tsx`, o título está no container absoluto superior do card da imagem (linha ~103).
+- Ajustar o padding do container do título para baixá-lo levemente, aumentando o espaço entre o título e a parte visual da imagem.
+- Mudar de `p-6` para algo como `pt-8 pb-4` ou `pt-10 pb-4`, mantendo o alinhamento superior (`items-start`) para que o título desça sem alterar a posição do card.
+- Manter o texto inferior com seu padding atual (`p-4`) e o gradiente de fundo.
+- Preservar o tamanho do título e o gradiente no span.
 
-Resultado esperado: o hero passa a ter apenas o card de login à esquerda e o card da imagem à direita, com visual limpo e transparente.
+Resultado esperado: o título fica um pouco mais afastado da imagem, equilibrando o espaçamento com o texto da parte inferior do card.
