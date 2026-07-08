@@ -56,7 +56,7 @@ function CadastroPage() {
       const data = await signUpWithEmail({ accountType, email, password, username });
 
       if (data.session) {
-        navigate({ to: "/" });
+        await routeAfterAuth(navigate);
         return;
       }
 
