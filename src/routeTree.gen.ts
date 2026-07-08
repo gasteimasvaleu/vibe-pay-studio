@@ -15,6 +15,7 @@ import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
 
 const SobreRoute = SobreRouteImport.update({
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
   id: '/creator',
   path: '/creator',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/creator': typeof AuthenticatedCreatorRoute
+  '/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/creator': typeof AuthenticatedCreatorRoute
+  '/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/_authenticated/creator': typeof AuthenticatedCreatorRoute
+  '/_authenticated/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,8 +96,16 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/creator'
+    | '/feed'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastro' | '/como-funciona' | '/entrar' | '/sobre' | '/creator'
+  to:
+    | '/'
+    | '/cadastro'
+    | '/como-funciona'
+    | '/entrar'
+    | '/sobre'
+    | '/creator'
+    | '/feed'
   id:
     | '__root__'
     | '/'
@@ -98,6 +115,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/_authenticated/creator'
+    | '/_authenticated/feed'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/feed': {
+      id: '/_authenticated/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/creator': {
       id: '/_authenticated/creator'
       path: '/creator'
@@ -165,10 +190,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRoute
+  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreatorRoute: AuthenticatedCreatorRoute,
+  AuthenticatedFeedRoute: AuthenticatedFeedRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
