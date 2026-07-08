@@ -121,15 +121,18 @@ function LoginCard() {
 
           {/* Header */}
           <div className="relative text-center mb-8">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-400 to-fuchsia-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-purple-500/50">
-              M
-            </div>
+            <img
+              src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisex2..png"
+              alt="Monetisex"
+              className="mx-auto mb-4 h-12 w-12 rounded-2xl object-contain shadow-lg shadow-purple-500/50"
+            />
             <h2 className="text-2xl font-black tracking-tight text-white">
-              Bem-vindo de volta
+              Entrar no Monetisex
             </h2>
             <p className="mt-1 text-sm text-white/60">
-              Entre para continuar no Monetisex
+              Acesse sua conta para começar
             </p>
+
           </div>
 
           <form onSubmit={handleSubmit} className="relative space-y-4">
