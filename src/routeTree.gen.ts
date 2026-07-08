@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
+import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -57,6 +58,12 @@ const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
   path: '/creator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPerfilUsernameRoute =
+  AuthenticatedPerfilUsernameRouteImport.update({
+    id: '/perfil/$username',
+    path: '/perfil/$username',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/_authenticated/creator': typeof AuthenticatedCreatorRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/creator'
     | '/feed'
+    | '/perfil/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/creator'
     | '/feed'
+    | '/perfil/$username'
   id:
     | '__root__'
     | '/'
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/_authenticated/creator'
     | '/_authenticated/feed'
+    | '/_authenticated/perfil/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,17 +198,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/perfil/$username': {
+      id: '/_authenticated/perfil/$username'
+      path: '/perfil/$username'
+      fullPath: '/perfil/$username'
+      preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreatorRoute: AuthenticatedCreatorRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
