@@ -1,30 +1,45 @@
-## Plano: destravar o botão "Connect" do Supabase
+# Conectar o Supabase manualmente
 
-Como você é **owner** e o botão aparece **cinza/desabilitado**, isso quase sempre é um dos 4 casos abaixo. Vamos eliminar em ordem — pare no primeiro que resolver.
+Como o botão "Connect a project" do Connectors está travado, vamos ignorá-lo e conectar direto pelas credenciais do próprio Supabase — usando a aba **Server / Direct** desse diálogo que você abriu. O projeto é TanStack Start (não Next.js), então não usamos o snippet pronto do Next; pegamos só as chaves e montamos o cliente no padrão do template.
 
-### 1. Reautorizar o app Lovable no Supabase (causa mais comum)
-O token OAuth entre Lovable ↔ Supabase pode ter expirado ou perdido escopo. Isso deixa o botão cinza mesmo para owners.
+## O que você me manda do Supabase
 
-- No Lovable: canto superior direito → **Account Settings → Integrations → Supabase → Disconnect**.
-- No Supabase Dashboard: **Account (avatar) → Access Tokens** e também **Organization → Settings → OAuth Apps / Integrations** → revogue qualquer "Lovable" que estiver listado.
-- Volte no Lovable → botão do Supabase no projeto → **Connect** → refaça o OAuth escolhendo a organização certa.
+Na tela **Connect to your project**:
 
-### 2. Confirmar que a organização certa foi autorizada
-No fluxo OAuth do Supabase existe a tela "Select organizations to grant access". Se numa autorização anterior você marcou só 1 org, outras orgs ficam invisíveis para o Lovable (o dropdown aparece vazio → botão cinza).
+1. Aba **Framework** → troque de "Next.js" para qualquer coisa; o que importa são as chaves. Mais fácil: feche esse diálogo e vá em **Project Settings → API** (ou **Data API**) do Supabase e me mande:
+   - **Project URL** (ex.: `https://xxxxx.supabase.co`)
+   - **Publishable / anon key** (`sb_publishable_...` ou JWT `eyJ...`)
+   - **Service role key** (`sb_secret_...` ou JWT `eyJ...`) — essa é secreta, eu guardo como secret
+   - **Project ID** (o `xxxxx` da URL)
 
-- Ao reconectar (passo 1), na tela do Supabase **marque a organização** onde está o projeto que você quer conectar.
+2. Aba **Direct** (opcional, só se quiser rodar as migrations agora): me manda a **connection string** (com a senha do banco). Vou usar só para aplicar o SQL inicial; não fica no código.
 
-### 3. Limitações da organização Supabase
-Não há limite público de projetos por org no conector, mas duas coisas travam o botão:
-- Org em **modo somente leitura** por atingir o limite do Free tier (2 projetos ativos por org grátis). Solução: pausar/deletar um projeto não usado, ou upgrade da org.
-- **2FA obrigatório** na org sem 2FA na sua conta. Solução: ativar 2FA na conta Supabase.
+## O que eu faço depois que você mandar
 
-### 4. Cache/sessão do navegador
-Se após reconectar o botão continuar cinza:
-- Faça logout do Lovable e do Supabase, limpe cookies dos dois domínios, abra em janela anônima e refaça.
+1. **Registrar secrets** no projeto:
+   - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID` (server)
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` (browser)
 
-### Se nada resolver
-Coleta pro suporte (print do botão cinza + nome da org + ID do projeto Supabase) e abrir ticket em `support@lovable.dev`. Enquanto isso, seguimos com o **Plano B** já discutido: rodar o SQL da tabela `profiles` manualmente no SQL Editor do Supabase para desbloquear o app.
+2. **Criar os arquivos de integração** no padrão TanStack Start:
+   - `src/integrations/supabase/client.ts` — cliente browser (publishable key)
+   - `src/integrations/supabase/client.server.ts` — admin (service role, server-only)
+   - `src/integrations/supabase/auth-middleware.ts` — `requireSupabaseAuth` para server functions
+   - `src/integrations/supabase/auth-attacher.ts` — anexa Bearer token nas chamadas
+   - `src/integrations/supabase/types.ts` — tipos gerados
+   - Registrar `attachSupabaseAuth` em `src/start.ts`
 
-### Próximo passo sugerido
-Comece pelo **passo 1** (desconectar + reconectar OAuth marcando a org). Me diga o que aconteceu e eu ajusto daqui.
+3. **Aplicar o SQL inicial** (rodo via connection string, ou te entrego pra colar no SQL Editor do Supabase):
+   - `profiles` + trigger `on_auth_user_created`
+   - `app_role` enum + `user_roles` + `has_role()` security definer
+   - Tabelas do domínio do app (me confirma quais — pelo nome "vibe-pay-studio" imagino pagamentos/clientes/planos, mas me diga o que precisa)
+   - RLS + GRANTs em todas
+
+4. **Wire de auth**: página `/auth` (login/signup email+senha + Google via `lovable.auth.signInWithOAuth`) e layout `_authenticated` gate.
+
+5. **Verificar**: rodo signup real, confirmo criação em `auth.users` + `profiles` + `user_roles`, mando print.
+
+## Decisões que preciso de você
+
+- Confirma que quer **email/senha + Google**, ou só email/senha?
+- Quais **tabelas de domínio** você já quer nesse primeiro SQL? (me lista, ou digo pra deixar só auth/profiles/roles e a gente cria depois)
+- Prefere que eu rode as migrations pela **connection string** que você mandar, ou você mesmo cola o SQL no **SQL Editor** do Supabase?
