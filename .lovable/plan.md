@@ -1,11 +1,12 @@
-## Bug
-No `LoginCard` do hero (`src/routes/index.tsx`, linha 49-50), após `signInWithEmail` o código chama `navigate({ to: "/" })` em vez de usar `routeAfterAuth`. Resultado: você fica na home mesmo logado.
+## Alterações em `src/routes/index.tsx` (LoginCard, ~linhas 111-119)
 
-Os outros pontos de login (`/entrar`, `/cadastro`) já foram atualizados; só esse ficou pra trás.
+1. **Trocar o badge "M"** (div com gradiente e letra "M") por uma `<img>` exibindo a logo:
+   `https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisex2..png`
+   - Mantém o mesmo tamanho/estilo circular do badge atual
+   - `alt="Monetisex"`
 
-## Correção
-Em `src/routes/index.tsx`:
-- Importar `routeAfterAuth` de `@/lib/auth`.
-- Substituir `navigate({ to: "/" })` por `await routeAfterAuth(navigate)` dentro do `handleSubmit` do `LoginCard`.
+2. **Atualizar os textos** do card:
+   - Título: `Bem-vindo de volta` → `Entrar no Monetisex`
+   - Subtítulo: `Entre para continuar no Monetisex` → `Acesse sua conta para começar`
 
-Só isso — 2 linhas.
+Nenhuma outra mudança (lógica de login, layout, estilos permanecem).
