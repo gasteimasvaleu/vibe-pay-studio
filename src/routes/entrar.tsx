@@ -26,7 +26,7 @@ function EntrarPage() {
     setLoading(true);
     try {
       await signInWithEmail(email, password);
-      navigate({ to: "/" });
+      await routeAfterAuth(navigate);
     } catch (err) {
       setErrorMsg(
         err instanceof Error
