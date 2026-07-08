@@ -1,59 +1,65 @@
 ## Objetivo
 
-Criar a página de perfil pública/logada baseada no layout enviado (capa + avatar circular sobreposto, nome com selo verificado, @handle, localização, ícones sociais, barra de stats e abas "Postagens" / "Mídias" com cards de conteúdo bloqueado), adaptada à paleta roxo/fúcsia + fundo escuro do Monetisex — não branco/laranja como nas referências.
+Criar o dashboard do assinante na rota autenticada, combinando:
+- **Topo**: mesmo cabeçalho de perfil já implementado em `/perfil/$username` (topbar, cover com gradiente, avatar sobreposto, stats, nome + selo, @handle, localização, ícones sociais) — mas exibindo o perfil do próprio usuário logado, sem o CTA "Assinar" (é o dono).
+- **Abaixo**: seção "Área do Assinante" com grade 2 colunas (1 no mobile) de cards clicáveis — Chat, Assinaturas, Carteira, Atividades, Definições, Ajuda e Sair — adaptados ao tema escuro roxo/fúcsia.
 
-A mesma rota atende creator e assinante: o layout é idêntico; o que muda é a presença do botão "Assinar" (visível quando o visitante não é o dono do perfil) versus "Editar perfil" (quando é o dono).
+## Rota
 
-## Estrutura de rotas
+Nova rota `src/routes/_authenticated/assinante.tsx` → URL `/assinante`.
 
-Criar `src/routes/_authenticated/perfil.$username.tsx` → URL `/perfil/$username`.
+- `beforeLoad`: verifica sessão, carrega `profiles` do usuário, e redireciona para `/creator` se `account_type === "creator"`.
+- Retorna `{ userId, username, accountType }` no contexto.
+- Inclui `errorComponent`.
 
-- `beforeLoad`: valida sessão (padrão já usado em feed/creator) e carrega o perfil alvo por `username` na tabela `profiles`. Se não existir, `throw notFound()`.
-- Guarda também o `viewerUserId` para decidir se é dono do perfil.
-- Adiciona `errorComponent` e `notFoundComponent`.
+Após login, `homeForAccountType("subscriber")` já aponta para o dashboard do assinante — atualizar esse helper para retornar `/assinante` (hoje deve retornar `/feed`), garantindo que assinantes caiam nessa página ao entrar.
 
-Links: adicionar navegação para `/perfil/{username}` a partir do avatar do usuário no `feed` e do painel do `creator`.
+## Layout
 
-## Layout da página (adaptado)
+Estrutura de container idêntica ao `/perfil/$username` (bg escuro + gradient radial + grid de pontos, topbar com voltar/título/menu).
 
-Container escuro consistente com o resto do app (mesmo bg do feed).
+**Bloco 1 — Perfil (topo)**
+Reutilizar visualmente o header do perfil já feito:
+- Cover em gradiente roxo→fúcsia com cantos arredondados.
+- Avatar circular grande sobreposto, borda `bg-background`.
+- Chip de stats no canto direito da capa (Fotos, Vídeos, Bloqueados, Curtidas — mock).
+- Bloco de identidade: Nome + `BadgeCheck`, @handle, `MapPin` + localização, 3 botões sociais.
+- **Sem** botão "Assinar" (é o próprio dono). Opcional: link discreto "Ver meu perfil público" apontando para `/perfil/{username}`.
 
-1. **Topbar** — botão voltar (ícone `ArrowLeft`), nome do perfil centralizado, `MoreVertical` à direita.
-2. **Cover** — banner grande com gradiente roxo→fúcsia como fallback + imagem opcional. Cantos arredondados.
-3. **Avatar** — círculo grande sobreposto ao canto inferior esquerdo do cover, borda do bg da página.
-4. **Linha de stats** — à direita da capa (desktop) / abaixo (mobile): ícones + números para Fotos, Vídeos, Conteúdo bloqueado, Curtidas. Ícones `Image`, `Film`, `Lock`, `Heart` do lucide, cor `muted-foreground`.
-5. **Bloco de identidade** — Nome + selo verificado (`BadgeCheck` roxo), `@handle` em muted, linha com `MapPin` + localização, três ícones sociais circulares (Instagram, X, TikTok).
-6. **CTA contextual** — botão largura total: "Assinar por R$ X/mês" (gradiente primary) se visitante ≠ dono; "Editar perfil" (outline) se dono.
-7. **Bio** (opcional, se houver campo).
-8. **Tabs** — "Postagens" e "Mídias" usando `@/components/ui/tabs` (shadcn), indicador na cor primary.
-9. **Feed de cards** — cards com header (avatar + nome + @handle + `MoreVertical`), área de conteúdo bloqueado (grande retângulo com ícone `Lock` centralizado + mini stats fotos/vídeos/likes), rodapé com `Heart`, `MessageCircle`, ícone `$` (PPV) e `Bookmark` à direita.
+Para evitar duplicação, extrair o header numa componente reutilizável `src/components/profile/ProfileHeader.tsx` e usar em ambas as rotas (`/perfil/$username` e `/assinante`). Props: `username`, `displayName`, `location`, `stats`, `isOwner`, `subscriptionPrice?`.
 
-## Dados
+**Bloco 2 — Área do Assinante**
+- Título "Área do Assinante" (`text-2xl font-black tracking-tight`).
+- Grid `grid-cols-1 md:grid-cols-2 gap-4`.
+- Cada card: `rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5`, com hover realçando borda e leve gradient. Ícone num quadrado `rounded-xl bg-white/5 border border-white/10` com cor `text-fuchsia-300`, título em `font-semibold`, descrição em `text-sm text-white/60`.
+- Cards e destinos:
+  - **Chat** — `MessageCircle` — "Converse com creators agora" → `/chat` (placeholder por enquanto, sem navegação real; card não navega ainda).
+  - **Assinaturas** — `UserPlus` — "Veja os creators que você assina".
+  - **Carteira** — `Wallet` — "Escolha como paga e veja seus gastos".
+  - **Atividades** — `Bookmark` — "Acesse suas mídias favoritas salvas".
+  - **Definições** — `Settings` — "Personalize sua experiência".
+  - **Ajuda** — `HelpCircle` — "Precisa de suporte ou tem dúvidas?".
+  - **Sair** — `LogOut` — "Sair da plataforma" — em cor de destaque (`text-fuchsia-400`), executa `supabase.auth.signOut()` e redireciona para `/`.
 
-Nesta primeira versão, dados do perfil vêm de `profiles` (username, account_type). Stats, bio, localização, redes sociais e posts ficam **mock** dentro do componente (constantes tipadas) — mesma abordagem já usada em `feed.tsx`. Assim entregamos o layout completo sem migração de schema; podemos plugar tabelas reais depois em pedido separado.
+Como as rotas de destino ainda não existem, os cards (exceto Sair) renderizam como `<button>` inertes com cursor default, prontos para virar `<Link>` quando as páginas forem criadas — evita quebra de tipo do TanStack Router.
 
-## Estilo / tokens
+## Adaptação ao tema
 
-- Usar tokens semânticos existentes (`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `primary`).
-- Acento = mesmo gradiente roxo/fúcsia já presente em `index.tsx` / `feed.tsx` (evitar hardcode; reaproveitar as classes utilitárias existentes).
-- Selo verificado: círculo `primary` com check branco.
-- Cards com `rounded-2xl`, borda sutil, sombra leve.
+- Fundo escuro (mesmos tokens do `/feed`), sem branco.
+- Ícones e títulos em branco/roxo; descrições em `text-white/60`.
+- Card "Sair" mantém o mesmo estilo dos demais, mas com ícone e título em `text-fuchsia-400` (equivalente ao vermelho do mockup).
 
-## Detalhes técnicos
+## Arquivos
 
 ```text
-src/routes/_authenticated/
-  perfil.$username.tsx     (novo)
+src/components/profile/ProfileHeader.tsx   (novo — extraído do perfil)
+src/routes/_authenticated/assinante.tsx    (novo)
+src/routes/_authenticated/perfil.$username.tsx  (refatorar para usar ProfileHeader)
+src/lib/auth.ts                             (ajustar homeForAccountType → /assinante)
 ```
-
-- `createFileRoute("/_authenticated/perfil/$username")`
-- `Route.useParams()` para `username`; `Route.useRouteContext()` para viewer + profile alvo.
-- Tabs via `@/components/ui/tabs` (já disponível no shadcn).
-- Ícones via `lucide-react` (já usado no projeto).
-- Nada de lógica de backend nova nesta iteração.
 
 ## Fora de escopo
 
-- Upload de cover/avatar.
-- Persistência de posts, likes, bookmarks.
-- Fluxo de pagamento do botão "Assinar" (apenas UI).
+- Páginas de destino dos cards (Chat, Assinaturas, Carteira, Atividades, Definições, Ajuda).
+- Dados reais de stats/assinaturas.
+- Upload de avatar/cover.
