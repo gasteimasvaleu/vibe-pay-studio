@@ -89,20 +89,20 @@ function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
+            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border flex flex-col items-center">
+              <div className="pt-8 pb-2 text-center pointer-events-none">
+                <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
+                  Monetisex,<br />
+                  <span className="text-gradient-primary">do seu jeito.</span>
+                </h1>
+              </div>
               <img
                 src={heroBg}
                 alt="Ilustração Monetisex"
                 width={1200}
                 height={1200}
-                className="w-full h-full object-cover"
+                className="w-full h-[58%] object-cover mt-4"
               />
-              <div className="absolute top-0 left-0 right-0 flex items-start justify-center pt-12 pb-4 pointer-events-none">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95] text-center">
-                  Monetisex,<br />
-                  <span className="text-gradient-primary">do seu jeito.</span>
-                </h1>
-              </div>
               <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none bg-gradient-to-t from-background/70 via-background/30 to-transparent">
                 <p className="text-sm text-center text-foreground">
                   A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
