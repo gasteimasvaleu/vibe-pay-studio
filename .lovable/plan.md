@@ -1,10 +1,8 @@
-Deixar o fundo do card da direito branco puro, removendo o tom roxo/claro do gradiente (`bg-gradient-soft`) e ajustando os overlays do título e do texto inferior para não adicionarem cor roxa.
+Remover todas as seções do corpo da homepage, mantendo apenas o header (Navbar via SiteLayout) e o footer. As seções a remover são: hero (login + card), stats, "Comece agora", diferenciais/features, depoimentos e CTA final.
 
 Detalhes técnicos:
-- Arquivo: src/routes/index.tsx, card da imagem no hero (linhas ~91-110).
-- Alterar o fundo do card de `bg-gradient-soft` para `bg-white`.
-- Remover o gradiente do overlay do texto inferior (`bg-gradient-to-t from-background/70 via-background/30 to-transparent`) e substituir por fundo branco ou transparente.
-- Manter o título sem fundo colorido, apenas texto preto com gradiente no span.
-- Preservar o espaçamento entre título e imagem já ajustado.
+- Arquivo: src/routes/index.tsx.
+- Limpar o conteúdo dentro de `<SiteLayout>` para deixar a homepage vazia entre header e footer.
+- Manter as importações necessárias apenas se ainda forem usadas; remover imports não utilizados se surgirem.
 
-Resultado esperado: card com fundo branco limpo, título e texto inferior sobre fundo branco, sem tons roxos.
+Resultado esperado: homepage contendo apenas Navbar no topo e Footer no final, sem conteúdo intermediário.
