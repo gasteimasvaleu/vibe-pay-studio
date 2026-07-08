@@ -90,7 +90,7 @@ function PerfilPage() {
   const stats = { fotos: 292, videos: 119, locked: 32, likes: "7.4K" };
   const displayName = profile.username
     .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const location = "São Paulo - BRA";
   const subscriptionPrice = "R$ 29,90";
 
