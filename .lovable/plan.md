@@ -1,55 +1,76 @@
-O problema real: a organização Supabase está conectada no Lovable, mas o projeto Supabase ainda está “Not connected” e o botão “Connect a project” permanece desabilitado.
+Entendi. Como o botão de conectar projeto está travado, o caminho prático é criar as tabelas direto no painel do Supabase usando o SQL que já existe no projeto.
 
-Do I know what the issue is?
-Sim. Isso não está acontecendo dentro do código do app. A própria documentação do Lovable diz que, depois de autorizar o Supabase, a UI deveria pedir para escolher uma organização e um projeto. No seu print, a organização aparece, mas a etapa de projeto está bloqueada. Além disso, o Supabase aparece como um conector especial da plataforma, sem ferramenta de agente para forçar a conexão por código.
+Plano:
 
-O que isso significa:
-- Não é falta de publicação do projeto.
-- Não é erro no React/TanStack/app.
-- Não é algo que uma migration ou arquivo `.env` resolva no conector visual.
-- É estado/permissão/sincronização do conector Lovable ↔ Supabase na interface do Lovable.
+1. Usar a migração já presente no projeto para criar a tabela `profiles` no Supabase.
+   - Campos: `id`, `user_id`, `username`, `account_type`, `created_at`, `updated_at`.
+   - Restrições: `username` único, `user_id` único, `account_type` limitado a `subscriber` ou `creator`.
+   - Segurança: RLS ativado, usuários autenticados só criam/alteram/deletam o próprio perfil.
 
-Plano seguro:
+2. Te passar o SQL completo para colar no Supabase:
+   - Supabase Dashboard → SQL Editor → New query → colar SQL → Run.
 
-1. Não mexer no app agora
-- Não vou ativar Lovable Cloud.
-- Não vou criar backend paralelo.
-- Não vou substituir seu Supabase externo por outro backend.
+3. Depois que você rodar o SQL, eu confiro no código se falta algum ajuste no app para usar essa tabela.
 
-2. Tentar destravar pela UI correta
-- Fechar o painel atual de Connectors.
-- Abrir Project Settings → Integrations → Supabase, não apenas o painel geral de Connectors.
-- Confirmar se ali aparece alguma ação separada para escolher projeto.
+SQL para rodar no Supabase:
 
-3. Revalidar a conta Supabase conectada
-- Confirmar que a conta Supabase usada no OAuth é Owner/Admin da organização.
-- Confirmar que o projeto que você quer conectar está dentro dessa mesma organização.
-- Se o projeto estiver em outra organização, adicionar essa outra organização no modal “Add More Organizations”.
+```sql
+CREATE TABLE public.profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL UNIQUE,
+  username text NOT NULL UNIQUE,
+  account_type text NOT NULL DEFAULT 'subscriber',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT profiles_account_type_check CHECK (account_type IN ('subscriber', 'creator')),
+  CONSTRAINT profiles_username_format_check CHECK (username ~ '^[a-z0-9_]{3,30}$')
+);
 
-4. Se continuar apagado
-- Abrir suporte Lovable como bug do conector, porque há histórico documentado de incidentes envolvendo conexão Supabase via connectors.
-- Enviar exatamente este texto com o print:
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO service_role;
 
-```text
-Minha organização Supabase está conectada no Lovable em Connectors > Supabase, mas o projeto continua “Not connected” e o botão “Connect a project” fica desabilitado. Já reconectei/autorizei a organização. Preciso conectar um projeto Supabase externo ao app, sem ativar Lovable Cloud. Podem verificar/destravar o estado do conector no meu workspace?
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Logged-in users can view profiles"
+ON public.profiles
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Users can create their own profile"
+ON public.profiles
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own profile"
+ON public.profiles
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own profile"
+ON public.profiles
+FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER update_profiles_updated_at
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
 ```
 
-5. Caminho alternativo enquanto o conector não destrava
-- O app já tem variáveis manuais do Supabase configuradas no código/projeto.
-- Posso continuar ajustando o app para usar o Supabase externo manualmente, mas isso não vai mudar o botão apagado no painel Lovable.
-- Para operações administrativas/migrations automáticas pelo Lovable, o vínculo oficial do conector ainda precisa ser destravado pela plataforma.
-
-Arquivos onde o erro poderia estar, mas não está:
-- `src/integrations/supabase/client.ts`: apenas usa URL/chave do Supabase no app.
-- `src/integrations/supabase/client.server.ts`: apenas cliente server-side quando houver service role.
-- `.env`: contém configuração manual do Supabase.
-
-Conclusão: o bloqueio está no conector da plataforma Lovable, não no app.
-
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
-
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+Se der erro dizendo que a tabela já existe, pare e me mande o erro; eu te passo uma versão segura com `IF NOT EXISTS`/ajustes sem duplicar políticas.
