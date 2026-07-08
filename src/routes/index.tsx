@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import heroBg from "@/assets/hero-illustration.jpg";
 import {
   Target,
@@ -57,33 +60,31 @@ function HomePage() {
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="animate-fade-in">
-            <span className="inline-block label-caps text-primary mb-6">
-              Creator economy · Brasil
-            </span>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/cadastro"
-                className="px-8 py-4 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
-              >
-                Criar minha conta grátis <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/como-funciona"
-                className="px-8 py-4 rounded-full border border-border hover:border-foreground font-semibold transition-colors text-center"
-              >
-                Como funciona
-              </Link>
-            </div>
-            <div className="mt-10 flex items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex -space-x-2">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-primary border-2 border-background"
-                  />
-                ))}
-              </div>
-              <span>+750K criadores ativos</span>
+            <div className="rounded-3xl border border-border/50 bg-background/40 backdrop-blur-xl p-8 shadow-card">
+              <h2 className="text-2xl font-black tracking-tight">Entrar</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
+              <form className="mt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hero-email">E-mail</Label>
+                  <Input id="hero-email" type="email" placeholder="voce@email.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hero-password">Senha</Label>
+                  <Input id="hero-password" type="password" placeholder="••••••••" />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full rounded-full bg-gradient-primary font-semibold shadow-glow hover:opacity-90"
+                >
+                  Entrar
+                </Button>
+              </form>
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Não tem conta?{" "}
+                <Link to="/cadastro" className="text-primary hover:underline font-semibold">
+                  Cadastre-se
+                </Link>
+              </p>
             </div>
           </div>
 
