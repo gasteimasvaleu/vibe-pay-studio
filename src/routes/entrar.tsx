@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from "@/lib/auth";
+import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
