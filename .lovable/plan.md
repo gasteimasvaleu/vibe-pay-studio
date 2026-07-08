@@ -1,9 +1,10 @@
-Reposicionar o parágrafo "A maior plataforma de creator economy do Brasil..." do hero para dentro do card da imagem, na parte inferior, abaixo da foto, com fonte menor.
+Remover o conteúdo atual da coluna esquerda do hero (label, botões e avatar stack) e substituir por um card transparente/glassmorphism para login.
 
 Detalhes técnicos:
-- Em `src/routes/index.tsx`, o parágrafo atualmente fica na coluna esquerda (linha 82). Ele será removido de lá e inserido dentro do card da imagem (coluna direita).
-- No card da imagem, o parágrafo será posicionado na parte inferior, abaixo da imagem, usando posicionamento absoluto (`absolute bottom-0 left-0 right-0 p-6`) ou inserido após a imagem no fluxo do card.
-- Reduzir o tamanho da fonte (ex: `text-sm` ou `text-xs`) para ficar proporcional ao card.
-- Manter o texto centralizado e com boa legibilidade sobre o fundo do card.
+- Em `src/routes/index.tsx`, a coluna esquerda do hero será esvaziada e receberá um card de login com visual translúcido.
+- O card usará fundo transparente/escuro com blur e borda sutil (`bg-background/40 backdrop-blur-xl border border-border/50` ou similar), alinhado ao tema atual.
+- O card conterá: título "Entrar", campos de e-mail e senha, botão de login e link para cadastro.
+- Mantém a responsividade: em mobile o card ocupa a largura, em desktop fica na coluna esquerda alinhado ao card de imagem da direita.
+- Remove os botões "Criar minha conta grátis" e "Como funciona" e o stack de avatares dessa seção.
 
-Resultado esperado: o parágrafo aparece dentro do card da direita, na parte inferior, abaixo da imagem, com tamanho reduzido.
+Resultado esperado: o hero passa a ter apenas o card de login à esquerda e o card da imagem à direita, com visual limpo e transparente.
