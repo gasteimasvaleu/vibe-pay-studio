@@ -126,10 +126,9 @@ function LoginCard() {
               alt="Monetisex"
               className="mx-auto mb-4 h-12 w-auto object-contain drop-shadow-lg"
             />
-            <p className="mt-1 text-sm text-white/60">
+            <p className="text-sm text-white/60">
               Acesse sua conta para começar
             </p>
-
           </div>
 
           <form onSubmit={handleSubmit} className="relative space-y-4">
