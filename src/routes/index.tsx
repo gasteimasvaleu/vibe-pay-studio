@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-illustration.jpg";
 import {
   Target,
   Zap,
@@ -49,40 +49,61 @@ const testimonials = [
 function HomePage() {
   return (
     <SiteLayout>
-      {/* HERO */}
+      {/* HERO — split layout */}
       <section className="relative overflow-hidden -mt-16 pt-16">
-        <img
-          src={heroBg}
-          alt=""
-          width={1920}
-          height={1080}
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{ background: "var(--gradient-radial)" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-44 text-center">
-          <span className="inline-block label-caps text-primary mb-6 animate-fade-in">
-            Creator economy · Brasil
-          </span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] animate-fade-in">
-            Monetize,<br />
-            <span className="text-gradient-primary">do seu jeito.</span>
-          </h1>
-          <p className="mt-8 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fade-in">
-            A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
-            <Link
-              to="/cadastro"
-              className="px-8 py-4 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
-            >
-              Criar minha conta grátis <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/como-funciona"
-              className="px-8 py-4 rounded-full border border-foreground/30 hover:border-foreground font-semibold transition-colors"
-            >
-              Como funciona
-            </Link>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="animate-fade-in">
+            <span className="inline-block label-caps text-primary mb-6">
+              Creator economy · Brasil
+            </span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.95]">
+              Monetize,<br />
+              <span className="text-gradient-primary">do seu jeito.</span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+              A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/cadastro"
+                className="px-8 py-4 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+              >
+                Criar minha conta grátis <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/como-funciona"
+                className="px-8 py-4 rounded-full border border-border hover:border-foreground font-semibold transition-colors text-center"
+              >
+                Como funciona
+              </Link>
+            </div>
+            <div className="mt-10 flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex -space-x-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-8 h-8 rounded-full bg-gradient-primary border-2 border-background"
+                  />
+                ))}
+              </div>
+              <span>+750K criadores ativos</span>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-gradient-soft shadow-card border border-border">
+              <img
+                src={heroBg}
+                alt="Ilustração Monetize"
+                width={1200}
+                height={1200}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>
