@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <SiteLayout>
-      {/* Homepage content removed — only header and footer remain */}
+      <></>
     </SiteLayout>
   );
 }
