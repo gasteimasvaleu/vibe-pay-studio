@@ -1,42 +1,70 @@
-# Conectar Supabase externo (manual) — execução
 
-Credenciais recebidas:
-- URL: `https://zyoxtptkmhugxmdzmptd.supabase.co`
-- Publishable key: `sb_publishable_PEVXVq0z14YVKfZjftzRRA_NSt4WVIX`
-- Project ID: `zyoxtptkmhugxmdzmptd`
-- Service role: vou solicitar via formulário seguro (`add_secret`)
-- Auth: email/senha + Google
-- SQL: você roda no SQL Editor
-- Escopo do SQL: só o básico (profiles + user_roles/roles)
+## Objetivo
+Diferenciar `subscriber` vs `creator` no banco e no fluxo do app.
 
-## Passos
+## 1. Banco (SQL para você rodar no SQL Editor)
 
-1. **Solicitar service role key** via `add_secret` (`SUPABASE_SERVICE_ROLE_KEY`) — formulário seguro, não colar em chat.
-2. **Salvar demais secrets** via `set_secret`:
-   - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_ID`
-   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
-3. **Criar arquivos de integração** (padrão TanStack Start):
-   - `src/integrations/supabase/client.ts` — browser (publishable)
-   - `src/integrations/supabase/client.server.ts` — admin (service role, server-only)
-   - `src/integrations/supabase/auth-middleware.ts` — `requireSupabaseAuth`
-   - `src/integrations/supabase/auth-attacher.ts` — anexa Bearer nas server fns
-   - `src/integrations/supabase/types.ts` — stub `Database` (sem tabelas ainda)
-   - Registrar `attachSupabaseAuth` em `src/start.ts` (append em `functionMiddleware`)
-4. **Auth UI**:
-   - Rota pública `/auth` com login/signup email+senha e botão Google (via `lovable.auth.signInWithOAuth`)
-   - Layout `src/routes/_authenticated/route.tsx` (gate `ssr: false` conforme integração)
-   - Listener `onAuthStateChange` em `src/routes/__root.tsx` (filtrado)
-5. **Entregar o SQL** para você colar no SQL Editor do Supabase:
-   - `profiles` (FK `auth.users`, RLS, trigger `on_auth_user_created`)
-   - Enum `app_role` + `user_roles` + `has_role()` security definer
-   - GRANTs corretos em ambas
-6. **Instruções pra você no dashboard do Supabase**:
-   - Auth → Providers → Google: habilitar (client id/secret do Google Cloud)
-   - Auth → URL Configuration: adicionar Site URL e Redirect URLs do preview/publicado
-7. **Verificar**: após você rodar o SQL, testo signup real e confirmo criação de `auth.users` + `profiles` + `user_roles`.
+- Criar enum `public.app_account_type` com valores `('subscriber','creator')`.
+- Converter `public.profiles.account_type` de `text` para o enum, mantendo default `'subscriber'`.
+  - `USING account_type::public.app_account_type` (linhas atuais já são 'subscriber').
+- Atualizar `public.handle_new_user()` para castear o metadata em `app_account_type` com fallback `'subscriber'`.
+- `types.ts` do Supabase será regenerado automaticamente após a migração.
 
-## O que você precisa ter à mão
+Observação: só toca `profiles`. `user_roles` (admin/moderator) continua separado — é outro conceito.
 
-- Confirmar `add_secret` do service role quando o formulário abrir.
-- Rodar o SQL que eu entregar.
-- Configurar Google provider e Redirect URLs no dashboard do Supabase.
+## 2. Cadastro (front)
+
+- `src/routes/cadastro.tsx` já tem as abas "Seja assinante / Seja creator" e envia `account_type` no metadata — mantém.
+- Ajustar `src/lib/auth.ts`:
+  - Tipar `AccountType` a partir do enum gerado (`Database["public"]["Enums"]["app_account_type"]`).
+  - Após signup/login bem-sucedido, ler `profiles.account_type` e redirecionar:
+    - `creator` → `/creator`
+    - `subscriber` → `/feed`
+- `src/routes/entrar.tsx`: usar o mesmo redirect pós-login (ler perfil e navegar).
+
+## 3. Áreas protegidas por tipo
+
+Criar layout autenticado gerenciado + duas rotas placeholder simples (só pra validar o fluxo; conteúdo real vem depois):
+
+```
+src/routes/_authenticated/route.tsx     (gate ssr:false → /entrar)
+src/routes/_authenticated/creator.tsx   (painel do creator — placeholder)
+src/routes/_authenticated/feed.tsx      (feed do assinante — placeholder)
+```
+
+Cada uma checa `profiles.account_type` e, se o tipo não bater, redireciona para a área correta (evita creator caindo no /feed e vice-versa).
+
+## 4. Bug lateral (corrigir junto)
+Runtime error atual `ReferenceError: localStorage is not defined` no SSR — o `supabase` client já tem guard `typeof window !== 'undefined'`, mas algum caminho lê sessão no server. Vou tratar durante a implementação (provavelmente `ensureCurrentUserProfile` chamado em contexto SSR ou getSession em loader) — sem mudar comportamento visível.
+
+## Detalhes técnicos (para referência)
+
+```sql
+create type public.app_account_type as enum ('subscriber','creator');
+
+alter table public.profiles
+  alter column account_type drop default,
+  alter column account_type type public.app_account_type
+    using account_type::public.app_account_type,
+  alter column account_type set default 'subscriber'::public.app_account_type;
+
+-- handle_new_user(): coalesce(new.raw_user_meta_data->>'account_type','subscriber')::public.app_account_type
+```
+
+Redirect helper (novo em `src/lib/auth.ts`):
+
+```ts
+export async function routeAfterAuth(navigate) {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return navigate({ to: "/entrar" });
+  const { data: p } = await supabase.from("profiles")
+    .select("account_type").eq("user_id", u.user.id).maybeSingle();
+  navigate({ to: p?.account_type === "creator" ? "/creator" : "/feed" });
+}
+```
+
+## Entregáveis
+1. Migração SQL (via ferramenta de migration — você aprova/roda).
+2. Edits em `src/lib/auth.ts`, `src/routes/cadastro.tsx`, `src/routes/entrar.tsx`.
+3. Novos arquivos: `_authenticated/route.tsx`, `_authenticated/creator.tsx`, `_authenticated/feed.tsx`.
+4. Fix silencioso do `localStorage is not defined`.
