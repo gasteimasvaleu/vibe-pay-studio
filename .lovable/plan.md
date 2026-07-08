@@ -1,26 +1,28 @@
-## Plano
+Plano para destravar a integração com Supabase próprio:
 
-1. **Confirmar o status da integração**
-   - Verificar se a organização Supabase aparece vinculada ao workspace Lovable.
-   - Confirmar se o projeto Supabase específico está dentro dessa organização e se o usuário tem permissão suficiente nele.
+1. Confirmar o estado real do conector
+- Considerar a organização como conectada, já que aparece “Supabase Enabled”.
+- Tratar o botão “Connect a project” desabilitado como problema do painel/conector, não como erro do app.
+- Não fazer novas alterações no código enquanto o projeto Supabase não estiver selecionado.
 
-2. **Resolver o botão desabilitado**
-   - Se a organização já aparece, tentar fechar/reabrir o modal, atualizar a página e voltar em **Connectors > Supabase**.
-   - Se o botão continuar desabilitado, validar duas causas comuns:
-     - o projeto Supabase não pertence à organização conectada;
-     - a conta conectada não tem permissão de Owner/Admin no projeto ou organização.
+2. Tentar destravar pelo painel
+- Fechar e reabrir o modal de Connectors.
+- Atualizar a página do Lovable.
+- Clicar em “Manage Connected Organizations” e confirmar que a organização correta está listada.
+- Se houver mais de uma organização Supabase, remover/reconectar a incorreta e deixar apenas a que contém o projeto desejado.
+- Confirmar que sua conta Supabase tem permissão Owner/Admin no projeto e na organização.
 
-3. **Caminho alternativo se a UI continuar bloqueada**
-   - Usar a conexão via Lovable Cloud/Supabase gerenciado pelo Lovable, se disponível para este projeto.
-   - Caso precise manter o projeto Supabase existente e a integração nativa siga bloqueada, preparar SQL/migrations para você rodar manualmente no painel Supabase enquanto resolvemos a conexão.
+3. Se o botão continuar desabilitado
+- Tratar como instabilidade/bug temporário entre Lovable e Supabase.
+- Aguardar alguns minutos e tentar novamente em uma nova aba/sessão.
+- Se persistir, abrir suporte/feedback para o Lovable com o print atual mostrando: organização conectada, projeto não conectado e botão desabilitado.
 
-4. **Depois que o projeto estiver conectado**
-   - Criar as tabelas necessárias.
-   - Aplicar permissões, RLS e policies.
-   - Ajustar o app para usar autenticação real, login email/senha e Google de forma integrada.
+4. Plano de recuperação depois que o botão liberar
+- Conectar o projeto Supabase correto.
+- Reverter qualquer configuração conflitante de Lovable Cloud, se necessário.
+- Aplicar as migrations no Supabase conectado.
+- Gerar/atualizar os tipos do banco.
+- Validar cadastro, login, Google auth e criação/leitura de perfis.
 
-## O que preciso que você confirme agora
-
-Pelo print, a organização já aparece conectada, mas o botão **Connect a project** ainda está cinza. Isso normalmente indica que não há projeto elegível visível nessa organização ou falta permissão.
-
-Verifique no Supabase se o projeto `zyoxtptkmhugxmdzmptd` está dentro da organização **gasteimasvaleu's Org** e se sua conta tem permissão de **Owner/Admin** nessa organização/projeto. Depois atualize a tela do Lovable e tente novamente.
+Detalhe importante:
+- Eu não consigo forçar a seleção do projeto Supabase pelo código se o conector oficial ainda não vinculou o projeto. Posso preparar SQL/migrations e integrar o app, mas para eu criar tabelas diretamente por aqui o projeto precisa aparecer como conectado no conector.
