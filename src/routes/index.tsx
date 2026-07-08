@@ -97,7 +97,7 @@ function HomePage() {
                 height={1200}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute top-0 left-0 right-0 flex items-start justify-center pt-8 pb-4 pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 flex items-start justify-center pt-12 pb-4 pointer-events-none">
                 <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95] text-center">
                   Monetisex,<br />
                   <span className="text-gradient-primary">do seu jeito.</span>

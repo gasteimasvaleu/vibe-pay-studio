@@ -1,10 +1,9 @@
-Aumentar o espaço entre o título "Monetisex, do seu jeito." e a imagem no card da direita, para igualar o espaço visual entre a imagem e o texto inferior.
+Ajustar o espaçamento entre o título "Monetisex, do seu jeito." e a imagem do card da direita, aumentando ainda mais o padding superior do container absoluto para equilibrar com o espaçamento inferior (texto com p-4).
 
 Detalhes técnicos:
-- Em `src/routes/index.tsx`, o título está no container absoluto superior do card da imagem (linha ~103).
-- Ajustar o padding do container do título para baixá-lo levemente, aumentando o espaço entre o título e a parte visual da imagem.
-- Mudar de `p-6` para algo como `pt-8 pb-4` ou `pt-10 pb-4`, mantendo o alinhamento superior (`items-start`) para que o título desça sem alterar a posição do card.
-- Manter o texto inferior com seu padding atual (`p-4`) e o gradiente de fundo.
-- Preservar o tamanho do título e o gradiente no span.
+- Arquivo: src/routes/index.tsx, linha ~100.
+- Alterar o container do título de `pt-8 pb-4` para `pt-12 pb-4` (ou equivalente que balanceie visualmente com o texto inferior).
+- Manter `items-start`, `justify-center`, `text-center`, tamanho de fonte e gradiente do span.
+- Preservar o texto inferior com `p-4` e o gradiente de fundo.
 
-Resultado esperado: o título fica um pouco mais afastado da imagem, equilibrando o espaçamento com o texto da parte inferior do card.
+Resultado esperado: maior respiro entre o topo do card/título e a imagem, deixando o espaçamento superior visualmente equivalente ao espaçamento inferior.
