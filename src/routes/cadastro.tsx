@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { sanitizeUsername, USERNAME_MIN, USERNAME_MAX } from "@/lib/utils";
 import {
   getAuthErrorMessage,
+  routeAfterAuth,
   signInWithGoogle,
   signUpWithEmail,
   type AccountType,
@@ -55,7 +56,7 @@ function CadastroPage() {
       const data = await signUpWithEmail({ accountType, email, password, username });
 
       if (data.session) {
-        navigate({ to: "/" });
+        await routeAfterAuth(navigate);
         return;
       }
 

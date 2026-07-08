@@ -13,7 +13,10 @@ import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -35,10 +38,24 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
+  id: '/creator',
+  path: '/creator',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -47,6 +64,8 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/creator': typeof AuthenticatedCreatorRoute
+  '/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,25 +73,54 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/creator': typeof AuthenticatedCreatorRoute
+  '/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/_authenticated/creator': typeof AuthenticatedCreatorRoute
+  '/_authenticated/feed': typeof AuthenticatedFeedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cadastro' | '/como-funciona' | '/entrar' | '/sobre'
+  fullPaths:
+    | '/'
+    | '/cadastro'
+    | '/como-funciona'
+    | '/entrar'
+    | '/sobre'
+    | '/creator'
+    | '/feed'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastro' | '/como-funciona' | '/entrar' | '/sobre'
-  id: '__root__' | '/' | '/cadastro' | '/como-funciona' | '/entrar' | '/sobre'
+  to:
+    | '/'
+    | '/cadastro'
+    | '/como-funciona'
+    | '/entrar'
+    | '/sobre'
+    | '/creator'
+    | '/feed'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/cadastro'
+    | '/como-funciona'
+    | '/entrar'
+    | '/sobre'
+    | '/_authenticated/creator'
+    | '/_authenticated/feed'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
@@ -109,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -116,11 +171,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/feed': {
+      id: '/_authenticated/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/creator': {
+      id: '/_authenticated/creator'
+      path: '/creator'
+      fullPath: '/creator'
+      preLoaderRoute: typeof AuthenticatedCreatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRoute
+  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCreatorRoute: AuthenticatedCreatorRoute,
+  AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   CadastroRoute: CadastroRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
@@ -129,13 +212,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
