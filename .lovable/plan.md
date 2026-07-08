@@ -1,76 +1,30 @@
-Entendi. Como o botão de conectar projeto está travado, o caminho prático é criar as tabelas direto no painel do Supabase usando o SQL que já existe no projeto.
+## Plano: destravar o botão "Connect" do Supabase
 
-Plano:
+Como você é **owner** e o botão aparece **cinza/desabilitado**, isso quase sempre é um dos 4 casos abaixo. Vamos eliminar em ordem — pare no primeiro que resolver.
 
-1. Usar a migração já presente no projeto para criar a tabela `profiles` no Supabase.
-   - Campos: `id`, `user_id`, `username`, `account_type`, `created_at`, `updated_at`.
-   - Restrições: `username` único, `user_id` único, `account_type` limitado a `subscriber` ou `creator`.
-   - Segurança: RLS ativado, usuários autenticados só criam/alteram/deletam o próprio perfil.
+### 1. Reautorizar o app Lovable no Supabase (causa mais comum)
+O token OAuth entre Lovable ↔ Supabase pode ter expirado ou perdido escopo. Isso deixa o botão cinza mesmo para owners.
 
-2. Te passar o SQL completo para colar no Supabase:
-   - Supabase Dashboard → SQL Editor → New query → colar SQL → Run.
+- No Lovable: canto superior direito → **Account Settings → Integrations → Supabase → Disconnect**.
+- No Supabase Dashboard: **Account (avatar) → Access Tokens** e também **Organization → Settings → OAuth Apps / Integrations** → revogue qualquer "Lovable" que estiver listado.
+- Volte no Lovable → botão do Supabase no projeto → **Connect** → refaça o OAuth escolhendo a organização certa.
 
-3. Depois que você rodar o SQL, eu confiro no código se falta algum ajuste no app para usar essa tabela.
+### 2. Confirmar que a organização certa foi autorizada
+No fluxo OAuth do Supabase existe a tela "Select organizations to grant access". Se numa autorização anterior você marcou só 1 org, outras orgs ficam invisíveis para o Lovable (o dropdown aparece vazio → botão cinza).
 
-SQL para rodar no Supabase:
+- Ao reconectar (passo 1), na tela do Supabase **marque a organização** onde está o projeto que você quer conectar.
 
-```sql
-CREATE TABLE public.profiles (
-  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid NOT NULL UNIQUE,
-  username text NOT NULL UNIQUE,
-  account_type text NOT NULL DEFAULT 'subscriber',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT profiles_account_type_check CHECK (account_type IN ('subscriber', 'creator')),
-  CONSTRAINT profiles_username_format_check CHECK (username ~ '^[a-z0-9_]{3,30}$')
-);
+### 3. Limitações da organização Supabase
+Não há limite público de projetos por org no conector, mas duas coisas travam o botão:
+- Org em **modo somente leitura** por atingir o limite do Free tier (2 projetos ativos por org grátis). Solução: pausar/deletar um projeto não usado, ou upgrade da org.
+- **2FA obrigatório** na org sem 2FA na sua conta. Solução: ativar 2FA na conta Supabase.
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
-GRANT ALL ON public.profiles TO service_role;
+### 4. Cache/sessão do navegador
+Se após reconectar o botão continuar cinza:
+- Faça logout do Lovable e do Supabase, limpe cookies dos dois domínios, abra em janela anônima e refaça.
 
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+### Se nada resolver
+Coleta pro suporte (print do botão cinza + nome da org + ID do projeto Supabase) e abrir ticket em `support@lovable.dev`. Enquanto isso, seguimos com o **Plano B** já discutido: rodar o SQL da tabela `profiles` manualmente no SQL Editor do Supabase para desbloquear o app.
 
-CREATE POLICY "Logged-in users can view profiles"
-ON public.profiles
-FOR SELECT
-TO authenticated
-USING (true);
-
-CREATE POLICY "Users can create their own profile"
-ON public.profiles
-FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own profile"
-ON public.profiles
-FOR UPDATE
-TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own profile"
-ON public.profiles
-FOR DELETE
-TO authenticated
-USING (auth.uid() = user_id);
-
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path = public
-AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER update_profiles_updated_at
-BEFORE UPDATE ON public.profiles
-FOR EACH ROW
-EXECUTE FUNCTION public.update_updated_at_column();
-```
-
-Se der erro dizendo que a tabela já existe, pare e me mande o erro; eu te passo uma versão segura com `IF NOT EXISTS`/ajustes sem duplicar políticas.
+### Próximo passo sugerido
+Comece pelo **passo 1** (desconectar + reconectar OAuth marcando a org). Me diga o que aconteceu e eu ajusto daqui.
