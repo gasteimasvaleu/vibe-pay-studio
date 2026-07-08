@@ -4,8 +4,8 @@ import { useState, type FormEvent } from "react";
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
     meta: [
-      { title: "Criar conta · Monetize" },
-      { name: "description", content: "Crie sua conta grátis na Monetize e comece a monetizar seu conteúdo." },
+      { title: "Criar conta · Monetisex" },
+      { name: "description", content: "Crie sua conta grátis na Monetisex e comece a monetizar seu conteúdo." },
     ],
   }),
   component: CadastroPage,
@@ -25,7 +25,7 @@ function CadastroPage() {
         <div className="w-full max-w-md">
           <Link to="/" className="block text-center mb-8">
             <span className="text-2xl font-black tracking-tight">
-              monet<span className="text-gradient-primary">ize</span>
+              monet<span className="text-gradient-primary">isex</span>
             </span>
           </Link>
           <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">

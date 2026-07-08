@@ -28,7 +28,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-xl font-black tracking-tight">
-            monet<span className="text-gradient-primary">ize</span>
+            monet<span className="text-gradient-primary">isex</span>
           </span>
         </Link>
 

@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           <div>
             <span className="text-2xl font-black tracking-tight">
-              monet<span className="text-gradient-primary">ize</span>
+              monet<span className="text-gradient-primary">isex</span>
             </span>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
               A maior plataforma de creator economy do Brasil.
@@ -58,7 +58,7 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-start gap-4 text-xs text-muted-foreground">
-          <p>©2026 Monetize. Todos os direitos reservados.</p>
+          <p>©2026 Monetisex. Todos os direitos reservados.</p>
           <p className="max-w-md">
             Plataforma exclusiva para maiores de 18 anos. Conteúdo protegido por DRM.
           </p>
