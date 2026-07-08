@@ -47,7 +47,7 @@ function LoginCard() {
     setIsLoading(true);
     try {
       await signInWithEmail(email, password);
-      navigate({ to: "/" });
+      await routeAfterAuth(navigate);
     } catch (err) {
       setErrorMsg(
         err instanceof Error
