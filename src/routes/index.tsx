@@ -9,33 +9,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const stats = [
-  { value: "+10M", label: "Fãs ativos" },
-  { value: "+750K", label: "Criadores cadastrados" },
-  { value: "LATAM", label: "Em expansão" },
-];
-
-const steps = [
-  { icon: UserPlus, title: "Crie sua conta", desc: "Cadastro gratuito, sem cartão de crédito. Comece em menos de 2 minutos." },
-  { icon: ImageIcon, title: "Publique seu conteúdo", desc: "Fotos, vídeos e posts exclusivos para os seus assinantes." },
-  { icon: Wallet, title: "Receba via Pix", desc: "Saque disponível em até 24h direto para a sua conta." },
-];
-
-const features = [
-  { icon: Target, title: "Você fica com 80%", desc: "Sem surpresas, sem taxas escondidas." },
-  { icon: Zap, title: "Pix em até 24h", desc: "Saldo disponível, saque imediato." },
-  { icon: Lock, title: "Conteúdo protegido", desc: "DRM integrado, bloqueio de print e marca d'água." },
-  { icon: Bot, title: "IA pessoal", desc: "Assistente que analisa seus dados e sugere oportunidades." },
-  { icon: Globe2, title: "América Latina", desc: "Maior plataforma de criadores da região." },
-  { icon: CreditCard, title: "Pagamentos completos", desc: "Pix, cartão, boleto e carteiras digitais." },
-];
-
-const testimonials = [
-  { handle: "@gabisaleh", name: "Gabi Saleh", quote: "Poucas profissões me permitem ter o estilo de vida que eu tenho hoje." },
-  { handle: "@erickdiaz", name: "Erick Diaz", quote: "Sou 100% focado aqui pelo fato de valorizarem o criador de conteúdo." },
-  { handle: "@marimattos", name: "Mari Mattos", quote: "Me permitiu ter liberdade geográfica, viajar e conhecer novos lugares." },
-  { handle: "@alexwm10", name: "Alex WM", quote: "Pensei que seria só uma renda extra, mas hoje é minha fonte de renda principal." },
-];
 
 function HomePage() {
   return (
