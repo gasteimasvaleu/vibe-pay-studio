@@ -1,32 +1,44 @@
-Não, provavelmente não é por falta de publicação do projeto.
+Objetivo: resolver o estado em que a organização Supabase aparece conectada, mas o botão de conectar projeto sumiu/desabilitou no Lovable.
 
-A publicação do app normalmente não é requisito para conectar um projeto Supabase. Esse botão costuma depender de permissões/estado do conector no workspace e da autorização OAuth com a organização Supabase.
+Plano:
 
-Plano de diagnóstico:
+1. Confirmar que não é problema de publicação
+- Publicar o app não deve ser requisito para conectar um projeto Supabase.
+- O sintoma indica estado do conector/organização no Lovable, não ausência de deploy.
 
-1. Verificar permissões no Supabase
-- Confirmar que sua conta é Owner/Admin da organização Supabase conectada.
-- Confirmar que o projeto desejado pertence exatamente a essa organização.
-- Se o projeto estiver em outra organização, conectar essa outra organização no Lovable.
+2. Verificar caminho correto na UI
+- Abrir Connectors > Supabase.
+- Se só aparece “Linked Supabase organizations” e não aparece mais “Connect a project”, isso sugere que o modal está mostrando apenas gestão de organizações, não a etapa de vínculo do projeto.
+- Fechar esse modal e procurar se existe uma seção separada de “Project connection”, “Connect project” ou “Use this connection” na tela anterior do conector.
 
-2. Forçar atualização do estado do conector
-- Fechar o modal de Connectors.
-- Recarregar o Lovable.
-- Abrir novamente Integrations/Connectors > Supabase.
-- Clicar em “Manage Connected Organizations” e reconectar/remover e adicionar novamente a organização.
+3. Forçar atualização do conector
+- Fechar o painel de Connectors.
+- Recarregar a página do Lovable.
+- Sair e entrar novamente na conta Lovable.
+- Reabrir Connectors > Supabase.
+- Em “Manage Connected Organizations”, remover/reconectar a organização Supabase, se a UI permitir.
 
-3. Testar hipótese de cache/sessão
-- Tentar em aba anônima ou outro navegador.
-- Sair e entrar novamente no Lovable.
-- Aguardar alguns minutos depois da autorização do Supabase, porque o estado pode demorar a sincronizar.
+4. Confirmar permissões no Supabase
+- A conta conectada precisa ter permissão de Owner/Admin na organização Supabase.
+- O projeto precisa estar dentro exatamente da organização conectada, não em outra org/workspace Supabase.
+- Se o projeto estiver em outra organização, adicionar essa outra organização pelo botão “Add More Organizations”.
 
-4. Se continuar desabilitado
-- Tratar como instabilidade/bug do conector Lovable ↔ Supabase.
-- Enviar ao suporte Lovable o print mostrando: Supabase Enabled, Project Not connected e botão “Connect a project” desabilitado.
-- Enquanto isso, não vou usar Lovable Cloud nem criar backend paralelo para evitar conflito com o Supabase próprio.
+5. Se o botão continuar ausente
+- Tratar como bug/instabilidade do conector Lovable ↔ Supabase.
+- Abrir suporte Lovable com o print atual mostrando:
+  - Supabase Enabled
+  - Organização conectada
+  - Ausência do botão de conectar projeto
+- Mensagem sugerida:
 
-5. Assim que o botão liberar
-- Conectar o projeto Supabase correto.
-- Eu removo qualquer configuração conflitante criada anteriormente.
-- Aplico as migrations/tabelas diretamente no Supabase conectado.
-- Valido autenticação, perfis e regras de acesso.
+```text
+Minha organização Supabase está conectada em Connectors > Supabase, mas o projeto continua não conectado e o botão “Connect a project” não aparece mais. Antes ele aparecia desabilitado; agora sumiu. Preciso conectar o projeto Supabase ao app Lovable. Segue print da tela.
+```
+
+6. Enquanto isso
+- Não vou criar Lovable Cloud nem backend paralelo, para evitar conflito com o Supabase próprio.
+- Se você quiser continuar sem esperar o conector, posso manter a integração manual via variáveis do Supabase já presentes no projeto, mas isso não substitui o vínculo oficial do conector Lovable.
+
+Resultado esperado:
+- Ou o conector volta a mostrar a opção de conectar projeto após refresh/reconexão,
+- ou fica caracterizado como problema de plataforma para suporte destravar no workspace.
