@@ -1,26 +1,30 @@
 ## Objetivo
-Substituir o card de login atual (branco/simples) por um card premium com efeitos: glassmorphism escuro roxo, tilt 3D no mouse, feixes de luz animados nas bordas, glow, inputs com ícones, toggle de senha, "Remember me", divisor "or" e botão "Sign in with Google".
+Conectar o app a um projeto Supabase existente configurando manualmente as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`, e criar o client Supabase para uso no frontend.
 
-## Adaptações ao stack (Next → TanStack Start)
-- Trocar `next/link` por `Link` de `@tanstack/react-router`.
-- Remover `'use client'`.
-- Manter textos em português (padrão atual do projeto): "Entrar", "Bem-vindo de volta.", "E-mail", "Senha", "Lembrar-me", "Esqueceu a senha?", "ou", "Entrar com Google", "Não tem conta? Cadastre-se".
-- Usar `Input` do shadcn já existente (`@/components/ui/input`) em vez do wrapper redeclarado.
-- Instalar `framer-motion` (se ainda não estiver instalado) via `bun add framer-motion`.
-- Ícones do `lucide-react` já disponível.
+## Passos
 
-## Escopo da mudança
-- Arquivo único: `src/routes/index.tsx`.
-- Substituir apenas o bloco do card de login (coluna esquerda do hero — `div` na linha 16). **Não** alterar a seção da imagem à direita nem o `SiteLayout`.
-- Como o novo card é escuro/roxo por design (glass + glow), ele fica isolado dentro da área branca do hero — o fundo da página permanece branco conforme sua preferência anterior. Só o card em si tem o visual escuro com glow.
+1. **Instalar o SDK**
+   - `bun add @supabase/supabase-js`
+
+2. **Criar o client Supabase**
+   - Novo arquivo `src/integrations/supabase/client.ts` que instancia `createClient` lendo:
+     - `import.meta.env.VITE_SUPABASE_URL`
+     - `import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY`
+   - Configuração: `auth: { persistSession: true, autoRefreshToken: true, storage: localStorage }`.
+   - Lança erro claro em dev se as variáveis não estiverem definidas.
+
+3. **Declarar as variáveis de ambiente**
+   - Criar `.env.example` documentando as duas chaves.
+   - Você mesmo vai preencher os valores reais como **Secrets** do projeto Lovable (via botão de secrets/variáveis de ambiente na UI) — não commitamos valores reais no repositório. Vou te dar os nomes exatos para colar:
+     - `VITE_SUPABASE_URL` = URL do projeto (ex.: `https://xxxx.supabase.co`)
+     - `VITE_SUPABASE_PUBLISHABLE_KEY` = chave `anon` / `publishable` do painel Supabase → Settings → API
+
+4. **Não** vou implementar autenticação, tabelas, nem alterar o card de login neste passo — só a conexão base. Assim que estiver conectado, decidimos o próximo passo (auth real, `profiles`, etc.).
 
 ## Detalhes técnicos
-- Estados locais: `showPassword`, `email`, `password`, `isLoading`, `focusedInput`, `rememberMe`.
-- `useMotionValue` + `useTransform` para rotação 3D (`rotateX`/`rotateY` faixa ±10°) baseada em `onMouseMove` no container do card.
-- `AnimatePresence` para highlight dos inputs em foco e spinner de loading.
-- 4 feixes animados (top/right/bottom/left) via `motion.div` com `animate` em loop.
-- `handleSubmit` mantém stub (setTimeout 2s) — sem lógica de auth real, apenas UX (você não pediu backend).
-- Preservar estrutura semântica: `<h2>` como título, `<form>` com labels acessíveis.
+- Chave usada é a **publishable/anon** (segura no cliente). Nunca a `service_role`.
+- Como o projeto é TanStack Start com SSR, o client é usado apenas em código de browser (componentes/hooks). Server functions futuras usarão um client próprio server-side.
+- Sem alterações em rotas, UI, ou lógica de negócio.
 
-## Verificação
-- `bun run build` e screenshot via Playwright para confirmar o card renderiza com tilt/glow e o restante do hero permanece intacto.
+## Pergunta
+Você quer que eu já solicite a você inserir os valores de `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` via o formulário seguro de Secrets da Lovable, ou você prefere configurar manualmente e só me avisar depois?
