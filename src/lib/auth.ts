@@ -1,4 +1,3 @@
-import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AccountType = "subscriber" | "creator";
@@ -21,7 +20,11 @@ export function getAuthErrorMessage(message: string) {
   return message || "Não foi possível concluir a autenticação.";
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(preferred?: {
+  accountType?: AccountType;
+  username?: string;
+}) {
+  const { lovable } = await import("@/integrations/lovable/index");
   const result = await lovable.auth.signInWithOAuth("google", {
     redirect_uri: window.location.origin,
   });
@@ -31,7 +34,7 @@ export async function signInWithGoogle() {
   }
 
   if (!result.redirected) {
-    await ensureCurrentUserProfile();
+    await ensureCurrentUserProfile(preferred);
   }
 }
 

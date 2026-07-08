@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { ensureCurrentUserProfile } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -115,6 +116,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    ensureCurrentUserProfile().catch((error) => {
+      console.error("Failed to sync user profile", error);
+    });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

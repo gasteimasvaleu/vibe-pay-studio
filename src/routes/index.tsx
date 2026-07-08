@@ -9,7 +9,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -46,18 +46,14 @@ function LoginCard() {
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setErrorMsg(
-          error.message === "Invalid login credentials"
-            ? "E-mail ou senha inválidos."
-            : error.message,
-        );
-        return;
-      }
+      await signInWithEmail(email, password);
       navigate({ to: "/" });
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao entrar. Tente novamente.");
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao entrar. Tente novamente.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -67,17 +63,14 @@ function LoginCard() {
     setErrorMsg(null);
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
-      });
-      if (error) {
-        setErrorMsg(error.message);
-        setGoogleLoading(false);
-      }
-      // On success, browser redirects to Google — no need to reset loading.
+      await signInWithGoogle();
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao entrar com Google.");
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao entrar com Google.",
+      );
+    } finally {
       setGoogleLoading(false);
     }
   };

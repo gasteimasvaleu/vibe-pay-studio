@@ -1,7 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import { sanitizeUsername, USERNAME_MIN, USERNAME_MAX } from "@/lib/utils";
+import {
+  getAuthErrorMessage,
+  signInWithGoogle,
+  signUpWithEmail,
+  type AccountType,
+} from "@/lib/auth";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
@@ -13,15 +19,17 @@ export const Route = createFileRoute("/cadastro")({
   component: CadastroPage,
 });
 
-type AccountType = "subscriber" | "creator";
-
 function CadastroPage() {
+  const navigate = useNavigate();
   const [accountType, setAccountType] = useState<AccountType>("subscriber");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const rules = useMemo(
     () => ({
@@ -37,12 +45,48 @@ function CadastroPage() {
   const passwordValid = Object.values(rules).every(Boolean);
   const canSubmit = usernameValid && passwordValid && email.includes("@") && agreed;
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
     setLoading(true);
-    // TODO: enviar { accountType, username, email, password } para o backend
-    setTimeout(() => setLoading(false), 800);
+    try {
+      const data = await signUpWithEmail({ accountType, email, password, username });
+
+      if (data.session) {
+        navigate({ to: "/" });
+        return;
+      }
+
+      setSuccessMsg("Conta criada. Confira seu e-mail para confirmar o acesso.");
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao criar conta. Tente novamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle({ accountType, username: username || undefined });
+      navigate({ to: "/" });
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? getAuthErrorMessage(err.message)
+          : "Erro ao entrar com Google.",
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const copy =
@@ -116,13 +160,28 @@ function CadastroPage() {
               >
                 {loading ? "Criando..." : "Confirmar"}
               </button>
+
+              {errorMsg && (
+                <p role="alert" className="text-sm text-red-500">
+                  {errorMsg}
+                </p>
+              )}
+
+              {successMsg && (
+                <p role="status" className="text-sm text-primary">
+                  {successMsg}
+                </p>
+              )}
             </form>
 
             <Divider />
 
             <div className="space-y-3">
-              <SocialButton label="Continuar com Google" />
-              <SocialButton label="Continuar com Apple" />
+              <SocialButton
+                label={googleLoading ? "Redirecionando..." : "Continuar com Google"}
+                disabled={googleLoading}
+                onClick={handleGoogle}
+              />
             </div>
 
             <p className="mt-8 text-center text-sm text-muted-foreground">
@@ -233,11 +292,21 @@ function Divider() {
   );
 }
 
-function SocialButton({ label }: { label: string }) {
+function SocialButton({
+  disabled,
+  label,
+  onClick,
+}: {
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
-      className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors"
+      disabled={disabled}
+      onClick={onClick}
+      className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
     >
       {label}
     </button>
