@@ -183,11 +183,7 @@ function PerfilPage() {
 
         {/* CTA */}
         <div>
-          {isOwner ? (
-            <button className="w-full h-11 rounded-full border border-white/20 bg-white/5 text-sm font-semibold hover:bg-white/10 transition-colors">
-              Editar perfil
-            </button>
-          ) : (
+          {!isOwner && (
             <button className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-bold shadow-lg shadow-purple-900/40 hover:brightness-110 transition">
               Assinar por {subscriptionPrice}/mês
             </button>
