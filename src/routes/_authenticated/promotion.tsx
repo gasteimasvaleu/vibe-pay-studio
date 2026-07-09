@@ -140,6 +140,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escolha o número máximo de assinaturas que poderão aproveitar a oferta"
           subtitle="Lembre-se: A oferta só vale para assinaturas de 1 mês"
