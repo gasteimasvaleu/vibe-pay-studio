@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { AppTopBar } from "@/components/site/AppTopBar";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
@@ -121,7 +122,8 @@ function ChatLayout() {
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[100svh]">
+      <AppTopBar />
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[calc(100svh-61px)]">
         <aside
           className={cn(
             "border-r border-border bg-card/80 backdrop-blur-xl",
@@ -187,7 +189,7 @@ function ChatLayout() {
           </div>
         </aside>
 
-        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[100svh]")}>
+        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[calc(100svh-61px)]")}>
           <Outlet />
         </section>
       </div>
