@@ -151,6 +151,7 @@ function ChatLayout() {
             <div className="flex items-center gap-1 text-muted-foreground">
               <Link
                 to="/chat-agendamento"
+                search={{ view: "composer" }}
                 aria-label="Nova mensagem em massa"
                 className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               >
