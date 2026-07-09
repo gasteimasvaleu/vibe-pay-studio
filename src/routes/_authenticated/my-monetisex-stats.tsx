@@ -765,9 +765,18 @@ function ExtratosPanel() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="md:col-span-2 space-y-5">
-          <ExtratoChartCard title={produtoFilter} />
-          <ExtratoFiltrosRow active={filtro} onChange={setFiltro} />
-          <ExtratoTable />
+          {extratoTab === "Ganhos por produto" ? (
+            <>
+              <GanhosPorProdutoChartCard />
+              <GanhosPorProdutoTable />
+            </>
+          ) : (
+            <>
+              <ExtratoChartCard title={produtoFilter} />
+              <ExtratoFiltrosRow active={filtro} onChange={setFiltro} />
+              <ExtratoTable />
+            </>
+          )}
         </div>
         <div className="space-y-5">
           <TopBadgeCard />
@@ -778,6 +787,76 @@ function ExtratosPanel() {
     </div>
   );
 }
+
+function GanhosPorProdutoChartCard() {
+  const legend = [
+    { label: "Assinatura", color: "bg-purple-500" },
+    { label: "Live", color: "bg-blue-500" },
+    { label: "Indicações", color: "bg-primary" },
+    { label: "Chamada 1:1", color: "bg-emerald-500" },
+    { label: "Mimo", color: "bg-rose-500" },
+    { label: "Publicação paga", color: "bg-slate-400" },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-lg font-bold tracking-tight">Ganhos por produto</h3>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-lg font-bold">R$ 0,00</span>
+        <span className="text-sm text-muted-foreground">total no período</span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        {legend.map((l) => (
+          <span key={l.label} className="inline-flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${l.color}`} />
+            <span className="text-foreground">{l.label}</span>
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-6 relative h-56">
+        <div className="absolute inset-0 flex flex-col justify-between">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-10">R$ 0,01</span>
+              <div className="flex-1 border-t border-dashed border-border" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-between text-xs text-muted-foreground pl-13">
+        <span>Jun 9,<br />2026</span>
+        <span>Jun 16,<br />2026</span>
+        <span>Jun 24,<br />2026</span>
+        <span>Jul 2,<br />2026</span>
+        <span>Jul 9,<br />2026</span>
+      </div>
+    </div>
+  );
+}
+
+function GanhosPorProdutoTable() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="grid grid-cols-[1fr_auto_auto] gap-x-10 text-sm text-muted-foreground">
+        <span>Produto</span>
+        <span className="text-right">Valor</span>
+        <span className="text-right">Sua comissão</span>
+      </div>
+      <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-x-10 items-center text-sm">
+        <span className="inline-flex items-center gap-2 font-bold text-foreground">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          Total
+        </span>
+        <span className="text-right font-bold">R$ 0,00</span>
+        <span className="text-right font-bold text-primary">R$ 0,00</span>
+      </div>
+      <div className="mt-3 h-1 w-full bg-primary rounded-full" />
+    </div>
+  );
+}
+
 
 function ExtratoChartCard({ title }: { title: string }) {
   return (

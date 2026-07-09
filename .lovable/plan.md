@@ -1,40 +1,31 @@
-## Aba "Extratos" — Meu Monetisex
+## Aba "Ganhos por produto"
 
-Adicionar renderização condicional por `mainTab` em `src/routes/_authenticated/my-monetisex-stats.tsx`. Hoje só `subTab` altera o conteúdo — vamos passar a comutar a página inteira quando `mainTab === "Extratos"`, mantendo "Visão geral" intacta.
+Adicionar renderização condicional em `ExtratosPanel` (src/routes/_authenticated/my-monetisex-stats.tsx) para que, quando `extratoTab === "Ganhos por produto"`, a coluna principal exiba um layout diferente. A coluna lateral direita (TopBadgeCard, Top5PaisesCard, ExtratoFaturamentoCard) permanece igual.
 
-### Sub-abas próprias
-Quando `mainTab === "Extratos"`, substituir a `SubTabsRow` por um conjunto próprio:
-`Faturamento | Link de indicação | Ganhos por produto | Todos os produtos ▼` (o último é um dropdown com opções mock: Todos os produtos, Assinaturas, PPV, Mimos, Chat).
+### Coluna principal quando "Ganhos por produto" está ativo
 
-Estado local novo: `extratoTab` (default "Faturamento") e `produtoFilter` (default "Todos os produtos").
+1. **Card "Ganhos por produto"** (novo componente `GanhosPorProdutoChartCard`):
+   - Título "Ganhos por produto" em bold
+   - Linha abaixo: `R$ 0,00` grande em bold + texto muted "total no período"
+   - Legenda com 6 itens coloridos (bolinha + label):
+     - Assinatura (roxo)
+     - Live (azul)
+     - Indicações (laranja)
+     - Chamada 1:1 (verde)
+     - Mimo (rosa/vermelho)
+     - Publicação paga (cinza)
+   - Área do gráfico com 2 linhas horizontais tracejadas rotuladas "R$ 0,01"
+   - Eixo X com as mesmas 5 datas (Jun 9 → Jul 9, 2026)
 
-### Layout (grid 2/1, igual ao restante)
+2. **Card "Tabela por Produto"** (novo componente `GanhosPorProdutoTable`):
+   - Cabeçalho com colunas: `Produto`, `Valor` (direita), `Sua comissão` (direita)
+   - Uma linha "Total": bolinha laranja + "Total" bold à esquerda, `R$ 0,00` (Valor), `R$ 0,00` em laranja (Sua comissão)
+   - Barra horizontal laranja full-width abaixo da linha (visual do screenshot)
 
-**Coluna principal (md:col-span-2), space-y-5:**
+Os filtros de topo (tabs + dropdown "Todos os produtos") continuam visíveis nesse modo. Os filtros "Filtrar por / Estornos / Exportar extrato" e a tabela de vendas não aparecem nesta aba.
 
-1. `ExtratoChartCard` — card com:
-   - Header: título dinâmico (`produtoFilter`) + `R$ 0,00` grande + `(R$ 0,00 Bruto)` em `text-muted-foreground`; à direita legenda com dois pontos (● Faturamento em primary, ● Quantidade em muted).
-   - Área de gráfico placeholder (h-64) com 3 linhas horizontais tracejadas rotuladas `R$0` e eixo x com Jun 9/Jun 16/Jun 24/Jul 2/Jul 9, 2026 (mesmo padrão do `EarningsChartCard` existente, só maior).
+### Detalhes técnicos
 
-2. `ExtratoFiltrosRow` — "Filtrar por" à esquerda com chips `Todos | Concluídos | A receber | Estornos` (reusar `Chip`); "Exportar extrato" à direita como botão outline arredondado com ícone `ExternalLink`.
-
-3. `ExtratoTable` — card com header `Data | Assinante | Valor | Sua comissão | Status` (grid 5 col, muted) e estado vazio centralizado "Nenhuma venda encontrada para este filtro." (pt-10 pb-6).
-
-**Coluna lateral (space-y-5):**
-
-- Reusar `TopBadgeCard` (Você está no top +100 / Faturamento hoje / Saldo liberado / Saldo a liberar / Acessar Meu Banco).
-- Novo `Top5PaisesCard` — "Top 5 países" + subtítulo "Países onde você mais faturou" (sem lista, estado vazio).
-- Novo `ExtratoFaturamentoCard` — título "Faturamento", bloco interno `rounded-xl bg-muted/60 p-4` com "Total" e `R$ 0,00`.
-
-### Alterações em `MyMonetisexStatsPage`
-
-- Ramificar o `<main>` por `mainTab`:
-  - `"Visão geral"` → mantém o comportamento atual (subtabs Faturamento/Destaques/Sequência/Resumo).
-  - `"Extratos"` → renderiza `<ExtratosPanel />` (contém as sub-abas próprias + layout descrito).
-  - Demais `mainTab` (Engajamento/Alcance/Assinantes) → mantêm o layout atual por ora (fora do escopo).
-
-### Detalhes
-
-- Nenhuma lógica de dados; tudo mock estático coerente com o resto da página.
-- Reusar tokens já usados: `rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`, `Chip`, `MessageCircle`, `Info`, ícones do `lucide-react` (`ExternalLink`, `ChevronDown`).
-- O texto "Monetisex" continua substituindo "Privacy" em títulos/mensagens (padrão do arquivo).
+- Cores da legenda usando classes Tailwind com cores fixas do design (aprox.): `bg-purple-500`, `bg-blue-500`, `bg-primary` (laranja), `bg-emerald-500`, `bg-rose-500`, `bg-slate-400`.
+- Barra laranja da tabela: `h-1 bg-primary w-full` logo abaixo da linha "Total".
+- Nenhuma alteração em dados/backend — só estrutura e apresentação estáticas seguindo os screenshots.
