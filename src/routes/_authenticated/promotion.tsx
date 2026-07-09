@@ -365,8 +365,7 @@ function PromotionPage() {
           <button onClick={() => navigate({ to: "/dashboard" })} className={primaryBtn}>
             Ver perfil
           </button>
-          {/* TODO: rota /promotions com listagem das ofertas do criador */}
-          <button onClick={() => navigate({ to: "/dashboard" })} className={outlineBtn}>
+          <button onClick={() => navigate({ to: "/promotions" })} className={outlineBtn}>
             Ver minhas ofertas
           </button>
         </div>
