@@ -1,10 +1,19 @@
-## Fix: `DialogTitle` fora de `Dialog` no composer
+## Goal
+Add a visual separator line below the message textarea in the mass-message composer, so the message input area is clearly separated from the icon toolbar (media, audio, schedule, GIF, emoji, tag) below it.
 
-Ao remover o `Sheet`, o header "Selecionar usuários para enviar mensagem em massa" continua usando `<DialogTitle>` do Radix, que exige um `Dialog` pai. Como agora o composer é uma view inline (sem Sheet/Dialog), esse componente lança `DialogTitle must be used within Dialog`.
+## Scope
+- `src/routes/_authenticated/chat-agendamento.tsx` only.
+- The Composer component's right column message area.
+- No functional changes; purely presentational.
 
-**Arquivo:** `src/routes/_authenticated/chat-agendamento.tsx`
+## Implementation
+1. Locate the `Textarea` element and the icon toolbar row inside the Composer's right section.
+2. Insert a horizontal separator between them using the theme's border color:
+   - Option A: wrap the `Textarea` in a container with `border-b border-border pb-2` (or equivalent spacing).
+   - Option B: add a `<div className="border-b border-border" />` immediately after the `Textarea` and before the `TooltipProvider`/`flex` icon row.
+3. Preserve existing padding, spacing, focus styles, and dark-mode compatibility by using `border-border` (no hardcoded colors).
 
-- Substituir `<DialogTitle …>` (linha ~379) por um `<h2>` simples com as mesmas classes.
-- Remover o import `DialogTitle` do bloco `@/components/ui/dialog` no topo (o `DateDialog` não usa `DialogTitle` — usa apenas `Dialog`/`DialogContent`; adicionar um dentro do `DateDialog` para acessibilidade não é necessário para esse fix, mas manteremos como está).
-
-Sem outras mudanças.
+## Acceptance
+- The composer page shows a visible line directly under the message textarea.
+- The icon row remains below the line.
+- Existing spacing and layout behavior are unchanged.

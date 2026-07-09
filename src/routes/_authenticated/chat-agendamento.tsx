@@ -423,6 +423,8 @@ function Composer({
                 className="min-h-14 resize-none border-0 shadow-none focus-visible:ring-0 px-1"
               />
 
+              <div className="border-b border-border" />
+
               <TooltipProvider delayDuration={200}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
