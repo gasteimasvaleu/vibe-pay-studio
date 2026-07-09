@@ -17,8 +17,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
-import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authenticated/assinante'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -66,16 +64,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
-  id: '/creator',
-  path: '/creator',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAssinanteRoute = AuthenticatedAssinanteRouteImport.update({
-  id: '/assinante',
-  path: '/assinante',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedPerfilUsernameRoute =
   AuthenticatedPerfilUsernameRouteImport.update({
     id: '/perfil/$username',
@@ -90,21 +78,21 @@ const ApiPublicWebhooksVeriffDecisionRoute =
   } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
-    id: '/onboarding/redes-sociais',
-    path: '/onboarding/redes-sociais',
-    getParentRoute: () => AuthenticatedCreatorRoute,
+    id: '/creator/onboarding/redes-sociais',
+    path: '/creator/onboarding/redes-sociais',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCreatorOnboardingDocumentosRoute =
   AuthenticatedCreatorOnboardingDocumentosRouteImport.update({
-    id: '/onboarding/documentos',
-    path: '/onboarding/documentos',
-    getParentRoute: () => AuthenticatedCreatorRoute,
+    id: '/creator/onboarding/documentos',
+    path: '/creator/onboarding/documentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCreatorOnboardingAssinaturaRoute =
   AuthenticatedCreatorOnboardingAssinaturaRouteImport.update({
-    id: '/onboarding/assinatura',
-    path: '/onboarding/assinatura',
-    getParentRoute: () => AuthenticatedCreatorRoute,
+    id: '/creator/onboarding/assinatura',
+    path: '/creator/onboarding/assinatura',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
   AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport.update({
@@ -125,8 +113,6 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/assinante': typeof AuthenticatedAssinanteRoute
-  '/creator': typeof AuthenticatedCreatorRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -143,8 +129,6 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/assinante': typeof AuthenticatedAssinanteRoute
-  '/creator': typeof AuthenticatedCreatorRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -163,8 +147,6 @@ export interface FileRoutesById {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/_authenticated/assinante': typeof AuthenticatedAssinanteRoute
-  '/_authenticated/creator': typeof AuthenticatedCreatorRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -183,8 +165,6 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
-    | '/assinante'
-    | '/creator'
     | '/dashboard'
     | '/feed'
     | '/perfil/$username'
@@ -201,8 +181,6 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
-    | '/assinante'
-    | '/creator'
     | '/dashboard'
     | '/feed'
     | '/perfil/$username'
@@ -220,8 +198,6 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
-    | '/_authenticated/assinante'
-    | '/_authenticated/creator'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
     | '/_authenticated/perfil/$username'
@@ -301,20 +277,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/creator': {
-      id: '/_authenticated/creator'
-      path: '/creator'
-      fullPath: '/creator'
-      preLoaderRoute: typeof AuthenticatedCreatorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/assinante': {
-      id: '/_authenticated/assinante'
-      path: '/assinante'
-      fullPath: '/assinante'
-      preLoaderRoute: typeof AuthenticatedAssinanteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/perfil/$username': {
       id: '/_authenticated/perfil/$username'
       path: '/perfil/$username'
@@ -331,24 +293,24 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/creator/onboarding/redes-sociais': {
       id: '/_authenticated/creator/onboarding/redes-sociais'
-      path: '/onboarding/redes-sociais'
+      path: '/creator/onboarding/redes-sociais'
       fullPath: '/creator/onboarding/redes-sociais'
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRouteImport
-      parentRoute: typeof AuthenticatedCreatorRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator/onboarding/documentos': {
       id: '/_authenticated/creator/onboarding/documentos'
-      path: '/onboarding/documentos'
+      path: '/creator/onboarding/documentos'
       fullPath: '/creator/onboarding/documentos'
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteImport
-      parentRoute: typeof AuthenticatedCreatorRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator/onboarding/assinatura': {
       id: '/_authenticated/creator/onboarding/assinatura'
-      path: '/onboarding/assinatura'
+      path: '/creator/onboarding/assinatura'
       fullPath: '/creator/onboarding/assinatura'
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
-      parentRoute: typeof AuthenticatedCreatorRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator/onboarding/documentos/verificando': {
       id: '/_authenticated/creator/onboarding/documentos/verificando'
@@ -385,38 +347,25 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
     AuthenticatedCreatorOnboardingDocumentosRouteChildren,
   )
 
-interface AuthenticatedCreatorRouteChildren {
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
 }
 
-const AuthenticatedCreatorRouteChildren: AuthenticatedCreatorRouteChildren = {
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:
     AuthenticatedCreatorOnboardingDocumentosRouteWithChildren,
   AuthenticatedCreatorOnboardingRedesSociaisRoute:
     AuthenticatedCreatorOnboardingRedesSociaisRoute,
-}
-
-const AuthenticatedCreatorRouteWithChildren =
-  AuthenticatedCreatorRoute._addFileChildren(AuthenticatedCreatorRouteChildren)
-
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAssinanteRoute: typeof AuthenticatedAssinanteRoute
-  AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRouteWithChildren
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
-  AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAssinanteRoute: AuthenticatedAssinanteRoute,
-  AuthenticatedCreatorRoute: AuthenticatedCreatorRouteWithChildren,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedFeedRoute: AuthenticatedFeedRoute,
-  AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

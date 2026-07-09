@@ -3,14 +3,13 @@ import type { useNavigate } from "@tanstack/react-router";
 
 export type AccountType = "subscriber" | "creator";
 
-export function homeForAccountType(accountType?: AccountType | string | null) {
-  if (accountType === "creator") return "/creator" as const;
+export function homeForAccountType(_accountType?: AccountType | string | null) {
+  // Home única para todos os usuários.
   return "/feed" as const;
 }
 
 /**
- * After a successful sign-in/sign-up, reads the user's profile.account_type
- * and navigates to the correct area (creator vs subscriber).
+ * After a successful sign-in/sign-up, sends the user to the feed.
  */
 export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
   const { data: userData } = await supabase.auth.getUser();
@@ -18,14 +17,7 @@ export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
     navigate({ to: "/entrar" });
     return;
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("account_type")
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-
-  navigate({ to: homeForAccountType(profile?.account_type) });
+  navigate({ to: "/feed" });
 }
 
 export function getAuthErrorMessage(message: string) {
