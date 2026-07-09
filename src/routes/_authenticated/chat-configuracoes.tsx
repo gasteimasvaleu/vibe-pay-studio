@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/chat/configuracoes")({
+export const Route = createFileRoute("/_authenticated/chat-configuracoes")({
   component: ChatSettingsPage,
 });
 
