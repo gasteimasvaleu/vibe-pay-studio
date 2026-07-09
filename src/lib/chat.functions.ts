@@ -45,7 +45,7 @@ export const listThreads = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, username, avatar_url")
+      .select("user_id, username")
       .in("user_id", partnerIds);
     const profileMap = new Map(
       (profiles ?? []).map((p) => [p.user_id, p]),
@@ -74,7 +74,7 @@ export const listThreads = createServerFn({ method: "GET" })
         threadId: t.id,
         partnerId,
         partnerUsername: profile?.username ?? "usuário",
-        partnerAvatar: profile?.avatar_url ?? null,
+        partnerAvatar: null,
         lastMessage: lastMsgRows?.[0]?.content ?? null,
         lastMessageAt: t.last_message_at,
         unreadCount: unread ?? 0,
@@ -93,7 +93,7 @@ export const searchUsers = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: rows, error } = await supabase
       .from("profiles")
-      .select("user_id, username, avatar_url")
+      .select("user_id, username")
       .ilike("username", `%${data.query}%`)
       .neq("user_id", userId)
       .limit(20);
@@ -101,7 +101,7 @@ export const searchUsers = createServerFn({ method: "POST" })
     return (rows ?? []).map((r) => ({
       userId: r.user_id,
       username: r.username,
-      avatarUrl: r.avatar_url,
+      avatarUrl: null,
     }));
   });
 
@@ -142,7 +142,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_id, username, avatar_url")
+        .select("user_id, username")
         .eq("user_id", partnerId)
         .maybeSingle();
 
@@ -158,7 +158,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         partner: {
           userId: partnerId,
           username: profile?.username ?? "usuário",
-          avatarUrl: profile?.avatar_url ?? null,
+          avatarUrl: null,
         },
         messages: (msgs ?? []).map((m) => ({
           id: m.id,
