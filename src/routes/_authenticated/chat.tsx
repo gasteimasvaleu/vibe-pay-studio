@@ -152,7 +152,7 @@ function ChatLayout() {
               <IconBtn label="Configurações">
                 <Settings className="h-5 w-5" />
               </IconBtn>
-              <IconBtn label="Filtros">
+              <IconBtn label="Filtros" onClick={() => setOpenFilters(true)}>
                 <ListFilter className="h-5 w-5" />
               </IconBtn>
               <Link
