@@ -152,7 +152,7 @@ function PublisherPage() {
             />
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
-              label="Acervo na Privacy"
+              label="Acervo no Monetisex"
               onClick={triggerFileInput}
             />
             <PickerOption
