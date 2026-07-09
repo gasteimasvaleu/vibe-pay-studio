@@ -174,7 +174,8 @@ export const getFeed = createServerFn({ method: "POST" })
     );
 
     const items: FeedItem[] = page.map((p) => {
-      const isLocked = p.visibility !== "public";
+      const isOwner = p.author_id === currentUserId;
+      const isLocked = p.visibility !== "public" && !isOwner;
       const media = (mediaRows ?? [])
         .filter((m) => m.publication_id === p.id)
         .map((m) => ({
@@ -196,10 +197,14 @@ export const getFeed = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
-        // Anon read com publishable key: mídia de pagos aparece vazia porque
-        // a RLS oculta. Isso está correto — o card renderiza o estado bloqueado.
-        media: isLocked ? [] : media,
+        // Se houver media retornada (autor ou usuário desbloqueado), mostra;
+        // senão devolve array vazio p/ o card renderizar o estado bloqueado.
+        media: isLocked && media.length === 0 ? [] : media,
       };
+    });
+
+    return { items, nextCursor };
+  });
     });
 
     return { items, nextCursor };
