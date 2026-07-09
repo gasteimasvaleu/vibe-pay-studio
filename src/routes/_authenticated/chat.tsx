@@ -208,6 +208,12 @@ function ChatLayout() {
       </div>
 
       <NewChatDialog open={openNewChat} onOpenChange={setOpenNewChat} />
+      <FiltersDialog
+        open={openFilters}
+        onOpenChange={setOpenFilters}
+        filters={filters}
+        onChange={setFilters}
+      />
     </div>
   );
 }
