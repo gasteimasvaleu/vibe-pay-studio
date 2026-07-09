@@ -26,7 +26,10 @@ import {
   ArrowUp,
   ExternalLink,
   ChevronDown,
+  Image as ImageIcon,
+  DollarSign,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
   head: () => ({
