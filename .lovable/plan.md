@@ -1,57 +1,36 @@
 ## Objetivo
 
-Substituir o cabeçalho atual (avatar + nome inline, com classes `text-white`/`bg-black/20` que não batem com o tema claro do app) por um **card de perfil** no estilo do screenshot, usando os tokens semânticos do design system (`--card`, `--foreground`, `--muted-foreground`, `--primary`, `--gradient-primary`, `--shadow-card`), tanto no Creator quanto no Assinante.
+Adicionar, logo abaixo do `ProfileHeaderCard` no `CreatorDashboard` (não no assinante), uma linha com 3 cards de resumo financeiro iguais aos do screenshot: **Faturamento / Hoje**, **Liberado / Valor disponível para saque**, **Total / Saldo liberado + a liberar**. Todos com valor `R$ -` (placeholder, sem dados reais por enquanto).
 
-## Layout do card (inspirado no screenshot, adaptado)
+## Componente
 
-```
-┌───────────────────────────────────────────────────────────┐
-│                    ░░░ gradient banner ░░░       ┌──────┐ │
-│                                                  │+100° │ │
-│                                                  └──────┘ │
-│   ┌────┐                                                  │
-│   │ 🟣 │                                    Ver perfil →  │
-│   └────┘                                                  │
-│                                                           │
-│   Caio                                                    │
-│   @caiorobbb                                              │
-│   0  Superfãs / Assinaturas                               │
-└───────────────────────────────────────────────────────────┘
-```
+Novo `src/components/dashboard/EarningsSummary.tsx` — puramente apresentacional, usa tokens semânticos (`bg-card`, `border`, `text-foreground`, `text-muted-foreground`, `shadow-[var(--shadow-card)]`).
 
 Estrutura:
-- Card `rounded-2xl border bg-card shadow-[var(--shadow-card)] overflow-hidden`
-- **Faixa superior** (`h-24`): fundo `bg-gradient-primary` (usa o utility já definido em `styles.css`)
-  - No canto sup. direito: badge `+100°` — pill `rounded-full bg-background/80 backdrop-blur px-3 py-1 text-sm font-black text-primary` — o `°` fica menor com `text-xs align-super`. Fica como marco/nível decorativo (semântica ligamos depois).
-- **Corpo** (`px-5 pt-0 pb-5 -mt-10 relative`):
-  - Avatar circular `h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-black text-primary-foreground` com a primeira letra do username, sobrepondo a faixa.
-  - À direita, alinhado ao final da faixa: `<Link to="/perfil/$username">Ver perfil →</Link>` — texto `text-sm font-semibold text-foreground hover:text-primary`.
-  - Abaixo do avatar: nome grande `text-2xl font-black text-foreground` (com `BadgeCheck` do lucide em `text-primary` inline, só no creator), `@username` em `text-sm text-muted-foreground`, e a linha de contagem `0` em `text-lg font-black` + label em `text-sm text-muted-foreground` (`Superfãs` para creator, `Assinaturas` para assinante).
+```
+<section grid-cols-1 sm:grid-cols-3 gap-4>
+  <Card title="Faturamento"  subtitle="Hoje"                          value="R$ -" />
+  <Card title="Liberado"     subtitle="Valor disponível para saque"   value="R$ -" />
+  <Card title="Total"        subtitle="Saldo liberado + a liberar"    value="R$ -" />
+</section>
+```
 
-Sem toggle de modo escuro (o app é light, sem tema alternativo por enquanto).
+Cada card:
+- `rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]`
+- Título: `text-lg font-black text-foreground`
+- Subtítulo: `text-sm text-muted-foreground mt-0.5`
+- Valor: `text-3xl font-black text-foreground mt-4` (formato "R$ -" como placeholder)
 
-## Onde fica
+Props opcionais pra ligarmos dados depois: `items?: { title; subtitle; value }[]` com default = os três acima. Assim quando você pedir para plugar Supabase é só passar valores.
 
-Novo componente `src/components/dashboard/ProfileHeaderCard.tsx` — exportado e usado dentro de `DashboardShell` no lugar da `<motion.section>` atual do cabeçalho. Props:
-- `username: string`
-- `isCreator: boolean`
-- `stat?: { value: number; label: string }` — default: `{ value: 0, label: isCreator ? "Superfãs" : "Assinaturas" }`
-- `levelBadge?: string` — default `"+100°"` (fica flexível pra ligarmos a marcos depois)
+## Onde entra
 
-O `DashboardShell` passa `isCreator` (que já recebe) pra montar as defaults.
+Em `src/components/dashboard/CreatorDashboard.tsx`, entre o `<DashboardShell>` (que renderiza o header) e o primeiro `<DashboardGroup title="Meu negócio">`. Ou seja, é o primeiro filho passado como `children` para o `DashboardShell`.
 
-## Ajustes de tema no DashboardShell (necessários pra não destoar)
-
-O shell atual foi escrito assumindo dark (`text-white`, `bg-black/20`, gradient grid claro sobre fundo escuro). Como o app é light, corrijo pontualmente **apenas o que envolve o novo header e o wrapper que o rodeia**, deixando os grupos de cards do commit anterior intactos por enquanto (você vai iterar):
-- Container: remover `text-white`, deixar herdar `text-foreground`.
-- Camadas de fundo: manter só o `bg-background` + o `--gradient-radial` (que já é suave e claro); remover o overlay de grid escuro (`bg-[radial-gradient(...rgba(255,255,255,0.06)...)]`) que só faz sentido em fundo escuro.
-- Header (topbar "Meu painel"): trocar `bg-black/20 border-white/10` por `bg-card/80 border-border`, botão voltar `text-muted-foreground hover:bg-accent`, título `text-foreground`, link Feed `text-muted-foreground hover:text-foreground`.
-
-Cards (`ActionCard`) e grupos permanecem como estão neste passo — você pediu ajuste do **card header**; iteramos nos cards em mensagens seguintes.
+Não é adicionado no `SubscriberDashboard` — você pediu só na versão creator.
 
 ## Fora de escopo
 
-- Buscar `superfãs` reais do Supabase (fixo em 0 por enquanto).
-- Toggle de modo escuro / tema alternativo.
-- Repaginar os `ActionCard`s pro tema claro (fica pra próxima instrução sua).
-- Rota real do badge de nível.
+- Valores reais (Faturamento hoje, saldo liberado etc. — placeholders `R$ -` até você pedir).
+- Ações como "Sacar" ou link para carteira (só os 3 cards, como no screenshot).
+- Ajuste dos `ActionCard`s (ainda no estilo dark antigo) — continua para uma próxima instrução.
