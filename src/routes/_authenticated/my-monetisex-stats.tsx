@@ -6,9 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   ArrowLeft,
-  Calendar,
+  Calendar as CalendarIcon,
+  CalendarDays,
   CheckCircle2,
   Info,
   Lock,
@@ -16,6 +19,8 @@ import {
   MoreVertical,
   Radio,
   Smartphone,
+  Sparkles,
+  Trophy,
   Users,
 } from "lucide-react";
 
