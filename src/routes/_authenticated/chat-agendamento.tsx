@@ -37,10 +37,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
+
+
 import {
   Dialog,
   DialogContent,
@@ -70,7 +68,7 @@ function ChatSchedulingPage() {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [view, setView] = useState<"calendar" | "composer">("calendar");
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
@@ -92,169 +90,172 @@ function ChatSchedulingPage() {
     <div className="min-h-[100svh] bg-background text-foreground flex flex-col">
       <AppTopBar />
 
-      <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
-        <button
-          type="button"
-          aria-label="Voltar"
-          onClick={() => navigate({ to: "/chat" })}
-          className="absolute left-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-base font-semibold text-foreground">
-          Mensagens Agendadas
-        </h1>
-        <button
-          type="button"
-          aria-label="Nova mensagem"
-          onClick={() => {
-            setComposerOpen(true);
-            setDateDialogOpen(true);
-          }}
-          className="absolute right-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
-      </header>
-
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 max-w-6xl mx-auto w-full">
-        {/* Calendar column */}
-        <div className="p-6 md:border-r border-border">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Mês anterior"
-                onClick={() => setCurrentMonth((m) => addMonths(m, -1))}
-                className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                aria-label="Próximo mês"
-                onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-                className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <span className="ml-2 font-semibold text-foreground capitalize">
-                {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-              </span>
-            </div>
+      {view === "calendar" ? (
+        <>
+          <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
             <button
               type="button"
-              aria-label="Ir para hoje"
-              onClick={() => {
-                setCurrentMonth(today);
-                setSelectedDate(today);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+              aria-label="Voltar"
+              onClick={() => navigate({ to: "/chat" })}
+              className="absolute left-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
             >
-              <CalendarDays className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
-          </div>
-
-          <div className="grid grid-cols-7 text-center text-xs font-semibold text-foreground pb-2">
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
-              <div key={d}>{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {weeks.flat().map((day) => {
-              const inMonth = isSameMonth(day, currentMonth);
-              const isToday = isSameDay(day, today);
-              const isSelected = isSameDay(day, selectedDate);
-              return (
-                <button
-                  type="button"
-                  key={day.toISOString()}
-                  onClick={() => setSelectedDate(day)}
-                  className={cn(
-                    "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
-                    !inMonth && "text-muted-foreground/50",
-                    inMonth && !isSelected && "text-foreground hover:bg-accent",
-                    isToday && !isSelected && "bg-accent/40",
-                    isSelected &&
-                      "bg-card border border-border font-bold shadow-sm",
-                  )}
-                >
-                  {format(day, "d")}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Selected day column */}
-        <div className="p-6 flex flex-col">
-          <div className="flex items-center justify-between border-b border-border pb-3 mb-6">
+            <h1 className="text-base font-semibold text-foreground">
+              Mensagens Agendadas
+            </h1>
             <button
               type="button"
-              aria-label="Dia anterior"
+              aria-label="Nova mensagem"
               onClick={() => {
-                const prev = subDays(selectedDate, 1);
-                setSelectedDate(prev);
-                if (!isSameMonth(prev, currentMonth)) setCurrentMonth(prev);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="font-semibold text-foreground">
-              {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </span>
-            <button
-              type="button"
-              aria-label="Próximo dia"
-              onClick={() => {
-                const next = addDays(selectedDate, 1);
-                setSelectedDate(next);
-                if (!isSameMonth(next, currentMonth)) setCurrentMonth(next);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex justify-center mb-8">
-            <button
-              type="button"
-              aria-label="Nova mensagem agendada"
-              onClick={() => {
-                setComposerOpen(true);
+                setView("composer");
                 setDateDialogOpen(true);
               }}
-              className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
+              className="absolute right-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
             >
-              <Plus className="h-6 w-6" />
+              <Plus className="h-5 w-5" />
             </button>
-          </div>
+          </header>
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
-            <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
-            <p className="text-muted-foreground">
-              Não há mensagens agendadas para esse dia
-            </p>
-          </div>
-        </div>
-      </div>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 max-w-6xl mx-auto w-full">
+            {/* Calendar column */}
+            <div className="p-6 md:border-r border-border">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Mês anterior"
+                    onClick={() => setCurrentMonth((m) => addMonths(m, -1))}
+                    className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Próximo mês"
+                    onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
+                    className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <span className="ml-2 font-semibold text-foreground capitalize">
+                    {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Ir para hoje"
+                  onClick={() => {
+                    setCurrentMonth(today);
+                    setSelectedDate(today);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </button>
+              </div>
 
-      <Composer
-        open={composerOpen}
-        onOpenChange={setComposerOpen}
-        message={message}
-        onMessageChange={setMessage}
-        contactSearch={contactSearch}
-        onContactSearchChange={setContactSearch}
-        activeFilters={activeFilters}
-        toggleFilter={toggleFilter}
-        scheduledAt={scheduledAt}
-        onOpenDateDialog={() => setDateDialogOpen(true)}
-        onClearSchedule={() => setScheduledAt(null)}
-      />
+              <div className="grid grid-cols-7 text-center text-xs font-semibold text-foreground pb-2">
+                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
+                  <div key={d}>{d}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {weeks.flat().map((day) => {
+                  const inMonth = isSameMonth(day, currentMonth);
+                  const isToday = isSameDay(day, today);
+                  const isSelected = isSameDay(day, selectedDate);
+                  return (
+                    <button
+                      type="button"
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(day)}
+                      className={cn(
+                        "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
+                        !inMonth && "text-muted-foreground/50",
+                        inMonth && !isSelected && "text-foreground hover:bg-accent",
+                        isToday && !isSelected && "bg-accent/40",
+                        isSelected &&
+                          "bg-card border border-border font-bold shadow-sm",
+                      )}
+                    >
+                      {format(day, "d")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selected day column */}
+            <div className="p-6 flex flex-col">
+              <div className="flex items-center justify-between border-b border-border pb-3 mb-6">
+                <button
+                  type="button"
+                  aria-label="Dia anterior"
+                  onClick={() => {
+                    const prev = subDays(selectedDate, 1);
+                    setSelectedDate(prev);
+                    if (!isSameMonth(prev, currentMonth)) setCurrentMonth(prev);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="font-semibold text-foreground">
+                  {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Próximo dia"
+                  onClick={() => {
+                    const next = addDays(selectedDate, 1);
+                    setSelectedDate(next);
+                    if (!isSameMonth(next, currentMonth)) setCurrentMonth(next);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex justify-center mb-8">
+                <button
+                  type="button"
+                  aria-label="Nova mensagem agendada"
+                  onClick={() => {
+                    setView("composer");
+                    setDateDialogOpen(true);
+                  }}
+                  className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
+                <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
+                <p className="text-muted-foreground">
+                  Não há mensagens agendadas para esse dia
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <Composer
+          onClose={() => setView("calendar")}
+          message={message}
+          onMessageChange={setMessage}
+          contactSearch={contactSearch}
+          onContactSearchChange={setContactSearch}
+          activeFilters={activeFilters}
+          toggleFilter={toggleFilter}
+          scheduledAt={scheduledAt}
+          onOpenDateDialog={() => setDateDialogOpen(true)}
+          onClearSchedule={() => setScheduledAt(null)}
+        />
+      )}
 
       <DateDialog
         open={dateDialogOpen}
@@ -286,8 +287,7 @@ function buildMonthMatrix(month: Date): Date[][] {
 }
 
 function Composer({
-  open,
-  onOpenChange,
+  onClose,
   message,
   onMessageChange,
   contactSearch,
@@ -298,8 +298,7 @@ function Composer({
   onOpenDateDialog,
   onClearSchedule,
 }: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onClose: () => void;
   message: string;
   onMessageChange: (v: string) => void;
   contactSearch: string;
@@ -313,25 +312,30 @@ function Composer({
   const canContinue = message.trim().length > 0 && activeFilters.size > 0;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[92svh] rounded-t-2xl p-0 sm:max-w-none"
+    <div className="flex-1 relative">
+      <button
+        type="button"
+        aria-label="Fechar"
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
       >
-        <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
-          {/* Left: contacts */}
-          <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                type="button"
-                aria-label="Fechar"
-                onClick={() => onOpenChange(false)}
-                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <h2 className="text-base font-semibold">Mensagem em massa</h2>
-            </div>
+        <X className="h-5 w-5" />
+      </button>
+      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full min-h-[calc(100svh-56px)]">
+        {/* Left: contacts */}
+        <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              type="button"
+              aria-label="Voltar"
+              onClick={onClose}
+              className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h2 className="text-base font-semibold">Mensagem em massa</h2>
+          </div>
+
 
             <h3 className="text-sm font-semibold text-foreground mb-3">
               Selecione seus contatos
@@ -447,8 +451,7 @@ function Composer({
             </div>
           </section>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
   );
 }
 
