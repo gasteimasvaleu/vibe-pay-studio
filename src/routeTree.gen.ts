@@ -21,6 +21,7 @@ import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as ApiPublicWebhooksStripeIdentityRouteImport } from './routes/api/public/webhooks/stripe-identity'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
+import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
 
 const SobreRoute = SobreRouteImport.update({
@@ -85,6 +86,12 @@ const AuthenticatedCreatorOnboardingRedesSociaisRoute =
     path: '/onboarding/redes-sociais',
     getParentRoute: () => AuthenticatedCreatorRoute,
   } as any)
+const AuthenticatedCreatorOnboardingDocumentosRoute =
+  AuthenticatedCreatorOnboardingDocumentosRouteImport.update({
+    id: '/onboarding/documentos',
+    path: '/onboarding/documentos',
+    getParentRoute: () => AuthenticatedCreatorRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingAssinaturaRoute =
   AuthenticatedCreatorOnboardingAssinaturaRouteImport.update({
     id: '/onboarding/assinatura',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
+  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
+  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
@@ -133,6 +142,7 @@ export interface FileRoutesById {
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
+  '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/perfil/$username'
     | '/creator/onboarding/assinatura'
+    | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
   fileRoutesByTo: FileRoutesByTo
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/perfil/$username'
     | '/creator/onboarding/assinatura'
+    | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
   id:
@@ -178,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/feed'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/creator/onboarding/assinatura'
+    | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
   fileRoutesById: FileRoutesById
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRouteImport
       parentRoute: typeof AuthenticatedCreatorRoute
     }
+    '/_authenticated/creator/onboarding/documentos': {
+      id: '/_authenticated/creator/onboarding/documentos'
+      path: '/onboarding/documentos'
+      fullPath: '/creator/onboarding/documentos'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteImport
+      parentRoute: typeof AuthenticatedCreatorRoute
+    }
     '/_authenticated/creator/onboarding/assinatura': {
       id: '/_authenticated/creator/onboarding/assinatura'
       path: '/onboarding/assinatura'
@@ -290,12 +310,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedCreatorRouteChildren {
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
+  AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
 }
 
 const AuthenticatedCreatorRouteChildren: AuthenticatedCreatorRouteChildren = {
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
+  AuthenticatedCreatorOnboardingDocumentosRoute:
+    AuthenticatedCreatorOnboardingDocumentosRoute,
   AuthenticatedCreatorOnboardingRedesSociaisRoute:
     AuthenticatedCreatorOnboardingRedesSociaisRoute,
 }
