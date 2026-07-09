@@ -187,6 +187,39 @@ function AssinantePage() {
           </div>
         </div>
 
+        {/* Virar creator */}
+        {creatorNextStep && (
+          <section>
+            <Link
+              to={creatorNextStep}
+              className="group relative block overflow-hidden rounded-3xl border border-fuchsia-400/30 bg-gradient-to-br from-fuchsia-500/20 via-purple-600/15 to-indigo-700/20 p-6 md:p-7 backdrop-blur-md transition-all hover:border-fuchsia-300/60 hover:from-fuchsia-500/25"
+            >
+              <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-fuchsia-500/25 blur-3xl" />
+              <div className="relative flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl grid place-items-center bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-200">
+                  <BadgeCheck className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs label-caps text-fuchsia-300/90">Monetize seu conteúdo</p>
+                  <h3 className="mt-1 text-lg md:text-xl font-black tracking-tight">
+                    {creatorOnboardingStarted
+                      ? "Continuar cadastro de creator"
+                      : "Quer virar creator?"}
+                  </h3>
+                  <p className="mt-1 text-sm text-white/70">
+                    {creatorOnboardingStarted
+                      ? "Você já começou — retome de onde parou."
+                      : "Publique conteúdo, atraia assinantes e receba na sua conta."}
+                  </p>
+                </div>
+                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-xs font-semibold text-white group-hover:bg-white/15">
+                  {creatorOnboardingStarted ? "Continuar" : "Começar"} →
+                </span>
+              </div>
+            </Link>
+          </section>
+        )}
+
         {/* Área do Assinante */}
         <section className="space-y-5">
           <h3 className="text-2xl font-black tracking-tight">Área do Assinante</h3>
