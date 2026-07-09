@@ -15,12 +15,38 @@ export const Route = createFileRoute("/_authenticated/creator")({
     if (!userData.user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("account_type, username")
+      .select(
+        "account_type, username, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at",
+      )
       .eq("user_id", userData.user.id)
       .maybeSingle();
     if (profile?.account_type !== "creator") {
       throw redirect({ to: homeForAccountType(profile?.account_type) });
     }
+
+    if (!profile.onboarding_completed_at) {
+      const noSocials =
+        !profile.instagram_handle && !profile.tiktok_handle && !profile.x_handle;
+      const noPrice = profile.price_monthly == null;
+      const kycPending =
+        profile.kyc_status === "not_started" ||
+        profile.kyc_status === "requires_input";
+      const kycProcessing = profile.kyc_status === "processing";
+
+      if (noSocials && noPrice && profile.kyc_status === "not_started") {
+        throw redirect({ to: "/creator/onboarding/redes-sociais" });
+      }
+      if (noPrice) {
+        throw redirect({ to: "/creator/onboarding/assinatura" });
+      }
+      if (kycPending) {
+        throw redirect({ to: "/creator/onboarding/documentos" });
+      }
+      if (kycProcessing) {
+        throw redirect({ to: "/creator/onboarding/documentos/verificando" });
+      }
+    }
+
     return { username: profile.username };
   },
   component: CreatorHome,

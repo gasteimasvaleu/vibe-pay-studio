@@ -23,6 +23,7 @@ import { Route as ApiPublicWebhooksStripeIdentityRouteImport } from './routes/ap
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
+import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -98,6 +99,12 @@ const AuthenticatedCreatorOnboardingAssinaturaRoute =
     path: '/onboarding/assinatura',
     getParentRoute: () => AuthenticatedCreatorRoute,
   } as any)
+const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
+  AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport.update({
+    id: '/verificando',
+    path: '/verificando',
+    getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,9 +117,10 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
-  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
+  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
+  '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,9 +133,10 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
-  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
+  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
+  '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,9 +151,10 @@ export interface FileRoutesById {
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
-  '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRoute
+  '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
+  '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
+    | '/creator/onboarding/documentos/verificando'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
+    | '/creator/onboarding/documentos/verificando'
   id:
     | '__root__'
     | '/'
@@ -193,6 +205,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/stripe-identity'
+    | '/_authenticated/creator/onboarding/documentos/verificando'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -305,12 +318,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
       parentRoute: typeof AuthenticatedCreatorRoute
     }
+    '/_authenticated/creator/onboarding/documentos/verificando': {
+      id: '/_authenticated/creator/onboarding/documentos/verificando'
+      path: '/verificando'
+      fullPath: '/creator/onboarding/documentos/verificando'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
+      parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
+    }
   }
 }
 
+interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
+  AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
+}
+
+const AuthenticatedCreatorOnboardingDocumentosRouteChildren: AuthenticatedCreatorOnboardingDocumentosRouteChildren =
+  {
+    AuthenticatedCreatorOnboardingDocumentosVerificandoRoute:
+      AuthenticatedCreatorOnboardingDocumentosVerificandoRoute,
+  }
+
+const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
+  AuthenticatedCreatorOnboardingDocumentosRoute._addFileChildren(
+    AuthenticatedCreatorOnboardingDocumentosRouteChildren,
+  )
+
 interface AuthenticatedCreatorRouteChildren {
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
-  AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
+  AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
 }
 
@@ -318,7 +353,7 @@ const AuthenticatedCreatorRouteChildren: AuthenticatedCreatorRouteChildren = {
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:
-    AuthenticatedCreatorOnboardingDocumentosRoute,
+    AuthenticatedCreatorOnboardingDocumentosRouteWithChildren,
   AuthenticatedCreatorOnboardingRedesSociaisRoute:
     AuthenticatedCreatorOnboardingRedesSociaisRoute,
 }
