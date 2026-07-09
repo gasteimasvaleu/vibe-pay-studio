@@ -52,6 +52,15 @@ function ChatLayout() {
   const queryClient = useQueryClient();
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [openNewChat, setOpenNewChat] = useState(false);
+  const [openFilters, setOpenFilters] = useState(false);
+  const [filters, setFilters] = useState<ChatFilters>({
+    unread: false,
+    interactions: false,
+    favorites: false,
+    muted: false,
+    topBuyers: false,
+    sort: "recent",
+  });
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [meId, setMeId] = useState<string | null>(null);
 
@@ -143,7 +152,7 @@ function ChatLayout() {
               <IconBtn label="Configurações">
                 <Settings className="h-5 w-5" />
               </IconBtn>
-              <IconBtn label="Filtros">
+              <IconBtn label="Filtros" onClick={() => setOpenFilters(true)}>
                 <ListFilter className="h-5 w-5" />
               </IconBtn>
               <Link
@@ -199,6 +208,12 @@ function ChatLayout() {
       </div>
 
       <NewChatDialog open={openNewChat} onOpenChange={setOpenNewChat} />
+      <FiltersDialog
+        open={openFilters}
+        onOpenChange={setOpenFilters}
+        filters={filters}
+        onChange={setFilters}
+      />
     </div>
   );
 }
@@ -362,6 +377,120 @@ function NewChatDialog({
             </button>
           ))}
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type ChatFilters = {
+  unread: boolean;
+  interactions: boolean;
+  favorites: boolean;
+  muted: boolean;
+  topBuyers: boolean;
+  sort: "recent" | "oldest";
+};
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+        active
+          ? "bg-gradient-primary text-primary-foreground shadow-glow"
+          : "bg-muted text-foreground hover:bg-accent",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FiltersDialog({
+  open,
+  onOpenChange,
+  filters,
+  onChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  filters: ChatFilters;
+  onChange: (f: ChatFilters) => void;
+}) {
+  const toggle = <K extends keyof ChatFilters>(key: K) =>
+    onChange({ ...filters, [key]: !filters[key] } as ChatFilters);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Filtrar por</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Conversas</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip active={filters.unread} onClick={() => toggle("unread")}>
+                Não lidas
+              </FilterChip>
+              <FilterChip active={filters.interactions} onClick={() => toggle("interactions")}>
+                Interações
+              </FilterChip>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Usuários</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip active={filters.favorites} onClick={() => toggle("favorites")}>
+                Favoritos
+              </FilterChip>
+              <FilterChip active={filters.muted} onClick={() => toggle("muted")}>
+                Silenciados
+              </FilterChip>
+              <FilterChip active={filters.topBuyers} onClick={() => toggle("topBuyers")}>
+                Top compradores
+              </FilterChip>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Ordenar</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip
+                active={filters.sort === "recent"}
+                onClick={() => onChange({ ...filters, sort: "recent" })}
+              >
+                Mais recentes
+              </FilterChip>
+              <FilterChip
+                active={filters.sort === "oldest"}
+                onClick={() => onChange({ ...filters, sort: "oldest" })}
+              >
+                Mais antigas
+              </FilterChip>
+            </div>
+          </section>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="mt-4 w-full h-12 rounded-full border border-primary text-primary font-semibold hover:bg-primary/10 transition-colors"
+        >
+          Aplicar filtros
+        </button>
       </DialogContent>
     </Dialog>
   );
