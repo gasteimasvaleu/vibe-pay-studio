@@ -381,3 +381,117 @@ function NewChatDialog({
     </Dialog>
   );
 }
+
+type ChatFilters = {
+  unread: boolean;
+  interactions: boolean;
+  favorites: boolean;
+  muted: boolean;
+  topBuyers: boolean;
+  sort: "recent" | "oldest";
+};
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+        active
+          ? "bg-gradient-primary text-primary-foreground shadow-glow"
+          : "bg-muted text-foreground hover:bg-accent",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FiltersDialog({
+  open,
+  onOpenChange,
+  filters,
+  onChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  filters: ChatFilters;
+  onChange: (f: ChatFilters) => void;
+}) {
+  const toggle = <K extends keyof ChatFilters>(key: K) =>
+    onChange({ ...filters, [key]: !filters[key] } as ChatFilters);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Filtrar por</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Conversas</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip active={filters.unread} onClick={() => toggle("unread")}>
+                Não lidas
+              </FilterChip>
+              <FilterChip active={filters.interactions} onClick={() => toggle("interactions")}>
+                Interações
+              </FilterChip>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Usuários</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip active={filters.favorites} onClick={() => toggle("favorites")}>
+                Favoritos
+              </FilterChip>
+              <FilterChip active={filters.muted} onClick={() => toggle("muted")}>
+                Silenciados
+              </FilterChip>
+              <FilterChip active={filters.topBuyers} onClick={() => toggle("topBuyers")}>
+                Top compradores
+              </FilterChip>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Ordenar</h3>
+            <div className="flex flex-wrap gap-2">
+              <FilterChip
+                active={filters.sort === "recent"}
+                onClick={() => onChange({ ...filters, sort: "recent" })}
+              >
+                Mais recentes
+              </FilterChip>
+              <FilterChip
+                active={filters.sort === "oldest"}
+                onClick={() => onChange({ ...filters, sort: "oldest" })}
+              >
+                Mais antigas
+              </FilterChip>
+            </div>
+          </section>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="mt-4 w-full h-12 rounded-full border border-primary text-primary font-semibold hover:bg-primary/10 transition-colors"
+        >
+          Aplicar filtros
+        </button>
+      </DialogContent>
+    </Dialog>
+  );
+}
