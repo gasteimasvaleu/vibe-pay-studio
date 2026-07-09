@@ -1,24 +1,22 @@
-Plano de correção:
+Plano de correção direta:
 
-1. **Corrigir a causa do spinner branco**
-   - O spinner branco não está vindo do `GooeyLoader`; ele aparece antes da tela montar, provavelmente porque o fluxo de documentos tenta navegar o `window.top` para a Veriff dentro do preview.
-   - Remover essa navegação para `window.top.location.href`, que trava o preview em uma tela branca de carregamento.
+1. **Remover a mensagem indevida da tela de documentos**
+   - Tirar o erro “Não conseguimos abrir a Veriff automaticamente...” que apareceu mesmo com a Veriff abrindo em nova aba.
+   - Não bloquear o fluxo por causa do retorno de `window.open`, porque no preview/iframe ele pode retornar bloqueado mesmo quando a aba abre.
 
-2. **Ajustar o fluxo ao iniciar a Veriff**
-   - Depois de criar a sessão da Veriff, navegar a aba atual do app para `/creator/onboarding/documentos/verificando`.
-   - Abrir a Veriff em nova aba/janela com `window.open`, sem substituir a tela atual do app.
-   - Se o navegador bloquear o popup, manter o usuário na tela de documentos com o link manual “Abrir verificação em nova aba” e sem cair no spinner branco.
+2. **Após clicar em “Iniciar verificação”, navegar sempre para `/creator/onboarding/documentos/verificando`**
+   - Criar a sessão da Veriff.
+   - Abrir a Veriff em nova aba quando possível.
+   - Em seguida, mandar a tela atual do app para `/creator/onboarding/documentos/verificando`, sem ficar preso na página anterior.
 
-3. **Forçar a UX correta na rota `documentos/verificando`**
-   - Manter o fundo escuro do onboarding.
-   - Usar o `GooeyLoader` roxo enviado.
-   - Mostrar a mensagem abaixo: “Verificação de identidade em andamento” e “Isso pode demorar alguns minutos...”.
-   - Configurar `pendingMs: 0` nessa rota para que qualquer carregamento da própria rota já use esse estado, sem esperar cair no spinner padrão.
+3. **Garantir que `/documentos/verificando` seja a tela de loading pedida**
+   - Fundo escuro do onboarding.
+   - Loader gooey roxo.
+   - Texto abaixo: “Verificação de identidade em andamento”.
+   - Subtexto: “Isso pode demorar alguns minutos...”
+   - Sem cards antigos, sem mensagem de erro, sem spinner branco.
 
-4. **Adicionar fallback global seguro no router**
-   - Definir um `defaultPendingComponent` no `src/router.tsx` com fundo escuro e loader roxo, para impedir que o TanStack/preview mostre o spinner branco quando uma rota protegida ainda estiver carregando.
-
-5. **Validar no preview**
-   - Reabrir `/creator/onboarding/documentos/verificando`.
-   - Confirmar que não há fundo branco nem spinner circular antigo.
-   - Confirmar que a tela mostra o fundo escuro, loader roxo e mensagem de verificação.
+4. **Validar o fluxo**
+   - Clicar em “Iniciar verificação”.
+   - Confirmar que a página atual muda para `/documentos/verificando`.
+   - Confirmar que a UX exibida é a tela escura com loader roxo e mensagem, enquanto a Veriff fica na nova aba.
