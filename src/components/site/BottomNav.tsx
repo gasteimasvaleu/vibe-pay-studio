@@ -23,6 +23,8 @@ export function BottomNav() {
         />
         <CenterPost />
         <NavItem
+          to="/chat"
+          active={pathname.startsWith("/chat")}
           icon={<MessageCircle className="h-5 w-5" />}
           label="Chat"
         />
