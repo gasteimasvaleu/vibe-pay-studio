@@ -63,14 +63,6 @@ function MyMonetisexStatsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="md:col-span-2 space-y-5">
-            <EarningsChartCard />
-            <ProductTable />
-          </div>
-          <div className="space-y-5">
-            <TopBadgeCard />
-            <PeriodTotalCard />
-          </div>
-          <div className="md:col-span-2 space-y-5">
             {subTab === "Destaques" ? (
               <DestaquesPanel />
             ) : (
