@@ -133,6 +133,60 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string
+          discount_pct: number
+          duration_days: number
+          ends_at: string
+          id: string
+          max_subscriptions: number
+          monthly_price_snapshot: number
+          name: string
+          promo_price: number
+          starts_at: string
+          status: Database["public"]["Enums"]["promotion_status"]
+          subscriptions_used: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string
+          discount_pct: number
+          duration_days: number
+          ends_at: string
+          id?: string
+          max_subscriptions: number
+          monthly_price_snapshot: number
+          name: string
+          promo_price: number
+          starts_at?: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          subscriptions_used?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string
+          discount_pct?: number
+          duration_days?: number
+          ends_at?: string
+          id?: string
+          max_subscriptions?: number
+          monthly_price_snapshot?: number
+          name?: string
+          promo_price?: number
+          starts_at?: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          subscriptions_used?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       publication_media: {
         Row: {
           created_at: string
@@ -301,6 +355,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
+      promotion_status: "active" | "paused" | "ended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -429,6 +484,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "creator", "subscriber"],
+      promotion_status: ["active", "paused", "ended"],
     },
   },
 } as const
