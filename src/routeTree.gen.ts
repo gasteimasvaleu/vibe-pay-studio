@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -69,6 +70,11 @@ const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPerfilUsernameRoute =
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/chat'
     | '/dashboard'
     | '/feed'
     | '/publisher'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/chat'
     | '/dashboard'
     | '/feed'
     | '/publisher'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
     | '/_authenticated/publisher'
@@ -307,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil/$username': {
       id: '/_authenticated/perfil/$username'
       path: '/perfil/$username'
@@ -388,6 +407,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
@@ -398,6 +418,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
