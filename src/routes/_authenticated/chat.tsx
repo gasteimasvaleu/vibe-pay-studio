@@ -66,7 +66,6 @@ function ChatLayout() {
     supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
   }, []);
 
-  // Realtime: refresh thread list on any new message on a thread I'm in
   useEffect(() => {
     const channel = supabase
       .channel("chat-threads-updates")
@@ -95,7 +94,6 @@ function ChatLayout() {
     };
   }, [queryClient, activeThreadId]);
 
-  // Presence
   useEffect(() => {
     if (!meId) return;
     const channel = supabase.channel("online-users", {
@@ -122,19 +120,18 @@ function ChatLayout() {
   }, [threads, onlineOnly, onlineUsers]);
 
   return (
-    <div className="min-h-[100svh] bg-black text-white">
+    <div className="min-h-[100svh] bg-background text-foreground">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[100svh]">
-        {/* Sidebar */}
         <aside
           className={cn(
-            "border-r border-white/10 bg-black/60 backdrop-blur-xl",
+            "border-r border-border bg-card/80 backdrop-blur-xl",
             activeThreadId ? "hidden md:flex" : "flex",
             "flex-col",
           )}
         >
           <div className="px-4 pt-6 pb-3 flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Conversas</h1>
-            <div className="flex items-center gap-1 text-white/70">
+            <h1 className="text-2xl font-bold text-foreground">Conversas</h1>
+            <div className="flex items-center gap-1 text-muted-foreground">
               <IconBtn onClick={() => setOpenNewChat(true)} label="Nova conversa">
                 <Plus className="h-5 w-5" />
               </IconBtn>
@@ -155,26 +152,26 @@ function ChatLayout() {
 
           <div className="px-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 readOnly
                 onClick={() => setOpenNewChat(true)}
                 placeholder="Pesquisar usuários"
-                className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 cursor-pointer"
+                className="pl-9 cursor-pointer"
               />
             </div>
           </div>
 
           <div className="px-4 py-4 flex items-center justify-between">
-            <span className="text-sm text-white/80">Exibir apenas usuários online</span>
+            <span className="text-sm text-foreground">Exibir apenas usuários online</span>
             <Switch checked={onlineOnly} onCheckedChange={setOnlineOnly} />
           </div>
 
-          <div className="border-t border-white/10" />
+          <div className="border-t border-border" />
 
           <div className="flex-1 overflow-y-auto">
             {filteredThreads.length === 0 ? (
-              <div className="py-16 text-center text-white/40 italic">Sem conversas</div>
+              <div className="py-16 text-center text-muted-foreground italic">Sem conversas</div>
             ) : (
               <ul>
                 {filteredThreads.map((t) => (
@@ -190,7 +187,6 @@ function ChatLayout() {
           </div>
         </aside>
 
-        {/* Right panel */}
         <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[100svh]")}>
           <Outlet />
         </section>
@@ -215,7 +211,7 @@ function IconBtn({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+      className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
     >
       {children}
     </button>
@@ -237,31 +233,31 @@ function ThreadRow({
         to="/chat/$threadId"
         params={{ threadId: thread.threadId }}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 border-b border-white/5 transition-colors",
-          active ? "bg-white/10" : "hover:bg-white/5",
+          "flex items-center gap-3 px-4 py-3 border-b border-border transition-colors",
+          active ? "bg-accent" : "hover:bg-muted",
         )}
       >
         <div className="relative">
-          <div className="h-11 w-11 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center text-sm font-semibold">
+          <div className="h-11 w-11 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
             {initials(thread.partnerUsername)}
           </div>
           {online && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-black" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background" />
           )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-medium">@{thread.partnerUsername}</span>
-            <span className="text-[11px] text-white/40 shrink-0">
+            <span className="truncate font-medium text-foreground">@{thread.partnerUsername}</span>
+            <span className="text-[11px] text-muted-foreground shrink-0">
               {formatTime(thread.lastMessageAt)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm text-white/50">
+            <span className="truncate text-sm text-muted-foreground">
               {thread.lastMessage ?? "Sem mensagens"}
             </span>
             {thread.unreadCount > 0 && (
-              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-full bg-fuchsia-500 text-white font-semibold">
+              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-full bg-gradient-primary text-primary-foreground font-semibold">
                 {thread.unreadCount}
               </span>
             )}
@@ -323,24 +319,24 @@ function NewChatDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-black/90 border-white/10 text-white backdrop-blur-xl">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Nova conversa</DialogTitle>
+          <DialogTitle>Nova conversa</DialogTitle>
         </DialogHeader>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por @username"
-            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="pl-9"
           />
         </div>
         <div className="max-h-80 overflow-y-auto -mx-2">
-          {loading && <div className="p-4 text-sm text-white/50">Buscando…</div>}
+          {loading && <div className="p-4 text-sm text-muted-foreground">Buscando…</div>}
           {!loading && q.trim() && results.length === 0 && (
-            <div className="p-4 text-sm text-white/50">Nenhum usuário encontrado</div>
+            <div className="p-4 text-sm text-muted-foreground">Nenhum usuário encontrado</div>
           )}
           {results.map((u) => (
             <button
@@ -348,15 +344,15 @@ function NewChatDialog({
               type="button"
               disabled={openMutation.isPending}
               onClick={() => openMutation.mutate(u.userId)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
             >
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center text-xs font-semibold">
+              <div className="h-9 w-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground">
                 {initials(u.username)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="truncate font-medium">@{u.username}</div>
+                <div className="truncate font-medium text-foreground">@{u.username}</div>
               </div>
-              <MessageCircle className="h-4 w-4 text-white/50" />
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </button>
           ))}
         </div>
