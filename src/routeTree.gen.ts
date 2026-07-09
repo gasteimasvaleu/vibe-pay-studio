@@ -19,6 +19,7 @@ import { Route as AuthenticatedPublisherRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -77,6 +78,11 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedChatRoute,
+} as any)
 const AuthenticatedPerfilUsernameRoute =
   AuthenticatedPerfilUsernameRouteImport.update({
     id: '/perfil/$username',
@@ -132,11 +138,12 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/chat': typeof AuthenticatedChatRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/chat/': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -151,11 +158,11 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/chat': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
@@ -171,11 +178,12 @@ export interface FileRoutesById {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
-  '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -197,6 +205,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/publisher'
     | '/perfil/$username'
+    | '/chat/'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
@@ -211,11 +220,11 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
-    | '/chat'
     | '/dashboard'
     | '/feed'
     | '/publisher'
     | '/perfil/$username'
+    | '/chat'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/feed'
     | '/_authenticated/publisher'
     | '/_authenticated/perfil/$username'
+    | '/_authenticated/chat/'
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
@@ -326,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat/': {
+      id: '/_authenticated/chat/'
+      path: '/'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/perfil/$username': {
       id: '/_authenticated/perfil/$username'
       path: '/perfil/$username'
@@ -385,6 +402,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedChatRouteChildren {
+  AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
+}
+
+const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
+  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+}
+
+const AuthenticatedChatRouteWithChildren =
+  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
+
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -407,7 +435,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
@@ -418,7 +446,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
