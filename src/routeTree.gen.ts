@@ -22,6 +22,7 @@ import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/ap
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
+import { Route as AuthenticatedCreatorOnboardingDocumentosIndexRouteImport } from './routes/_authenticated/creator.onboarding.documentos.index'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
 import { Route as AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.aprovado'
 
@@ -94,6 +95,12 @@ const AuthenticatedCreatorOnboardingAssinaturaRoute =
     path: '/creator/onboarding/assinatura',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCreatorOnboardingDocumentosIndexRoute =
+  AuthenticatedCreatorOnboardingDocumentosIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
   AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport.update({
     id: '/verificando',
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
+  '/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,11 +141,11 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
-  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
+  '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
+  '/_authenticated/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
+    | '/creator/onboarding/documentos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -185,11 +195,11 @@ export interface FileRouteTypes {
     | '/feed'
     | '/perfil/$username'
     | '/creator/onboarding/assinatura'
-    | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
+    | '/creator/onboarding/documentos'
   id:
     | '__root__'
     | '/'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
     | '/_authenticated/creator/onboarding/documentos/verificando'
+    | '/_authenticated/creator/onboarding/documentos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -312,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/creator/onboarding/documentos/': {
+      id: '/_authenticated/creator/onboarding/documentos/'
+      path: '/'
+      fullPath: '/creator/onboarding/documentos/'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosIndexRouteImport
+      parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
+    }
     '/_authenticated/creator/onboarding/documentos/verificando': {
       id: '/_authenticated/creator/onboarding/documentos/verificando'
       path: '/verificando'
@@ -332,6 +350,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
+  AuthenticatedCreatorOnboardingDocumentosIndexRoute: typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
 
 const AuthenticatedCreatorOnboardingDocumentosRouteChildren: AuthenticatedCreatorOnboardingDocumentosRouteChildren =
@@ -340,6 +359,8 @@ const AuthenticatedCreatorOnboardingDocumentosRouteChildren: AuthenticatedCreato
       AuthenticatedCreatorOnboardingDocumentosAprovadoRoute,
     AuthenticatedCreatorOnboardingDocumentosVerificandoRoute:
       AuthenticatedCreatorOnboardingDocumentosVerificandoRoute,
+    AuthenticatedCreatorOnboardingDocumentosIndexRoute:
+      AuthenticatedCreatorOnboardingDocumentosIndexRoute,
   }
 
 const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
@@ -383,3 +404,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
