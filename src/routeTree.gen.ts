@@ -20,7 +20,6 @@ import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authenticated/assinante'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
-import { Route as ApiPublicWebhooksStripeIdentityRouteImport } from './routes/api/public/webhooks/stripe-identity'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
@@ -82,12 +81,6 @@ const ApiPublicWebhooksVeriffDecisionRoute =
     path: '/api/public/webhooks/veriff-decision',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicWebhooksStripeIdentityRoute =
-  ApiPublicWebhooksStripeIdentityRouteImport.update({
-    id: '/api/public/webhooks/stripe-identity',
-    path: '/api/public/webhooks/stripe-identity',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
     id: '/onboarding/redes-sociais',
@@ -126,7 +119,6 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
-  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
@@ -143,7 +135,6 @@ export interface FileRoutesByTo {
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
-  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
@@ -162,7 +153,6 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
-  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
@@ -181,7 +171,6 @@ export interface FileRouteTypes {
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
-    | '/api/public/webhooks/stripe-identity'
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/verificando'
   fileRoutesByTo: FileRoutesByTo
@@ -198,7 +187,6 @@ export interface FileRouteTypes {
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
-    | '/api/public/webhooks/stripe-identity'
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/verificando'
   id:
@@ -216,7 +204,6 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
-    | '/api/public/webhooks/stripe-identity'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/creator/onboarding/documentos/verificando'
   fileRoutesById: FileRoutesById
@@ -228,7 +215,6 @@ export interface RootRouteChildren {
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
-  ApiPublicWebhooksStripeIdentityRoute: typeof ApiPublicWebhooksStripeIdentityRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
 }
 
@@ -309,13 +295,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/webhooks/veriff-decision'
       fullPath: '/api/public/webhooks/veriff-decision'
       preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/webhooks/stripe-identity': {
-      id: '/api/public/webhooks/stripe-identity'
-      path: '/api/public/webhooks/stripe-identity'
-      fullPath: '/api/public/webhooks/stripe-identity'
-      preLoaderRoute: typeof ApiPublicWebhooksStripeIdentityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/creator/onboarding/redes-sociais': {
@@ -406,7 +385,6 @@ const rootRouteChildren: RootRouteChildren = {
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
-  ApiPublicWebhooksStripeIdentityRoute: ApiPublicWebhooksStripeIdentityRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
 }
 export const routeTree = rootRouteImport
