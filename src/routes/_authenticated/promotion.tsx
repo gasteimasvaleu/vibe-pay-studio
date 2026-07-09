@@ -291,7 +291,7 @@ function PromotionPage() {
 
   // ============ STEP: DESCRIPTION ============
   if (step === "description") {
-    const valid = description.trim().length > 0;
+    const valid = description.trim().length > 0 && !submitting;
     return (
       <PromotionShell
         step={stepIndex + 1}
@@ -300,20 +300,32 @@ function PromotionPage() {
         footer={
           <button
             disabled={!valid}
-            onClick={() => {
-              // TODO(server-fn): createPromotion({ name, quantity, durationDays, discountPct, description })
-              console.log("Criar oferta:", {
-                name,
-                quantity: parseInt(quantity, 10),
-                durationDays,
-                discountPct,
-                description,
-              });
-              goNext("success");
+            onClick={async () => {
+              if (durationDays === null || discountPct === null) return;
+              setSubmitting(true);
+              try {
+                await createPromotionFn({
+                  data: {
+                    name: name.trim(),
+                    maxSubscriptions: parseInt(quantity, 10),
+                    durationDays,
+                    discountPct,
+                    description: description.trim(),
+                  },
+                });
+                goNext("success");
+              } catch (err) {
+                console.error(err);
+                toast.error(
+                  err instanceof Error ? err.message : "Não foi possível criar a oferta",
+                );
+              } finally {
+                setSubmitting(false);
+              }
             }}
             className={primaryBtn}
           >
-            Concluir
+            {submitting ? "Criando..." : "Concluir"}
           </button>
         }
       >
