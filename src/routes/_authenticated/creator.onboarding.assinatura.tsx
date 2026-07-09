@@ -82,43 +82,13 @@ function AssinaturaPage() {
           Não se preocupe, você pode alterar o valor da assinatura mais tarde.
         </p>
 
-        <h3 className="mt-8 mb-3 text-sm font-semibold text-white/80">
-          Preços das suas assinaturas
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <PriceCard label="Mensal" value={prices.monthly} highlight={valid} />
-          <PriceCard label="Trimestral" value={prices.quarterly} highlight={valid} />
-          <PriceCard label="Semestral" value={prices.semiannual} highlight={valid} />
-        </div>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setShowSim((s) => !s)}
-            className="text-sm font-medium text-fuchsia-300 hover:text-fuchsia-200 underline underline-offset-4"
-          >
-            Simular ganhos com assinatura
-          </button>
-          {showSim && (
-            <div className="mt-4 mx-auto max-w-md text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 text-sm text-white/80">
-              <p className="font-semibold text-white">Estimativa (mock)</p>
-              <p className="mt-2 text-white/60">
-                Com <b className="text-white">100 assinantes/mês</b> no plano mensal:
-              </p>
-              <p className="mt-1 text-xl font-black text-fuchsia-300">
-                R$ {formatBRL(prices.monthly * 100 * 0.8)}
-                <span className="text-xs font-normal text-white/50"> /mês líquido (20% taxa)</span>
-              </p>
-            </div>
-          )}
-        </div>
-
-        <form onSubmit={onSubmit} className="mt-10 space-y-4">
+        <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <MoneyField
             label="Assinatura Mensal"
             value={monthlyRaw}
             onChange={setMonthlyRaw}
             invalid={monthlyRaw !== "" && !valid}
+            autoFocus
           />
           <p className="text-xs text-white/50">
             Mínimo: R$ {formatBRL(MIN)} — Máximo: R$ {formatBRL(MAX)}
@@ -128,9 +98,46 @@ function AssinaturaPage() {
             <PercentField label="Desconto Semestral" value={ds} onChange={setDs} />
           </div>
 
+          <h3 className="pt-4 mb-3 text-sm font-semibold text-white/80">
+            Como ficam seus planos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <PriceCard label="Mensal" value={prices.monthly} highlight={valid} />
+            <PriceCard label="Trimestral" value={prices.quarterly} highlight={valid} />
+            <PriceCard label="Semestral" value={prices.semiannual} highlight={valid} />
+          </div>
+
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => setShowSim((s) => !s)}
+              className="text-sm font-medium text-fuchsia-300 hover:text-fuchsia-200 underline underline-offset-4"
+            >
+              Simular ganhos com assinatura
+            </button>
+            {showSim && (
+              <div className="mt-4 mx-auto max-w-md text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 text-sm text-white/80">
+                <p className="font-semibold text-white">Estimativa (mock)</p>
+                <p className="mt-2 text-white/60">
+                  Com <b className="text-white">100 assinantes/mês</b> no plano mensal:
+                </p>
+                <p className="mt-1 text-xl font-black text-fuchsia-300">
+                  R$ {formatBRL(prices.monthly * 100 * 0.8)}
+                  <span className="text-xs font-normal text-white/50"> /mês líquido (20% taxa)</span>
+                </p>
+              </div>
+            )}
+          </div>
+
           {error && (
             <p role="alert" className="text-sm text-red-400">
               {error}
+            </p>
+          )}
+
+          {!valid && monthlyRaw !== "" && (
+            <p className="text-xs text-white/60 text-center">
+              Digite um valor entre R$ {formatBRL(MIN)} e R$ {formatBRL(MAX)} para continuar.
             </p>
           )}
 
@@ -178,11 +185,13 @@ function MoneyField({
   value,
   onChange,
   invalid,
+  autoFocus,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   invalid: boolean;
+  autoFocus?: boolean;
 }) {
   return (
     <div
@@ -196,8 +205,9 @@ function MoneyField({
         <input
           type="text"
           inputMode="decimal"
-          placeholder="0,00"
+          placeholder="Ex: 29,90"
           value={value}
+          autoFocus={autoFocus}
           onChange={(e) => onChange(e.target.value.replace(/[^\d,.]/g, ""))}
           className="flex-1 bg-transparent outline-none text-lg font-semibold placeholder:text-white/30"
         />
