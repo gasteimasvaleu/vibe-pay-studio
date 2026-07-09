@@ -76,19 +76,14 @@ function VerificandoPage() {
         text: "Precisamos de mais informações. Você pode reenviar seus documentos.",
       };
     }
-    if (status === "canceled") {
-      return {
-        color: "border-red-500/40 bg-red-500/10 text-red-200",
-        icon: <AlertTriangle className="w-5 h-5" />,
-        text: "Verificação cancelada. Tente novamente quando quiser.",
-      };
-    }
     return {
-      color: "border-white/10 bg-white/5 text-white/80",
-      icon: <Loader2 className="w-5 h-5 animate-spin" />,
-      text: "Validando seus documentos... isso leva alguns minutos.",
+      color: "border-red-500/40 bg-red-500/10 text-red-200",
+      icon: <AlertTriangle className="w-5 h-5" />,
+      text: "Verificação cancelada. Tente novamente quando quiser.",
     };
   })();
+
+  const isProcessing = status === "processing" || status === "not_started";
 
   return (
     <OnboardingShell title="Verificação de documentos" step={3} backTo="/dashboard">
