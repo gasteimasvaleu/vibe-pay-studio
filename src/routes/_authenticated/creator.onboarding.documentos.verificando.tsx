@@ -90,7 +90,7 @@ function VerificandoPage() {
   })();
 
   return (
-    <OnboardingShell title="Verificação de documentos" step={3} backTo="/creator">
+    <OnboardingShell title="Verificação de documentos" step={3} backTo="/dashboard">
       <div className="max-w-2xl mx-auto text-center">
         <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
           Tudo pronto! Agora só esperar enquanto cuidamos do resto.
@@ -122,7 +122,7 @@ function VerificandoPage() {
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
-            onClick={() => navigate({ to: "/creator" })}
+            onClick={() => navigate({ to: "/dashboard" })}
             className="px-8 py-3 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
           >
             Ir para o painel

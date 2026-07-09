@@ -33,7 +33,7 @@ function AprovadoPage() {
   }, [finish]);
 
   return (
-    <OnboardingShell title="Identidade aprovada" step={3} backTo="/creator">
+    <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
       <div className="max-w-2xl mx-auto text-center">
         <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shadow-glow">
           <CheckCircle2 className="w-10 h-10 text-emerald-400" strokeWidth={2.2} />
@@ -80,7 +80,7 @@ function AprovadoPage() {
         <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
-            onClick={() => navigate({ to: "/creator" })}
+            onClick={() => navigate({ to: "/dashboard" })}
             className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
           >
             Ir para o painel

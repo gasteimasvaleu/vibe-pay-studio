@@ -121,9 +121,13 @@ function FeedPage() {
             >
               {signingOut ? "Saindo..." : "Sair"}
             </button>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center font-bold text-sm shadow-lg shadow-purple-500/40">
+            <Link
+              to="/dashboard"
+              aria-label="Meu painel"
+              className="h-9 w-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center font-bold text-sm shadow-lg shadow-purple-500/40 hover:opacity-90 transition-opacity"
+            >
               {username.slice(0, 1).toUpperCase()}
-            </div>
+            </Link>
           </div>
         </div>
       </header>
