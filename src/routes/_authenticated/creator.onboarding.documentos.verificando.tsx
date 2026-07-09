@@ -23,13 +23,13 @@ export const Route = createFileRoute(
 function VerificandoPending() {
   return (
     <OnboardingShell title="Verificação de documentos" step={3} backTo="/dashboard">
-      <div className="max-w-2xl mx-auto text-center">
-        <div className="min-h-[60vh] flex flex-col items-center justify-center">
-          <GooeyLoader className="w-40 h-40" />
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <GooeyLoader className="h-28 w-56 text-[14px]" />
           <p className="mt-8 text-lg font-semibold text-white/90">
             Verificação de identidade em andamento
           </p>
-          <p className="mt-2 text-sm text-white/60 max-w-sm">
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/60">
             Isso pode demorar alguns minutos. Você será redirecionado
             automaticamente assim que for concluído.
           </p>
@@ -107,14 +107,14 @@ function VerificandoPage() {
 
   return (
     <OnboardingShell title="Verificação de documentos" step={3} backTo="/dashboard">
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="mx-auto max-w-2xl text-center">
         {isProcessing ? (
-          <div className="min-h-[60vh] flex flex-col items-center justify-center">
-            <GooeyLoader className="w-40 h-40" />
+          <div className="flex min-h-[60vh] flex-col items-center justify-center">
+            <GooeyLoader className="h-28 w-56 text-[14px]" />
             <p className="mt-8 text-lg font-semibold text-white/90">
               Verificação de identidade em andamento
             </p>
-            <p className="mt-2 text-sm text-white/60 max-w-sm">
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/60">
               Isso pode demorar alguns minutos. Você será redirecionado
               automaticamente assim que for concluído.
             </p>
