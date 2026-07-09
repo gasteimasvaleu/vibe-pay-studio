@@ -446,7 +446,14 @@ function StreakCalendarCard() {
         selected={day}
         defaultMonth={day}
         showOutsideDays={false}
-        className="p-3 pointer-events-auto w-fit mx-auto [--cell-size:1.25rem]"
+        className="p-3 pointer-events-auto w-full [--cell-size:1.5rem]"
+        classNames={{
+          weekdays: "grid grid-cols-7 gap-2",
+          weekday:
+            "text-muted-foreground select-none text-[0.8rem] font-normal text-center",
+          week: "mt-2 grid grid-cols-7 gap-2",
+          day: "group/day relative aspect-square w-(--cell-size) h-(--cell-size) mx-auto select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md",
+        }}
       />
     </div>
   );

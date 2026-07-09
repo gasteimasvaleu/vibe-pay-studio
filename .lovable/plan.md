@@ -1,10 +1,10 @@
-Ajustar o calendário da aba "Sequência de atividades" para deixar os botões dos dias bem menores e mais proporcionais ao card.
+Ajustar o calendário da aba "Sequência de atividades" para que ele ocupe a largura total do card, mantendo os botões dos dias pequenos.
 
-Alterações em `src/routes/_authenticated/my-monetisex-stats.tsx`, no componente `StreakCalendarCard`:
+No componente `StreakCalendarCard` em `src/routes/_authenticated/my-monetisex-stats.tsx`:
 
-1. **Diminuir o tamanho base das células**: sobrescrever a variável `--cell-size` do calendário de `2rem` para `1.5rem` (ou menor, conforme ajuste final) via `className` no `<Calendar>`.
-2. **Impedir que o calendário estique horizontalmente**: trocar `w-full` por `w-fit` e centralizar com `mx-auto` dentro do card, para que os dias fiquem compactos ao invés de se espremarem para ocupar toda a largura da coluna `md:col-span-2`.
-3. **Manter a aparência do card**: card continua com `rounded-2xl`, borda e fundo; apenas o conteúdo do calendário fica menor e centralizado.
-4. **Verificar visualmente** no preview se os botões dos dias ficaram de tamanho agradável (células próximas de ~24px), ajustando a variável caso ainda fiquem grandes ou pequenos demais.
+1. **Tornar o calendário largura total do card**: trocar `className="p-3 pointer-events-auto w-fit mx-auto [--cell-size:1.25rem]"` por `w-full` (removendo o `w-fit` centralizado).
+2. **Evitar que os botões dos dias estiquem gigantes**: passar `classNames` para o componente `Calendar` para que cada linha de semana use `grid grid-cols-7` com `gap-2`/`gap-4`, e as células de dia tenham tamanho fixo baseado em `--cell-size` (por exemplo `1.25rem` ou `1.5rem`) em vez de `h-full w-full`.
+3. **Resultado esperado**: o calendário preenche a área do card, mas cada botão de dia permanece pequeno (≈20–24px), com o espaço extra distribuído entre as colunas do grid.
+4. **Verificar visualmente** no preview se o calendário agora ocupa a largura do card sem botões enormes.
 
-Escopo: somente o calendário da aba "Sequência de atividades"; nenhuma outra aba ou funcionalidade será alterada.
+Escopo: somente o calendário da aba "Sequência de atividades".
