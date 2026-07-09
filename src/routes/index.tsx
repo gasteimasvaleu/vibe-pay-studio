@@ -132,24 +132,38 @@ function LoginCard() {
           </div>
 
           <form onSubmit={handleSubmit} className="relative space-y-4">
+            <style>{`
+              input[data-auth-input]:-webkit-autofill,
+              input[data-auth-input]:-webkit-autofill:hover,
+              input[data-auth-input]:-webkit-autofill:focus,
+              input[data-auth-input]:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset !important;
+                -webkit-text-fill-color: #ffffff !important;
+                caret-color: #ffffff !important;
+                transition: background-color 9999s ease-in-out 0s;
+              }
+            `}</style>
+
             {/* Email */}
             <div className="relative">
               <div
-                className={`relative flex items-center rounded-lg border transition-all duration-300 ${
+                className={`relative rounded-lg border transition-all duration-300 ${
                   focusedInput === "email"
                     ? "border-white/30 bg-white/10"
                     : "border-transparent bg-white/5"
                 }`}
               >
-                <Mail className="ml-3 h-4 w-4 text-white/40" />
+                <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                 <input
+                  data-auth-input
                   type="email"
+                  autoComplete="email"
                   placeholder="E-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setFocusedInput("email")}
                   onBlur={() => setFocusedInput(null)}
-                  className="w-full bg-transparent text-white placeholder:text-white/30 h-10 px-3 outline-none text-sm"
+                  className="w-full bg-transparent text-white placeholder:text-white/30 h-10 pl-10 pr-3 outline-none text-sm rounded-lg"
                 />
                 <AnimatePresence>
                   {focusedInput === "email" && (
@@ -167,26 +181,28 @@ function LoginCard() {
             {/* Password */}
             <div className="relative">
               <div
-                className={`relative flex items-center rounded-lg border transition-all duration-300 ${
+                className={`relative rounded-lg border transition-all duration-300 ${
                   focusedInput === "password"
                     ? "border-white/30 bg-white/10"
                     : "border-transparent bg-white/5"
                 }`}
               >
-                <Lock className="ml-3 h-4 w-4 text-white/40" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                 <input
+                  data-auth-input
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="Senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setFocusedInput("password")}
                   onBlur={() => setFocusedInput(null)}
-                  className="w-full bg-transparent text-white placeholder:text-white/30 h-10 px-3 outline-none text-sm"
+                  className="w-full bg-transparent text-white placeholder:text-white/30 h-10 pl-10 pr-10 outline-none text-sm rounded-lg"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="mr-3 text-white/40 hover:text-white/70 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {showPassword ? (
@@ -197,6 +213,7 @@ function LoginCard() {
                 </button>
               </div>
             </div>
+
 
             {/* Remember me & Forgot */}
             <div className="flex items-center justify-between text-xs">
