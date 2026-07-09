@@ -544,3 +544,158 @@ function StreakDetailCard() {
     </div>
   );
 }
+
+function ResumoPanel() {
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <VendasCard title="Vendas nacionais" />
+        <VendasCard title="Vendas internacionais" />
+        <MeuBancoCard />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <AssinantesCard />
+        <ProjecaoFaturamentoCard />
+        <PeriodTotalCard />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <RecordeCard title="Recorde de vendas no dia" />
+        <RecordeCard title="Recorde de vendas no mês" />
+      </div>
+    </div>
+  );
+}
+
+function VendasCard({ title }: { title: string }) {
+  const rows = [
+    { label: "Hoje", value: "R$ 0,00" },
+    { label: "No mês", value: "R$ 0,00" },
+    { label: "Total faturamento histórico", value: "R$ 0,00" },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <div className="space-y-3">
+        {rows.map((r) => (
+          <div key={r.label} className="rounded-xl bg-muted/60 p-4">
+            <p className="text-sm text-muted-foreground">{r.label}</p>
+            <p className="mt-1 text-lg font-bold">{r.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MeuBancoCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
+          <MessageCircle className="h-5 w-5" />
+        </div>
+        <span className="font-semibold">Você está no top +100 da Monetisex!</span>
+      </div>
+      <div>
+        <p className="text-sm text-muted-foreground">Faturamento hoje</p>
+        <div className="mt-2 h-0.5 w-8 bg-foreground/60 rounded-full" />
+      </div>
+      <div className="rounded-xl bg-muted/60 grid grid-cols-2 divide-x divide-border">
+        <div className="p-4">
+          <p className="text-lg font-bold">R$ 0,00</p>
+          <p className="text-xs text-muted-foreground mt-1">Saldo liberado</p>
+        </div>
+        <div className="p-4">
+          <p className="text-lg font-bold">R$ 0,00</p>
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            Saldo a liberar <Info className="h-3 w-3" />
+          </p>
+        </div>
+      </div>
+      <Link
+        to="/dashboard"
+        className="block text-center rounded-full border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors"
+      >
+        Acessar Meu Banco
+      </Link>
+    </div>
+  );
+}
+
+function AssinantesCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <h3 className="text-lg font-bold tracking-tight">Assinantes</h3>
+      <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Total</span>
+        <span className="text-lg font-bold">0</span>
+      </div>
+      <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Ativos</span>
+        <span className="text-lg font-bold">0</span>
+      </div>
+      <button
+        type="button"
+        className="w-full rounded-xl bg-muted/60 p-4 flex items-center justify-between text-left hover:bg-muted transition-colors"
+      >
+        <span className="text-sm text-foreground">Faturamento em relação a outros criadores</span>
+        <Minus className="h-4 w-4 text-muted-foreground" />
+      </button>
+      <p className="pt-2 text-center text-sm text-muted-foreground">
+        Parabéns, você está entre os melhores criadores Monetisex! Continue assim!
+      </p>
+    </div>
+  );
+}
+
+function ProjecaoFaturamentoCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <div>
+        <h3 className="text-lg font-bold tracking-tight">Projeção de Faturamento</h3>
+        <p className="text-sm text-muted-foreground mt-1">July/26</p>
+      </div>
+      <div className="rounded-xl bg-muted/60 p-4">
+        <p className="text-sm text-muted-foreground">Total</p>
+        <p className="mt-1 text-lg font-bold">R$ 0,00</p>
+      </div>
+      <div className="rounded-xl bg-muted/60 p-4">
+        <p className="text-sm text-muted-foreground">Média Dia</p>
+        <p className="mt-1 text-lg font-bold">R$ 0,00</p>
+      </div>
+      <div className="rounded-xl bg-muted/60 p-4 flex items-start justify-between">
+        <span className="text-sm text-muted-foreground">Projeção</span>
+        <div className="text-right">
+          <p className="text-lg font-bold text-primary">R$ 0,00</p>
+          <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
+            +0% <ArrowUp className="h-3 w-3" />
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecordeCard({ title }: { title: string }) {
+  const tops = ["TOP 1", "TOP 2", "TOP 3"];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <div className="space-y-3">
+        {tops.map((t) => (
+          <button
+            key={t}
+            type="button"
+            className="w-full rounded-xl bg-muted/60 p-4 text-left hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{t}</span>
+              <Minus className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="mt-2 text-muted-foreground">—</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
