@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
 import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
+import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
@@ -79,6 +80,12 @@ const AuthenticatedPromotionRoute = AuthenticatedPromotionRouteImport.update({
   path: '/promotion',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMyMonetisexStatsRoute =
+  AuthenticatedMyMonetisexStatsRouteImport.update({
+    id: '/my-monetisex-stats',
+    path: '/my-monetisex-stats',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/dashboard'
     | '/feed'
+    | '/my-monetisex-stats'
     | '/promotion'
     | '/promotions'
     | '/publisher'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/dashboard'
     | '/feed'
+    | '/my-monetisex-stats'
     | '/promotion'
     | '/promotions'
     | '/publisher'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat-configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
+    | '/_authenticated/my-monetisex-stats'
     | '/_authenticated/promotion'
     | '/_authenticated/promotions'
     | '/_authenticated/publisher'
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/promotion'
       fullPath: '/promotion'
       preLoaderRoute: typeof AuthenticatedPromotionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-monetisex-stats': {
+      id: '/_authenticated/my-monetisex-stats'
+      path: '/my-monetisex-stats'
+      fullPath: '/my-monetisex-stats'
+      preLoaderRoute: typeof AuthenticatedMyMonetisexStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/feed': {
@@ -561,6 +581,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
@@ -577,6 +598,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
