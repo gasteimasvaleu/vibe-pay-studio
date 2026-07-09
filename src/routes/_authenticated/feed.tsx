@@ -1,8 +1,11 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useServerFn } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Bell, MessageCircle, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getFeed } from "@/lib/publications.functions";
+import { PublicationCard } from "@/components/feed/PublicationCard";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
