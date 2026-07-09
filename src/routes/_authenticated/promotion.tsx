@@ -346,6 +346,7 @@ function PromotionPage() {
         </div>
       }
     >
+      <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
       <PromotionHeader
         title="Parabéns, sua oferta foi criada com sucesso!"
         subtitle="Sua oferta já está disponível no seu perfil para todos usuários"
