@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, CheckCircle2, MessageCircle, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Info,
+  Lock,
+  MessageCircle,
+  MoreVertical,
+  Radio,
+  Smartphone,
+  Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
   head: () => ({
@@ -59,8 +70,150 @@ function MyMonetisexStatsPage() {
             <TopBadgeCard />
             <PeriodTotalCard />
           </div>
+          <div className="md:col-span-2 space-y-5">
+            {subTab === "Destaques" ? (
+              <DestaquesPanel />
+            ) : (
+              <>
+                <EarningsChartCard />
+                <ProductTable />
+              </>
+            )}
+          </div>
+          <div className="space-y-5">
+            <TopBadgeCard />
+            <PeriodTotalCard />
+          </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function Chip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+        active
+          ? "bg-primary/15 text-primary border-primary/30"
+          : "bg-card text-muted-foreground border-border hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function CardMenuButton() {
+  return (
+    <button
+      type="button"
+      aria-label="Mais opções"
+      className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+    >
+      <MoreVertical className="h-4 w-4" />
+    </button>
+  );
+}
+
+function DestaquesPanel() {
+  return (
+    <div className="space-y-5">
+      <TopPostagemCard />
+      <TopLiveCard />
+      <TopAssinantesCard />
+    </div>
+  );
+}
+
+function TopPostagemCard() {
+  const filters = ["Mais vendida", "Mimos", "Curtidas", "Comentários"] as const;
+  const [active, setActive] = useState<(typeof filters)[number]>("Mais vendida");
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-start justify-between">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold tracking-tight">Top postagem</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {filters.map((f) => (
+              <Chip key={f} label={f} active={f === active} onClick={() => setActive(f)} />
+            ))}
+          </div>
+        </div>
+        <CardMenuButton />
+      </div>
+      <p className="mt-10 mb-6 text-center text-sm text-muted-foreground">
+        Nenhuma postagem encontrada no período.
+      </p>
+    </div>
+  );
+}
+
+function TopLiveCard() {
+  const filters = ["Mais vendida", "Mimos"] as const;
+  const [active, setActive] = useState<(typeof filters)[number]>("Mais vendida");
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-start justify-between">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold tracking-tight">Top Live</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {filters.map((f) => (
+              <Chip key={f} label={f} active={f === active} onClick={() => setActive(f)} />
+            ))}
+          </div>
+        </div>
+        <CardMenuButton />
+      </div>
+
+      <div className="mt-4 h-px bg-border" />
+
+      <div className="mt-4 flex items-center gap-4">
+        <div className="h-32 w-32 rounded-xl bg-muted grid place-items-center">
+          <Radio className="h-12 w-12 text-primary" />
+        </div>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border text-muted-foreground text-sm">
+          <Lock className="h-4 w-4" />
+          <span>—</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopAssinantesCard() {
+  const filters = ["Total", "Mais assinaturas", "Mimos", "Chat"] as const;
+  const [active, setActive] = useState<(typeof filters)[number]>("Total");
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2">
+        <Users className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-bold tracking-tight">Top assinantes</h3>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {filters.map((f) => (
+          <Chip key={f} label={f} active={f === active} onClick={() => setActive(f)} />
+        ))}
+      </div>
+      <p className="mt-10 mb-6 text-center text-sm text-muted-foreground">
+        Sem dados para este filtro.
+      </p>
     </div>
   );
 }
