@@ -298,20 +298,20 @@ function ProfilePostCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden"
+      className="rounded-2xl border border-border bg-card backdrop-blur-md overflow-hidden text-foreground"
     >
       <div className="p-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center font-bold shrink-0">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center font-bold shrink-0 text-white">
           {username.slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-semibold truncate">{displayName}</p>
-            <BadgeCheck className="h-4 w-4 text-fuchsia-400" />
+            <BadgeCheck className="h-4 w-4 text-primary" />
           </div>
-          <p className="text-xs text-white/50 truncate">@{username} · {post.time}</p>
+          <p className="text-xs text-muted-foreground truncate">@{username} · {post.time}</p>
         </div>
-        <button className="h-8 w-8 grid place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Mais">
+        <button className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Mais">
           <MoreVertical className="h-5 w-5" />
         </button>
       </div>
@@ -321,9 +321,9 @@ function ProfilePostCard({
         <div className="absolute inset-0 grid place-items-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-16 w-16 rounded-2xl bg-white/10 border border-white/20 grid place-items-center">
-              <Lock className="h-7 w-7 text-white/90" />
+              <Lock className="h-7 w-7 text-white" />
             </div>
-            <div className="flex items-center gap-4 text-xs text-white/80">
+            <div className="flex items-center gap-4 text-xs text-white">
               <Stat icon={<ImageIcon className="h-4 w-4" />} value={post.photos} />
               <Stat icon={<Film className="h-4 w-4" />} value={post.videos} />
               <Stat icon={<Heart className="h-4 w-4" />} value={post.likes} />
@@ -372,7 +372,7 @@ function IconAction({
       aria-label={label}
       onClick={onClick}
       className={`h-9 w-9 grid place-items-center rounded-full transition-colors ${
-        active ? "text-fuchsia-400" : "text-white/70 hover:text-white hover:bg-white/10"
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
       }`}
     >
       {children}
