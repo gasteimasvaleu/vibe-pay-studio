@@ -76,7 +76,10 @@ function ChatSchedulingPage() {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [view, setView] = useState<"calendar" | "composer">("calendar");
+  const { view: initialView } = Route.useSearch();
+  const [view, setView] = useState<"calendar" | "composer">(
+    initialView === "composer" ? "composer" : "calendar"
+  );
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
