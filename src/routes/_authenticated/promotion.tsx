@@ -38,6 +38,8 @@ function PromotionPage() {
   const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
   const [selectOpen, setSelectOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const createPromotionFn = useServerFn(createPromotion);
 
   // form data
   const [name, setName] = useState("");
