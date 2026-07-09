@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PromotionHeader,
+  PromotionProgress,
   PromotionShell,
 } from "@/components/promotion/PromotionShell";
 
