@@ -446,7 +446,7 @@ function StreakCalendarCard() {
         selected={day}
         defaultMonth={day}
         showOutsideDays={false}
-        className="p-3 pointer-events-auto w-full"
+        className="p-3 pointer-events-auto w-fit mx-auto [--cell-size:1.25rem]"
       />
     </div>
   );
