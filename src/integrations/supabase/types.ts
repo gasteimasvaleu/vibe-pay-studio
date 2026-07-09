@@ -18,26 +18,56 @@ export type Database = {
         Row: {
           account_type: string
           created_at: string
+          discount_quarterly: number
+          discount_semiannual: number
           id: string
+          instagram_handle: string | null
+          kyc_status: string
+          kyc_verified_at: string | null
+          onboarding_completed_at: string | null
+          price_monthly: number | null
+          stripe_verification_session_id: string | null
+          tiktok_handle: string | null
           updated_at: string
           user_id: string
           username: string
+          x_handle: string | null
         }
         Insert: {
           account_type?: string
           created_at?: string
+          discount_quarterly?: number
+          discount_semiannual?: number
           id?: string
+          instagram_handle?: string | null
+          kyc_status?: string
+          kyc_verified_at?: string | null
+          onboarding_completed_at?: string | null
+          price_monthly?: number | null
+          stripe_verification_session_id?: string | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id: string
           username: string
+          x_handle?: string | null
         }
         Update: {
           account_type?: string
           created_at?: string
+          discount_quarterly?: number
+          discount_semiannual?: number
           id?: string
+          instagram_handle?: string | null
+          kyc_status?: string
+          kyc_verified_at?: string | null
+          onboarding_completed_at?: string | null
+          price_monthly?: number | null
+          stripe_verification_session_id?: string | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
           username?: string
+          x_handle?: string | null
         }
         Relationships: []
       }
