@@ -61,38 +61,78 @@ export const createIdentityVerificationSession = createServerFn({ method: "POST"
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createSessionSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const secret = process.env.STRIPE_SECRET_KEY;
-    if (!secret) {
+    const apiKey = process.env.VERIFF_API_KEY;
+    const apiSecret = process.env.VERIFF_API_SECRET;
+    if (!apiKey || !apiSecret) {
       return {
         ok: false as const,
-        error: "stripe_not_configured",
+        error: "veriff_not_configured",
         message:
           "A verificação de documentos ainda não está configurada. Tente novamente em instantes.",
       };
     }
 
-    const { default: Stripe } = await import("stripe");
-    const stripe = new Stripe(secret, {
-      httpClient: Stripe.createFetchHttpClient(),
-    });
+    // Fetch user's name to prefill Veriff person data (opcional; Veriff aceita nomes vazios).
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("username")
+      .eq("user_id", context.userId)
+      .maybeSingle();
 
     try {
-      const session = await stripe.identity.verificationSessions.create({
-        type: "document",
-        options: {
-          document: {
-            require_matching_selfie: true,
-            require_live_capture: true,
+      const body = JSON.stringify({
+        verification: {
+          callback: data.return_url,
+          person: {
+            firstName: profile?.username ?? "Creator",
+            lastName: "-",
           },
+          vendorData: context.userId,
+          lang: "pt-BR",
         },
-        metadata: { user_id: context.userId },
-        return_url: data.return_url,
       });
+
+      const { createHmac } = await import("crypto");
+      const signature = createHmac("sha256", apiSecret).update(body).digest("hex");
+
+      const res = await fetch("https://stationapi.veriff.com/v1/sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-AUTH-CLIENT": apiKey,
+          "X-HMAC-SIGNATURE": signature,
+        },
+        body,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[veriff] create session failed", res.status, text);
+        return {
+          ok: false as const,
+          error: "veriff_error",
+          message: "Não foi possível iniciar a verificação. Tente novamente em instantes.",
+        };
+      }
+
+      const payload = (await res.json()) as {
+        status: string;
+        verification?: { id: string; url: string; sessionToken?: string };
+      };
+      const session = payload.verification;
+      if (!session?.id || !session.url) {
+        console.error("[veriff] unexpected payload", payload);
+        return {
+          ok: false as const,
+          error: "veriff_error",
+          message: "Resposta inesperada do provedor de verificação.",
+        };
+      }
 
       const { error } = await context.supabase
         .from("profiles")
         .update({
-          stripe_verification_session_id: session.id,
+          veriff_session_id: session.id,
           kyc_status: "processing",
         })
         .eq("user_id", context.userId);
@@ -104,10 +144,10 @@ export const createIdentityVerificationSession = createServerFn({ method: "POST"
         session_id: session.id,
       };
     } catch (err) {
-      console.error("[stripe-identity] create session failed", err);
+      console.error("[veriff] create session error", err);
       return {
         ok: false as const,
-        error: "stripe_error",
+        error: "veriff_error",
         message: err instanceof Error ? err.message : "Erro ao iniciar verificação.",
       };
     }
@@ -118,7 +158,7 @@ export const getKycStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("kyc_status, kyc_verified_at, stripe_verification_session_id")
+      .select("kyc_status, kyc_verified_at, veriff_session_id")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -130,7 +170,7 @@ export const getKycStatus = createServerFn({ method: "GET" })
         | "requires_input"
         | "canceled",
       verified_at: data?.kyc_verified_at ?? null,
-      session_id: data?.stripe_verification_session_id ?? null,
+      session_id: data?.veriff_session_id ?? null,
     };
   });
 
