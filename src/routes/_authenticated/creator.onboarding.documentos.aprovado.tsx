@@ -56,7 +56,7 @@ function AprovadoPage() {
           <CheckCircle2 className="w-10 h-10 text-emerald-400" strokeWidth={2.2} />
         </div>
 
-        <h2 className="mt-6 text-3xl md:text-4xl font-black tracking-tight leading-tight">
+        <h2 className="mt-6 text-2xl md:text-3xl font-black tracking-tight leading-tight">
           Identidade aprovada!
         </h2>
         <p className="mt-3 text-white/70 leading-relaxed max-w-lg mx-auto">
