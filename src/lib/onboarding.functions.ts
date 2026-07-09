@@ -153,6 +153,24 @@ export const createIdentityVerificationSession = createServerFn({ method: "POST"
     }
   });
 
+type KycStatus =
+  | "not_started"
+  | "processing"
+  | "verified"
+  | "requires_input"
+  | "canceled";
+
+const veriffStatusMap: Record<string, KycStatus> = {
+  approved: "verified",
+  resubmission_requested: "requires_input",
+  declined: "requires_input",
+  expired: "canceled",
+  abandoned: "canceled",
+  review: "processing",
+  submitted: "processing",
+  created: "processing",
+};
+
 export const getKycStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -162,15 +180,66 @@ export const getKycStatus = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
+
+    let status = (data?.kyc_status ?? "not_started") as KycStatus;
+    let verifiedAt = data?.kyc_verified_at ?? null;
+    const sessionId = data?.veriff_session_id ?? null;
+
+    // Fallback: if webhook didn't arrive yet, ask Veriff directly.
+    if ((status === "processing" || status === "not_started") && sessionId) {
+      const apiKey = process.env.VERIFF_API_KEY;
+      const apiSecret = process.env.VERIFF_API_SECRET;
+      if (apiKey && apiSecret) {
+        try {
+          const { createHmac } = await import("crypto");
+          const signature = createHmac("sha256", apiSecret).update(sessionId).digest("hex");
+          const res = await fetch(
+            `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                "X-AUTH-CLIENT": apiKey,
+                "X-HMAC-SIGNATURE": signature,
+              },
+            },
+          );
+          if (res.ok) {
+            const payload = (await res.json()) as {
+              verification?: { status?: string } | null;
+            };
+            const veriffStatus = payload.verification?.status;
+            if (veriffStatus && veriffStatusMap[veriffStatus]) {
+              const next = veriffStatusMap[veriffStatus];
+              if (next !== status) {
+                const update: Record<string, string> = { kyc_status: next };
+                if (next === "verified") {
+                  const now = new Date().toISOString();
+                  update.kyc_verified_at = now;
+                  update.account_type = "creator";
+                  update.onboarding_completed_at = now;
+                  verifiedAt = now;
+                }
+                const { error: upErr } = await context.supabase
+                  .from("profiles")
+                  .update(update)
+                  .eq("user_id", context.userId);
+                if (!upErr) status = next;
+              }
+            }
+          } else {
+            console.warn("[veriff] decision fetch non-ok", res.status);
+          }
+        } catch (err) {
+          console.warn("[veriff] decision fetch failed", err);
+        }
+      }
+    }
+
     return {
-      status: (data?.kyc_status ?? "not_started") as
-        | "not_started"
-        | "processing"
-        | "verified"
-        | "requires_input"
-        | "canceled",
-      verified_at: data?.kyc_verified_at ?? null,
-      session_id: data?.veriff_session_id ?? null,
+      status,
+      verified_at: verifiedAt,
+      session_id: sessionId,
     };
   });
 
