@@ -29,7 +29,9 @@ import {
   Image as ImageIcon,
   DollarSign,
   Eye,
+  UserPlus,
 } from "lucide-react";
+
 
 
 

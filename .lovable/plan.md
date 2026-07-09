@@ -1,33 +1,33 @@
-## Sub-aba "Lives" (dentro de Engajamento)
+## Aba "Alcance"
 
-Atualizar `EngajamentoPanel` em `src/routes/_authenticated/my-monetisex-stats.tsx` para renderizar conteúdo diferente quando `tab === "Lives"`. Sub-tabs Publicações/Lives permanecem iguais no topo.
+Adicionar `AlcancePanel` renderizado quando `mainTab === "Alcance"` em `src/routes/_authenticated/my-monetisex-stats.tsx`. Atualizar o switch principal.
 
-### Quando "Lives" está ativa
+### Layout
 
-**Ordenar por** (chips diferentes):
-- `Mais compradas` (ativa por padrão)
-- `Mimos`
-- `Visualizações`
-- `Comentários`
-- `Curtidas`
+**Grid 2/3 + 1/3 (topo):**
 
-**Coluna principal:**
-- Card com header: `0 compras  R$ 0,00` (bold) à esquerda, legenda "● Faturamento  ● Quantidade" à direita
-- Corpo vazio (mais alto que Publicações) com texto centralizado muted: "Sem dados de engajamento para o período selecionado."
-- (Sem texto adicional "Nenhuma publicação encontrada" abaixo do card)
+Coluna principal — Card de gráfico:
+- Header: `0 Visitantes` (bold, grande) + legenda "● Visitantes (laranja) ● Usuários (cinza)"
+- Área do gráfico com grid horizontal (linhas "1", "1", "0") e eixo X: `08/06, 14/06, 20/06, 26/06, 02/07, 08/07`
 
-**Coluna lateral:**
-- Card `Resumo`:
-  - Ícone `Radio` (ondas) → "Quantidade" / "0"
-  - Ícone `Eye` → "Visualizações" / "0"
-  - Ícone `DollarSign` → "Faturamento" / "R$ 0,00"
-  - Layout: grid 2 colunas, com Faturamento ocupando linha própria abaixo (como no screenshot)
-- Card `Top live`:
-  - Título "Top live" bold
-  - Texto muted: "Sem dados de engajamento para o período selecionado."
+Coluna lateral — Card `Resumo`:
+- Grid 2x2 com ícone circular (outline com bg card e ring border) + label/valor:
+  - `Users` → "Visitantes" / "0"
+  - `UserPlus` → "Assinaturas" / "0"
+  - `DollarSign` → "Assinaturas" / "R$ 0,00"
+  - `UserPlus` → "Renovações" / "0"
+
+**Abaixo (largura da coluna principal 2/3):**
+
+- Card tabela `Visitantes do perfil`:
+  - Header: colunas alinhadas à direita `Visitantes | Usuários | Total`
+  - Linha: `Visitantes do perfil` (esquerda) `0 | 0 | 0 (bold)` (direita)
+- Card `Principais países`:
+  - Título "Principais países" bold
+  - Texto muted centralizado: "Nenhum dado disponível para o período."
 
 ### Detalhes técnicos
 
-- Novo ícone lucide: `Eye`.
-- Manter estado `ordenar` separado por aba ou resetar ao trocar — resetar para o primeiro valor da lista de cada aba ao mudar.
-- Extrair renderização condicional dos chips de ordenação e dos painéis (esquerda/direita) baseado em `tab`.
+- Novos ícones lucide: `UserPlus`.
+- Ícones circulares no Resumo: `h-10 w-10 rounded-full border border-border text-primary grid place-items-center bg-card`.
+- Sem mudanças em dados/backend; UI estática seguindo screenshots.
