@@ -155,9 +155,13 @@ function ChatLayout() {
               <IconBtn label="Agenda">
                 <CalendarCheck className="h-5 w-5" />
               </IconBtn>
-              <IconBtn label="Configurações">
+              <Link
+                to="/chat/configuracoes"
+                aria-label="Configurações"
+                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <Settings className="h-5 w-5" />
-              </IconBtn>
+              </Link>
               <IconBtn label="Filtros" onClick={() => setOpenFilters(true)}>
                 <ListFilter className="h-5 w-5" />
               </IconBtn>

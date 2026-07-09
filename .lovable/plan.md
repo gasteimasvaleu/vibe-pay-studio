@@ -1,30 +1,42 @@
-Converter o `FiltersDialog` da página `/chat` para usar o `Sheet` do shadcn no modo bottom sheet — mesmo padrão já usado no picker de mídia do publisher — que passa a ser o padrão do app para esse tipo de modal.
+## Nova página: Configurações do Chat
 
-## Alterações em `src/routes/_authenticated/chat.tsx`
+Criar uma rota dedicada acessada pelo ícone de engrenagem (Settings) na sidebar de conversas, com o layout dos screenshots adaptado às cores e ao tema do app.
 
-1. **Imports**: adicionar `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle` de `@/components/ui/sheet`. Manter `Dialog*` (ainda usado pelo `NewChatDialog`).
+### Rota
+- Arquivo: `src/routes/_authenticated/chat.configuracoes.tsx` → URL `/chat/configuracoes`
+  - Como `chat.tsx` é layout com `<Outlet />`, esta página renderiza no painel direito (sem sair da experiência de chat).
+- Atualizar o ícone `Settings` em `src/routes/_authenticated/chat.tsx` para um `<Link to="/chat/configuracoes">`.
 
-2. **Renomear** `FiltersDialog` → `FiltersSheet` (e o uso no JSX do `ChatLayout`). Estado `openFilters`/`filters` permanece igual.
+### Layout (adaptado ao design system)
+Estrutura em coluna, centralizada, dentro do painel de conteúdo do chat:
 
-3. **Estrutura do Sheet** (substituindo o `Dialog`):
-   ```tsx
-   <Sheet open={open} onOpenChange={onOpenChange}>
-     <SheetContent
-       side="bottom"
-       className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
-     >
-       <SheetHeader>
-         <SheetTitle>Filtrar por</SheetTitle>
-       </SheetHeader>
-       {/* mesmas 3 seções (Conversas, Usuários, Ordenar) com FilterChip */}
-       {/* botão "Aplicar filtros" full-width outline primary rounded-full h-12 */}
-     </SheetContent>
-   </Sheet>
-   ```
+1. **Header**
+   - Botão voltar (ícone `ArrowLeft`) à esquerda → navega para `/chat`.
+   - Título centralizado "Configurações" (font-semibold, `text-foreground`).
+   - Borda inferior `border-border`.
 
-4. **Conteúdo interno inalterado**: seções, chips e botão "Aplicar filtros" mantêm exatamente a mesma marcação e estilos já implementados.
+2. **Banner de dica** (equivalente ao verde claro do screenshot)
+   - Fundo suave usando token semântico (`bg-accent/40` ou `bg-muted`), borda `border-border`, cantos `rounded-xl`.
+   - Ícone `Lightbulb` em `text-primary`.
+   - Texto: "Aproveite o primeiro contato para se apresentar e oferecer uma mídia exclusiva de boas vindas".
 
-## Fora de escopo
+3. **Linha de toggle**
+   - Título "Habilitar mensagem de boas-vindas" + subtítulo "Sua mensagem de boas-vindas é enviada automaticamente aos novos assinantes".
+   - Componente `Switch` do shadcn à direita (herda `--primary` da paleta do app — sem laranja fixo).
 
-- Não migrar o `NewChatDialog` (não foi pedido).
-- Sem mudanças de comportamento/estado dos filtros.
+4. **Área do compositor** (só aparece quando o toggle está ativo)
+   - Container `rounded-2xl border border-border bg-card` com padding.
+   - `Textarea` sem borda, placeholder "Mín. 3 caracteres", altura mínima ~140px.
+   - Barra de ações abaixo: ícones `Image`, `Mic`, `Archive`, `Smile`, `Tag` (lucide), cada um com `Tooltip` (usando componente `Tooltip` do shadcn) — labels: "Adicionar mídia", "Gravar um áudio", "Adicionar mídia do acervo", "Adicionar um emoji", "Adicionar tag". Ícones apenas visuais nesta etapa (sem lógica).
+
+5. **Botão "Salvar alterações"**
+   - `Button` full-width, `rounded-full`, altura ~48px, usando `bg-gradient-primary text-primary-foreground shadow-glow` (padrão do app, ao invés do laranja do screenshot).
+   - Desabilitado quando o toggle está desligado ou o texto tem menos de 3 caracteres.
+
+### Estado
+- Local somente (nesta etapa): `enabled: boolean`, `message: string`.
+- Sem persistência backend — apenas UI. Se o usuário quiser salvar no Supabase depois, tratamos em um próximo pedido.
+
+### Fora de escopo
+- Persistência da mensagem, upload de mídia, gravação de áudio, picker de emoji, sistema de tags.
+- Alterações em outras telas do chat.
