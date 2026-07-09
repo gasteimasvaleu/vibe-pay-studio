@@ -123,21 +123,8 @@ function FeedPage() {
             >
               Ir para o painel
             </Link>
-          </motion.section>
-        </main>
-
-        {/* Right rail */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-5">
-              <p className="text-xs uppercase tracking-widest text-white/70">Em alta</p>
-              <p className="mt-3 text-sm text-white/70 leading-relaxed">
-                Em breve você verá aqui as tags e creators em destaque na plataforma.
-              </p>
-            </div>
-          </div>
-        </aside>
-      </div>
+        </motion.section>
+      </main>
     </div>
   );
 }
