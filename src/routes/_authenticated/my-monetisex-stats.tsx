@@ -1235,5 +1235,162 @@ function AlcancePanel() {
   );
 }
 
+const ASSINANTES_TABS = ["Assinaturas", "Top assinantes", "Atividade dos assinantes"] as const;
+const ASSINANTES_FILTROS = ["Todos", "Renovações", "Novos assinantes"] as const;
+const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat"] as const;
+
+function AssinantesPanel() {
+  const [tab, setTab] = useState<(typeof ASSINANTES_TABS)[number]>("Assinaturas");
+  const [filtro, setFiltro] = useState<(typeof ASSINANTES_FILTROS)[number]>("Todos");
+  const [topFiltro, setTopFiltro] =
+    useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
+  const [query, setQuery] = useState("");
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2">
+        {ASSINANTES_TABS.map((t) => {
+          const isActive = t === tab;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                isActive
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-card text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-border pt-5">
+        {tab === "Assinaturas" ? (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="md:col-span-2 space-y-5">
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-base font-bold">0 Assinantes, R$ 0,00</h3>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                        <span className="text-foreground">Faturamento</span>
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+                        <span className="text-muted-foreground">Quantidade</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 relative h-64">
+                    <div className="absolute inset-0 flex flex-col justify-between">
+                      {["R$1", "R$1", "R$0", "1", "1"].map((label, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-8">{label}</span>
+                          <div className="flex-1 border-t border-dashed border-border" />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum dado disponível para o período.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex justify-between text-xs text-muted-foreground pl-11">
+                    <span>Jun 9,<br />2026</span>
+                    <span>Jun 16,<br />2026</span>
+                    <span>Jun 24,<br />2026</span>
+                    <span>Jul 2,<br />2026</span>
+                    <span>Jul 9,<br />2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                  <h3 className="text-base font-bold">Top assinantes</h3>
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                    {TOP_ASSINANTES_CHIPS.map((c) => (
+                      <div key={c} className="shrink-0">
+                        <Chip
+                          label={c}
+                          active={c === topFiltro}
+                          onClick={() => setTopFiltro(c)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-6 text-center text-sm text-muted-foreground">
+                    Sem dados para este filtro.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                  <h3 className="text-base font-bold">Assinantes por faixa de preço</h3>
+                  <p className="mt-6 text-center text-sm text-muted-foreground">
+                    Nenhum dado disponível para o período.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:w-2/3 space-y-4">
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-foreground">Filtrar por</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {ASSINANTES_FILTROS.map((f) => (
+                    <Chip
+                      key={f}
+                      label={f}
+                      active={f === filtro}
+                      onClick={() => setFiltro(f)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Pesquisar assinantes..."
+                  className="w-full rounded-full border border-border bg-card pl-11 pr-5 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden">
+                <div className="grid grid-cols-4 px-5 py-3 text-sm text-muted-foreground border-b border-border">
+                  <span>Nome</span>
+                  <span>Status</span>
+                  <span>Preço</span>
+                  <span>Duração total</span>
+                </div>
+                <p className="py-10 px-5 text-center text-sm text-muted-foreground">
+                  Nenhum assinante encontrado.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground shadow-[var(--shadow-card)]">
+            Em breve.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 
 
