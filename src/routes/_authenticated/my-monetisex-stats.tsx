@@ -1384,11 +1384,95 @@ function AssinantesPanel() {
               </div>
             </div>
           </div>
+        ) : tab === "Top assinantes" ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2 space-y-4">
+              <p className="text-sm font-bold text-foreground">Filtrar por</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {TOP_ASSINANTES_CHIPS.map((c) => (
+                  <Chip
+                    key={c}
+                    label={c}
+                    active={c === topMainFiltro}
+                    onClick={() => setTopMainFiltro(c)}
+                  />
+                ))}
+              </div>
+              <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 text-sm text-muted-foreground border-b border-border">
+                  <span>Nome</span>
+                  <span>Gasto total</span>
+                </div>
+                <p className="py-10 px-5 text-center text-sm text-muted-foreground">
+                  Sem dados para este filtro
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Resumo</h3>
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground">Assinantes</p>
+                      <p className="text-base font-bold">0</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <UserPlus className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground leading-tight">
+                        Assinaturas/<br />Renovações
+                      </p>
+                      <p className="text-base font-bold">0 / 0</p>
+                    </div>
+                  </div>
+                  <div className="col-span-2 flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <DollarSign className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-muted-foreground">Ganhos de assinaturas</p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-base font-bold">R$ 0,00</p>
+                        <div className="flex-1 border-t border-border" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Top assinantes</h3>
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {TOP_ASSINANTES_CHIPS.map((c) => (
+                    <div key={c} className="shrink-0">
+                      <Chip
+                        label={c}
+                        active={c === topFiltro}
+                        onClick={() => setTopFiltro(c)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-center text-sm text-muted-foreground">
+                  Sem dados para este filtro.
+                </p>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground shadow-[var(--shadow-card)]">
             Em breve.
           </div>
         )}
+
       </div>
     </div>
   );
