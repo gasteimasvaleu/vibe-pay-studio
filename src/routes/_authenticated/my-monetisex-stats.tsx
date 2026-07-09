@@ -1244,6 +1244,9 @@ function AssinantesPanel() {
   const [filtro, setFiltro] = useState<(typeof ASSINANTES_FILTROS)[number]>("Todos");
   const [topFiltro, setTopFiltro] =
     useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
+  const [topMainFiltro, setTopMainFiltro] =
+    useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
+
   const [query, setQuery] = useState("");
 
   return (
