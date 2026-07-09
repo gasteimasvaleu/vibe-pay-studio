@@ -48,7 +48,7 @@ function FeedPage() {
 
       {/* Top bar */}
       <header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/30">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <Link to="/feed" className="text-lg font-black tracking-tight">
             monet<span className="text-gradient-primary">isex</span>
           </Link>
@@ -83,7 +83,7 @@ function FeedPage() {
         </div>
       </header>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_300px] gap-8">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_300px] gap-8">
         {/* Sidebar */}
         <aside className="hidden lg:block">
           <nav className="sticky top-24 space-y-1">
@@ -97,7 +97,7 @@ function FeedPage() {
         </aside>
 
         {/* Feed */}
-        <main className="space-y-6 min-w-0">
+        <main className="space-y-6 min-w-0 max-w-3xl mx-auto w-full">
           {/* Welcome */}
           <motion.section
             initial={{ opacity: 0, y: 10 }}
