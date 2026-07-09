@@ -153,7 +153,7 @@ function ChatLayout() {
                 <Plus className="h-5 w-5" />
               </IconBtn>
               <Link
-                to="/chat-agendamento"
+                to="/chat-massa"
                 aria-label="Agenda"
                 className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               >
