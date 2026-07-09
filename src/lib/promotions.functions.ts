@@ -52,3 +52,34 @@ export const createPromotion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return inserted;
   });
+
+export const listMyPromotions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("promotions")
+      .select("*")
+      .eq("creator_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const now = Date.now();
+    return (data ?? []).map((p) => ({
+      ...p,
+      is_active: p.status === "active" && new Date(p.ends_at).getTime() > now,
+    }));
+  });
+
+export const endPromotion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("promotions")
+      .update({ status: "ended" })
+      .eq("id", data.id)
+      .eq("creator_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
