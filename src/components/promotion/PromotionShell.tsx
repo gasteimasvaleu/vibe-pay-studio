@@ -17,24 +17,24 @@ export function PromotionShell({
   const pct = Math.min(100, Math.max(0, (step / totalSteps) * 100));
 
   return (
-    <div className="min-h-screen bg-background text-white flex flex-col">
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-2xl px-5 py-4 flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
             aria-label="Voltar"
-            className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/5 transition"
+            className="h-9 w-9 grid place-items-center rounded-full text-foreground hover:bg-muted transition"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <p className="flex-1 text-center text-sm font-medium text-white/80">
+          <p className="flex-1 text-center text-sm font-medium text-foreground">
             Criando oferta
           </p>
           <span className="h-9 w-9" />
         </div>
         <div className="mx-auto max-w-2xl px-5 pb-3">
-          <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-1 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full bg-gradient-primary transition-all duration-300"
               style={{ width: `${pct}%` }}
@@ -48,7 +48,7 @@ export function PromotionShell({
       </main>
 
       {footer && (
-        <footer className="sticky bottom-0 bg-background/80 backdrop-blur-md">
+        <footer className="sticky bottom-0 border-t border-border bg-background/80 backdrop-blur-md">
           <div className="mx-auto max-w-2xl px-5 py-4">{footer}</div>
         </footer>
       )}
@@ -65,8 +65,8 @@ export function PromotionHeader({
 }) {
   return (
     <div className="mb-8">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
-      {subtitle && <p className="mt-2 text-sm text-white/60">{subtitle}</p>}
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+      {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }

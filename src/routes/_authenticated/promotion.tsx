@@ -84,12 +84,12 @@ function PromotionPage() {
   const primaryBtn =
     "w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed";
   const outlineBtn =
-    "w-full py-3.5 rounded-full border border-white/15 bg-white/5 text-white font-semibold hover:bg-white/10 transition";
+    "w-full py-3.5 rounded-full border border-border bg-background text-foreground font-semibold hover:bg-muted transition";
 
   if (loadingPrice) {
     return (
-      <div className="min-h-screen bg-background text-white grid place-items-center">
-        <p className="text-sm text-white/60">Carregando...</p>
+      <div className="min-h-screen bg-background text-foreground grid place-items-center">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     );
   }
@@ -148,8 +148,8 @@ function PromotionPage() {
           inputMode="numeric"
           autoFocus
         />
-        <p className="mt-3 text-sm text-white/60">
-          Mínimo: <b className="text-white">{MIN_QUANTITY} assinaturas</b>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Mínimo: <b className="text-foreground">{MIN_QUANTITY} assinaturas</b>
         </p>
       </PromotionShell>
     );
@@ -203,10 +203,10 @@ function PromotionPage() {
         }
       >
         <PromotionHeader title="Ofertas indisponíveis" />
-        <div className="space-y-4 text-white/80">
+        <div className="space-y-4 text-muted-foreground">
           <p>
             O valor da assinatura precisa ser de{" "}
-            <b className="text-white">R$ {formatBRL(MIN_PRICE)} ou mais</b> para ativar ofertas.
+            <b className="text-foreground">R$ {formatBRL(MIN_PRICE)} ou mais</b> para ativar ofertas.
           </p>
           <p>Com esse valor, você já pode criar ofertas com desconto.</p>
           <p>Ajuste o valor da assinatura para continuar.</p>
@@ -241,26 +241,26 @@ function PromotionPage() {
           options={DISCOUNTS.map((d) => ({ label: `${d}%`, value: d }))}
           onSelect={(v) => setDiscountPct(v as number)}
         />
-        <p className="mt-3 text-sm text-white/60">
+        <p className="mt-3 text-sm text-muted-foreground">
           Valor de assinatura mínima:{" "}
-          <b className="text-white">R${formatBRL(monthly)}</b>
+          <b className="text-foreground">R${formatBRL(monthly)}</b>
         </p>
 
         {promoValue !== null && (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5">
-            <p className="font-semibold text-white">Valor da assinatura</p>
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+            <p className="font-semibold text-foreground">Valor da assinatura</p>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-white/60">Mensal</p>
-                <p className="mt-1 text-lg font-bold text-white">
+                <p className="text-sm text-muted-foreground">Mensal</p>
+                <p className="mt-1 text-lg font-bold text-foreground">
                   R${formatBRL(monthly)}
                 </p>
               </div>
-              <div className="border-l border-white/10 pl-4">
-                <p className="text-sm text-white/60">Promocional</p>
-                <p className="mt-1 text-lg font-bold text-fuchsia-300">
+              <div className="border-l border-border pl-4">
+                <p className="text-sm text-muted-foreground">Promocional</p>
+                <p className="mt-1 text-lg font-bold text-primary">
                   R${formatBRL(promoValue)}{" "}
-                  <span className="text-sm text-white/60">(-{discountPct}%)</span>
+                  <span className="text-sm text-muted-foreground">(-{discountPct}%)</span>
                 </p>
               </div>
             </div>
@@ -302,15 +302,15 @@ function PromotionPage() {
           title="Escreva uma descrição para a oferta"
           subtitle="Uma mensagem bem escrita pode convencer e conquistar novos assinantes"
         />
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 focus-within:border-fuchsia-400/60 transition-colors">
+        <div className="rounded-2xl border border-border bg-card px-5 py-4 focus-within:border-primary transition-colors">
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 100))}
             placeholder="Descrição para oferta"
             rows={4}
-            className="w-full bg-transparent outline-none resize-none text-base placeholder:text-white/40"
+            className="w-full bg-transparent outline-none resize-none text-base text-foreground placeholder:text-muted-foreground"
           />
-          <p className="mt-2 text-right text-xs text-white/50">
+          <p className="mt-2 text-right text-xs text-muted-foreground">
             {description.length} / 100
           </p>
         </div>
@@ -343,23 +343,23 @@ function PromotionPage() {
         subtitle="Sua oferta já está disponível no seu perfil para todos usuários"
       />
 
-      <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6">
+      <div className="mt-6 rounded-3xl border border-border bg-card p-6">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-gradient-primary" />
-          <p className="text-sm font-semibold">{name || "Sua oferta"}</p>
+          <p className="text-sm font-semibold text-foreground">{name || "Sua oferta"}</p>
         </div>
         <div className="mt-4 space-y-2">
-          <div className="h-3 rounded-full bg-white/10 w-2/3" />
-          <div className="h-3 rounded-full bg-white/10 w-1/2" />
+          <div className="h-3 rounded-full bg-muted w-2/3" />
+          <div className="h-3 rounded-full bg-muted w-1/2" />
         </div>
         <div className="mt-6 relative">
-          <span className="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold">
+          <span className="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold">
             Economize {discountPct ?? 0}%
           </span>
           <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 font-bold">
             Assinar agora R$ {formatBRL(promoValue)}
           </div>
-          <p className="mt-3 text-right text-xs text-white/60">
+          <p className="mt-3 text-right text-xs text-muted-foreground">
             Preço original <span className="line-through">R${formatBRL(monthly)}</span>
           </p>
         </div>
@@ -384,15 +384,15 @@ function PillInput({
   autoFocus?: boolean;
 }) {
   return (
-    <div className="rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-6 py-3 focus-within:border-fuchsia-400/60 transition-colors">
-      <label className="block text-xs text-white/60">{label}</label>
+    <div className="rounded-full border border-border bg-card px-6 py-3 focus-within:border-primary transition-colors">
+      <label className="block text-xs text-muted-foreground">{label}</label>
       <input
         type="text"
         inputMode={inputMode ?? "text"}
         value={value}
         autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent outline-none text-base font-medium placeholder:text-white/30"
+        className="w-full bg-transparent outline-none text-base font-medium text-foreground placeholder:text-muted-foreground"
       />
     </div>
   );
@@ -415,18 +415,18 @@ function PillSelect<T extends string | number>({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-6 py-3 focus:border-fuchsia-400/60 transition-colors flex items-center"
+        className="w-full rounded-full border border-border bg-card px-6 py-3 focus:border-primary transition-colors flex items-center"
       >
         <div className="flex-1 text-left">
-          <span className="block text-xs text-white/60">{label}</span>
-          <span className="block text-base font-medium">
-            {value || <span className="text-white/30">Selecione</span>}
+          <span className="block text-xs text-muted-foreground">{label}</span>
+          <span className="block text-base font-medium text-foreground">
+            {value || <span className="text-muted-foreground">Selecione</span>}
           </span>
         </div>
-        <ChevronDown className={`h-5 w-5 text-white/60 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-5 w-5 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-10 mt-2 w-full rounded-2xl border border-white/10 bg-background/95 backdrop-blur-md shadow-lg overflow-hidden">
+        <div className="absolute z-10 mt-2 w-full rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
           {options.map((opt) => (
             <button
               key={String(opt.value)}
@@ -435,7 +435,7 @@ function PillSelect<T extends string | number>({
                 onSelect(opt.value);
                 setOpen(false);
               }}
-              className="w-full text-left px-6 py-3 hover:bg-white/5 transition"
+              className="w-full text-left px-6 py-3 hover:bg-muted transition"
             >
               {opt.label}
             </button>
