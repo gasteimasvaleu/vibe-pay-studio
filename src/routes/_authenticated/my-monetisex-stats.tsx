@@ -74,24 +74,28 @@ function MyMonetisexStatsPage() {
           <SubTabsRow tabs={SUB_TABS} active={subTab} onChange={setSubTab} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="md:col-span-2 space-y-5">
-            {subTab === "Destaques" ? (
-              <DestaquesPanel />
-            ) : subTab === "Sequência de atividades" ? (
-              <SequenciaPanel />
-            ) : (
-              <>
-                <EarningsChartCard />
-                <ProductTable />
-              </>
-            )}
+        {subTab === "Resumo" ? (
+          <ResumoPanel />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2 space-y-5">
+              {subTab === "Destaques" ? (
+                <DestaquesPanel />
+              ) : subTab === "Sequência de atividades" ? (
+                <SequenciaPanel />
+              ) : (
+                <>
+                  <EarningsChartCard />
+                  <ProductTable />
+                </>
+              )}
+            </div>
+            <div className="space-y-5">
+              <TopBadgeCard />
+              <PeriodTotalCard />
+            </div>
           </div>
-          <div className="space-y-5">
-            <TopBadgeCard />
-            <PeriodTotalCard />
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );
