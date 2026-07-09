@@ -1,36 +1,45 @@
 ## Objetivo
 
-Adicionar, logo abaixo do `ProfileHeaderCard` no `CreatorDashboard` (não no assinante), uma linha com 3 cards de resumo financeiro iguais aos do screenshot: **Faturamento / Hoje**, **Liberado / Valor disponível para saque**, **Total / Saldo liberado + a liberar**. Todos com valor `R$ -` (placeholder, sem dados reais por enquanto).
+Substituir tudo que hoje aparece abaixo dos 3 cards de resumo (Faturamento/Liberado/Total) no CreatorDashboard pelos cards dos screenshots, em dois grupos: **Área do Criador** e **Outras Funcionalidades**. Assinante não é tocado.
 
-## Componente
+## Novos grupos e cards (ordem dos screenshots, 2 colunas em `md+`)
 
-Novo `src/components/dashboard/EarningsSummary.tsx` — puramente apresentacional, usa tokens semânticos (`bg-card`, `border`, `text-foreground`, `text-muted-foreground`, `shadow-[var(--shadow-card)]`).
+### Área do Criador
+| Título | Descrição | Ícone lucide |
+|---|---|---|
+| Meu Perfil | Acesse e visualize seu perfil | `User` |
+| Ofertas | Aqui você pode gerir suas Ofertas | `BadgePercent` |
+| Perfil Gratuito | Seu perfil gratuito no ar em um clique | `UserPlus` |
+| Meu Privacy | Veja suas vendas e engajamento | `LineChart` |
+| Chat | Converse com seus assinantes agora | `MessageCircle` |
+| Meu Banco | Gerencie saques e saldo disponível | `Landmark` |
+| Em Alta | Descubra o que está bombando | `TrendingUp` |
+| Meus assinantes | Acompanhe quem mais te apoia | `Users` |
+| Assinaturas | Veja os creators que você assina | `UserPlus` |
+| Carteira | Escolha como paga e veja seus gastos | `Wallet` |
+| Acervo | Gerencie seus conteúdos com praticidade | `FolderPlus` |
+| Live (em breve) | Transmita ao vivo para assinantes | `Radio` — **card desabilitado**, opacidade reduzida, sem hover |
+| Reportar bug | Teve um problema? Conte pra gente | `Bug` |
+| Vazamento | Alguém usou seu conteúdo? | `ShieldAlert` |
 
-Estrutura:
-```
-<section grid-cols-1 sm:grid-cols-3 gap-4>
-  <Card title="Faturamento"  subtitle="Hoje"                          value="R$ -" />
-  <Card title="Liberado"     subtitle="Valor disponível para saque"   value="R$ -" />
-  <Card title="Total"        subtitle="Saldo liberado + a liberar"    value="R$ -" />
-</section>
-```
+### Outras Funcionalidades
+| Título | Descrição | Ícone |
+|---|---|---|
+| Atividades | Acesse suas mídias favoritas salvas | `Bookmark` |
+| Definições | Personalize sua experiência | `Settings` |
+| Ajuda | Precisa de suporte ou tem dúvidas? | `HelpCircle` |
+| Sair | Sair da plataforma | `LogOut` — tone `danger` (título vermelho), aciona `supabase.auth.signOut()` como hoje |
 
-Cada card:
-- `rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]`
-- Título: `text-lg font-black text-foreground`
-- Subtítulo: `text-sm text-muted-foreground mt-0.5`
-- Valor: `text-3xl font-black text-foreground mt-4` (formato "R$ -" como placeholder)
+## Ajustes técnicos
 
-Props opcionais pra ligarmos dados depois: `items?: { title; subtitle; value }[]` com default = os três acima. Assim quando você pedir para plugar Supabase é só passar valores.
-
-## Onde entra
-
-Em `src/components/dashboard/CreatorDashboard.tsx`, entre o `<DashboardShell>` (que renderiza o header) e o primeiro `<DashboardGroup title="Meu negócio">`. Ou seja, é o primeiro filho passado como `children` para o `DashboardShell`.
-
-Não é adicionado no `SubscriberDashboard` — você pediu só na versão creator.
+- Editar apenas `src/components/dashboard/CreatorDashboard.tsx`. Nada muda no ProfileHeaderCard, EarningsSummary, DashboardShell, ActionCard nem no SubscriberDashboard.
+- Substituir os 3 `DashboardGroup` atuais (`Meu negócio` / `Comunicação` / `Conta`) pelos 2 novos (`Área do Criador` / `Outras Funcionalidades`).
+- Ajustar os imports do lucide-react para os ícones novos e remover os que deixam de ser usados (`PenSquare`, `DollarSign`).
+- `ActionCard` já suporta `disabled`; usar para "Live (em breve)". Já suporta `tone="danger"` para "Sair".
+- Nenhuma navegação (`to=`) — todos os cards ficam como botões sem ação por enquanto, exceto Chat (mantém `to="/chat"` que já funciona) e Sair (mantém `onClick` de signout). Rotas reais das outras entradas ficam para próximas mensagens.
 
 ## Fora de escopo
 
-- Valores reais (Faturamento hoje, saldo liberado etc. — placeholders `R$ -` até você pedir).
-- Ações como "Sacar" ou link para carteira (só os 3 cards, como no screenshot).
-- Ajuste dos `ActionCard`s (ainda no estilo dark antigo) — continua para uma próxima instrução.
+- Rotas de destino de cada card (Meu Perfil, Ofertas, Meu Banco, etc.).
+- Estado real de "Live" (só desabilitado visualmente).
+- Backend/lógica de Reportar bug e Vazamento.

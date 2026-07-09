@@ -1,13 +1,20 @@
 import { useState } from "react";
 import {
+  BadgePercent,
   Bookmark,
-  DollarSign,
+  Bug,
+  FolderPlus,
   HelpCircle,
+  Landmark,
+  LineChart,
   LogOut,
   MessageCircle,
-  PenSquare,
+  Radio,
   Settings,
+  ShieldAlert,
+  TrendingUp,
   User,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
@@ -28,48 +35,87 @@ export function CreatorDashboard({ username }: { username: string }) {
     <DashboardShell username={username} isCreator>
       <div className="space-y-6">
         <EarningsSummary />
-        <DashboardGroup title="Meu negócio">
+
+        <DashboardGroup title="Área do Criador">
           <ActionCard
-            icon={<PenSquare className="h-5 w-5" />}
-            title="Publicar"
-            description="Crie um novo post para seus assinantes"
+            icon={<User className="h-5 w-5" />}
+            title="Meu Perfil"
+            description="Acesse e visualize seu perfil"
+          />
+          <ActionCard
+            icon={<BadgePercent className="h-5 w-5" />}
+            title="Ofertas"
+            description="Aqui você pode gerir suas Ofertas"
+          />
+          <ActionCard
+            icon={<UserPlus className="h-5 w-5" />}
+            title="Perfil Gratuito"
+            description="Seu perfil gratuito no ar em um clique."
+          />
+          <ActionCard
+            icon={<LineChart className="h-5 w-5" />}
+            title="Meu Privacy"
+            description="Veja suas vendas e engajamento"
+          />
+          <ActionCard
+            icon={<MessageCircle className="h-5 w-5" />}
+            title="Chat"
+            description="Converse com seus assinantes agora"
+            to="/chat"
+          />
+          <ActionCard
+            icon={<Landmark className="h-5 w-5" />}
+            title="Meu Banco"
+            description="Gerencie saques e saldo disponível"
+          />
+          <ActionCard
+            icon={<TrendingUp className="h-5 w-5" />}
+            title="Em Alta"
+            description="Descubra o que está bombando"
           />
           <ActionCard
             icon={<Users className="h-5 w-5" />}
-            title="Assinantes"
-            description="Veja quem assina seu conteúdo"
+            title="Meus assinantes"
+            description="Acompanhe quem mais te apoia"
           />
           <ActionCard
-            icon={<DollarSign className="h-5 w-5" />}
-            title="Ganhos"
-            description="Acompanhe seus recebíveis e saques"
+            icon={<UserPlus className="h-5 w-5" />}
+            title="Assinaturas"
+            description="Veja os creators que você assina"
           />
           <ActionCard
             icon={<Wallet className="h-5 w-5" />}
             title="Carteira"
-            description="Métodos de pagamento e histórico"
+            description="Escolha como paga e veja seus gastos"
+          />
+          <ActionCard
+            icon={<FolderPlus className="h-5 w-5" />}
+            title="Acervo"
+            description="Gerencie seus conteúdos com praticidade"
+          />
+          <ActionCard
+            icon={<Radio className="h-5 w-5" />}
+            title="Live (em breve)"
+            description="Transmita ao vivo para assinantes"
+            disabled
+          />
+          <ActionCard
+            icon={<Bug className="h-5 w-5" />}
+            title="Reportar bug"
+            description="Teve um problema? Conte pra gente"
+          />
+          <ActionCard
+            icon={<ShieldAlert className="h-5 w-5" />}
+            title="Vazamento"
+            description="Alguém usou seu conteúdo?"
           />
         </DashboardGroup>
 
-        <DashboardGroup title="Comunicação">
-          <ActionCard
-            icon={<MessageCircle className="h-5 w-5" />}
-            title="Chat"
-            description="Converse com seus assinantes"
-            to="/chat"
-          />
-        </DashboardGroup>
-
-        <DashboardGroup title="Conta">
-          <ActionCard
-            icon={<User className="h-5 w-5" />}
-            title="Perfil"
-            description="Editar suas informações públicas"
-          />
+        <DashboardGroup title="Outras Funcionalidades">
           <ActionCard
             icon={<Bookmark className="h-5 w-5" />}
             title="Atividades"
-            description="Mídias favoritas e salvas"
+            description="Acesse suas mídias favoritas salvas"
           />
           <ActionCard
             icon={<Settings className="h-5 w-5" />}
@@ -79,7 +125,7 @@ export function CreatorDashboard({ username }: { username: string }) {
           <ActionCard
             icon={<HelpCircle className="h-5 w-5" />}
             title="Ajuda"
-            description="Suporte e perguntas frequentes"
+            description="Precisa de suporte ou tem dúvidas?"
           />
           <ActionCard
             icon={<LogOut className="h-5 w-5" />}
