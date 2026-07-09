@@ -92,169 +92,172 @@ function ChatSchedulingPage() {
     <div className="min-h-[100svh] bg-background text-foreground flex flex-col">
       <AppTopBar />
 
-      <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
-        <button
-          type="button"
-          aria-label="Voltar"
-          onClick={() => navigate({ to: "/chat" })}
-          className="absolute left-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-base font-semibold text-foreground">
-          Mensagens Agendadas
-        </h1>
-        <button
-          type="button"
-          aria-label="Nova mensagem"
-          onClick={() => {
-            setComposerOpen(true);
-            setDateDialogOpen(true);
-          }}
-          className="absolute right-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
-      </header>
-
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 max-w-6xl mx-auto w-full">
-        {/* Calendar column */}
-        <div className="p-6 md:border-r border-border">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Mês anterior"
-                onClick={() => setCurrentMonth((m) => addMonths(m, -1))}
-                className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                aria-label="Próximo mês"
-                onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-                className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <span className="ml-2 font-semibold text-foreground capitalize">
-                {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-              </span>
-            </div>
+      {view === "calendar" ? (
+        <>
+          <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
             <button
               type="button"
-              aria-label="Ir para hoje"
-              onClick={() => {
-                setCurrentMonth(today);
-                setSelectedDate(today);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+              aria-label="Voltar"
+              onClick={() => navigate({ to: "/chat" })}
+              className="absolute left-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
             >
-              <CalendarDays className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
-          </div>
-
-          <div className="grid grid-cols-7 text-center text-xs font-semibold text-foreground pb-2">
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
-              <div key={d}>{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {weeks.flat().map((day) => {
-              const inMonth = isSameMonth(day, currentMonth);
-              const isToday = isSameDay(day, today);
-              const isSelected = isSameDay(day, selectedDate);
-              return (
-                <button
-                  type="button"
-                  key={day.toISOString()}
-                  onClick={() => setSelectedDate(day)}
-                  className={cn(
-                    "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
-                    !inMonth && "text-muted-foreground/50",
-                    inMonth && !isSelected && "text-foreground hover:bg-accent",
-                    isToday && !isSelected && "bg-accent/40",
-                    isSelected &&
-                      "bg-card border border-border font-bold shadow-sm",
-                  )}
-                >
-                  {format(day, "d")}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Selected day column */}
-        <div className="p-6 flex flex-col">
-          <div className="flex items-center justify-between border-b border-border pb-3 mb-6">
+            <h1 className="text-base font-semibold text-foreground">
+              Mensagens Agendadas
+            </h1>
             <button
               type="button"
-              aria-label="Dia anterior"
+              aria-label="Nova mensagem"
               onClick={() => {
-                const prev = subDays(selectedDate, 1);
-                setSelectedDate(prev);
-                if (!isSameMonth(prev, currentMonth)) setCurrentMonth(prev);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="font-semibold text-foreground">
-              {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </span>
-            <button
-              type="button"
-              aria-label="Próximo dia"
-              onClick={() => {
-                const next = addDays(selectedDate, 1);
-                setSelectedDate(next);
-                if (!isSameMonth(next, currentMonth)) setCurrentMonth(next);
-              }}
-              className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex justify-center mb-8">
-            <button
-              type="button"
-              aria-label="Nova mensagem agendada"
-              onClick={() => {
-                setComposerOpen(true);
+                setView("composer");
                 setDateDialogOpen(true);
               }}
-              className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
+              className="absolute right-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
             >
-              <Plus className="h-6 w-6" />
+              <Plus className="h-5 w-5" />
             </button>
-          </div>
+          </header>
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
-            <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
-            <p className="text-muted-foreground">
-              Não há mensagens agendadas para esse dia
-            </p>
-          </div>
-        </div>
-      </div>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 max-w-6xl mx-auto w-full">
+            {/* Calendar column */}
+            <div className="p-6 md:border-r border-border">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Mês anterior"
+                    onClick={() => setCurrentMonth((m) => addMonths(m, -1))}
+                    className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Próximo mês"
+                    onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
+                    className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <span className="ml-2 font-semibold text-foreground capitalize">
+                    {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Ir para hoje"
+                  onClick={() => {
+                    setCurrentMonth(today);
+                    setSelectedDate(today);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </button>
+              </div>
 
-      <Composer
-        open={composerOpen}
-        onOpenChange={setComposerOpen}
-        message={message}
-        onMessageChange={setMessage}
-        contactSearch={contactSearch}
-        onContactSearchChange={setContactSearch}
-        activeFilters={activeFilters}
-        toggleFilter={toggleFilter}
-        scheduledAt={scheduledAt}
-        onOpenDateDialog={() => setDateDialogOpen(true)}
-        onClearSchedule={() => setScheduledAt(null)}
-      />
+              <div className="grid grid-cols-7 text-center text-xs font-semibold text-foreground pb-2">
+                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
+                  <div key={d}>{d}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {weeks.flat().map((day) => {
+                  const inMonth = isSameMonth(day, currentMonth);
+                  const isToday = isSameDay(day, today);
+                  const isSelected = isSameDay(day, selectedDate);
+                  return (
+                    <button
+                      type="button"
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(day)}
+                      className={cn(
+                        "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
+                        !inMonth && "text-muted-foreground/50",
+                        inMonth && !isSelected && "text-foreground hover:bg-accent",
+                        isToday && !isSelected && "bg-accent/40",
+                        isSelected &&
+                          "bg-card border border-border font-bold shadow-sm",
+                      )}
+                    >
+                      {format(day, "d")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selected day column */}
+            <div className="p-6 flex flex-col">
+              <div className="flex items-center justify-between border-b border-border pb-3 mb-6">
+                <button
+                  type="button"
+                  aria-label="Dia anterior"
+                  onClick={() => {
+                    const prev = subDays(selectedDate, 1);
+                    setSelectedDate(prev);
+                    if (!isSameMonth(prev, currentMonth)) setCurrentMonth(prev);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="font-semibold text-foreground">
+                  {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Próximo dia"
+                  onClick={() => {
+                    const next = addDays(selectedDate, 1);
+                    setSelectedDate(next);
+                    if (!isSameMonth(next, currentMonth)) setCurrentMonth(next);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex justify-center mb-8">
+                <button
+                  type="button"
+                  aria-label="Nova mensagem agendada"
+                  onClick={() => {
+                    setView("composer");
+                    setDateDialogOpen(true);
+                  }}
+                  className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
+                <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
+                <p className="text-muted-foreground">
+                  Não há mensagens agendadas para esse dia
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <Composer
+          onClose={() => setView("calendar")}
+          message={message}
+          onMessageChange={setMessage}
+          contactSearch={contactSearch}
+          onContactSearchChange={setContactSearch}
+          activeFilters={activeFilters}
+          toggleFilter={toggleFilter}
+          scheduledAt={scheduledAt}
+          onOpenDateDialog={() => setDateDialogOpen(true)}
+          onClearSchedule={() => setScheduledAt(null)}
+        />
+      )}
 
       <DateDialog
         open={dateDialogOpen}
