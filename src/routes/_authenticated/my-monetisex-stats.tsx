@@ -29,7 +29,9 @@ import {
   Image as ImageIcon,
   DollarSign,
   Eye,
+  UserPlus,
 } from "lucide-react";
+
 
 
 
@@ -87,8 +89,11 @@ function MyMonetisexStatsPage() {
           <ExtratosPanel />
         ) : mainTab === "Engajamento" ? (
           <EngajamentoPanel />
+        ) : mainTab === "Alcance" ? (
+          <AlcancePanel />
         ) : subTab === "Resumo" ? (
           <ResumoPanel />
+
         ) : (
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -1127,5 +1132,103 @@ function EngajamentoPanel() {
     </div>
   );
 }
+
+function AlcancePanel() {
+  const summary = [
+    { icon: Users, label: "Visitantes", value: "0" },
+    { icon: UserPlus, label: "Assinaturas", value: "0" },
+    { icon: DollarSign, label: "Assinaturas", value: "R$ 0,00" },
+    { icon: UserPlus, label: "Renovações", value: "0" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="md:col-span-2 space-y-5">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-xl font-bold tracking-tight">0 Visitantes</h3>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-foreground">Visitantes</span>
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+                  <span className="text-muted-foreground">Usuários</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 relative h-56">
+              <div className="absolute inset-0 flex flex-col justify-between">
+                {["1", "1", "0"].map((label, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-6">{label}</span>
+                    <div className="flex-1 border-t border-dashed border-border" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 flex justify-between text-xs text-muted-foreground pl-9">
+              <span>08/06</span>
+              <span>14/06</span>
+              <span>20/06</span>
+              <span>26/06</span>
+              <span>02/07</span>
+              <span>08/07</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 text-sm text-muted-foreground border-b border-border pb-3">
+              <span />
+              <span className="text-right">Visitantes</span>
+              <span className="text-right">Usuários</span>
+              <span className="text-right">Total</span>
+            </div>
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 items-center pt-4 text-sm">
+              <span className="text-foreground">Visitantes do perfil</span>
+              <span className="text-right">0</span>
+              <span className="text-right">0</span>
+              <span className="text-right font-bold">0</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Principais países</h3>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Nenhum dado disponível para o período.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Resumo</h3>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              {summary.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground">{s.label}</p>
+                      <p className="text-base font-bold">{s.value}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 
