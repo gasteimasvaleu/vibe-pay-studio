@@ -25,6 +25,7 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Images,
+  Info,
   Mic,
   Plus,
   Search,
