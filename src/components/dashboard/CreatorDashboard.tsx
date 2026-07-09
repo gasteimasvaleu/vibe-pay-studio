@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
+import { EarningsSummary } from "./EarningsSummary";
 
 export function CreatorDashboard({ username }: { username: string }) {
   const [signingOut, setSigningOut] = useState(false);
@@ -26,6 +27,7 @@ export function CreatorDashboard({ username }: { username: string }) {
   return (
     <DashboardShell username={username} isCreator>
       <div className="space-y-6">
+        <EarningsSummary />
         <DashboardGroup title="Meu negócio">
           <ActionCard
             icon={<PenSquare className="h-5 w-5" />}
