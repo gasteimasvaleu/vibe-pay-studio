@@ -58,9 +58,11 @@ export const Route = createFileRoute("/_authenticated/creator")({
       }
     }
 
+    if (profile.account_type !== "creator") {
+      throw redirect({ to: homeForAccountType(profile.account_type) });
+    }
+
     return { username: profile.username };
-  },
-  component: CreatorHome,
 });
 
 function CreatorHome() {
