@@ -185,11 +185,13 @@ function MoneyField({
   value,
   onChange,
   invalid,
+  autoFocus,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   invalid: boolean;
+  autoFocus?: boolean;
 }) {
   return (
     <div
@@ -203,8 +205,9 @@ function MoneyField({
         <input
           type="text"
           inputMode="decimal"
-          placeholder="0,00"
+          placeholder="Ex: 29,90"
           value={value}
+          autoFocus={autoFocus}
           onChange={(e) => onChange(e.target.value.replace(/[^\d,.]/g, ""))}
           className="flex-1 bg-transparent outline-none text-lg font-semibold placeholder:text-white/30"
         />
