@@ -1,27 +1,9 @@
-## Corrigir início da verificação Veriff (tela branca com spinner)
+Reconstruir o componente GooeyLoader fornecido (o código colado está incompleto) e usar ele como estado de carregamento da tela `/creator/onboarding/documentos/verificando`, com cores no roxo padrão do app.
 
-**Diagnóstico:** o server function `createIdentityVerificationSession` funciona (Network mostra 200 e URL Veriff válida). O problema é o cliente:
+O que será feito:
+1. Criar `src/components/onboarding/GooeyLoader.tsx` com o efeito "gooey" real: filtro SVG (`feGaussianBlur` + `feColorMatrix`) e duas bolas animadas que se movem e se fundem. Usar a cor primária roxa do app (`--primary`, que no tema atual é `oklch(0.72 0.13 300)`) para as bolas, garantindo consistência com o onboarding.
+2. Alterar `src/routes/_authenticated/creator.onboarding.documentos.verificando.tsx` para, enquanto `status === "processing"`, renderizar uma tela de loading dedicada em vez do banner atual. Essa tela vai usar o `GooeyLoader` centralizado, manter o fundo escuro do `OnboardingShell` e exibir a mensagem embaixo: "Verificação de identidade em andamento. Isso pode demorar alguns minutos.".
+3. Preservar os estados finais (`verified`, `requires_input`, `canceled`) exatamente como estão — só o estado intermediário de "processando" muda de UX.
+4. Verificar o build após as alterações.
 
-```ts
-window.location.href = result.url;
-```
-
-No preview do Lovable a app roda dentro de um iframe. `saas.veriff.com` envia `X-Frame-Options: DENY` / CSP `frame-ancestors`, então navegar o iframe para lá deixa a tela em branco (só o spinner do Veriff, sem conteúdo). Em produção fora de iframe funcionaria, mas o usuário nunca consegue testar/usar no preview.
-
-### Mudança — `src/routes/_authenticated/creator.onboarding.documentos.tsx`
-
-1. Substituir `window.location.href = result.url` por uma navegação de topo segura:
-   ```ts
-   const veriffUrl = result.url ?? returnUrl;
-   // Sempre navegar a janela do topo — funciona no preview (iframe) e em produção.
-   if (window.top && window.top !== window.self) {
-     window.top.location.href = veriffUrl;
-   } else {
-     window.location.href = veriffUrl;
-   }
-   ```
-2. Como fallback (caso o browser bloqueie navegação cross-origin do top), abrir também `window.open(veriffUrl, "_blank", "noopener")` e mostrar um link "Abrir verificação em nova aba" com `href={result.url}` para o usuário clicar manualmente se o pop-up for bloqueado.
-3. Navegar o próprio app para `/creator/onboarding/documentos/verificando` logo em seguida (`navigate({ to: ... })`) para que, quando o usuário voltar da Veriff, a tela de polling do KYC já esteja carregada.
-4. Manter o estado `loading` até o redirect efetivamente ocorrer e mostrar mensagem "Abrindo verificação segura..." para dar feedback.
-
-Sem mudanças no backend, no server function, nas rotas ou no schema. Só ajuste do handler `handleStart` e da UI de fallback.
+Não haverá mudanças no backend, server functions, schema ou roteamento.
