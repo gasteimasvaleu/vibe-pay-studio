@@ -37,7 +37,9 @@ export const Route = createFileRoute("/_authenticated/assinante")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("account_type, username")
+      .select(
+        "account_type, username, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle",
+      )
       .eq("user_id", userData.user.id)
       .maybeSingle();
 
@@ -45,9 +47,31 @@ export const Route = createFileRoute("/_authenticated/assinante")({
       throw redirect({ to: homeForAccountType("creator") });
     }
 
+    const hasSocials =
+      !!profile?.instagram_handle || !!profile?.tiktok_handle || !!profile?.x_handle;
+    const hasPrice = profile?.price_monthly != null;
+    const kycStatus = profile?.kyc_status ?? "not_started";
+
+    let creatorNextStep: string | null = "/creator/onboarding/redes-sociais";
+    if (kycStatus === "processing") {
+      creatorNextStep = "/creator/onboarding/documentos/verificando";
+    } else if (kycStatus === "requires_input") {
+      creatorNextStep = "/creator/onboarding/documentos";
+    } else if (!hasSocials && !hasPrice) {
+      creatorNextStep = "/creator/onboarding/redes-sociais";
+    } else if (!hasPrice) {
+      creatorNextStep = "/creator/onboarding/assinatura";
+    } else if (kycStatus === "not_started") {
+      creatorNextStep = "/creator/onboarding/documentos";
+    }
+
+    const creatorOnboardingStarted = hasSocials || hasPrice || kycStatus !== "not_started";
+
     return {
       userId: userData.user.id,
       username: profile?.username ?? userData.user.email?.split("@")[0] ?? "voce",
+      creatorNextStep,
+      creatorOnboardingStarted,
     };
   },
   component: AssinantePage,
