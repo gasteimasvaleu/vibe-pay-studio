@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { ShieldCheck, Lock, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
@@ -18,33 +18,36 @@ export const Route = createFileRoute("/_authenticated/creator/onboarding/documen
 function DocumentosPage() {
   const navigate = useNavigate();
   const createSession = useServerFn(createIdentityVerificationSession);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const [veriffUrl, setVeriffUrl] = useState<string | null>(null);
-
-  const openVeriff = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+  const reserveVeriffTab = () => {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) {
+      tab.opener = null;
+    }
+    return tab;
   };
 
   const handleStart = async () => {
-    setError(null);
-    setLoading(true);
+    const veriffTab = reserveVeriffTab();
+    navigate({ to: "/creator/onboarding/documentos/verificando" });
+
     try {
       const returnUrl = `${window.location.origin}/creator/onboarding/documentos/verificando`;
       const result = await createSession({ data: { return_url: returnUrl } });
       if (!result.ok) {
-        setError(result.message);
-        setLoading(false);
+        veriffTab?.close();
+        console.error(result.message);
         return;
       }
       const url = result.url ?? returnUrl;
-      setVeriffUrl(url);
-      openVeriff(url);
-      navigate({ to: "/creator/onboarding/documentos/verificando" });
+      if (veriffTab) {
+        veriffTab.location.href = url;
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
-      setLoading(false);
+      veriffTab?.close();
+      console.error(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
     }
   };
 
@@ -76,51 +79,23 @@ function DocumentosPage() {
           </Bullet>
         </div>
 
-        {error && (
-          <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
-            {error}
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/dashboard" })}
-              className="ml-2 underline"
-            >
-              Voltar ao painel
-            </button>
-          </div>
-        )}
-
         <button
           type="button"
           onClick={handleStart}
-          disabled={loading}
           className="mt-10 w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
         >
-          {loading ? "Preparando..." : "Iniciar verificação"}
+          Iniciar verificação
         </button>
 
-        {veriffUrl ? (
-          <p className="mt-4 text-center text-xs text-white/60">
-            Não abriu?{" "}
-            <a
-              href={veriffUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-fuchsia-300 underline underline-offset-4 hover:text-fuchsia-200"
-            >
-              Abrir verificação em nova aba
-            </a>
-          </p>
-        ) : (
-          <p className="mt-4 text-center text-xs text-white/40">
-            Você será redirecionado para o ambiente seguro da Veriff.
-          </p>
-        )}
+        <p className="mt-4 text-center text-xs text-white/40">
+          Você será redirecionado para o ambiente seguro da Veriff.
+        </p>
       </div>
     </OnboardingShell>
   );
 }
 
-function Bullet({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function Bullet({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4">
       <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300">
