@@ -97,20 +97,6 @@ export const deleteDraftMedia = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-function serverPublicClient() {
-  return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    {
-      auth: {
-        storage: undefined,
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    },
-  );
-}
-
 export type FeedItem = {
   id: string;
   author_id: string;
