@@ -378,20 +378,22 @@ function PromotionPage() {
         subtitle="Sua oferta já está disponível no seu perfil para todos usuários"
       />
 
-      <div className="mt-6 rounded-3xl border border-border bg-card p-6">
+      <div className="mt-6 rounded-3xl border border-border bg-card p-5">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-primary" />
-          <p className="text-sm font-semibold text-foreground">{name || "Sua oferta"}</p>
+          <div className="h-8 w-8 rounded-full bg-gradient-primary shrink-0" />
+          <p className="text-sm font-semibold text-foreground truncate">{name || "Sua oferta"}</p>
         </div>
         <div className="mt-4 space-y-2">
           <div className="h-3 rounded-full bg-muted w-2/3" />
           <div className="h-3 rounded-full bg-muted w-1/2" />
         </div>
-        <div className="mt-6 relative">
-          <span className="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold">
-            Economize {discountPct ?? 0}%
-          </span>
-          <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 font-bold">
+        <div className="mt-6">
+          <div className="flex justify-center mb-2">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold">
+              Economize {discountPct ?? 0}%
+            </span>
+          </div>
+          <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 px-4 font-bold text-sm sm:text-base">
             Assinar agora R$ {formatBRL(promoValue)}
           </div>
           <p className="mt-3 text-right text-xs text-muted-foreground">
