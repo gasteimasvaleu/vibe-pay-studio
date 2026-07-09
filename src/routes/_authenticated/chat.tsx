@@ -152,9 +152,13 @@ function ChatLayout() {
               <IconBtn onClick={() => setOpenNewChat(true)} label="Nova conversa">
                 <Plus className="h-5 w-5" />
               </IconBtn>
-              <IconBtn label="Agenda">
+              <Link
+                to="/chat-agendamento"
+                aria-label="Agenda"
+                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <CalendarCheck className="h-5 w-5" />
-              </IconBtn>
+              </Link>
               <Link
                 to="/chat-configuracoes"
                 aria-label="Configurações"
