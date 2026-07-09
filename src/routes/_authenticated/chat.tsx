@@ -27,6 +27,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { AppTopBar } from "@/components/site/AppTopBar";
 
@@ -208,7 +214,7 @@ function ChatLayout() {
       </div>
 
       <NewChatDialog open={openNewChat} onOpenChange={setOpenNewChat} />
-      <FiltersDialog
+      <FiltersSheet
         open={openFilters}
         onOpenChange={setOpenFilters}
         filters={filters}
@@ -416,7 +422,7 @@ function FilterChip({
   );
 }
 
-function FiltersDialog({
+function FiltersSheet({
   open,
   onOpenChange,
   filters,
@@ -431,11 +437,14 @@ function FiltersDialog({
     onChange({ ...filters, [key]: !filters[key] } as ChatFilters);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Filtrar por</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+      >
+        <SheetHeader>
+          <SheetTitle>Filtrar por</SheetTitle>
+        </SheetHeader>
 
         <div className="space-y-6">
           <section className="space-y-3">
@@ -491,7 +500,7 @@ function FiltersDialog({
         >
           Aplicar filtros
         </button>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
