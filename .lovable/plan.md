@@ -1,47 +1,39 @@
-## Plano
+## Objetivo
 
-### 1. Corrigir a tela final "Parabéns, sua oferta foi criada"
-No card de pré-visualização da oferta:
-- Reposicionar o selo **"Economize X%"** para que fique **acima** do botão "Assinar agora" (com respiro), sem sobrepor o botão nem sair para fora do card.
-- Ajustar o card para ficar mais compacto e alinhado ao restante do fluxo (padding, largura do botão, tamanho do selo).
-- Garantir que "Preço original R$ XX,XX" fique logo abaixo do botão, alinhado à direita, sem cortar.
-- Manter os dois botões inferiores ("Ver perfil" e "Ver minhas ofertas") no mesmo padrão pill usado nas outras etapas.
-- Não mexer em navbar, fundo branco, barra de progresso nem textos.
+Criar página de listagem de ofertas em `/promotions`. Botão "Ofertas" do dashboard passa a apontar para ela. Se o criador não tem nenhuma oferta ativa, redireciona para o fluxo de criação (`/promotion`). Layout segue os screenshots, adaptado aos tokens do app (fundo `background`, cartão `card`, gradiente/laranja `primary` no lugar do laranja hardcoded, verde do status via classe utilitária semântica).
 
-### 2. Criar tabela de ofertas no backend (Supabase)
+## Escopo
 
-Nova tabela `public.promotions` para armazenar as ofertas criadas pelos creators. Campos de negócio:
-- `creator_id` → dono da oferta (referência ao usuário)
-- `name` → nome da campanha
-- `max_subscriptions` → limite de assinaturas que podem aproveitar
-- `duration_days` → duração da oferta (1–7)
-- `discount_pct` → percentual de desconto (5–60)
-- `monthly_price_snapshot` → preço mensal no momento da criação
-- `promo_price` → valor promocional calculado
-- `description` → descrição livre (até 100 caracteres)
-- `status` → `active` | `paused` | `ended` (default `active`)
-- `starts_at`, `ends_at` → janela da oferta
-- `subscriptions_used` → contador (default 0)
+### 1. Backend — `src/lib/promotions.functions.ts`
+Adicionar duas server functions autenticadas (`requireSupabaseAuth`):
+- `listMyPromotions` → retorna ofertas do `creator_id = userId` ordenadas por `created_at desc`, incluindo campo derivado `is_active` (`status='active'` **e** `ends_at > now()`).
+- `endPromotion({ id })` → `UPDATE promotions SET status='ended' WHERE id=$1 AND creator_id=userId`.
 
-Regras de acesso (RLS):
-- Criador autenticado pode **ver, criar, editar e excluir** apenas as próprias ofertas.
-- Qualquer pessoa autenticada pode **ver ofertas ativas** de qualquer criador (para futura exibição no perfil/feed).
-- `service_role` com acesso total.
+Não mexer em `createPromotion`.
 
-Também:
-- Índices em `creator_id` e `status`.
-- Trigger `updated_at`.
-- GRANTs padrão para `authenticated` e `service_role`.
+### 2. Nova rota `src/routes/_authenticated/promotions.tsx` (listagem)
+- Loader chama `listMyPromotions` via TanStack Query (`ensureQueryData` + `useSuspenseQuery`).
+- Se `promotions.length === 0` → `throw redirect({ to: "/promotion" })` no `beforeLoad`/loader (fluxo de criação).
+- Se lista existe mas sem nenhuma `is_active` → mostra a página com tab "Inativas" já selecionada.
+- Header igual ao `PromotionShell` (botão voltar → `/dashboard`, título "Ofertas").
+- Tabs "Ativas" / "Inativas" (underline laranja no ativo, usando `text-primary` e `border-primary`).
+- Cartão de oferta (`rounded-3xl border bg-card p-5`) — colapsado/expandido controlado por estado local:
+  - **Colapsado**: nome (bold), linha status (dot verde + "Oferta ativa" ou dot muted + "Oferta encerrada"), "Termina em X dias (DD/MM/YYYY)" calculado de `ends_at`, divisor, "Quantidade de participantes: `subscriptions_used`/`max_subscriptions`", botão outline pill "Encerrar oferta" (só para ativas) que chama `endPromotion` e invalida a query. Chevron `>` no canto.
+  - **Expandido**: bloco `bg-muted rounded-2xl` com linhas "Valor original R$X", "Desconto -Y%" (em `text-primary`), "Valor final R$Z"; depois linhas "Oferta: Desconto na assinatura", "Início da campanha: DD/MM/YYYY", "Fim da campanha: DD/MM/YYYY", "Quantidade de participantes: X/Y"; depois botão "Encerrar oferta". Chevron `v`.
+- `head()`: título "Ofertas · Monetisex", `noindex`.
 
-### 3. Persistir a oferta ao concluir o wizard
-- Criar um server function `createPromotion` (`src/lib/promotions.functions.ts`) com `requireSupabaseAuth` que valida e insere na tabela `promotions`, retornando a oferta criada.
-- Na etapa "Descrição" do wizard, ao clicar em **Concluir**: chamar o server function, e só então avançar para a tela de sucesso. Mostrar erro amigável se falhar.
-- Passar o `discount_pct` real e o `promo_price` retornado para a tela de sucesso (hoje já é calculado no client, apenas garantir consistência).
+### 3. Dashboard — `src/components/dashboard/CreatorDashboard.tsx`
+Alterar o `ActionCard` "Ofertas" para `to="/promotions"` (a rota decide entre listagem e criação).
 
-### 4. Fora de escopo (agora)
-- Listagem/edição/exclusão de ofertas em uma tela dedicada. Fica pronto no backend; a UI de listagem será feita quando você indicar onde exibir.
+### 4. Ajuste no wizard de criação
+No `success` step do `promotion.tsx`, o botão secundário "Ver minhas ofertas" passa a navegar para `/promotions` (hoje vai para `/dashboard`).
 
-### Detalhes técnicos
-- Migration seguirá a estrutura obrigatória: CREATE TABLE → GRANT → ENABLE RLS → CREATE POLICY, com trigger `updated_at` e função `set_updated_at` já existente reutilizada.
-- Server function em `src/lib/promotions.functions.ts` (client-safe path), usando `context.supabase` para respeitar RLS como o próprio creator.
-- Sem alterações em navbar, layout global ou lógica de progresso do wizard.
+## Fora do escopo
+- Edição de oferta, "Inativas" além de exibir status encerrado, filtros, paginação.
+- Exposição pública das ofertas em outras telas (será tratado depois quando você indicar onde exibir).
+
+## Detalhes técnicos
+- Cores: usar apenas tokens (`bg-card`, `text-foreground`, `text-primary`, `bg-muted`, `text-emerald-500` para o dot verde já usado no projeto).
+- Data BR: `new Date(ends_at).toLocaleDateString("pt-BR")`; "dias restantes" = `Math.max(0, ceil((ends_at - now)/86400000))`.
+- Mutation de encerrar usa `useServerFn` + `queryClient.invalidateQueries` da key `["my-promotions"]`.
+- RLS já cobre o `UPDATE` (política própria do criador criada na migration).
