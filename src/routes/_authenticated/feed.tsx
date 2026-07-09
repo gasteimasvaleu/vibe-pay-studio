@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, Compass, Home, MessageCircle, Search, Settings, Sparkles, User } from "lucide-react";
+import { Bell, MessageCircle, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/feed")({
