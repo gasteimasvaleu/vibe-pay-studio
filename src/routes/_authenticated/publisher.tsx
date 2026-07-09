@@ -1,26 +1,71 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
   ArrowLeftRight,
   Ban,
-  Calendar,
+  Calendar as CalendarIcon,
   Camera,
+  Check,
   Clock,
   FolderPlus,
   Image as ImageIcon,
+  Loader2,
   Lock,
+  Minus,
   Mic,
   Pin,
   Plus,
   Wallet,
   X,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  createPublication,
+  deleteDraftMedia,
+} from "@/lib/publications.functions";
 
 export const Route = createFileRoute("/_authenticated/publisher")({
   head: () => ({
@@ -32,7 +77,35 @@ export const Route = createFileRoute("/_authenticated/publisher")({
   component: PublisherPage,
 });
 
-type MediaItem = { id: string; url: string; type: "image" | "video" };
+const BUCKET = "criativos";
+const MAX_MEDIA = 10;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+
+type MediaStatus = "uploading" | "ready" | "error";
+type MediaItem = {
+  id: string;
+  previewUrl: string;
+  type: "image" | "video";
+  status: MediaStatus;
+  storagePath?: string;
+  publicUrl?: string;
+  error?: string;
+};
+
+type Toggles = {
+  paid: { enabled: boolean; priceCents: number | null };
+  challenge: { enabled: boolean; priceCents: number | null };
+  expires24h: boolean;
+  schedule: { enabled: boolean; at: string | null };
+  commentsDisabled: boolean;
+  pinnedToTop: boolean;
+};
+
+const brl = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
 
 function PublisherPage() {
   const router = useRouter();
@@ -40,15 +113,38 @@ function PublisherPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [caption, setCaption] = useState("");
-  const [toggles, setToggles] = useState({
-    paid: false,
-    challenge: false,
-    post24h: false,
-    schedule: false,
-    disableComments: false,
-    pinToTop: false,
+  const [toggles, setToggles] = useState<Toggles>({
+    paid: { enabled: false, priceCents: null },
+    challenge: { enabled: false, priceCents: null },
+    expires24h: false,
+    schedule: { enabled: false, at: null },
+    commentsDisabled: false,
+    pinnedToTop: false,
   });
+  const [reorderMode, setReorderMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [paidOpen, setPaidOpen] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+
+  const createFn = useServerFn(createPublication);
+  const deleteDraft = useServerFn(deleteDraftMedia);
+  const mutation = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Publicação criada!");
+      router.navigate({ to: "/feed" });
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao publicar");
+    },
+  });
+
+  const uploadingCount = media.filter((m) => m.status === "uploading").length;
+  const errorCount = media.filter((m) => m.status === "error").length;
+  const canContinue =
+    media.length > 0 && uploadingCount === 0 && errorCount === 0;
 
   const goBack = () => {
     if (step === 2) return setStep(1);
@@ -61,18 +157,132 @@ function PublisherPage() {
     setTimeout(() => fileInputRef.current?.click(), 100);
   };
 
-  const onFiles = (files: FileList | null) => {
+  const onFiles = async (files: FileList | null) => {
     if (!files) return;
-    const arr = Array.from(files).slice(0, 10 - media.length).map((f) => ({
-      id: crypto.randomUUID(),
-      url: URL.createObjectURL(f),
-      type: f.type.startsWith("video") ? ("video" as const) : ("image" as const),
-    }));
-    setMedia((m) => [...m, ...arr]);
+    const userRes = await supabase.auth.getUser();
+    const userId = userRes.data.user?.id;
+    if (!userId) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
+    const remaining = MAX_MEDIA - media.length;
+    const slice = Array.from(files).slice(0, remaining);
+
+    const newItems: MediaItem[] = [];
+    for (const file of slice) {
+      const isVideo = file.type.startsWith("video");
+      const type: "image" | "video" = isVideo ? "video" : "image";
+      const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+      if (file.size > limit) {
+        toast.error(
+          `${file.name} excede o limite de ${isVideo ? "200MB" : "15MB"}`,
+        );
+        continue;
+      }
+      const id = crypto.randomUUID();
+      newItems.push({
+        id,
+        previewUrl: URL.createObjectURL(file),
+        type,
+        status: "uploading",
+      });
+      const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+      const path = `posts/${userId}/drafts/${id}.${ext}`;
+
+      // Upload async
+      void supabase.storage
+        .from(BUCKET)
+        .upload(path, file, { upsert: false, contentType: file.type })
+        .then(({ error }) => {
+          if (error) {
+            setMedia((prev) =>
+              prev.map((m) =>
+                m.id === id
+                  ? { ...m, status: "error", error: error.message }
+                  : m,
+              ),
+            );
+            toast.error(`Falha ao enviar ${file.name}`);
+            return;
+          }
+          const { data: pub } = supabase.storage
+            .from(BUCKET)
+            .getPublicUrl(path);
+          setMedia((prev) =>
+            prev.map((m) =>
+              m.id === id
+                ? {
+                    ...m,
+                    status: "ready",
+                    storagePath: path,
+                    publicUrl: pub.publicUrl,
+                  }
+                : m,
+            ),
+          );
+        });
+    }
+    setMedia((m) => [...m, ...newItems]);
   };
 
-  const removeMedia = (id: string) =>
+  const removeMedia = async (id: string) => {
+    const item = media.find((m) => m.id === id);
     setMedia((m) => m.filter((x) => x.id !== id));
+    if (item?.storagePath) {
+      try {
+        await deleteDraft({ data: { storagePath: item.storagePath } });
+      } catch {
+        // silencioso: arquivo órfão pode ser limpo depois.
+      }
+    }
+    if (item) URL.revokeObjectURL(item.previewUrl);
+  };
+
+  const onPost = () => {
+    const readyMedia = media.filter((m) => m.status === "ready" && m.storagePath && m.publicUrl);
+    if (readyMedia.length === 0) return;
+    const visibility: "public" | "paid" | "challenge" = toggles.paid.enabled
+      ? "paid"
+      : toggles.challenge.enabled
+        ? "challenge"
+        : "public";
+    mutation.mutate({
+      data: {
+        caption: caption.trim() || null,
+        visibility,
+        priceCents: toggles.paid.priceCents,
+        challengeCents: toggles.challenge.priceCents,
+        expires24h: toggles.expires24h,
+        scheduledAt: toggles.schedule.at,
+        commentsDisabled: toggles.commentsDisabled,
+        pinned: toggles.pinnedToTop,
+        media: readyMedia.map((m) => ({
+          storagePath: m.storagePath!,
+          url: m.publicUrl!,
+          type: m.type,
+        })),
+      },
+    });
+  };
+
+  // Handlers for switches
+  const onPaidChange = (v: boolean) => {
+    if (v) setPaidOpen(true);
+    else setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
+  };
+  const onChallengeChange = (v: boolean) => {
+    if (v) setChallengeOpen(true);
+    else
+      setToggles((t) => ({
+        ...t,
+        challenge: { enabled: false, priceCents: null },
+      }));
+  };
+  const onScheduleChange = (v: boolean) => {
+    if (v) setScheduleOpen(true);
+    else setToggles((t) => ({ ...t, schedule: { enabled: false, at: null } }));
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -98,7 +308,7 @@ function PublisherPage() {
         multiple
         hidden
         onChange={(e) => {
-          onFiles(e.target.files);
+          void onFiles(e.target.files);
           e.target.value = "";
         }}
       />
@@ -109,6 +319,9 @@ function PublisherPage() {
             media={media}
             onOpenPicker={openPicker}
             onRemove={removeMedia}
+            reorderMode={reorderMode}
+            setReorderMode={setReorderMode}
+            setMedia={setMedia}
           />
         ) : (
           <StepCompose
@@ -116,7 +329,13 @@ function PublisherPage() {
             caption={caption}
             setCaption={setCaption}
             toggles={toggles}
+            onPaidChange={onPaidChange}
+            onChallengeChange={onChallengeChange}
+            onScheduleChange={onScheduleChange}
             setToggles={setToggles}
+            setMedia={setMedia}
+            reorderMode={reorderMode}
+            setReorderMode={setReorderMode}
           />
         )}
       </main>
@@ -126,21 +345,30 @@ function PublisherPage() {
           {step === 1 ? (
             <Button
               className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold disabled:opacity-40 disabled:bg-muted disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
-              disabled={media.length === 0}
+              disabled={!canContinue}
               onClick={() => setStep(2)}
             >
-              Continuar
+              {uploadingCount > 0
+                ? `Enviando (${uploadingCount})...`
+                : "Continuar"}
             </Button>
           ) : (
-            <Button className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold">
-              Postar
+            <Button
+              className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold disabled:opacity-50"
+              disabled={mutation.isPending || !canContinue}
+              onClick={onPost}
+            >
+              {mutation.isPending ? "Postando..." : "Postar"}
             </Button>
           )}
         </div>
       </footer>
 
       <Sheet open={pickerOpen} onOpenChange={setPickerOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0">
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+        >
           <SheetHeader>
             <SheetTitle>Selecionar mídia</SheetTitle>
           </SheetHeader>
@@ -163,6 +391,73 @@ function PublisherPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <PriceDialog
+        open={paidOpen}
+        onOpenChange={(v) => {
+          setPaidOpen(v);
+          if (!v && !toggles.paid.enabled) {
+            setToggles((t) => ({
+              ...t,
+              paid: { enabled: false, priceCents: null },
+            }));
+          }
+        }}
+        title="Desbloquear publicação"
+        subtitle={null}
+        minCents={1490}
+        maxCents={200000}
+        initialCents={toggles.paid.priceCents ?? 1490}
+        onConfirm={(cents) => {
+          setToggles((t) => ({
+            ...t,
+            paid: { enabled: true, priceCents: cents },
+            challenge: { enabled: false, priceCents: null },
+          }));
+          setPaidOpen(false);
+        }}
+      />
+
+      <PriceDialog
+        open={challengeOpen}
+        onOpenChange={(v) => {
+          setChallengeOpen(v);
+          if (!v && !toggles.challenge.enabled) {
+            setToggles((t) => ({
+              ...t,
+              challenge: { enabled: false, priceCents: null },
+            }));
+          }
+        }}
+        title="Desafio"
+        subtitle="Valor do desafio"
+        minCents={5000}
+        maxCents={200000}
+        initialCents={toggles.challenge.priceCents ?? 5000}
+        onConfirm={(cents) => {
+          setToggles((t) => ({
+            ...t,
+            challenge: { enabled: true, priceCents: cents },
+            paid: { enabled: false, priceCents: null },
+          }));
+          setChallengeOpen(false);
+        }}
+      />
+
+      <ScheduleDialog
+        open={scheduleOpen}
+        onOpenChange={(v) => {
+          setScheduleOpen(v);
+          if (!v && !toggles.schedule.enabled) {
+            setToggles((t) => ({ ...t, schedule: { enabled: false, at: null } }));
+          }
+        }}
+        initial={toggles.schedule.at}
+        onConfirm={(iso) => {
+          setToggles((t) => ({ ...t, schedule: { enabled: true, at: iso } }));
+          setScheduleOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -188,22 +483,51 @@ function PickerOption({
   );
 }
 
+/* ---------------- STEP 1 ---------------- */
+
 function StepMedia({
   media,
   onOpenPicker,
   onRemove,
+  reorderMode,
+  setReorderMode,
+  setMedia,
 }: {
   media: MediaItem[];
   onOpenPicker: () => void;
   onRemove: (id: string) => void;
+  reorderMode: boolean;
+  setReorderMode: (v: boolean) => void;
+  setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>;
 }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setMedia((items) => {
+      const oldIdx = items.findIndex((m) => m.id === active.id);
+      const newIdx = items.findIndex((m) => m.id === over.id);
+      if (oldIdx < 0 || newIdx < 0) return items;
+      return arrayMove(items, oldIdx, newIdx);
+    });
+  };
+
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-center">
         <h2 className="font-semibold">Fotos e vídeos</h2>
         <p className="text-sm text-muted-foreground">
-          {media.length} de 10 - Você pode enviar até 10 mídias
+          {media.length} de {MAX_MEDIA} - Você pode enviar até {MAX_MEDIA} mídias
         </p>
+        {reorderMode && (
+          <p className="text-xs text-orange-500 mt-1">
+            Arraste as miniaturas para reordenar
+          </p>
+        )}
       </div>
 
       {media.length === 0 ? (
@@ -217,50 +541,55 @@ function StepMedia({
         </button>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg">
-            {media.map((m) => (
-              <div
-                key={m.id}
-                className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
-              >
-                {m.type === "video" ? (
-                  <video src={m.url} className="w-full h-full object-cover" />
-                ) : (
-                  <img
-                    src={m.url}
-                    alt=""
-                    className="w-full h-full object-cover"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={media.map((m) => m.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg">
+                {media.map((m) => (
+                  <SortableMedia
+                    key={m.id}
+                    item={m}
+                    onRemove={onRemove}
+                    reorderMode={reorderMode}
                   />
-                )}
-                <button
-                  type="button"
-                  onClick={() => onRemove(m.id)}
-                  aria-label="Remover"
-                  className="absolute top-2 right-2 h-8 w-8 grid place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
 
           <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
             <Button
               variant="outline"
               onClick={onOpenPicker}
-              disabled={media.length >= 10}
+              disabled={media.length >= MAX_MEDIA || reorderMode}
               className="h-12 rounded-full bg-card"
             >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar mídia
             </Button>
             <Button
-              variant="outline"
+              variant={reorderMode ? "default" : "outline"}
+              onClick={() => setReorderMode(!reorderMode)}
               disabled={media.length < 2}
-              className="h-12 rounded-full bg-card"
+              className="h-12 rounded-full"
             >
-              <ArrowLeftRight className="h-4 w-4 mr-2" />
-              Reordenar
+              {reorderMode ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Concluir
+                </>
+              ) : (
+                <>
+                  <ArrowLeftRight className="h-4 w-4 mr-2" />
+                  Reordenar
+                </>
+              )}
             </Button>
           </div>
         </>
@@ -269,39 +598,132 @@ function StepMedia({
   );
 }
 
-type Toggles = {
-  paid: boolean;
-  challenge: boolean;
-  post24h: boolean;
-  schedule: boolean;
-  disableComments: boolean;
-  pinToTop: boolean;
-};
+function SortableMedia({
+  item,
+  onRemove,
+  reorderMode,
+}: {
+  item: MediaItem;
+  onRemove: (id: string) => void;
+  reorderMode: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.id, disabled: !reorderMode });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+      {...(reorderMode ? { ...attributes, ...listeners } : {})}
+    >
+      {item.type === "video" ? (
+        <video src={item.previewUrl} className="w-full h-full object-cover" />
+      ) : (
+        <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
+      )}
+
+      {item.status === "uploading" && (
+        <div className="absolute inset-0 grid place-items-center bg-black/50 text-white">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      )}
+      {item.status === "error" && (
+        <div className="absolute inset-0 grid place-items-center bg-red-900/70 text-white text-xs px-2 text-center">
+          Falha no upload
+        </div>
+      )}
+
+      {!reorderMode && (
+        <button
+          type="button"
+          onClick={() => onRemove(item.id)}
+          aria-label="Remover"
+          className="absolute top-2 right-2 h-8 w-8 grid place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- STEP 2 ---------------- */
 
 function StepCompose({
   media,
   caption,
   setCaption,
   toggles,
+  onPaidChange,
+  onChallengeChange,
+  onScheduleChange,
   setToggles,
+  setMedia,
+  reorderMode,
+  setReorderMode,
 }: {
   media: MediaItem[];
   caption: string;
   setCaption: (v: string) => void;
   toggles: Toggles;
+  onPaidChange: (v: boolean) => void;
+  onChallengeChange: (v: boolean) => void;
+  onScheduleChange: (v: boolean) => void;
   setToggles: React.Dispatch<React.SetStateAction<Toggles>>;
+  setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>;
+  reorderMode: boolean;
+  setReorderMode: (v: boolean) => void;
 }) {
   const first = media[0];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setMedia((items) => {
+      const oldIdx = items.findIndex((m) => m.id === active.id);
+      const newIdx = items.findIndex((m) => m.id === over.id);
+      if (oldIdx < 0 || newIdx < 0) return items;
+      return arrayMove(items, oldIdx, newIdx);
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      {first && (
-        <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
-          {first.type === "video" ? (
-            <video src={first.url} className="w-full h-full object-cover" />
-          ) : (
-            <img src={first.url} alt="" className="w-full h-full object-cover" />
-          )}
-        </div>
+      {reorderMode ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={media.map((m) => m.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-3 gap-2">
+              {media.map((m) => (
+                <SortableMedia
+                  key={m.id}
+                  item={m}
+                  onRemove={() => {}}
+                  reorderMode
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        first && (
+          <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
+            {first.type === "video" ? (
+              <video src={first.previewUrl} className="w-full h-full object-cover" />
+            ) : (
+              <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
+            )}
+          </div>
+        )
       )}
 
       <Textarea
@@ -317,12 +739,22 @@ function StepCompose({
           Gravar áudio
         </Button>
         <Button
-          variant="outline"
+          variant={reorderMode ? "default" : "outline"}
           disabled={media.length < 2}
-          className="h-12 rounded-full bg-card"
+          onClick={() => setReorderMode(!reorderMode)}
+          className="h-12 rounded-full"
         >
-          <ArrowLeftRight className="h-4 w-4 mr-2" />
-          Reordenar
+          {reorderMode ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              Concluir
+            </>
+          ) : (
+            <>
+              <ArrowLeftRight className="h-4 w-4 mr-2" />
+              Reordenar
+            </>
+          )}
         </Button>
       </div>
 
@@ -332,39 +764,56 @@ function StepCompose({
         <ToggleRow
           icon={<Lock className="h-5 w-5" />}
           label="Publicação paga"
-          checked={toggles.paid}
-          onChange={(v) => setToggles((t) => ({ ...t, paid: v }))}
+          hint={
+            toggles.paid.enabled && toggles.paid.priceCents != null
+              ? brl.format(toggles.paid.priceCents / 100)
+              : undefined
+          }
+          checked={toggles.paid.enabled}
+          onChange={onPaidChange}
         />
         <ToggleRow
           icon={<Wallet className="h-5 w-5" />}
           label="Desafio"
-          checked={toggles.challenge}
-          onChange={(v) => setToggles((t) => ({ ...t, challenge: v }))}
+          hint={
+            toggles.challenge.enabled && toggles.challenge.priceCents != null
+              ? brl.format(toggles.challenge.priceCents / 100)
+              : undefined
+          }
+          checked={toggles.challenge.enabled}
+          onChange={onChallengeChange}
         />
         <ToggleRow
           icon={<Clock className="h-5 w-5" />}
           label="Post 24 horas"
-          checked={toggles.post24h}
-          onChange={(v) => setToggles((t) => ({ ...t, post24h: v }))}
+          checked={toggles.expires24h}
+          onChange={(v) => setToggles((t) => ({ ...t, expires24h: v }))}
         />
         <Separator className="my-2" />
         <ToggleRow
-          icon={<Calendar className="h-5 w-5" />}
+          icon={<CalendarIcon className="h-5 w-5" />}
           label="Agendar publicação"
-          checked={toggles.schedule}
-          onChange={(v) => setToggles((t) => ({ ...t, schedule: v }))}
+          hint={
+            toggles.schedule.enabled && toggles.schedule.at
+              ? format(new Date(toggles.schedule.at), "dd/MM HH:mm", {
+                  locale: ptBR,
+                })
+              : undefined
+          }
+          checked={toggles.schedule.enabled}
+          onChange={onScheduleChange}
         />
         <ToggleRow
           icon={<Ban className="h-5 w-5" />}
           label="Desligar comentários"
-          checked={toggles.disableComments}
-          onChange={(v) => setToggles((t) => ({ ...t, disableComments: v }))}
+          checked={toggles.commentsDisabled}
+          onChange={(v) => setToggles((t) => ({ ...t, commentsDisabled: v }))}
         />
         <ToggleRow
           icon={<Pin className="h-5 w-5" />}
           label="Postar fixado ao topo"
-          checked={toggles.pinToTop}
-          onChange={(v) => setToggles((t) => ({ ...t, pinToTop: v }))}
+          checked={toggles.pinnedToTop}
+          onChange={(v) => setToggles((t) => ({ ...t, pinnedToTop: v }))}
         />
       </div>
     </div>
@@ -374,19 +823,209 @@ function StepCompose({
 function ToggleRow({
   icon,
   label,
+  hint,
   checked,
   onChange,
 }: {
   icon: React.ReactNode;
   label: string;
+  hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
     <label className="flex items-center gap-3 py-3 cursor-pointer">
       <span className="text-foreground">{icon}</span>
-      <span className="flex-1 font-medium">{label}</span>
+      <span className="flex-1 font-medium">
+        {label}
+        {hint && (
+          <span className="ml-2 text-xs text-orange-500 font-semibold">{hint}</span>
+        )}
+      </span>
       <Switch checked={checked} onCheckedChange={onChange} />
     </label>
+  );
+}
+
+/* ---------------- DIALOGS ---------------- */
+
+function PriceDialog({
+  open,
+  onOpenChange,
+  title,
+  subtitle,
+  minCents,
+  maxCents,
+  initialCents,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  subtitle: string | null;
+  minCents: number;
+  maxCents: number;
+  initialCents: number;
+  onConfirm: (cents: number) => void;
+}) {
+  const [cents, setCents] = useState(initialCents);
+  const stepCents = 100;
+
+  useEffect(() => {
+    if (open) setCents(Math.max(minCents, Math.min(maxCents, initialCents)));
+  }, [open, initialCents, minCents, maxCents]);
+
+  const clamp = (v: number) => Math.max(minCents, Math.min(maxCents, v));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px] rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="pt-2 pb-1">
+          {subtitle && (
+            <p className="text-center text-sm text-muted-foreground mb-2">
+              {subtitle}
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => setCents((c) => clamp(c - stepCents))}
+              className="h-11 w-11 grid place-items-center rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+              aria-label="Diminuir"
+            >
+              <Minus className="h-5 w-5" />
+            </button>
+            <div className="flex-1 text-center text-3xl font-black tracking-tight">
+              {brl.format(cents / 100)}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCents((c) => clamp(c + stepCents))}
+              className="h-11 w-11 grid place-items-center rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+              aria-label="Aumentar"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="mt-6 px-1">
+            <Slider
+              min={minCents}
+              max={maxCents}
+              step={stepCents}
+              value={[cents]}
+              onValueChange={([v]) => setCents(clamp(v ?? minCents))}
+            />
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            <span className="font-semibold">mínimo</span> : {brl.format(minCents / 100)} —{" "}
+            <span className="font-semibold">máximo</span> : {brl.format(maxCents / 100)}
+          </p>
+          <Button
+            onClick={() => onConfirm(cents)}
+            className="w-full h-12 mt-6 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+          >
+            Avançar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ScheduleDialog({
+  open,
+  onOpenChange,
+  initial,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  initial: string | null;
+  onConfirm: (iso: string) => void;
+}) {
+  const initialDate = useMemo(
+    () => (initial ? new Date(initial) : new Date(Date.now() + 15 * 60 * 1000)),
+    [initial],
+  );
+  const [date, setDate] = useState<Date>(initialDate);
+  const [time, setTime] = useState(() => format(initialDate, "HH:mm"));
+
+  useEffect(() => {
+    if (open) {
+      setDate(initialDate);
+      setTime(format(initialDate, "HH:mm"));
+    }
+  }, [open, initialDate]);
+
+  const combine = () => {
+    const [hh, mm] = time.split(":").map((v) => parseInt(v, 10));
+    const d = new Date(date);
+    d.setHours(hh || 0, mm || 0, 0, 0);
+    return d;
+  };
+
+  const handleApply = () => {
+    const d = combine();
+    const min = new Date(Date.now() + 5 * 60 * 1000);
+    if (d.getTime() < min.getTime()) {
+      toast.error("A data/hora deve ser no futuro (mín. 15 min).");
+      return;
+    }
+    onConfirm(d.toISOString());
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px] rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Agendando publicação</DialogTitle>
+        </DialogHeader>
+        <Tabs defaultValue="date" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full bg-transparent border-b border-border rounded-none h-auto p-0">
+            <TabsTrigger
+              value="date"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+            >
+              {format(date, "MMM dd, EEE.", { locale: ptBR })}
+            </TabsTrigger>
+            <TabsTrigger
+              value="time"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+            >
+              {time}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="date" className="mt-4">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(d) => d && setDate(d)}
+              disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+              locale={ptBR}
+              className="rounded-md pointer-events-auto mx-auto"
+            />
+          </TabsContent>
+          <TabsContent value="time" className="mt-4">
+            <div className="flex justify-center">
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="text-4xl font-bold bg-transparent border-b-2 border-orange-500 text-center outline-none py-4"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+        <Button
+          onClick={handleApply}
+          className="w-full h-12 mt-4 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+        >
+          Aplicar
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,8 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Bell, MessageCircle, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getFeed } from "@/lib/publications.functions";
+import { PublicationCard } from "@/components/feed/PublicationCard";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
@@ -30,6 +34,12 @@ export const Route = createFileRoute("/_authenticated/feed")({
 function FeedPage() {
   const { username } = Route.useRouteContext();
   const [signingOut, setSigningOut] = useState(false);
+  const fetchFeed = useServerFn(getFeed);
+
+  const feedQuery = useQuery({
+    queryKey: ["feed"],
+    queryFn: () => fetchFeed({ data: { limit: 20 } }),
+  });
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -101,33 +111,46 @@ function FeedPage() {
             </p>
           </motion.section>
 
-          {/* Empty state */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 md:p-12 text-center"
-          >
-            <div className="mx-auto h-14 w-14 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/30 grid place-items-center text-fuchsia-300">
-              <Sparkles className="h-6 w-6" />
+          {/* Feed items */}
+          {feedQuery.isLoading ? (
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+              Carregando publicações...
             </div>
-            <h2 className="mt-5 text-xl md:text-2xl font-bold text-white">
-              Seu feed ainda está vazio
-            </h2>
-            <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
-              Assim que você começar a seguir creators, os posts mais recentes aparecem aqui em tempo real.
-            </p>
-            <Link
-              to="/dashboard"
-              className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
+          ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
+            <div className="space-y-4">
+              {feedQuery.data.items.map((item) => (
+                <PublicationCard key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 md:p-12 text-center"
             >
-              Ir para o painel
-            </Link>
-        </motion.section>
+              <div className="mx-auto h-14 w-14 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/30 grid place-items-center text-fuchsia-300">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h2 className="mt-5 text-xl md:text-2xl font-bold text-white">
+                Seu feed ainda está vazio
+              </h2>
+              <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
+                Assim que você começar a seguir creators, os posts mais recentes aparecem aqui em tempo real.
+              </p>
+              <Link
+                to="/dashboard"
+                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
+              >
+                Ir para o painel
+              </Link>
+            </motion.section>
+          )}
       </main>
     </div>
   );
 }
+
 
 function IconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
