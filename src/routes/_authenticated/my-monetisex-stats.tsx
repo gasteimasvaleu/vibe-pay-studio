@@ -89,8 +89,11 @@ function MyMonetisexStatsPage() {
           <ExtratosPanel />
         ) : mainTab === "Engajamento" ? (
           <EngajamentoPanel />
+        ) : mainTab === "Alcance" ? (
+          <AlcancePanel />
         ) : subTab === "Resumo" ? (
           <ResumoPanel />
+
         ) : (
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
