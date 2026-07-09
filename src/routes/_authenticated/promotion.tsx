@@ -451,7 +451,7 @@ function PillSelect<T extends string | number>({
         <ChevronDown className={`h-5 w-5 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-10 mt-2 w-full rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+        <div className="relative z-10 mt-2 w-full rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
           {options.map((opt) => (
             <button
               key={String(opt.value)}
