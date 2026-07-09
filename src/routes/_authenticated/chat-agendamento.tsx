@@ -289,8 +289,7 @@ function buildMonthMatrix(month: Date): Date[][] {
 }
 
 function Composer({
-  open,
-  onOpenChange,
+  onClose,
   message,
   onMessageChange,
   contactSearch,
@@ -301,8 +300,7 @@ function Composer({
   onOpenDateDialog,
   onClearSchedule,
 }: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onClose: () => void;
   message: string;
   onMessageChange: (v: string) => void;
   contactSearch: string;
@@ -316,25 +314,30 @@ function Composer({
   const canContinue = message.trim().length > 0 && activeFilters.size > 0;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[92svh] rounded-t-2xl p-0 sm:max-w-none"
+    <div className="flex-1 relative">
+      <button
+        type="button"
+        aria-label="Fechar"
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
       >
-        <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
-          {/* Left: contacts */}
-          <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                type="button"
-                aria-label="Fechar"
-                onClick={() => onOpenChange(false)}
-                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <h2 className="text-base font-semibold">Mensagem em massa</h2>
-            </div>
+        <X className="h-5 w-5" />
+      </button>
+      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full min-h-[calc(100svh-56px)]">
+        {/* Left: contacts */}
+        <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              type="button"
+              aria-label="Voltar"
+              onClick={onClose}
+              className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h2 className="text-base font-semibold">Mensagem em massa</h2>
+          </div>
+
 
             <h3 className="text-sm font-semibold text-foreground mb-3">
               Selecione seus contatos
