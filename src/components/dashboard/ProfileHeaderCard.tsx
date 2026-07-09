@@ -24,7 +24,7 @@ export function ProfileHeaderCard({
       {/* Faixa gradiente */}
       <div className="relative h-24 bg-gradient-primary">
         <div className="absolute top-3 right-4">
-          <span className="inline-flex items-center rounded-full bg-background/85 backdrop-blur px-3 py-1 text-sm font-black text-primary shadow-sm">
+          <span className="inline-flex items-center rounded-full bg-background/85 backdrop-blur px-3 py-1 text-sm font-bold text-primary shadow-sm">
             {levelBadge}
             <span className="text-xs align-super ml-0.5">°</span>
           </span>
@@ -34,7 +34,7 @@ export function ProfileHeaderCard({
       {/* Corpo */}
       <div className="relative px-5 pb-5">
         <div className="flex items-start justify-between -mt-10">
-          <div className="h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-black text-primary-foreground shadow-[var(--shadow-glow)]">
+          <div className="h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
             {username.slice(0, 1).toUpperCase()}
           </div>
           <Link
@@ -48,7 +48,7 @@ export function ProfileHeaderCard({
 
         <div className="mt-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight text-foreground truncate">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground truncate">
               {displayName}
             </h2>
             {isCreator && (
@@ -57,7 +57,7 @@ export function ProfileHeaderCard({
           </div>
           <p className="text-sm text-muted-foreground">@{username}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="text-lg font-black text-foreground align-middle">
+            <span className="text-lg font-bold text-foreground align-middle">
               {resolvedStat.value}
             </span>{" "}
             <span className="align-middle">{resolvedStat.label}</span>

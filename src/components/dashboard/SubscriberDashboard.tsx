@@ -33,7 +33,7 @@ export function SubscriberDashboard({
   return (
     <DashboardShell username={username} isCreator={false}>
       <section className="space-y-4">
-        <h3 className="text-lg font-black tracking-tight text-white/90">
+        <h3 className="text-lg font-bold tracking-tight text-white/90">
           Área do Assinante
         </h3>
 
