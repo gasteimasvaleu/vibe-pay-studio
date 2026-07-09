@@ -23,28 +23,37 @@ function DocumentosPage() {
 
   const [veriffUrl, setVeriffUrl] = useState<string | null>(null);
 
-  const openVeriff = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+  const reserveVeriffTab = () => {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) {
+      tab.opener = null;
+    }
+    return tab;
   };
 
   const handleStart = async () => {
     setError(null);
     setLoading(true);
+    const veriffTab = reserveVeriffTab();
+    navigate({ to: "/creator/onboarding/documentos/verificando" });
+
     try {
       const returnUrl = `${window.location.origin}/creator/onboarding/documentos/verificando`;
       const result = await createSession({ data: { return_url: returnUrl } });
       if (!result.ok) {
-        setError(result.message);
-        setLoading(false);
+        veriffTab?.close();
+        console.error(result.message);
         return;
       }
       const url = result.url ?? returnUrl;
-      setVeriffUrl(url);
-      openVeriff(url);
-      navigate({ to: "/creator/onboarding/documentos/verificando" });
+      if (veriffTab) {
+        veriffTab.location.href = url;
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
-      setLoading(false);
+      veriffTab?.close();
+      console.error(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
     }
   };
 
