@@ -1,33 +1,32 @@
-## Sub-aba "Top assinantes" (dentro de Assinantes)
+## Sub-aba "Atividade dos assinantes"
 
-Atualizar `AssinantesPanel` em `src/routes/_authenticated/my-monetisex-stats.tsx` para renderizar layout dedicado quando `tab === "Top assinantes"` (substitui o placeholder "Em breve").
+Substituir o placeholder "Em breve" restante em `AssinantesPanel` para renderizar layout dedicado quando `tab === "Atividade dos assinantes"`.
 
 ### Layout
 
 **Grid 2/3 + 1/3:**
 
-Coluna principal:
-- Label `Filtrar por` bold
-- Chips: `Total` (ativo), `Assinaturas`, `Mimos`, `Chat`
-- Card tabela:
-  - Header: `Nome` (esquerda) `Gasto total` (direita)
-  - Corpo vazio com texto centralizado muted: "Sem dados para este filtro"
+Coluna principal (empilhada):
 
-Coluna lateral:
-- Card `Resumo`:
-  - Título "Resumo" bold
-  - Grid 2 colunas:
-    - `Users` (ícone circular outline) → "Assinantes" / "0"
-    - `UserPlus` (ícone circular outline) → "Assinaturas/Renovações" / "0 / 0"
-    - `DollarSign` (ícone circular outline) → "Ganhos de assinaturas" / "R$ 0,00" (com uma linha divisória fina à direita/abaixo simulando o traço do screenshot — usar `<hr>` sutil)
-- Card `Top assinantes` (mesmo do modo Assinaturas):
-  - Título "Top assinantes" bold
-  - Chips com overflow-x-auto: `Total` (ativo), `Assinaturas`, `Mimos`, `Chat`
-  - Texto muted: "Sem dados para este filtro."
+1. Card `Atividade dos assinantes`:
+   - Título "Atividade dos assinantes" bold
+   - Subtítulo muted: "Distribuição de acessos dos assinantes por dia e horário"
+   - Heatmap: grid 7 linhas (Sun, Mon, Tue, Wed, Thu, Fri, Sat) × 8 colunas (12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm)
+     - Label do dia à esquerda de cada linha
+     - Células retangulares em `bg-primary/10` com `rounded-md`
+     - Row de labels de hora abaixo do grid
+
+2. Card `Horas mais ativas`:
+   - Título "Horas mais ativas" bold
+   - Área de gráfico com 4 linhas horizontais rotuladas `100%`, `66%`, `33%`, `0%`
+   - Eixo X com labels: `12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm`
+
+Coluna lateral (reusar do Top assinantes):
+- Card `Resumo` (Assinantes, Assinaturas/Renovações, Ganhos de assinaturas)
+- Card `Top assinantes` (chips + "Sem dados para este filtro.")
 
 ### Detalhes técnicos
 
-- Reutilizar constante `TOP_ASSINANTES_CHIPS` para ambos os filtros (topFiltro para sidebar, novo `topAssFiltro` para coluna principal).
-- Ícones circulares: `h-10 w-10 rounded-full border border-border text-primary grid place-items-center bg-card`.
-- Estado local separado para o filtro da coluna principal.
-- Nenhuma alteração em dados/backend.
+- Extrair o bloco da sidebar (Resumo + Top assinantes) em uma função interna `SidebarResumo` dentro de `AssinantesPanel` para reutilizar entre Top assinantes e Atividade.
+- Heatmap: `grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-2 items-center`, células com `h-6 rounded-md bg-primary/10`.
+- Sem dados/backend; UI estática.

@@ -1468,10 +1468,118 @@ function AssinantesPanel() {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground shadow-[var(--shadow-card)]">
-            Em breve.
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2 space-y-5">
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Atividade dos assinantes</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Distribuição de acessos dos assinantes por dia e horário
+                </p>
+                <div className="mt-6 space-y-2">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                    <div
+                      key={d}
+                      className="grid grid-cols-[2.5rem_repeat(8,minmax(0,1fr))] gap-2 items-center"
+                    >
+                      <span className="text-xs text-muted-foreground">{d}</span>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="h-6 rounded-md bg-primary/10" />
+                      ))}
+                    </div>
+                  ))}
+                  <div className="grid grid-cols-[2.5rem_repeat(8,minmax(0,1fr))] gap-2 pt-2">
+                    <span />
+                    {["12am", "3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm"].map((h) => (
+                      <span key={h} className="text-xs text-muted-foreground text-center">
+                        {h}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Horas mais ativas</h3>
+                <div className="mt-6 relative h-48">
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {["100%", "66%", "33%", "0%"].map((label) => (
+                      <div key={label} className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground w-10">{label}</span>
+                        <div className="flex-1 border-t border-border" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-8 gap-2 pl-13">
+                  {["12am", "3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm"].map((h) => (
+                    <span key={h} className="text-xs text-muted-foreground text-center">
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Resumo</h3>
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground">Assinantes</p>
+                      <p className="text-base font-bold">0</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <UserPlus className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground leading-tight">
+                        Assinaturas/<br />Renovações
+                      </p>
+                      <p className="text-base font-bold">0 / 0</p>
+                    </div>
+                  </div>
+                  <div className="col-span-2 flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-border text-primary grid place-items-center bg-card">
+                      <DollarSign className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-muted-foreground">Ganhos de assinaturas</p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-base font-bold">R$ 0,00</p>
+                        <div className="flex-1 border-t border-border" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">Top assinantes</h3>
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {TOP_ASSINANTES_CHIPS.map((c) => (
+                    <div key={c} className="shrink-0">
+                      <Chip
+                        label={c}
+                        active={c === topFiltro}
+                        onClick={() => setTopFiltro(c)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-center text-sm text-muted-foreground">
+                  Sem dados para este filtro.
+                </p>
+              </div>
+            </div>
           </div>
         )}
+
 
       </div>
     </div>
