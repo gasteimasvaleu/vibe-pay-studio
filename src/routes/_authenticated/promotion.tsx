@@ -237,6 +237,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Defina o desconto ideal para atrair novos assinantes"
           subtitle="Escolha entre 5% até 60% de desconto para sua assinatura de 1 mês"
