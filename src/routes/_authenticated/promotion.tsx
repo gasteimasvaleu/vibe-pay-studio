@@ -109,9 +109,11 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Dê um nome à sua oferta"
           subtitle="Crie um nome para organizar suas ofertas com facilidade"
+          compact
         />
         <PillInput
           label="Nome da campanha"
