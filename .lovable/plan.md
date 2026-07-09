@@ -1,46 +1,43 @@
 ## Objetivo
-Ajustar os cards de ação (`ActionCard`) em `CreatorDashboard` para ficar com a mesma aparência dos cards de Faturamento/Liberado/Total: fundo branco (`bg-card`), borda fina (`border`) e sombra suave (`shadow-card`).
 
-## Escopo
-- Aplicar a todos os cards do dashboard: **Área do Criador** e **Outras Funcionalidades** (incluindo o card de Sair).
-- Manter os comportamentos existentes: navegação, estado `disabled`, clique no Sair e variação de tom `danger`.
-- Não mexer no `EarningsSummary` nem no `DashboardShell`, pois a referência visual já está neles.
+Aplicar a mesma tipografia dos cards do dashboard (Faturamento/Liberado/Total) como padrão em todo o site, exceto na home (`src/routes/index.tsx`). Hoje há títulos em `text-4xl`, `5xl`, `6xl` e `7xl` com `font-black tracking-tighter` — o usuário considera essa escala agressiva demais.
 
-## Alterações planejadas
+## Padrão de referência (extraído do card do screenshot)
 
-### 1. Revisar estilos do `ActionCard.tsx`
-- Substituir o visual "glass dark" por tokens claros do tema:
-  - `bg-white/5` → `bg-card`
-  - `border-white/10` → `border` (usando `--color-border`)
-  - `backdrop-blur-md` → remover
-  - `shadow-[var(--shadow-card)]` → adicionar sombra consistente com os cards de faturamento
-- Ajustar os estados hover:
-  - `hover:border-white/25` → `hover:border-primary/40` ou `hover:ring-1 hover:ring-primary/20`
-  - `hover:bg-white/10` → remover ou usar `hover:bg-accent`
-- Ajustar o container do ícone:
-  - `bg-white/5` → `bg-secondary/60` ou `bg-primary/10`
-  - `border-white/10` → `border`
-  - `text-fuchsia-300` → `text-primary`
-- Ajustar textos:
-  - título → `text-card-foreground`
-  - descrição → `text-muted-foreground`
-- Ajustar o estado `danger` para combinar com o novo fundo claro:
-  - manter `tone="danger"` com cores destrutivas/acento primário sem ficar gritante demais no fundo branco
-- Ajustar `highlight` (se ainda existir) para não conflitar com o novo visual; considerar removê-lo se não for usado.
+Fonte: Inter (já é a padrão do projeto — não muda).
 
-### 2. Verificar `CreatorDashboard.tsx`
-- Confirmar que `highlight` não é passado para nenhum `ActionCard` (o resumo da última mensagem diz que foi removido). Se ainda estiver, removê-lo.
-- Manter `disabled`, `tone="danger"`, `to` e `onClick` como estão.
+| Uso | Classes |
+|---|---|
+| Título de página/seção principal (h1/h2 grande) | `text-2xl md:text-3xl font-black tracking-tight` |
+| Título de card/subseção (h3) | `text-lg font-black tracking-tight` |
+| Legenda/subtítulo dentro do card | `text-sm text-muted-foreground` |
+| Valor/número em destaque | `text-3xl font-black tracking-tight` |
+| Eyebrow/label uppercase | manter atual (`text-xs uppercase tracking-wider font-semibold`) |
 
-### 3. Validar visual
-- Comparar os cards de ação com os cards do `EarningsSummary` no preview.
-- Confirmar que o contraste de ícone, título e descrição continua legível no fundo branco.
+Regra geral: nunca passar de `text-3xl` em telas md+; nunca usar `tracking-tighter`; manter `font-black tracking-tight` como peso padrão para títulos.
 
-## Arquivos alterados
-- `src/components/dashboard/ActionCard.tsx` (estilos)
-- `src/components/dashboard/CreatorDashboard.tsx` (apenas se houver limpeza de `highlight`)
+## Arquivos a alterar
 
-## Fora do escopo
-- Não criar novas rotas nem funcionalidades para os cards.
-- Não alterar os cards de faturamento (jão estão no estilo desejado).
-- Não mudar a estrutura do dashboard, apenas os tokens de cor.
+Ajustar tamanhos/peso/tracking dos títulos e valores nestes arquivos, seguindo a tabela acima. Não mexer em cores, layout, ícones ou copy.
+
+- `src/routes/sobre.tsx` — heros e h2 de seções (várias ocorrências `text-4xl/5xl/6xl/7xl`, `tracking-tighter`), estatística `text-5xl md:text-6xl`.
+- `src/routes/como-funciona.tsx` — hero `text-5xl md:text-7xl`, h2 `text-4xl md:text-5xl`, numeração `text-7xl`, valores `text-3xl md:text-4xl`.
+- `src/routes/entrar.tsx` — h1 `text-2xl md:text-3xl` (já OK, apenas confirmar).
+- `src/routes/cadastro.tsx` — h1 `text-2xl md:text-3xl` (já OK, apenas confirmar).
+- `src/routes/_authenticated/feed.tsx` — h1 do feed `text-2xl md:text-3xl` (já OK); h2 `text-xl md:text-2xl` mantém.
+- `src/routes/_authenticated/publisher.tsx` — título grande `text-3xl` e input `text-4xl` → padronizar para `text-3xl` no título; input mantém tamanho para editor.
+- `src/routes/_authenticated/perfil.$username.tsx` — h2 `text-2xl font-black` (já OK).
+- `src/routes/_authenticated/creator.onboarding.*` — títulos `text-2xl md:text-3xl` (já OK); `creator.onboarding.documentos.aprovado.tsx` reduzir de `text-3xl md:text-4xl` → `text-2xl md:text-3xl`.
+- `src/routes/__root.tsx` — 404 `text-7xl` → `text-5xl` (exceção visual permitida por ser código de erro, mas reduzir).
+- `src/components/dashboard/*`, `src/components/site/Navbar.tsx`, `Footer.tsx`, `AppTopBar.tsx` — já estão dentro do padrão; apenas conferir.
+
+## Fora de escopo
+
+- `src/routes/index.tsx` (home) — não tocar.
+- Cores, gradientes, layout, espaçamento, componentes shadcn.
+- Corpo de texto (`text-base`, `text-sm`) e labels — mantidos.
+- Fonte em si (continua Inter).
+
+## Validação
+
+Após as edições, rodar o build e checar visualmente as páginas `/sobre`, `/como-funciona`, `/dashboard`, onboarding do criador e feed para confirmar que os títulos ficaram no mesmo peso/tamanho dos cards de referência.
