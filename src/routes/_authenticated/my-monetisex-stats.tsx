@@ -169,7 +169,14 @@ function TopPostagemCard() {
             ))}
           </div>
         </div>
-        <CardMenuButton />
+        <CardMenu
+          items={[
+            { label: "Exibir estatísticas" },
+            { label: "Copiar link da publicação" },
+            { label: "Fixar post" },
+            { label: "Arquivar post" },
+          ]}
+        />
       </div>
       <p className="mt-10 mb-6 text-center text-sm text-muted-foreground">
         Nenhuma postagem encontrada no período.
@@ -195,7 +202,7 @@ function TopLiveCard() {
             ))}
           </div>
         </div>
-        <CardMenuButton />
+        <CardMenu items={[{ label: "Exibir estatísticas" }]} />
       </div>
 
       <div className="mt-4 h-px bg-border" />
