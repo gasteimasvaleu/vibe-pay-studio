@@ -6,9 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   ArrowLeft,
-  Calendar,
+  Calendar as CalendarIcon,
+  CalendarDays,
   CheckCircle2,
   Info,
   Lock,
@@ -16,6 +19,8 @@ import {
   MoreVertical,
   Radio,
   Smartphone,
+  Sparkles,
+  Trophy,
   Users,
 } from "lucide-react";
 
@@ -71,6 +76,8 @@ function MyMonetisexStatsPage() {
           <div className="md:col-span-2 space-y-5">
             {subTab === "Destaques" ? (
               <DestaquesPanel />
+            ) : subTab === "Sequência de atividades" ? (
+              <SequenciaPanel />
             ) : (
               <>
                 <EarningsChartCard />
@@ -245,7 +252,7 @@ function RangeSelector() {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2 text-foreground">
-        <Calendar className="h-5 w-5 text-muted-foreground" />
+        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
         <span className="font-semibold">Últimos 30 dias</span>
       </div>
       <button
@@ -415,6 +422,106 @@ function PeriodTotalCard() {
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <h3 className="text-base font-bold">Faturamento no período</h3>
       <p className="mt-3 text-sm text-muted-foreground">R$ 0,00</p>
+    </div>
+  );
+}
+
+function SequenciaPanel() {
+  return (
+    <div className="space-y-5">
+      <StreakCallout />
+      <StreakStatsRow />
+      <StreakDetailCard />
+    </div>
+  );
+}
+
+function StreakCallout() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] flex items-center gap-3">
+      <Trophy className="h-5 w-5 text-primary shrink-0" />
+      <p className="flex-1 font-semibold">Poste e divulgue para continuar crescendo!</p>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="Sobre sequências"
+            className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <Info className="h-4 w-4" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="max-w-xs bg-foreground text-background border-foreground text-sm leading-relaxed rounded-xl p-4"
+        >
+          Uma sequência é o número de dias seguidos em que você esteve ativo para seus
+          seguidores. Depois de concluir uma ação, sua sequência aumentará em um dia. Você
+          pode descansar por um dia consecutivo, mas apenas uma vez por semana sem perder
+          sua sequência. Durante esse dia de folga, sua sequência será pausada e retomada
+          no dia seguinte, quando você se tornar ativo novamente.
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+function StreakStatsRow() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="rounded-2xl border-2 border-primary bg-card p-5 shadow-[var(--shadow-card)] text-center hover:bg-accent transition-colors"
+          >
+            <p className="text-sm text-muted-foreground">Sequência atual</p>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
+              <span className="text-2xl font-bold text-primary">1 dia</span>
+            </div>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="center" className="w-auto p-0">
+          <Calendar mode="single" selected={new Date()} />
+        </PopoverContent>
+      </Popover>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-center">
+        <p className="text-sm text-muted-foreground">Sequência mais longa</p>
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <CalendarDays className="h-6 w-6 text-primary" />
+          <span className="text-2xl font-bold">1 dia</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StreakDetailCard() {
+  const rows: { label: string; value: string }[] = [
+    { label: "Postagens feitas", value: "1" },
+    { label: "Respostas aos assinantes no chat", value: "Não" },
+    { label: "Tempo em live", value: "0m" },
+    { label: "Faturamento total", value: "R$ 0,00" },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Sua sequência atual começou. 9 Jul, 2026</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Durante esse período, você esteve ativo por 1 dia, com:
+      </p>
+      <div className="mt-4">
+        {rows.map((r) => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between py-4 border-t border-border"
+          >
+            <span className="text-foreground">{r.label}</span>
+            <span className="font-semibold">{r.value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
