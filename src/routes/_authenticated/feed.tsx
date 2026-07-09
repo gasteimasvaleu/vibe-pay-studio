@@ -139,26 +139,3 @@ function IconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButton
     </button>
   );
 }
-
-function SideItem({
-  icon,
-  label,
-  active,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-        active
-          ? "bg-white/15 text-white"
-          : "text-white/75 hover:text-white hover:bg-white/10"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
