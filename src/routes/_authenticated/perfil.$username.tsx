@@ -372,7 +372,7 @@ function IconAction({
       aria-label={label}
       onClick={onClick}
       className={`h-9 w-9 grid place-items-center rounded-full transition-colors ${
-        active ? "text-fuchsia-400" : "text-white/70 hover:text-white hover:bg-white/10"
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
       }`}
     >
       {children}
