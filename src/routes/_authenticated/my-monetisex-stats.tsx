@@ -970,3 +970,107 @@ function ExtratoFaturamentoCard() {
     </div>
   );
 }
+
+const ENGAJAMENTO_TABS = ["Publicações", "Lives"] as const;
+const ORDENAR_OPTIONS = ["Recentes", "Faturamento", "Mimos", "Curtidas", "Comentários"] as const;
+
+function EngajamentoPanel() {
+  const [tab, setTab] = useState<(typeof ENGAJAMENTO_TABS)[number]>("Publicações");
+  const [ordenar, setOrdenar] = useState<(typeof ORDENAR_OPTIONS)[number]>("Recentes");
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2">
+        {ENGAJAMENTO_TABS.map((t) => {
+          const isActive = t === tab;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                isActive
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-card text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-5">
+        <p className="text-sm font-bold text-foreground">Ordenar por</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {ORDENAR_OPTIONS.map((o) => (
+            <Chip key={o} label={o} active={o === ordenar} onClick={() => setOrdenar(o)} />
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="md:col-span-2 space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="text-base font-bold">1 postagem</span>
+                <span className="text-base font-bold">R$ 0,00</span>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-foreground">Faturamento</span>
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+                  <span className="text-muted-foreground">Quantidade</span>
+                </span>
+              </div>
+            </div>
+            <p className="py-16 text-center text-sm text-muted-foreground">
+              Sem dados de engajamento para o período selecionado.
+            </p>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            Nenhuma publicação encontrada no período.
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Resumo</h3>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center">
+                  <ImageIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Quantidade</p>
+                  <p className="text-base font-bold">0</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center">
+                  <DollarSign className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Faturamento</p>
+                  <p className="text-base font-bold">R$ 0,00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Top postagem</h3>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Nenhuma postagem encontrada no período.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
