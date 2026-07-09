@@ -16,6 +16,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
 import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authenticated/assinante'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
@@ -58,6 +59,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCreatorRoute = AuthenticatedCreatorRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/assinante': typeof AuthenticatedAssinanteRoute
   '/creator': typeof AuthenticatedCreatorRouteWithChildren
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/assinante': typeof AuthenticatedAssinanteRoute
   '/creator': typeof AuthenticatedCreatorRouteWithChildren
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/_authenticated/assinante': typeof AuthenticatedAssinanteRoute
   '/_authenticated/creator': typeof AuthenticatedCreatorRouteWithChildren
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/assinante'
     | '/creator'
+    | '/dashboard'
     | '/feed'
     | '/perfil/$username'
     | '/creator/onboarding/assinatura'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/assinante'
     | '/creator'
+    | '/dashboard'
     | '/feed'
     | '/perfil/$username'
     | '/creator/onboarding/assinatura'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/_authenticated/assinante'
     | '/_authenticated/creator'
+    | '/_authenticated/dashboard'
     | '/_authenticated/feed'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -280,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator': {
@@ -387,6 +406,7 @@ const AuthenticatedCreatorRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssinanteRoute: typeof AuthenticatedAssinanteRoute
   AuthenticatedCreatorRoute: typeof AuthenticatedCreatorRouteWithChildren
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
 }
@@ -394,6 +414,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssinanteRoute: AuthenticatedAssinanteRoute,
   AuthenticatedCreatorRoute: AuthenticatedCreatorRouteWithChildren,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
 }
