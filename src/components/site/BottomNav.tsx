@@ -73,8 +73,8 @@ function NavItem({
 
 function CenterPost() {
   return (
-    <button
-      type="button"
+    <Link
+      to="/publisher"
       className="flex flex-col items-center justify-center gap-1 h-full text-white/80 hover:text-white transition-colors"
       aria-label="Postar"
     >
@@ -82,6 +82,6 @@ function CenterPost() {
         <Plus className="h-6 w-6 text-white" />
       </span>
       <span className="text-[11px] font-medium leading-none -mt-1">Postar</span>
-    </button>
+    </Link>
   );
 }
