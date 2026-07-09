@@ -22,6 +22,7 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
+import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat.configuracoes'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -97,6 +98,12 @@ const AuthenticatedPerfilUsernameRoute =
     path: '/perfil/$username',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedChatConfiguracoesRoute =
+  AuthenticatedChatConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -179,6 +187,7 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/chat/configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/publisher'
     | '/chat/$threadId'
+    | '/chat/configuracoes'
     | '/perfil/$username'
     | '/chat/'
     | '/creator/onboarding/assinatura'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/publisher'
     | '/chat/$threadId'
+    | '/chat/configuracoes'
     | '/perfil/$username'
     | '/chat'
     | '/creator/onboarding/assinatura'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/feed'
     | '/_authenticated/publisher'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/chat/configuracoes'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/chat/'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -383,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat/configuracoes': {
+      id: '/_authenticated/chat/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/chat/configuracoes'
+      preLoaderRoute: typeof AuthenticatedChatConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -444,11 +464,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
+  AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
 }
 
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
+  AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
