@@ -119,10 +119,12 @@ const getFeedSchema = z.object({
 });
 
 export const getFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => getFeedSchema.parse(d ?? {}))
-  .handler(async ({ data }): Promise<{ items: FeedItem[]; nextCursor: string | null }> => {
+  .handler(async ({ data, context }): Promise<{ items: FeedItem[]; nextCursor: string | null }> => {
     const limit = data.limit ?? 20;
-    const client = serverPublicClient();
+    const client = context.supabase;
+    const currentUserId = context.userId;
 
     let query = client
       .from("publications")
