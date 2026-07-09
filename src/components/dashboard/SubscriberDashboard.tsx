@@ -51,7 +51,6 @@ export function SubscriberDashboard({
                 : "Monetize seu conteúdo e receba assinantes"
             }
             to={creatorNextStep}
-            highlight
           />
           <ActionCard
             icon={<MessageCircle className="h-5 w-5" />}
