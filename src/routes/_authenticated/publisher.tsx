@@ -140,7 +140,7 @@ function PublisherPage() {
       </footer>
 
       <Sheet open={pickerOpen} onOpenChange={setPickerOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetContent side="bottom" className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0">
           <SheetHeader>
             <SheetTitle>Selecionar mídia</SheetTitle>
           </SheetHeader>
@@ -152,7 +152,7 @@ function PublisherPage() {
             />
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
-              label="Acervo na Privacy"
+              label="Acervo no Monetisex"
               onClick={triggerFileInput}
             />
             <PickerOption
