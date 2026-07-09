@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowLeft,
   Calendar,
   CheckCircle2,
@@ -106,15 +112,33 @@ function Chip({
   );
 }
 
-function CardMenuButton() {
+function CardMenu({ items }: { items: { label: string; onSelect?: () => void }[] }) {
   return (
-    <button
-      type="button"
-      aria-label="Mais opções"
-      className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-    >
-      <MoreVertical className="h-4 w-4" />
-    </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Mais opções"
+          className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2"
+      >
+        {items.map((it) => (
+          <DropdownMenuItem
+            key={it.label}
+            onSelect={it.onSelect}
+            className="py-3 px-3 text-base cursor-pointer rounded-xl"
+          >
+            {it.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
