@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { createPromotion } from "@/lib/promotions.functions";
 import {
   PromotionHeader,
   PromotionProgress,
@@ -35,6 +38,8 @@ function PromotionPage() {
   const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
   const [selectOpen, setSelectOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const createPromotionFn = useServerFn(createPromotion);
 
   // form data
   const [name, setName] = useState("");
@@ -288,7 +293,7 @@ function PromotionPage() {
 
   // ============ STEP: DESCRIPTION ============
   if (step === "description") {
-    const valid = description.trim().length > 0;
+    const valid = description.trim().length > 0 && !submitting;
     return (
       <PromotionShell
         step={stepIndex + 1}
@@ -297,20 +302,32 @@ function PromotionPage() {
         footer={
           <button
             disabled={!valid}
-            onClick={() => {
-              // TODO(server-fn): createPromotion({ name, quantity, durationDays, discountPct, description })
-              console.log("Criar oferta:", {
-                name,
-                quantity: parseInt(quantity, 10),
-                durationDays,
-                discountPct,
-                description,
-              });
-              goNext("success");
+            onClick={async () => {
+              if (durationDays === null || discountPct === null) return;
+              setSubmitting(true);
+              try {
+                await createPromotionFn({
+                  data: {
+                    name: name.trim(),
+                    maxSubscriptions: parseInt(quantity, 10),
+                    durationDays,
+                    discountPct,
+                    description: description.trim(),
+                  },
+                });
+                goNext("success");
+              } catch (err) {
+                console.error(err);
+                toast.error(
+                  err instanceof Error ? err.message : "Não foi possível criar a oferta",
+                );
+              } finally {
+                setSubmitting(false);
+              }
             }}
             className={primaryBtn}
           >
-            Concluir
+            {submitting ? "Criando..." : "Concluir"}
           </button>
         }
       >
@@ -361,20 +378,22 @@ function PromotionPage() {
         subtitle="Sua oferta já está disponível no seu perfil para todos usuários"
       />
 
-      <div className="mt-6 rounded-3xl border border-border bg-card p-6">
+      <div className="mt-6 rounded-3xl border border-border bg-card p-5">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-primary" />
-          <p className="text-sm font-semibold text-foreground">{name || "Sua oferta"}</p>
+          <div className="h-8 w-8 rounded-full bg-gradient-primary shrink-0" />
+          <p className="text-sm font-semibold text-foreground truncate">{name || "Sua oferta"}</p>
         </div>
         <div className="mt-4 space-y-2">
           <div className="h-3 rounded-full bg-muted w-2/3" />
           <div className="h-3 rounded-full bg-muted w-1/2" />
         </div>
-        <div className="mt-6 relative">
-          <span className="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold">
-            Economize {discountPct ?? 0}%
-          </span>
-          <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 font-bold">
+        <div className="mt-6">
+          <div className="flex justify-center mb-2">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold">
+              Economize {discountPct ?? 0}%
+            </span>
+          </div>
+          <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 px-4 font-bold text-sm sm:text-base">
             Assinar agora R$ {formatBRL(promoValue)}
           </div>
           <p className="mt-3 text-right text-xs text-muted-foreground">
