@@ -1,52 +1,33 @@
-## Aba "Assinantes"
+## Sub-aba "Top assinantes" (dentro de Assinantes)
 
-Adicionar `AssinantesPanel` renderizado quando `mainTab === "Assinantes"` em `src/routes/_authenticated/my-monetisex-stats.tsx`. Atualizar switch principal.
+Atualizar `AssinantesPanel` em `src/routes/_authenticated/my-monetisex-stats.tsx` para renderizar layout dedicado quando `tab === "Top assinantes"` (substitui o placeholder "Em breve").
 
-### Sub-tabs (pílulas)
-- `Assinaturas` (ativa por padrão)
-- `Top assinantes`
-- `Atividade dos assinantes`
+### Layout
 
-Divisor abaixo (border-t) como nas outras abas.
+**Grid 2/3 + 1/3:**
 
-### Layout (quando "Assinaturas" está ativa)
-
-**Grid 2/3 + 1/3 (topo):**
-
-Coluna principal — Card de gráfico:
-- Header: `0 Assinantes, R$ 0,00` (bold) + legenda "● Faturamento ● Quantidade"
-- Área do gráfico com linhas horizontais tracejadas rotuladas `R$1`, `R$1`, `R$0`, `1`, `1`
-- No meio do gráfico, texto centralizado muted: "Nenhum dado disponível para o período."
-- Eixo X: `Jun 9, 2026 / Jun 16, 2026 / Jun 24, 2026 / Jul 2, 2026 / Jul 9, 2026`
+Coluna principal:
+- Label `Filtrar por` bold
+- Chips: `Total` (ativo), `Assinaturas`, `Mimos`, `Chat`
+- Card tabela:
+  - Header: `Nome` (esquerda) `Gasto total` (direita)
+  - Corpo vazio com texto centralizado muted: "Sem dados para este filtro"
 
 Coluna lateral:
-- Card `Top assinantes`:
+- Card `Resumo`:
+  - Título "Resumo" bold
+  - Grid 2 colunas:
+    - `Users` (ícone circular outline) → "Assinantes" / "0"
+    - `UserPlus` (ícone circular outline) → "Assinaturas/Renovações" / "0 / 0"
+    - `DollarSign` (ícone circular outline) → "Ganhos de assinaturas" / "R$ 0,00" (com uma linha divisória fina à direita/abaixo simulando o traço do screenshot — usar `<hr>` sutil)
+- Card `Top assinantes` (mesmo do modo Assinaturas):
   - Título "Top assinantes" bold
-  - Linha de chips (scroll horizontal `overflow-x-auto`): `Total` (ativa), `Assinaturas`, `Mimos`, `Chat` (parcialmente visível)
-  - Texto muted centralizado: "Sem dados para este filtro."
-- Card `Assinantes por faixa de preço`:
-  - Título bold
-  - Texto muted centralizado: "Nenhum dado disponível para o período."
-
-**Abaixo (largura da coluna principal 2/3):**
-
-- Bloco `Filtrar por`:
-  - Label "Filtrar por" bold
-  - Chips: `Todos` (ativo), `Renovações`, `Novos assinantes`
-- Input de busca:
-  - Ícone `Search` à esquerda, placeholder "Pesquisar assinantes..."
-  - Estilo pílula arredondada com border
-- Card tabela:
-  - Header: `Nome | Status | Preço | Duração total`
-  - Corpo vazio com texto centralizado muted: "Nenhum assinante encontrado."
-
-### Sub-tabs restantes
-
-`Top assinantes` e `Atividade dos assinantes`: renderizar placeholder simples "Em breve." Pode ser refinado nas próximas iterações quando os screenshots forem enviados.
+  - Chips com overflow-x-auto: `Total` (ativo), `Assinaturas`, `Mimos`, `Chat`
+  - Texto muted: "Sem dados para este filtro."
 
 ### Detalhes técnicos
 
-- Novos ícones lucide: `Search`.
-- Estado local para sub-tab, filtro (Todos/Renovações/Novos assinantes), filtro Top assinantes e query de busca.
-- Input com border pílula: `rounded-full border border-border bg-card px-5 py-3 pl-11`.
-- Sem mudanças em dados/backend.
+- Reutilizar constante `TOP_ASSINANTES_CHIPS` para ambos os filtros (topFiltro para sidebar, novo `topAssFiltro` para coluna principal).
+- Ícones circulares: `h-10 w-10 rounded-full border border-border text-primary grid place-items-center bg-card`.
+- Estado local separado para o filtro da coluna principal.
+- Nenhuma alteração em dados/backend.
