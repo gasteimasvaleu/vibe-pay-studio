@@ -1,0 +1,244 @@
+import { useState } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { ArrowLeft, Calendar, CheckCircle2, MessageCircle, Info } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
+  head: () => ({
+    meta: [
+      { title: "Meu Monetisex · Monetisex" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: MyMonetisexStatsPage,
+});
+
+const MAIN_TABS = ["Visão geral", "Extratos", "Engajamento", "Alcance", "Assinantes"] as const;
+const SUB_TABS = ["Faturamento", "Destaques", "Sequência de atividades", "Resumo"] as const;
+
+function MyMonetisexStatsPage() {
+  const router = useRouter();
+  const [mainTab, setMainTab] = useState<(typeof MAIN_TABS)[number]>("Visão geral");
+  const [subTab, setSubTab] = useState<(typeof SUB_TABS)[number]>("Faturamento");
+
+  return (
+    <div className="relative min-h-screen text-foreground overflow-hidden">
+      <div className="absolute inset-0 bg-background" />
+      <div
+        className="absolute inset-0 opacity-70 pointer-events-none"
+        style={{ background: "var(--gradient-radial)" }}
+      />
+
+      <header className="sticky top-0 z-20 border-b border-border backdrop-blur-md bg-card/80">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+          <button
+            onClick={() => router.history.back()}
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold">Meu Monetisex</h1>
+          <div className="w-9" />
+        </div>
+      </header>
+
+      <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
+        <RangeSelector />
+
+        <div className="space-y-3">
+          <TabsRow tabs={MAIN_TABS} active={mainTab} onChange={setMainTab} />
+          <SubTabsRow tabs={SUB_TABS} active={subTab} onChange={setSubTab} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="md:col-span-2 space-y-5">
+            <EarningsChartCard />
+            <ProductTable />
+          </div>
+          <div className="space-y-5">
+            <TopBadgeCard />
+            <PeriodTotalCard />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function RangeSelector() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 text-foreground">
+        <Calendar className="h-5 w-5 text-muted-foreground" />
+        <span className="font-semibold">Últimos 30 dias</span>
+      </div>
+      <button
+        type="button"
+        className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground hover:bg-accent transition-colors"
+      >
+        Jun 9, 2026 - Jul 9, 2026
+      </button>
+    </div>
+  );
+}
+
+function TabsRow<T extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: readonly T[];
+  active: T;
+  onChange: (t: T) => void;
+}) {
+  return (
+    <div className="rounded-full border border-border bg-card p-1 flex overflow-x-auto">
+      {tabs.map((t) => {
+        const isActive = t === active;
+        return (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onChange(t)}
+            className={`flex-1 min-w-fit whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              isActive
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SubTabsRow<T extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: readonly T[];
+  active: T;
+  onChange: (t: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {tabs.map((t) => {
+        const isActive = t === active;
+        return (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onChange(t)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+              isActive
+                ? "bg-primary/15 text-primary border-primary/30"
+                : "bg-card text-muted-foreground border-border hover:text-foreground"
+            }`}
+          >
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function EarningsChartCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-start justify-between">
+        <h3 className="text-lg font-bold tracking-tight">Últimos 30 dias</h3>
+        <span className="text-lg font-bold">R$ 0,00</span>
+      </div>
+
+      <div className="mt-6 relative h-40">
+        <div className="absolute inset-0 flex flex-col justify-between">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-8">R$0</span>
+              <div className="flex-1 border-t border-dashed border-border" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-between text-xs text-muted-foreground pl-11">
+        <span>Jun 9,<br />2026</span>
+        <span>Jun 16,<br />2026</span>
+        <span>Jun 24,<br />2026</span>
+        <span>Jul 2,<br />2026</span>
+        <span>Jul 9,<br />2026</span>
+      </div>
+    </div>
+  );
+}
+
+function ProductTable() {
+  return (
+    <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="grid grid-cols-3 px-5 py-3 text-sm text-muted-foreground border-b border-border">
+        <span>Produto</span>
+        <span className="text-right">Valor</span>
+        <span className="text-right">Sua comissão</span>
+      </div>
+      <div className="grid grid-cols-3 px-5 py-4 items-center">
+        <div className="flex items-center gap-2 font-semibold">
+          <CheckCircle2 className="h-5 w-5 text-primary" />
+          Total
+        </div>
+        <span className="text-right">R$ 0,00</span>
+        <span className="text-right">R$ 0,00</span>
+      </div>
+    </div>
+  );
+}
+
+function TopBadgeCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
+          <MessageCircle className="h-5 w-5" />
+        </div>
+        <span className="font-semibold">Você está no top +100 da Monetisex!</span>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground">Faturamento hoje</p>
+        <div className="mt-2 h-0.5 w-8 bg-foreground/60 rounded-full" />
+      </div>
+
+      <div className="rounded-xl border border-border bg-background/40 grid grid-cols-2 divide-x divide-border">
+        <div className="p-4">
+          <p className="text-lg font-bold">R$ 0,00</p>
+          <p className="text-xs text-muted-foreground mt-1">Saldo liberado</p>
+        </div>
+        <div className="p-4">
+          <p className="text-lg font-bold">R$ 0,00</p>
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            Saldo a liberar <Info className="h-3 w-3" />
+          </p>
+        </div>
+      </div>
+
+      <Link
+        to="/dashboard"
+        className="block text-center rounded-full border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors"
+      >
+        Acessar Meu Banco
+      </Link>
+    </div>
+  );
+}
+
+function PeriodTotalCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Faturamento no período</h3>
+      <p className="mt-3 text-sm text-muted-foreground">R$ 0,00</p>
+    </div>
+  );
+}
