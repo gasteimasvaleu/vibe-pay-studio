@@ -1,8 +1,6 @@
-Plano de implementação para alterar o botão `+` da tela de chat.
+Plano para ajustar o botão `+` da tela `/chat` para abrir diretamente na tela de composição de mensagem em massa (a do screenshot), pulando a tela de calendário e sem abrir o dialog de agendamento.
 
-Objetivo: o botão `+` do header de `/chat` deve abrir a tela de agendamento/mensagem em massa (`/chat-agendamento`), e essa tela deve exibir o aviso de limite de disparos em massa conforme o screenshot.
-
-Escopo: mudanças apenas no frontend, sem lógica de negócio/persistência.
+Escopo: ajustes de roteamento/estado inicial, sem backend.
 
 ````text
 Arquivos alterados
@@ -10,19 +8,21 @@ Arquivos alterados
 └── src/routes/_authenticated/chat-agendamento.tsx
 
 Mudanças
-1. chat.tsx
-   - Substituir o botão `+` (que hoje abre o modal "Nova conversa") por um Link
-     que navega para `/chat-agendamento`.
-   - Manter inalterados os demais botões do header (Agenda, Configurações,
-     Filtros, Presença).
+1. chat-agendamento.tsx
+   - Adicionar leitura de search param `view` (via useSearch do TanStack Router).
+   - Inicializar o estado interno `view` como "composer" quando a URL for
+     `/chat-agendamento?view=composer`.
+   - Manter o comportamento padrão "calendar" quando o param não estiver
+     presente (ícone de agenda continua indo para o calendário).
 
-2. chat-agendamento.tsx
-   - Adicionar, no painel esquerdo da view "composer" (abaixo dos filtros e
-     acima do botão "Aplicar filtro"), um card de aviso com:
-     • Ícone de informação
-     • Título: "Novo limite de disparos em massa"
-     • Texto: "Você tem até 5 disparos hoje. Planeje suas mensagens com
-       antecedência."
-     • Estilo visual alinhado ao design atual do app (card arredondado,
-       borda, cor de fundo suave).
+2. chat.tsx
+   - Alterar o Link do botão `+` para apontar para `/chat-agendamento` com
+     search param `view=composer`.
+
+Resultado esperado
+- Clicar no `+` do header de `/chat` abre `/chat-agendamento?view=composer`
+  já na tela de composição (igual ao screenshot), com o card de aviso visível.
+- O dialog de agendamento de data não abre automaticamente.
+- O ícone de calendário ao lado continua abrindo `/chat-agendamento` na tela
+  de calendário normalmente.
 ````

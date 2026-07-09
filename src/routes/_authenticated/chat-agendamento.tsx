@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { useMemo, useState } from "react";
 import {
   addDays,
@@ -49,7 +51,12 @@ import { FilterChip } from "@/components/chat/FilterChip";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { cn } from "@/lib/utils";
 
+const searchSchema = z.object({
+  view: fallback(z.string(), "calendar").default("calendar"),
+});
+
 export const Route = createFileRoute("/_authenticated/chat-agendamento")({
+  validateSearch: zodValidator(searchSchema),
   component: ChatSchedulingPage,
 });
 
@@ -69,7 +76,10 @@ function ChatSchedulingPage() {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [view, setView] = useState<"calendar" | "composer">("calendar");
+  const { view: initialView } = Route.useSearch();
+  const [view, setView] = useState<"calendar" | "composer">(
+    initialView === "composer" ? "composer" : "calendar"
+  );
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
