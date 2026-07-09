@@ -24,8 +24,7 @@ function DocumentosPage() {
   const [veriffUrl, setVeriffUrl] = useState<string | null>(null);
 
   const openVeriff = (url: string) => {
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-    return Boolean(opened);
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const handleStart = async () => {
@@ -41,12 +40,7 @@ function DocumentosPage() {
       }
       const url = result.url ?? returnUrl;
       setVeriffUrl(url);
-      const opened = openVeriff(url);
-      if (!opened) {
-        setError("Não conseguimos abrir a Veriff automaticamente. Use o link abaixo para continuar em nova aba.");
-        setLoading(false);
-        return;
-      }
+      openVeriff(url);
       navigate({ to: "/creator/onboarding/documentos/verificando" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
