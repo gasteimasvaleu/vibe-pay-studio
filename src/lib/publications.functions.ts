@@ -205,7 +205,3 @@ export const getFeed = createServerFn({ method: "POST" })
 
     return { items, nextCursor };
   });
-    });
-
-    return { items, nextCursor };
-  });
