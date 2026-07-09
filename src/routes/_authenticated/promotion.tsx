@@ -173,6 +173,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escolha por quanto tempo sua oferta estará ativa"
           subtitle="Defina por quanto tempo ficará disponível para novos assinantes"
