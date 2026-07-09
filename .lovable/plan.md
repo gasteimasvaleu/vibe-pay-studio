@@ -1,37 +1,46 @@
-Problema identificado:
 
-A URL muda para `/creator/onboarding/documentos/verificando`, mas a tela continua mostrando o conteúdo de `/documentos` com botão “Preparando...”. Isso acontece porque `src/routes/_authenticated/creator.onboarding.documentos.tsx` virou rota-pai de `verificando` e `aprovado`, mas não renderiza `<Outlet />`. No TanStack Router, uma rota-pai sem `<Outlet />` bloqueia a renderização dos filhos — por isso o loading roxo da rota `verificando` nunca aparece.
+## Diagnóstico
 
-Do I know what the issue is? Sim: o problema não é mais Veriff nem popup; é arquitetura de rota pai/filha.
+Duas coisas independentes deram errado:
 
-Plano de correção:
+1. **O webhook do Veriff está batendo na URL errada.** No painel do Veriff a URL de "Decision webhook" está configurada como `https://vibe-pay-studio.lovable.app/creator/onboarding/documentos/verificando` — que é uma página React, não uma rota de API. Por isso o Veriff recebe `500 Internal Server Error` mesmo com a verificação `Approved`. O endpoint correto que já existe no projeto é `/api/public/webhooks/veriff-decision`.
 
-1. **Transformar `/documentos` em layout pai correto**
-   - Alterar `src/routes/_authenticated/creator.onboarding.documentos.tsx` para renderizar apenas `<Outlet />`.
-   - Isso permite que `/documentos/verificando` e `/documentos/aprovado` apareçam de verdade.
+2. **A página `/documentos/verificando` só descobre a aprovação via webhook.** Como o webhook nunca chega no endpoint certo, o `profiles.kyc_status` fica em `processing` para sempre, o polling nunca vê `verified` e o usuário nunca é redirecionado para `/creator/onboarding/documentos/aprovado` (e daí para o feed). Além disso o redirect do Veriff está mandando para a home (que sem sessão vira `/entrar`) em vez de voltar para `/verificando`.
 
-2. **Mover a página atual de documentos para a rota index**
-   - Criar `src/routes/_authenticated/creator.onboarding.documentos.index.tsx` com o conteúdo atual da tela “Verificação de documentos”.
-   - Essa página continua respondendo em `/creator/onboarding/documentos`.
-   - O botão continua criando a sessão Veriff, abrindo a URL real, e depois navegando para `/creator/onboarding/documentos/verificando`.
+## Plano
 
-3. **Manter `/documentos/verificando` como loading real**
-   - A rota existente `creator.onboarding.documentos.verificando.tsx` passa a renderizar corretamente.
-   - Ela mantém fundo escuro, loader gooey roxo e texto “Verificação de identidade em andamento”.
+### 1. Ação manual no painel do Veriff (fora do código)
+Você precisa trocar, no painel do Veriff → Integrations → Webhooks:
+- **Decision webhook URL** para: `https://vibe-pay-studio.lovable.app/api/public/webhooks/veriff-decision`
+- (Opcional, mesmo endpoint) **Event webhook URL** para a mesma URL.
 
-4. **Limpar pendings que atrapalham**
-   - Remover o pending customizado da rota `_authenticated` se ainda estiver interferindo.
-   - Não adicionar loading roxo global; ele deve aparecer apenas na rota `verificando`.
+Sem isso o Veriff continua batendo em `/creator/onboarding/documentos/verificando` e recebendo 500. Não há como definir esse URL pela API de sessão — é config de integração.
 
-5. **Validar**
-   - Confirmar que `/creator/onboarding/documentos` mostra os cards e botão.
-   - Confirmar que `/creator/onboarding/documentos/verificando` mostra o loader roxo, não a tela de documentos.
-   - Confirmar que o fluxo é: clicar → Veriff abre → aba atual vai para `verificando`.
+### 2. Fallback server-side: consultar decisão do Veriff no polling
+Mesmo com o webhook configurado, para não depender só dele adiciono um fallback em `src/lib/onboarding.functions.ts`:
 
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
+- No `getKycStatus`, se o status atual for `processing`/`not_started` e existir `veriff_session_id`, chamar `GET https://stationapi.veriff.com/v1/sessions/{id}/decision` com os headers HMAC do Veriff.
+- Mapear a resposta (`verification.status`: `approved` → `verified`, `resubmission_requested`/`declined` → `requires_input`, `expired`/`abandoned` → `canceled`, resto → `processing`).
+- Se mudou para `verified`, atualizar `profiles` com `kyc_status='verified'`, `kyc_verified_at=now()`, `account_type='creator'`, `onboarding_completed_at=now()` (mesmo shape do webhook) e retornar o novo status.
+- Se der erro/timeout na chamada ao Veriff, apenas devolver o status atual do banco (sem quebrar o polling).
 
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+Assim, mesmo que o webhook falhe, o polling de 8s da tela `/verificando` detecta a aprovação sozinho e o `useEffect` já existente chama `completeOnboarding()` + `navigate({ to: "/creator/onboarding/documentos/aprovado" })`.
+
+### 3. Corrigir o `callback` que o Veriff usa para redirecionar o usuário
+Em `saveSocialLinks`/`createIdentityVerificationSession` (`src/lib/onboarding.functions.ts`), o `verification.callback` está sendo definido como `data.return_url`, e no cliente `return_url` é `window.location.origin` — por isso ao terminar o Veriff joga o usuário em `/` (que, sem sessão ativa naquele contexto, vira `/entrar`).
+
+- Passar do cliente um `return_url` absoluto apontando para `/creator/onboarding/documentos/verificando` (ex.: `${window.location.origin}/creator/onboarding/documentos/verificando`).
+- Nenhuma mudança na assinatura da server function é necessária além de aceitar essa URL.
+
+### 4. Validação
+- Refresh na tela `/creator/onboarding/documentos/verificando` do usuário atual (session `98d3f08c-...`, já `Approved` no Veriff): o polling deve, na próxima chamada, cair no fallback do item 2, marcar `verified` e redirecionar para `/aprovado`.
+- Testar novo fluxo end-to-end depois que você atualizar a URL do webhook no painel do Veriff: verificação → volta para `/verificando` → loader roxo → `/aprovado` → feed.
+- Conferir no painel do Veriff que novos "Decision webhooks" saem com status `200` para `/api/public/webhooks/veriff-decision`.
+
+## Arquivos a alterar
+- `src/lib/onboarding.functions.ts` — adicionar fallback via API do Veriff no `getKycStatus`, garantir atualização do profile igual ao webhook.
+- `src/routes/_authenticated/creator.onboarding.documentos.index.tsx` — passar `return_url` apontando para `/creator/onboarding/documentos/verificando`.
+
+## Fora do escopo
+- Não vou mexer no webhook `/api/public/webhooks/veriff-decision`, ele já está correto.
+- Não vou alterar a tela `verificando.tsx` — o polling e a navegação já estão ok, só faltava o status virar `verified`.
