@@ -52,7 +52,7 @@ function DocumentosPage() {
         <p className="mt-3 text-white/70 leading-relaxed">
           Faltam poucos passos para você se tornar um(a) creator Monetisex.
           Precisamos apenas validar alguns documentos — o processo é rápido,
-          seguro e sigiloso, feito em parceria com a Stripe Identity.
+          seguro e sigiloso, feito em parceria com a Veriff.
         </p>
 
         <div className="mt-8 space-y-3">
@@ -90,7 +90,7 @@ function DocumentosPage() {
         </button>
 
         <p className="mt-4 text-center text-xs text-white/40">
-          Você será redirecionado para o ambiente seguro da Stripe.
+          Você será redirecionado para o ambiente seguro da Veriff.
         </p>
       </div>
     </OnboardingShell>

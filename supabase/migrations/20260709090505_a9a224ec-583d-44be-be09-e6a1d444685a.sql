@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles RENAME COLUMN stripe_verification_session_id TO veriff_session_id;
