@@ -148,22 +148,22 @@ function PerfilPage() {
         </motion.section>
 
         {/* Identity */}
-        <div className="pt-10 sm:pt-12 space-y-3">
+        <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight">{displayName}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">{displayName}</h2>
             <BadgeCheck className="h-6 w-6 text-fuchsia-400 fill-fuchsia-400/20" />
           </div>
-          <p className="text-sm text-white/60">@{profile.username}</p>
+          <p className="text-sm text-muted-foreground">@{profile.username}</p>
 
           {/* Mobile stats */}
-          <div className="sm:hidden flex items-center gap-4 text-xs text-white/70">
-            <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} />
-            <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} />
-            <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} />
-            <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} />
+          <div className="sm:hidden flex items-center gap-4 text-xs text-muted-foreground">
+            <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} variant="light" />
+            <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} variant="light" />
+            <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} variant="light" />
+            <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} variant="light" />
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-white/70">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />
             <span>{location}</span>
           </div>
