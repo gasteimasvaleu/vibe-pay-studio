@@ -174,6 +174,7 @@ function PromotionPage() {
         step={stepIndex + 1}
         totalSteps={totalSteps}
         onBack={goBack}
+        footerLowered={selectOpen}
         footer={
           <button disabled={!valid} onClick={() => goNext()} className={primaryBtn}>
             Avançar
