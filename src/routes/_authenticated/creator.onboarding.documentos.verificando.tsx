@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding, getKycStatus } from "@/lib/onboarding.functions";
 import mosaicImg from "@/assets/onboarding-verificando.jpg";
 
