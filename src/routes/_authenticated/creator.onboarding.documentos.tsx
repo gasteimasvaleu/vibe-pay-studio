@@ -24,20 +24,8 @@ function DocumentosPage() {
   const [veriffUrl, setVeriffUrl] = useState<string | null>(null);
 
   const openVeriff = (url: string) => {
-    // Tenta escapar do iframe do preview (saas.veriff.com bloqueia X-Frame).
-    try {
-      if (window.top && window.top !== window.self) {
-        window.top.location.href = url;
-        return;
-      }
-    } catch {
-      // cross-origin: cai para nova aba abaixo
-    }
     const opened = window.open(url, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      // Pop-up bloqueado — navega a própria janela como último recurso.
-      window.location.href = url;
-    }
+    return Boolean(opened);
   };
 
   const handleStart = async () => {
@@ -53,8 +41,12 @@ function DocumentosPage() {
       }
       const url = result.url ?? returnUrl;
       setVeriffUrl(url);
-      openVeriff(url);
-      // Manda a app para a tela de polling — quando o usuário voltar da Veriff, já está pronta.
+      const opened = openVeriff(url);
+      if (!opened) {
+        setError("Não conseguimos abrir a Veriff automaticamente. Use o link abaixo para continuar em nova aba.");
+        setLoading(false);
+        return;
+      }
       navigate({ to: "/creator/onboarding/documentos/verificando" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao iniciar verificação.");

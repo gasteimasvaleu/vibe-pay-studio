@@ -16,6 +16,8 @@ export const Route = createFileRoute(
       { name: "robots", content: "noindex" },
     ],
   }),
+  pendingMs: 0,
+  pendingMinMs: 300,
   component: VerificandoPage,
   pendingComponent: VerificandoPending,
 });
