@@ -1,21 +1,17 @@
-## Corrigir textos invisíveis no onboarding do creator
+## Corrigir tela "Assinatura" (definir preço)
 
-**Causa:** as telas `creator.onboarding.*` usam classes hardcoded `text-white`, `text-white/60`, `bg-white/5` etc., mas o `OnboardingShell` renderiza com `bg-background text-foreground`. Neste projeto `--background` é claro, então texto branco fica invisível (como no screenshot: "Não se preocupe…", "Mensal/Trimestral/Semestral", "R$", subtítulos).
+**Diagnóstico:** o backend (`saveSubscriptionPricing`) e o formulário funcionam. O problema é puramente de UX/layout — a página coloca no topo os **cards de preview** (Mensal/Trimestral/Semestral zerados), depois o botão "Simular ganhos", e só bem lá embaixo o campo de input real. O usuário vê "R$ 0,00" no topo, não percebe que precisa rolar até o input de "Assinatura Mensal", e conclui que a tela está quebrada.
 
-O restante da área logada (feed, dashboard) resolve isso montando um fundo escuro próprio (`bg-background` + gradiente radial + textura de pontos) e usa `text-white` por cima. O onboarding deve seguir o mesmo padrão para ficar coerente e legível.
+### Mudanças em `src/routes/_authenticated/creator.onboarding.assinatura.tsx`
+1. **Inverter a ordem** do conteúdo dentro do `OnboardingShell`:
+   - Título + subtítulo
+   - **Formulário primeiro:** campo `Assinatura Mensal` (com destaque visual, hint de mín/máx logo abaixo) e, ao lado/abaixo, os dois campos de desconto (Trimestral / Semestral).
+   - **Preview de preços** (os três `PriceCard`) logo depois do formulário, com título "Como ficam seus planos" — atualiza ao vivo conforme o usuário digita.
+   - Link "Simular ganhos com assinatura" mantido como opcional abaixo do preview.
+   - Mensagem de erro + botão "Avançar" no final.
+2. **Placeholder guia** no campo mensal: `Ex: 29,90` em vez de `0,00`, para deixar claro que é ali que se digita.
+3. **Autofocus** no campo mensal ao montar a página.
+4. **Botão "Avançar"** continua desabilitado enquanto `monthly` está fora de `[19,90; 200,00]`; adicionar um pequeno texto auxiliar acima do botão quando desabilitado ("Digite um valor entre R$ 19,90 e R$ 200,00 para continuar.") para o usuário não ficar sem entender por que o botão está apagado.
+5. Sem mudanças de schema, backend, rotas ou lógica de cálculo — apenas reordenação/UX e microcopy.
 
-### Mudança
-Em `src/components/onboarding/OnboardingShell.tsx`:
-- Trocar o wrapper de `bg-background text-foreground` para o mesmo stack visual do feed/dashboard:
-  - camada `absolute inset-0 bg-background`
-  - overlay `bg-[var(--gradient-radial)]` opacidade 70%
-  - textura de pontos (`radial-gradient` de 22px)
-  - texto base branco (`text-white`)
-- Ajustar header e barra de progresso para contrastarem com o fundo escuro (borda inferior `border-white/10`, título `text-white/90`, botão voltar com `hover:bg-white/10`).
-
-Isso torna todos os textos brancos das telas filhas (`redes-sociais`, `assinatura`, `documentos`, `verificando`, `aprovado`) imediatamente legíveis, sem tocar em cada página.
-
-### Arquivo
-- `src/components/onboarding/OnboardingShell.tsx` — apenas as classes do wrapper e do header.
-
-Sem mudanças de conteúdo, layout, rotas ou lógica.
+Isso resolve o "não estou conseguindo definir o valor": o input fica imediatamente visível e óbvio, e os preços de preview passam a ser consequência do que foi digitado.
