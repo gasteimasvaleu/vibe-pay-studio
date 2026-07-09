@@ -22,6 +22,8 @@ import {
   Sparkles,
   Trophy,
   Users,
+  Minus,
+  ArrowUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
