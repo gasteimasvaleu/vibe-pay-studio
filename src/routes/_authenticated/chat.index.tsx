@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_authenticated/chat/")({
 
 function EmptyChat() {
   return (
-    <div className="flex-1 grid place-items-center bg-gradient-soft">
+    <div className="flex-1 grid place-items-center bg-background">
       <div className="text-center px-6">
         <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
           <MessageCircle className="h-8 w-8 text-primary-foreground" />
