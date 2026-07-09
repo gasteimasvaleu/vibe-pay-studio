@@ -146,9 +146,13 @@ function ChatLayout() {
               <IconBtn label="Filtros">
                 <ListFilter className="h-5 w-5" />
               </IconBtn>
-              <IconBtn label="Presença">
+              <Link
+                to="/account-status"
+                aria-label="Presença"
+                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <UserRoundCheck className="h-5 w-5" />
-              </IconBtn>
+              </Link>
             </div>
           </div>
 

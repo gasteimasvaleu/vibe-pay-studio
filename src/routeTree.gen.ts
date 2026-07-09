@@ -19,6 +19,7 @@ import { Route as AuthenticatedPublisherRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
@@ -79,6 +80,12 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAccountStatusRoute =
+  AuthenticatedAccountStatusRouteImport.update({
+    id: '/account-status',
+    path: '/account-status',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/account-status': typeof AuthenticatedAccountStatusRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -166,6 +174,7 @@ export interface FileRoutesByTo {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/account-status': typeof AuthenticatedAccountStatusRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
+  '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/account-status'
     | '/chat'
     | '/dashboard'
     | '/feed'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/account-status'
     | '/dashboard'
     | '/feed'
     | '/publisher'
@@ -251,6 +263,7 @@ export interface FileRouteTypes {
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
+    | '/_authenticated/account-status'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account-status': {
+      id: '/_authenticated/account-status'
+      path: '/account-status'
+      fullPath: '/account-status'
+      preLoaderRoute: typeof AuthenticatedAccountStatusRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chat/': {
@@ -457,6 +477,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountStatusRoute: typeof AuthenticatedAccountStatusRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -468,6 +489,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountStatusRoute: AuthenticatedAccountStatusRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
