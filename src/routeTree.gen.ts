@@ -24,6 +24,7 @@ import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from '
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
+import { Route as AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.aprovado'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -105,6 +106,12 @@ const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
     path: '/verificando',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
+const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
+  AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport.update({
+    id: '/aprovado',
+    path: '/aprovado',
+    getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRoutesByTo {
@@ -136,6 +144,7 @@ export interface FileRoutesByTo {
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRoutesById {
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 export interface FileRouteTypes {
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
+    | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
+    | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
   id:
     | '__root__'
@@ -205,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
+    | '/_authenticated/creator/onboarding/documentos/aprovado'
     | '/_authenticated/creator/onboarding/documentos/verificando'
   fileRoutesById: FileRoutesById
 }
@@ -325,15 +338,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
+    '/_authenticated/creator/onboarding/documentos/aprovado': {
+      id: '/_authenticated/creator/onboarding/documentos/aprovado'
+      path: '/aprovado'
+      fullPath: '/creator/onboarding/documentos/aprovado'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport
+      parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
+    }
   }
 }
 
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
+  AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
 }
 
 const AuthenticatedCreatorOnboardingDocumentosRouteChildren: AuthenticatedCreatorOnboardingDocumentosRouteChildren =
   {
+    AuthenticatedCreatorOnboardingDocumentosAprovadoRoute:
+      AuthenticatedCreatorOnboardingDocumentosAprovadoRoute,
     AuthenticatedCreatorOnboardingDocumentosVerificandoRoute:
       AuthenticatedCreatorOnboardingDocumentosVerificandoRoute,
   }

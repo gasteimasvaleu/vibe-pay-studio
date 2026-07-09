@@ -41,8 +41,10 @@ function VerificandoPage() {
           try {
             await finish();
           } catch {
-            // ignore — user still sees verified state
+            // ignore — usuário ainda vê a tela de aprovado
           }
+          navigate({ to: "/creator/onboarding/documentos/aprovado" });
+          return;
         }
         if (r.status === "processing") {
           timer = setTimeout(poll, 8000);
@@ -56,7 +58,7 @@ function VerificandoPage() {
       mounted = false;
       if (timer) clearTimeout(timer);
     };
-  }, [fetchStatus, finish, completed]);
+  }, [fetchStatus, finish, completed, navigate]);
 
   const banner = (() => {
     if (status === "verified") {
