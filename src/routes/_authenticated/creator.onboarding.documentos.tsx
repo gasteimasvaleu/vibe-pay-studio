@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { ShieldCheck, Lock, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
@@ -94,7 +95,7 @@ function DocumentosPage() {
   );
 }
 
-function Bullet({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function Bullet({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4">
       <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300">
