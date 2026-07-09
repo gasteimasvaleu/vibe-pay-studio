@@ -26,11 +26,11 @@ export type Database = {
           kyc_verified_at: string | null
           onboarding_completed_at: string | null
           price_monthly: number | null
-          stripe_verification_session_id: string | null
           tiktok_handle: string | null
           updated_at: string
           user_id: string
           username: string
+          veriff_session_id: string | null
           x_handle: string | null
         }
         Insert: {
@@ -44,11 +44,11 @@ export type Database = {
           kyc_verified_at?: string | null
           onboarding_completed_at?: string | null
           price_monthly?: number | null
-          stripe_verification_session_id?: string | null
           tiktok_handle?: string | null
           updated_at?: string
           user_id: string
           username: string
+          veriff_session_id?: string | null
           x_handle?: string | null
         }
         Update: {
@@ -62,11 +62,11 @@ export type Database = {
           kyc_verified_at?: string | null
           onboarding_completed_at?: string | null
           price_monthly?: number | null
-          stripe_verification_session_id?: string | null
           tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
           username?: string
+          veriff_session_id?: string | null
           x_handle?: string | null
         }
         Relationships: []
