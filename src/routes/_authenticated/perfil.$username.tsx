@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Bookmark,
+  Clapperboard,
   DollarSign,
   Film,
   Heart,
@@ -15,6 +16,7 @@ import {
   MessageCircle,
   MoreVertical,
   Music2,
+  Smartphone,
   Twitter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
