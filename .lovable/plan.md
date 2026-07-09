@@ -1,26 +1,37 @@
-Plano de correção final:
+Problema identificado:
 
-1. **Remover a aba `about:blank`**
-   - Apagar `reserveVeriffTab()` e qualquer `window.open("about:blank")`.
-   - Isso elimina a aba branca mostrada no print.
+A URL muda para `/creator/onboarding/documentos/verificando`, mas a tela continua mostrando o conteúdo de `/documentos` com botão “Preparando...”. Isso acontece porque `src/routes/_authenticated/creator.onboarding.documentos.tsx` virou rota-pai de `verificando` e `aprovado`, mas não renderiza `<Outlet />`. No TanStack Router, uma rota-pai sem `<Outlet />` bloqueia a renderização dos filhos — por isso o loading roxo da rota `verificando` nunca aparece.
 
-2. **Não navegar antes da sessão Veriff existir**
-   - O clique em “Iniciar verificação” deve primeiro chamar `createIdentityVerificationSession` e aguardar a URL real da Veriff.
-   - Isso evita abortar/falhar o server function por desmontar a página antes da resposta.
+Do I know what the issue is? Sim: o problema não é mais Veriff nem popup; é arquitetura de rota pai/filha.
 
-3. **Abrir a Veriff com a URL real**
-   - Depois que `result.url` chegar, chamar `window.open(result.url, "_blank", "noopener,noreferrer")`.
-   - Se o popup for bloqueado, usar `window.location.href = result.url` como fallback, para nunca abrir aba branca.
+Plano de correção:
 
-4. **Só então ir para `/creator/onboarding/documentos/verificando`**
-   - Depois de abrir a Veriff, navegar a aba atual do app para a tela `documentos/verificando`.
-   - Essa rota fica responsável por exibir o loading roxo com fundo escuro e mensagem.
+1. **Transformar `/documentos` em layout pai correto**
+   - Alterar `src/routes/_authenticated/creator.onboarding.documentos.tsx` para renderizar apenas `<Outlet />`.
+   - Isso permite que `/documentos/verificando` e `/documentos/aprovado` apareçam de verdade.
 
-5. **Estado do botão durante a criação da sessão**
-   - Enquanto a sessão Veriff está sendo criada, o botão pode ficar desabilitado com “Preparando...”, mas sem abrir loading roxo antes da rota `verificando`.
-   - O loading roxo aparece apenas depois que a URL Veriff foi gerada e a tela atual mudou para `/documentos/verificando`.
+2. **Mover a página atual de documentos para a rota index**
+   - Criar `src/routes/_authenticated/creator.onboarding.documentos.index.tsx` com o conteúdo atual da tela “Verificação de documentos”.
+   - Essa página continua respondendo em `/creator/onboarding/documentos`.
+   - O botão continua criando a sessão Veriff, abrindo a URL real, e depois navegando para `/creator/onboarding/documentos/verificando`.
 
-6. **Validar sinais**
-   - Confirmar no código que não existe mais `about:blank`.
-   - Confirmar que a ordem é: criar sessão → abrir URL real da Veriff → navegar para `verificando`.
-   - Confirmar que `/documentos/verificando` mantém a UX pedida: fundo escuro, gooey roxo e mensagem.
+3. **Manter `/documentos/verificando` como loading real**
+   - A rota existente `creator.onboarding.documentos.verificando.tsx` passa a renderizar corretamente.
+   - Ela mantém fundo escuro, loader gooey roxo e texto “Verificação de identidade em andamento”.
+
+4. **Limpar pendings que atrapalham**
+   - Remover o pending customizado da rota `_authenticated` se ainda estiver interferindo.
+   - Não adicionar loading roxo global; ele deve aparecer apenas na rota `verificando`.
+
+5. **Validar**
+   - Confirmar que `/creator/onboarding/documentos` mostra os cards e botão.
+   - Confirmar que `/creator/onboarding/documentos/verificando` mostra o loader roxo, não a tela de documentos.
+   - Confirmar que o fluxo é: clicar → Veriff abre → aba atual vai para `verificando`.
+
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
+
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
