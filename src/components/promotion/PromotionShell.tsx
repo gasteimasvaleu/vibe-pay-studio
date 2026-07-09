@@ -41,7 +41,7 @@ export function PromotionShell({
 
       {footer && (
         <footer
-          className={`sticky ${footerLowered ? "bottom-0" : "bottom-24"} z-10 bg-transparent transition-[bottom] duration-200`}
+          className={`${footerLowered ? "relative" : "sticky bottom-24"} z-10 bg-transparent transition-all duration-200`}
         >
           <div className="mx-auto max-w-2xl px-5 pb-2 pt-3">{footer}</div>
         </footer>
