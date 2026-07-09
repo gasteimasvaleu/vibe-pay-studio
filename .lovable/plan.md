@@ -1,25 +1,18 @@
-## Ajustar comportamento do botão "+" em /chat-agendamento
+## Composer substitui a página do calendário (não abre como Sheet)
 
 **Arquivo:** `src/routes/_authenticated/chat-agendamento.tsx`
 
-### Mudança de comportamento
-Hoje, clicar no "+" (tanto no header quanto no estado vazio da coluna da direita) abre apenas o composer (Sheet). O usuário quer que esse clique:
-
-1. Abra o composer (página do screenshot 2) — como já faz hoje.
-2. **Simultaneamente** abra por cima o dialog "DATA DE AGENDAMENTO" (screenshot 1) para escolher horário.
+### Mudança
+Hoje o composer é um `Sheet` que surge de baixo por cima da página do calendário. O usuário quer que o composer **substitua** a página do calendário na mesma rota (`/chat-agendamento`), e o dialog "DATA DE AGENDAMENTO" abra por cima dessa nova view.
 
 ### Implementação
-- Criar handler `openComposerWithSchedule` que faz `setComposerOpen(true)` e `setDateDialogOpen(true)` no mesmo clique.
-- Ligar esse handler aos dois botões "+" (header + empty state, linha 110 e o botão da coluna direita).
-- O botão de calendário dentro da toolbar do composer continua abrindo só o dialog (comportamento atual).
-- Ao Cancelar/Confirmar no dialog, o composer permanece aberto atrás (já é o comportamento do Dialog do shadcn — só fechar o dialog).
-
-### Ajustes visuais no Dialog para casar com o screenshot 1
-- Título "DATA DE AGENDAMENTO" em maiúsculas, `text-sm font-bold tracking-wide`.
-- Abas superiores: data formatada (ex.: "jul. 10, sex.") à esquerda e horário "HH:mm" à direita, aba ativa com sublinhado e cor `text-primary` (laranja do tema).
-- Time picker central: números grandes (`text-5xl font-light`) com `ChevronUp`/`ChevronDown` acima/abaixo em `text-muted-foreground`, separador ":" centralizado.
-- Botões "Confirmar" (outline com borda e texto `primary`) e "Cancelar" (outline neutro) lado a lado.
-- Usar apenas tokens semânticos (`bg-background`, `text-foreground`, `text-primary`, `border-border`) — nada hardcoded.
+- Trocar o state `composerOpen` por um modo de view: `view: "calendar" | "composer"` (via `useState`).
+- Clique no "+" (header e empty state): `setView("composer")` + `setDateDialogOpen(true)`.
+- Remover o wrapper `Sheet`/`SheetContent` do componente `Composer`. Renderizar o mesmo conteúdo (aside de contatos + section de mensagem) inline como layout de página quando `view === "composer"`.
+- Botão de voltar (`ArrowLeft`) dentro do header "Mensagem em massa" volta para `view: "calendar"` em vez de fechar sheet. Adicionar também um botão "X" no topo direito com o mesmo comportamento (bate com o screenshot).
+- Header do topo da rota (com título "Mensagens Agendadas") fica oculto quando `view === "composer"` — o composer traz o seu próprio header interno.
+- `DateDialog` continua como `Dialog` (abre por cima do composer).
+- Remover imports não utilizados (`Sheet`, `SheetContent`) se não forem mais usados.
 
 ### Fora de escopo
-Persistência, envio, seleção real de contatos.
+Nenhuma mudança em persistência, envio ou lógica de contatos.
