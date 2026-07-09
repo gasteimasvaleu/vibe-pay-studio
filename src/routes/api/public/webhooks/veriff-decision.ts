@@ -68,12 +68,17 @@ export const Route = createFileRoute("/api/public/webhooks/veriff-decision")({
           kyc_status: string;
           veriff_session_id: string;
           kyc_verified_at?: string;
+          account_type?: string;
+          onboarding_completed_at?: string;
         } = {
           kyc_status: nextStatus,
           veriff_session_id: verification.id,
         };
         if (nextStatus === "verified") {
-          update.kyc_verified_at = new Date().toISOString();
+          const now = new Date().toISOString();
+          update.kyc_verified_at = now;
+          update.account_type = "creator";
+          update.onboarding_completed_at = now;
         }
 
         // Prefer matching by veriff_session_id; fall back to vendorData (userId).
