@@ -1,19 +1,28 @@
-## Goal
-Add a visual separator line below the message textarea in the mass-message composer, so the message input area is clearly separated from the icon toolbar (media, audio, schedule, GIF, emoji, tag) below it.
+Plano de implementação para alterar o botão `+` da tela de chat.
 
-## Scope
-- `src/routes/_authenticated/chat-agendamento.tsx` only.
-- The Composer component's right column message area.
-- No functional changes; purely presentational.
+Objetivo: o botão `+` do header de `/chat` deve abrir a tela de agendamento/mensagem em massa (`/chat-agendamento`), e essa tela deve exibir o aviso de limite de disparos em massa conforme o screenshot.
 
-## Implementation
-1. Locate the `Textarea` element and the icon toolbar row inside the Composer's right section.
-2. Insert a horizontal separator between them using the theme's border color:
-   - Option A: wrap the `Textarea` in a container with `border-b border-border pb-2` (or equivalent spacing).
-   - Option B: add a `<div className="border-b border-border" />` immediately after the `Textarea` and before the `TooltipProvider`/`flex` icon row.
-3. Preserve existing padding, spacing, focus styles, and dark-mode compatibility by using `border-border` (no hardcoded colors).
+Escopo: mudanças apenas no frontend, sem lógica de negócio/persistência.
 
-## Acceptance
-- The composer page shows a visible line directly under the message textarea.
-- The icon row remains below the line.
-- Existing spacing and layout behavior are unchanged.
+````text
+Arquivos alterados
+├── src/routes/_authenticated/chat.tsx
+└── src/routes/_authenticated/chat-agendamento.tsx
+
+Mudanças
+1. chat.tsx
+   - Substituir o botão `+` (que hoje abre o modal "Nova conversa") por um Link
+     que navega para `/chat-agendamento`.
+   - Manter inalterados os demais botões do header (Agenda, Configurações,
+     Filtros, Presença).
+
+2. chat-agendamento.tsx
+   - Adicionar, no painel esquerdo da view "composer" (abaixo dos filtros e
+     acima do botão "Aplicar filtro"), um card de aviso com:
+     • Ícone de informação
+     • Título: "Novo limite de disparos em massa"
+     • Texto: "Você tem até 5 disparos hoje. Planeje suas mensagens com
+       antecedência."
+     • Estilo visual alinhado ao design atual do app (card arredondado,
+       borda, cor de fundo suave).
+````
