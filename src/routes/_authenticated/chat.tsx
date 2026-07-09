@@ -422,7 +422,7 @@ function FilterChip({
   );
 }
 
-function FiltersDialog({
+function FiltersSheet({
   open,
   onOpenChange,
   filters,
@@ -437,11 +437,14 @@ function FiltersDialog({
     onChange({ ...filters, [key]: !filters[key] } as ChatFilters);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Filtrar por</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+      >
+        <SheetHeader>
+          <SheetTitle>Filtrar por</SheetTitle>
+        </SheetHeader>
 
         <div className="space-y-6">
           <section className="space-y-3">
