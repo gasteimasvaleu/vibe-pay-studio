@@ -223,7 +223,10 @@ function ChatSchedulingPage() {
             <button
               type="button"
               aria-label="Nova mensagem agendada"
-              onClick={() => setComposerOpen(true)}
+              onClick={() => {
+                setComposerOpen(true);
+                setDateDialogOpen(true);
+              }}
               className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
             >
               <Plus className="h-6 w-6" />
