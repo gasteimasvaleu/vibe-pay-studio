@@ -38,7 +38,7 @@ export function PromotionShell({
       </main>
 
       {footer && (
-        <footer className="sticky bottom-8 z-10 bg-transparent">
+        <footer className="sticky bottom-24 z-10 bg-transparent">
           <div className="mx-auto max-w-2xl px-5 pb-2 pt-3">{footer}</div>
         </footer>
       )}
