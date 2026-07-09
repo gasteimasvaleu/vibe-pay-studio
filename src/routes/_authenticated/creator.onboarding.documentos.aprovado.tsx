@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding } from "@/lib/onboarding.functions";
 import heroImg from "@/assets/onboarding-aprovado.jpg";
 
@@ -16,7 +17,23 @@ export const Route = createFileRoute(
     ],
   }),
   component: AprovadoPage,
+  pendingComponent: AprovadoPending,
 });
+
+function AprovadoPending() {
+  return (
+    <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <GooeyLoader className="w-40 h-40" />
+          <p className="mt-8 text-lg font-semibold text-white/90">
+            Finalizando sua verificação...
+          </p>
+        </div>
+      </div>
+    </OnboardingShell>
+  );
+}
 
 function AprovadoPage() {
   const navigate = useNavigate();

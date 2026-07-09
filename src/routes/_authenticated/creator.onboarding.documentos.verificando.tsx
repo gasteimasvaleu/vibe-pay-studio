@@ -17,7 +17,27 @@ export const Route = createFileRoute(
     ],
   }),
   component: VerificandoPage,
+  pendingComponent: VerificandoPending,
 });
+
+function VerificandoPending() {
+  return (
+    <OnboardingShell title="Verificação de documentos" step={3} backTo="/dashboard">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <GooeyLoader className="w-40 h-40" />
+          <p className="mt-8 text-lg font-semibold text-white/90">
+            Verificação de identidade em andamento
+          </p>
+          <p className="mt-2 text-sm text-white/60 max-w-sm">
+            Isso pode demorar alguns minutos. Você será redirecionado
+            automaticamente assim que for concluído.
+          </p>
+        </div>
+      </div>
+    </OnboardingShell>
+  );
+}
 
 type KycStatus = "not_started" | "processing" | "verified" | "requires_input" | "canceled";
 
