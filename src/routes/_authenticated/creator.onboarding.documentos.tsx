@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ShieldCheck, Lock, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
