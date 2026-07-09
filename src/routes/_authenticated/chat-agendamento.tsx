@@ -453,8 +453,8 @@ function Composer({
             </div>
           </section>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   );
 }
 
