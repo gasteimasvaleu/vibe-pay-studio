@@ -52,6 +52,15 @@ function ChatLayout() {
   const queryClient = useQueryClient();
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [openNewChat, setOpenNewChat] = useState(false);
+  const [openFilters, setOpenFilters] = useState(false);
+  const [filters, setFilters] = useState<ChatFilters>({
+    unread: false,
+    interactions: false,
+    favorites: false,
+    muted: false,
+    topBuyers: false,
+    sort: "recent",
+  });
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [meId, setMeId] = useState<string | null>(null);
 
