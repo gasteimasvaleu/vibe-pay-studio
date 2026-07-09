@@ -212,7 +212,12 @@ export const getKycStatus = createServerFn({ method: "GET" })
             if (veriffStatus && veriffStatusMap[veriffStatus]) {
               const next = veriffStatusMap[veriffStatus];
               if (next !== status) {
-                const update: Record<string, string> = { kyc_status: next };
+                const update: {
+                  kyc_status: KycStatus;
+                  kyc_verified_at?: string;
+                  account_type?: string;
+                  onboarding_completed_at?: string;
+                } = { kyc_status: next };
                 if (next === "verified") {
                   const now = new Date().toISOString();
                   update.kyc_verified_at = now;
