@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { ShieldCheck, Lock, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
@@ -18,8 +17,6 @@ export const Route = createFileRoute("/_authenticated/creator/onboarding/documen
 function DocumentosPage() {
   const navigate = useNavigate();
   const createSession = useServerFn(createIdentityVerificationSession);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const reserveVeriffTab = () => {
     const tab = window.open("about:blank", "_blank");
@@ -30,8 +27,6 @@ function DocumentosPage() {
   };
 
   const handleStart = async () => {
-    setError(null);
-    setLoading(true);
     const veriffTab = reserveVeriffTab();
     navigate({ to: "/creator/onboarding/documentos/verificando" });
 
@@ -83,26 +78,12 @@ function DocumentosPage() {
           </Bullet>
         </div>
 
-        {error && (
-          <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
-            {error}
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/dashboard" })}
-              className="ml-2 underline"
-            >
-              Voltar ao painel
-            </button>
-          </div>
-        )}
-
         <button
           type="button"
           onClick={handleStart}
-          disabled={loading}
           className="mt-10 w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
         >
-          {loading ? "Preparando..." : "Iniciar verificação"}
+          Iniciar verificação
         </button>
 
         <p className="mt-4 text-center text-xs text-white/40">
