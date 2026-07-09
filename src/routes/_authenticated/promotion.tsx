@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PromotionHeader,
+  PromotionProgress,
   PromotionShell,
 } from "@/components/promotion/PromotionShell";
 
@@ -108,9 +109,11 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Dê um nome à sua oferta"
           subtitle="Crie um nome para organizar suas ofertas com facilidade"
+          compact
         />
         <PillInput
           label="Nome da campanha"
@@ -137,6 +140,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escolha o número máximo de assinaturas que poderão aproveitar a oferta"
           subtitle="Lembre-se: A oferta só vale para assinaturas de 1 mês"
@@ -169,6 +173,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escolha por quanto tempo sua oferta estará ativa"
           subtitle="Defina por quanto tempo ficará disponível para novos assinantes"
@@ -202,6 +207,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader title="Ofertas indisponíveis" />
         <div className="space-y-4 text-muted-foreground">
           <p>
@@ -231,6 +237,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Defina o desconto ideal para atrair novos assinantes"
           subtitle="Escolha entre 5% até 60% de desconto para sua assinatura de 1 mês"
@@ -298,6 +305,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escreva uma descrição para a oferta"
           subtitle="Uma mensagem bem escrita pode convencer e conquistar novos assinantes"
@@ -338,6 +346,7 @@ function PromotionPage() {
         </div>
       }
     >
+      <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
       <PromotionHeader
         title="Parabéns, sua oferta foi criada com sucesso!"
         subtitle="Sua oferta já está disponível no seu perfil para todos usuários"
