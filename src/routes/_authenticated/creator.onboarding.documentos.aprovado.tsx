@@ -23,9 +23,9 @@ export const Route = createFileRoute(
 function AprovadoPending() {
   return (
     <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
-      <div className="max-w-2xl mx-auto text-center">
-        <div className="min-h-[60vh] flex flex-col items-center justify-center">
-          <GooeyLoader className="w-40 h-40" />
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <GooeyLoader className="h-28 w-56 text-[14px]" />
           <p className="mt-8 text-lg font-semibold text-white/90">
             Finalizando sua verificação...
           </p>

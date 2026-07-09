@@ -1,17 +1,28 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface GooeyLoaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface GooeyLoaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  primaryColor?: string;
+  secondaryColor?: string;
+  borderColor?: string;
+}
 
 const GooeyLoader = React.forwardRef<HTMLDivElement, GooeyLoaderProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, primaryColor, secondaryColor, borderColor, style, ...props }, ref) => {
+    const cssVariables = {
+      "--gooey-primary-color": primaryColor || "var(--primary)",
+      "--gooey-secondary-color": secondaryColor || "oklch(0.58 0.24 305)",
+      "--gooey-border-color": borderColor || "oklch(0.72 0.13 300 / 0.22)",
+      ...style,
+    } as React.CSSProperties;
+
     return (
       <div
         ref={ref}
         className={cn("relative flex items-center justify-center", className)}
+        style={cssVariables}
         {...props}
       >
-        {/* Filter host lives outside the flow so zero-size SVG can't be dropped by the browser. */}
         <svg
           width="0"
           height="0"
@@ -32,43 +43,70 @@ const GooeyLoader = React.forwardRef<HTMLDivElement, GooeyLoaderProps>(
           </defs>
         </svg>
 
-        <div className="gooey-loader">
-          <div className="gooey-ball gooey-ball-1" />
-          <div className="gooey-ball gooey-ball-2" />
+        <div className="gooey-loader-rail" aria-label="Carregando verificação">
+          <span className="gooey-loader-blob gooey-loader-blob-primary" />
+          <span className="gooey-loader-blob gooey-loader-blob-secondary" />
         </div>
 
         <style>{`
-          .gooey-loader {
+          .gooey-loader-rail {
             position: relative;
-            width: 160px;
-            height: 160px;
+            width: 12em;
+            height: 4em;
+            border-bottom: 0.18em solid var(--gooey-border-color);
             filter: url(#gooey-loader-filter);
           }
-          .gooey-ball {
+
+          .gooey-loader-blob {
             position: absolute;
-            top: 50%;
+            bottom: 0.18em;
             left: 50%;
-            width: 36px;
-            height: 36px;
-            margin: -18px 0 0 -18px;
+            display: block;
             border-radius: 50%;
-            background: var(--primary, #a855f7);
+            will-change: transform;
           }
-          .gooey-ball-1 {
-            animation: gooey-orbit-1 2.4s ease-in-out infinite;
+
+          .gooey-loader-blob-primary {
+            width: 2.2em;
+            height: 2.2em;
+            margin-left: -1.1em;
+            background: var(--gooey-primary-color);
+            box-shadow: 0 0 34px color-mix(in oklab, var(--gooey-primary-color) 58%, transparent);
+            animation: gooey-loader-wee1 1.7s ease-in-out infinite alternate;
           }
-          .gooey-ball-2 {
-            animation: gooey-orbit-2 2.4s ease-in-out infinite;
+
+          .gooey-loader-blob-secondary {
+            width: 1.55em;
+            height: 1.55em;
+            margin-left: -0.775em;
+            background: var(--gooey-secondary-color);
+            box-shadow: 0 0 28px color-mix(in oklab, var(--gooey-secondary-color) 54%, transparent);
+            animation: gooey-loader-wee2 1.7s ease-in-out infinite alternate;
           }
-          @keyframes gooey-orbit-1 {
-            0%   { transform: translateX(-40px) rotate(0deg); }
-            50%  { transform: translateX(40px) rotate(180deg); }
-            100% { transform: translateX(-40px) rotate(360deg); }
+
+          @keyframes gooey-loader-wee1 {
+            0% {
+              transform: translateX(-5.2em) rotate(0deg);
+            }
+            100% {
+              transform: translateX(4.85em) rotate(180deg);
+            }
           }
-          @keyframes gooey-orbit-2 {
-            0%   { transform: translateX(40px) rotate(0deg); }
-            50%  { transform: translateX(-40px) rotate(180deg); }
-            100% { transform: translateX(40px) rotate(360deg); }
+
+          @keyframes gooey-loader-wee2 {
+            0% {
+              transform: translateX(-4.25em) rotate(0deg);
+            }
+            100% {
+              transform: translateX(5.2em) rotate(180deg);
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .gooey-loader-blob-primary,
+            .gooey-loader-blob-secondary {
+              animation-duration: 3s;
+            }
           }
         `}</style>
       </div>

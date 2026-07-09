@@ -1,18 +1,23 @@
-## Diagnóstico
+Plano de implementação:
 
-A tela `/` (`src/routes/index.tsx`) usa um `<div class="flex items-center ...">` com os ícones `Mail`/`Lock` como *irmãos* do `<input>`. Quando o Chrome preenche automaticamente o e-mail/senha, o autofill pinta o input com um fundo branco/azulado (`-webkit-autofill`) e o retângulo do input, por ser irmão no flexbox e ter `w-full`, sobrepõe visualmente o ícone à esquerda — daí a sensação de que "o input está cobrindo o ícone".
+1. **Substituir o componente `GooeyLoader`**
+   - Recriar `src/components/onboarding/GooeyLoader.tsx` no formato do loader enviado.
+   - Usar props `primaryColor`, `secondaryColor` e `borderColor` com fallback para os tokens do app.
+   - Ajustar o fallback visual para o roxo padrão da Monetisex, usando `var(--primary)`/gradiente roxo do tema.
 
-## Plano
+2. **Aplicar a UX na tela `/creator/onboarding/documentos/verificando`**
+   - Manter o fundo escuro do `OnboardingShell`.
+   - No estado `processing`/`not_started`, exibir somente:
+     - o novo loader gooey roxo;
+     - a mensagem “Verificação de identidade em andamento”;
+     - o texto “Isso pode demorar alguns minutos...” abaixo.
+   - Remover qualquer conteúdo antigo que apareça enquanto a verificação ainda não saiu.
 
-Editar apenas `src/routes/index.tsx`, nos dois campos (e-mail e senha):
+3. **Corrigir o loading que aparece antes da rota renderizar**
+   - O spinner branco da captura provavelmente vem do pending da rota autenticada antes da página `verificando` montar.
+   - Adicionar um `pendingComponent` na rota autenticada que, quando a URL atual for a página de verificação, usa exatamente a mesma tela escura com o novo `GooeyLoader` e a mensagem.
+   - Para as demais rotas autenticadas, manter um pending simples/compatível, sem impactar o fluxo.
 
-1. **Reposicionar os ícones como `absolute` dentro do wrapper** (`left-3 top-1/2 -translate-y-1/2`) em vez de irmãos flex do input. Assim o input pode ocupar 100% da largura sem sobrepor visualmente o ícone.
-2. **Adicionar `pl-10` no input** (e `pr-10` no de senha para o botão do olho, que também vira `absolute right-3`).
-3. **Neutralizar o fundo do autofill do Chrome** com uma classe local que aplique:
-   - `-webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset;`
-   - `-webkit-text-fill-color: #fff;`
-   - `caret-color: #fff;`
-   Injetado via `<style>` no próprio arquivo, escopado por `data-auth-input` para não vazar para o resto do app.
-4. Adicionar `autoComplete="email"` e `autoComplete="current-password"` para consistência.
-
-Não altero comportamento de submit, validação, estilos gerais do card ou lógica de auth.
+4. **Validar visualmente**
+   - Abrir a rota de verificação no preview e confirmar que o fundo branco/spinner circular antigo não aparece mais.
+   - Confirmar que o loader está roxo e centralizado, com a mensagem abaixo.
