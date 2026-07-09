@@ -1,45 +1,46 @@
 ## Objetivo
+Ajustar os cards de ação (`ActionCard`) em `CreatorDashboard` para ficar com a mesma aparência dos cards de Faturamento/Liberado/Total: fundo branco (`bg-card`), borda fina (`border`) e sombra suave (`shadow-card`).
 
-Substituir tudo que hoje aparece abaixo dos 3 cards de resumo (Faturamento/Liberado/Total) no CreatorDashboard pelos cards dos screenshots, em dois grupos: **Área do Criador** e **Outras Funcionalidades**. Assinante não é tocado.
+## Escopo
+- Aplicar a todos os cards do dashboard: **Área do Criador** e **Outras Funcionalidades** (incluindo o card de Sair).
+- Manter os comportamentos existentes: navegação, estado `disabled`, clique no Sair e variação de tom `danger`.
+- Não mexer no `EarningsSummary` nem no `DashboardShell`, pois a referência visual já está neles.
 
-## Novos grupos e cards (ordem dos screenshots, 2 colunas em `md+`)
+## Alterações planejadas
 
-### Área do Criador
-| Título | Descrição | Ícone lucide |
-|---|---|---|
-| Meu Perfil | Acesse e visualize seu perfil | `User` |
-| Ofertas | Aqui você pode gerir suas Ofertas | `BadgePercent` |
-| Perfil Gratuito | Seu perfil gratuito no ar em um clique | `UserPlus` |
-| Meu Privacy | Veja suas vendas e engajamento | `LineChart` |
-| Chat | Converse com seus assinantes agora | `MessageCircle` |
-| Meu Banco | Gerencie saques e saldo disponível | `Landmark` |
-| Em Alta | Descubra o que está bombando | `TrendingUp` |
-| Meus assinantes | Acompanhe quem mais te apoia | `Users` |
-| Assinaturas | Veja os creators que você assina | `UserPlus` |
-| Carteira | Escolha como paga e veja seus gastos | `Wallet` |
-| Acervo | Gerencie seus conteúdos com praticidade | `FolderPlus` |
-| Live (em breve) | Transmita ao vivo para assinantes | `Radio` — **card desabilitado**, opacidade reduzida, sem hover |
-| Reportar bug | Teve um problema? Conte pra gente | `Bug` |
-| Vazamento | Alguém usou seu conteúdo? | `ShieldAlert` |
+### 1. Revisar estilos do `ActionCard.tsx`
+- Substituir o visual "glass dark" por tokens claros do tema:
+  - `bg-white/5` → `bg-card`
+  - `border-white/10` → `border` (usando `--color-border`)
+  - `backdrop-blur-md` → remover
+  - `shadow-[var(--shadow-card)]` → adicionar sombra consistente com os cards de faturamento
+- Ajustar os estados hover:
+  - `hover:border-white/25` → `hover:border-primary/40` ou `hover:ring-1 hover:ring-primary/20`
+  - `hover:bg-white/10` → remover ou usar `hover:bg-accent`
+- Ajustar o container do ícone:
+  - `bg-white/5` → `bg-secondary/60` ou `bg-primary/10`
+  - `border-white/10` → `border`
+  - `text-fuchsia-300` → `text-primary`
+- Ajustar textos:
+  - título → `text-card-foreground`
+  - descrição → `text-muted-foreground`
+- Ajustar o estado `danger` para combinar com o novo fundo claro:
+  - manter `tone="danger"` com cores destrutivas/acento primário sem ficar gritante demais no fundo branco
+- Ajustar `highlight` (se ainda existir) para não conflitar com o novo visual; considerar removê-lo se não for usado.
 
-### Outras Funcionalidades
-| Título | Descrição | Ícone |
-|---|---|---|
-| Atividades | Acesse suas mídias favoritas salvas | `Bookmark` |
-| Definições | Personalize sua experiência | `Settings` |
-| Ajuda | Precisa de suporte ou tem dúvidas? | `HelpCircle` |
-| Sair | Sair da plataforma | `LogOut` — tone `danger` (título vermelho), aciona `supabase.auth.signOut()` como hoje |
+### 2. Verificar `CreatorDashboard.tsx`
+- Confirmar que `highlight` não é passado para nenhum `ActionCard` (o resumo da última mensagem diz que foi removido). Se ainda estiver, removê-lo.
+- Manter `disabled`, `tone="danger"`, `to` e `onClick` como estão.
 
-## Ajustes técnicos
+### 3. Validar visual
+- Comparar os cards de ação com os cards do `EarningsSummary` no preview.
+- Confirmar que o contraste de ícone, título e descrição continua legível no fundo branco.
 
-- Editar apenas `src/components/dashboard/CreatorDashboard.tsx`. Nada muda no ProfileHeaderCard, EarningsSummary, DashboardShell, ActionCard nem no SubscriberDashboard.
-- Substituir os 3 `DashboardGroup` atuais (`Meu negócio` / `Comunicação` / `Conta`) pelos 2 novos (`Área do Criador` / `Outras Funcionalidades`).
-- Ajustar os imports do lucide-react para os ícones novos e remover os que deixam de ser usados (`PenSquare`, `DollarSign`).
-- `ActionCard` já suporta `disabled`; usar para "Live (em breve)". Já suporta `tone="danger"` para "Sair".
-- Nenhuma navegação (`to=`) — todos os cards ficam como botões sem ação por enquanto, exceto Chat (mantém `to="/chat"` que já funciona) e Sair (mantém `onClick` de signout). Rotas reais das outras entradas ficam para próximas mensagens.
+## Arquivos alterados
+- `src/components/dashboard/ActionCard.tsx` (estilos)
+- `src/components/dashboard/CreatorDashboard.tsx` (apenas se houver limpeza de `highlight`)
 
-## Fora de escopo
-
-- Rotas de destino de cada card (Meu Perfil, Ofertas, Meu Banco, etc.).
-- Estado real de "Live" (só desabilitado visualmente).
-- Backend/lógica de Reportar bug e Vazamento.
+## Fora do escopo
+- Não criar novas rotas nem funcionalidades para os cards.
+- Não alterar os cards de faturamento (jão estão no estilo desejado).
+- Não mudar a estrutura do dashboard, apenas os tokens de cor.

@@ -9,7 +9,6 @@ export function ActionCard({
   onClick,
   disabled,
   to,
-  highlight,
 }: {
   icon: ReactNode;
   title: string;
@@ -18,14 +17,10 @@ export function ActionCard({
   onClick?: () => void;
   disabled?: boolean;
   to?: string;
-  highlight?: boolean;
 }) {
   const isDanger = tone === "danger";
-  const className = `group text-left rounded-2xl border p-5 backdrop-blur-md transition-all disabled:opacity-60 ${
-    highlight
-      ? "border-fuchsia-400/40 bg-gradient-to-br from-fuchsia-500/15 to-purple-600/10 hover:border-fuchsia-300/70"
-      : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
-  } ${isDanger ? "hover:border-fuchsia-400/40" : ""}`;
+  const className =
+    "group text-left rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40 hover:bg-accent disabled:opacity-60";
 
   const content = (
     <>
@@ -33,23 +28,21 @@ export function ActionCard({
         <div
           className={`h-10 w-10 rounded-xl border grid place-items-center ${
             isDanger
-              ? "bg-fuchsia-500/15 border-fuchsia-400/30 text-fuchsia-300"
-              : highlight
-                ? "bg-fuchsia-500/20 border-fuchsia-400/40 text-fuchsia-200"
-                : "bg-white/5 border-white/10 text-fuchsia-300"
+              ? "bg-destructive/10 border-destructive/20 text-destructive"
+              : "bg-primary/10 border-primary/20 text-primary"
           }`}
         >
           {icon}
         </div>
         <span
           className={`text-base font-semibold ${
-            isDanger ? "text-fuchsia-300" : "text-white"
+            isDanger ? "text-destructive" : "text-card-foreground"
           }`}
         >
           {title}
         </span>
       </div>
-      <p className="mt-3 text-sm text-white/60">{description}</p>
+      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
     </>
   );
 
