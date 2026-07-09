@@ -305,6 +305,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader
           title="Escreva uma descrição para a oferta"
           subtitle="Uma mensagem bem escrita pode convencer e conquistar novos assinantes"
