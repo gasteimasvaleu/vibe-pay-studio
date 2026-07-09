@@ -196,15 +196,6 @@ function FeedPage() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-500/20 to-fuchsia-500/10 p-5">
-              <p className="text-xs uppercase tracking-widest text-white/60">Sugestão</p>
-              <p className="mt-2 text-sm text-white/80">
-                Complete seu perfil e ganhe visibilidade no explorar.
-              </p>
-              <button className="mt-3 w-full h-9 rounded-full bg-white text-[#2a1250] text-xs font-semibold hover:bg-white/90 transition-colors">
-                Completar perfil
-              </button>
-            </div>
           </div>
         </aside>
       </div>
