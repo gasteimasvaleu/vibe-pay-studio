@@ -48,7 +48,7 @@ function SobrePage() {
       <section className="py-24 md:py-32 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <span className="label-caps text-primary">Nossa história</span>
-          <h1 className="mt-4 text-5xl md:text-7xl font-black tracking-tighter">
+          <h1 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
             A história da <span className="text-gradient-primary">Monetisex</span>
           </h1>
           <p className="mt-8 text-lg text-muted-foreground max-w-2xl">
@@ -65,7 +65,7 @@ function SobrePage() {
               <div key={t.year} className="relative">
                 <span className="absolute -left-10 md:-left-14 top-1 w-4 h-4 rounded-full bg-gradient-primary shadow-glow" />
                 <div className="text-sm label-caps text-primary">{t.year}</div>
-                <h3 className="mt-2 text-2xl md:text-3xl font-bold">{t.title}</h3>
+                <h3 className="mt-2 text-lg font-black tracking-tight">{t.title}</h3>
                 <p className="mt-3 text-muted-foreground text-lg">{t.desc}</p>
               </div>
             ))}
@@ -78,7 +78,7 @@ function SobrePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           {stats.map((s) => (
             <div key={s.label}>
-              <div className="text-5xl md:text-6xl font-black tracking-tight">{s.value}</div>
+              <div className="text-3xl font-black tracking-tight">{s.value}</div>
               <div className="mt-2 text-sm label-caps text-muted-foreground">{s.label}</div>
             </div>
           ))}
@@ -89,7 +89,7 @@ function SobrePage() {
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <span className="label-caps text-primary">Nossa missão</span>
-          <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+          <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
             Criadores no controle.<br />Comunidade de verdade.
           </h2>
           <div className="mt-8 space-y-6 text-lg text-muted-foreground">
@@ -114,7 +114,7 @@ function SobrePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="label-caps text-primary">Depoimentos</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
               Vozes da comunidade
             </h2>
           </div>
@@ -142,7 +142,7 @@ function SobrePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="label-caps text-primary">Diferenciais</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
               O que nos torna únicos
             </h2>
           </div>
@@ -152,7 +152,7 @@ function SobrePage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-primary/10 border border-primary/20 flex items-center justify-center mb-5">
                   <f.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">{f.title}</h3>
+                <h3 className="text-lg font-black tracking-tight mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
               </div>
             ))}
@@ -166,7 +166,7 @@ function SobrePage() {
           <div className="relative rounded-3xl p-12 md:p-20 text-center overflow-hidden border border-primary/30 bg-surface">
             <div className="absolute inset-0 opacity-40" style={{ background: "var(--gradient-radial)" }} />
             <div className="relative">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight">Faça parte</h2>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight">Faça parte</h2>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">
                 Junte-se aos criadores que já estão faturando com autonomia.
               </p>

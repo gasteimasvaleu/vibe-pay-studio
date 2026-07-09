@@ -40,9 +40,8 @@ function ComoFuncionaPage() {
       <section className="py-24 md:py-32 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="label-caps text-primary">Guia completo</span>
-          <h1 className="mt-4 text-5xl md:text-7xl font-black tracking-tighter">
-            Como funciona a<br />
-            <span className="text-gradient-primary">plataforma</span>
+          <h1 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
+            Como funciona a <span className="text-gradient-primary">plataforma</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
             Tudo o que você precisa saber para começar a monetizar seu conteúdo hoje.
@@ -60,9 +59,9 @@ function ComoFuncionaPage() {
             { n: "04", t: "Receba via Pix", d: "Solicite saque a qualquer momento. O valor cai na sua conta em até 24h úteis, direto por Pix." },
           ].map((s) => (
             <div key={s.n} className="flex flex-col md:flex-row gap-8 items-start">
-              <div className="text-7xl font-black text-gradient-primary shrink-0">{s.n}</div>
+              <div className="text-3xl font-black tracking-tight text-gradient-primary shrink-0">{s.n}</div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold">{s.t}</h3>
+                <h3 className="text-lg font-black tracking-tight">{s.t}</h3>
                 <p className="mt-3 text-muted-foreground text-lg">{s.d}</p>
               </div>
             </div>
@@ -75,7 +74,7 @@ function ComoFuncionaPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="label-caps text-primary">Calculadora</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
               Estime seus ganhos
             </h2>
           </div>
@@ -114,13 +113,13 @@ function ComoFuncionaPage() {
               <div className="pt-8 border-t border-border grid grid-cols-2 gap-6">
                 <div>
                   <div className="text-xs label-caps text-muted-foreground">Bruto mensal</div>
-                  <div className="text-3xl md:text-4xl font-black mt-1">
+                  <div className="text-3xl font-black tracking-tight mt-1">
                     R$ {gross.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div>
                   <div className="text-xs label-caps text-primary">Você recebe (80%)</div>
-                  <div className="text-3xl md:text-4xl font-black mt-1 text-gradient-primary">
+                  <div className="text-3xl font-black tracking-tight mt-1 text-gradient-primary">
                     R$ {net.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </div>
                 </div>
@@ -135,7 +134,7 @@ function ComoFuncionaPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="label-caps text-primary">FAQ</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
               Perguntas frequentes
             </h2>
           </div>
