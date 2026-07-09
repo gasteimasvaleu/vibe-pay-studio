@@ -7,12 +7,14 @@ export function PromotionShell({
   onBack,
   children,
   footer,
+  footerLowered = false,
 }: {
   step: number;
   totalSteps: number;
   onBack: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  footerLowered?: boolean;
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -38,7 +40,9 @@ export function PromotionShell({
       </main>
 
       {footer && (
-        <footer className="sticky bottom-24 z-10 bg-transparent">
+        <footer
+          className={`${footerLowered ? "relative" : "sticky bottom-24"} z-10 bg-transparent transition-all duration-200`}
+        >
           <div className="mx-auto max-w-2xl px-5 pb-2 pt-3">{footer}</div>
         </footer>
       )}

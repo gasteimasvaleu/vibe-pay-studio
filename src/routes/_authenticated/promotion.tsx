@@ -34,6 +34,7 @@ function PromotionPage() {
   const [step, setStep] = useState<Step>("name");
   const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
+  const [selectOpen, setSelectOpen] = useState(false);
 
   // form data
   const [name, setName] = useState("");
@@ -55,6 +56,10 @@ function PromotionPage() {
       setLoadingPrice(false);
     })();
   }, []);
+
+  useEffect(() => {
+    setSelectOpen(false);
+  }, [step]);
 
   const order: Step[] = ["name", "quantity", "duration", "gate", "discount", "description", "success"];
   const visibleOrder = order.filter((s) => {
@@ -167,6 +172,7 @@ function PromotionPage() {
         step={stepIndex + 1}
         totalSteps={totalSteps}
         onBack={goBack}
+        footerLowered={selectOpen}
         footer={
           <button disabled={!valid} onClick={() => goNext()} className={primaryBtn}>
             Avançar
@@ -186,6 +192,7 @@ function PromotionPage() {
             value: d,
           }))}
           onSelect={(v) => setDurationDays(v as number)}
+          onOpenChange={setSelectOpen}
         />
       </PromotionShell>
     );
@@ -231,6 +238,7 @@ function PromotionPage() {
         step={stepIndex + 1}
         totalSteps={totalSteps}
         onBack={goBack}
+        footerLowered={selectOpen}
         footer={
           <button disabled={!valid} onClick={() => goNext()} className={primaryBtn}>
             Avançar
@@ -247,6 +255,7 @@ function PromotionPage() {
           value={discountPct !== null ? `${discountPct}%` : ""}
           options={DISCOUNTS.map((d) => ({ label: `${d}%`, value: d }))}
           onSelect={(v) => setDiscountPct(v as number)}
+          onOpenChange={setSelectOpen}
         />
         <p className="mt-3 text-sm text-muted-foreground">
           Valor de assinatura mínima:{" "}
@@ -412,18 +421,25 @@ function PillSelect<T extends string | number>({
   value,
   options,
   onSelect,
+  onOpenChange,
 }: {
   label: string;
   value: string;
   options: Array<{ label: string; value: T }>;
   onSelect: (v: T) => void;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const updateOpen = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
+
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => updateOpen(!open)}
         className="w-full rounded-full border border-border bg-card px-6 py-3 focus:border-primary transition-colors flex items-center"
       >
         <div className="flex-1 text-left">
@@ -435,14 +451,14 @@ function PillSelect<T extends string | number>({
         <ChevronDown className={`h-5 w-5 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-10 mt-2 w-full rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+        <div className="relative z-10 mt-2 w-full rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
           {options.map((opt) => (
             <button
               key={String(opt.value)}
               type="button"
               onClick={() => {
                 onSelect(opt.value);
-                setOpen(false);
+                updateOpen(false);
               }}
               className="w-full text-left px-6 py-3 hover:bg-muted transition"
             >

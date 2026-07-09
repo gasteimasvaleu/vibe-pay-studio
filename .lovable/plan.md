@@ -1,16 +1,17 @@
 ## Plano
 
-1. **Ajustar o rodapé fixo do wizard**
-   - Subir visualmente o botão **Avançar**, aumentando a distância dele em relação à borda inferior da tela.
-   - Remover qualquer comportamento que mantenha o botão colado no fim da viewport.
+1. **Detectar quando um select/dropdown está aberto**
+   - No componente de select usado nas etapas “Duração da oferta” e “Desconto promocional”, comunicar para a tela quando o menu estiver aberto ou fechado.
 
-2. **Reduzir o vazio entre input e CTA**
-   - Ajustar o espaçamento vertical da área principal/rodapé para que o botão fique mais próximo do campo atual, especialmente no passo “Dê um nome à sua oferta”.
+2. **Mover o botão apenas nesse estado**
+   - Manter o botão **Avançar** mais alto quando o input/select está fechado.
+   - Quando o dropdown abrir, fazer o footer/CTA descer para baixo, evitando que o botão fique por cima das opções.
 
-3. **Preservar o restante do layout**
-   - Manter fundo branco.
-   - Manter a barra de progresso fora da navbar, acima do título do passo.
-   - Não alterar textos, lógica do formulário ou navegação.
+3. **Preservar o layout atual**
+   - Não mexer no fundo branco.
+   - Não alterar a navbar.
+   - Não alterar a barra de progresso.
+   - Não alterar textos nem lógica de avanço.
 
 4. **Verificar visualmente**
-   - Conferir a página `/promotion` no viewport atual para garantir que o botão ficou mais alto e com menos espaço morto abaixo do input.
+   - Conferir a etapa do dropdown aberto para garantir que as opções aparecem livres e o botão não cobre mais a lista.
