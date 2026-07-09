@@ -55,7 +55,7 @@ export function CreatorDashboard({ username }: { username: string }) {
           />
           <ActionCard
             icon={<LineChart className="h-5 w-5" />}
-            title="Meu Privacy"
+            title="Meu Monetisex"
             description="Veja suas vendas e engajamento"
           />
           <ActionCard
