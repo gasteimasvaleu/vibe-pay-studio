@@ -71,6 +71,133 @@ export type Database = {
         }
         Relationships: []
       }
+      publication_media: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          publication_id: string
+          storage_path: string
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          publication_id: string
+          storage_path: string
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          publication_id?: string
+          storage_path?: string
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_media_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publication_unlocks: {
+        Row: {
+          amount_cents: number
+          buyer_id: string
+          created_at: string
+          id: string
+          provider: string
+          provider_ref: string | null
+          publication_id: string
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_id: string
+          created_at?: string
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          publication_id: string
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          publication_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_unlocks_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publications: {
+        Row: {
+          author_id: string
+          caption: string | null
+          challenge_cents: number | null
+          comments_disabled: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          pinned: boolean
+          price_cents: number | null
+          published_at: string | null
+          scheduled_at: string | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          author_id: string
+          caption?: string | null
+          challenge_cents?: number | null
+          comments_disabled?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          pinned?: boolean
+          price_cents?: number | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          author_id?: string
+          caption?: string | null
+          challenge_cents?: number | null
+          comments_disabled?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          pinned?: boolean
+          price_cents?: number | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -97,6 +224,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_see_publication: {
+        Args: { _publication_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
