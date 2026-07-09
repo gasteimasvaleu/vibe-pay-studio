@@ -239,10 +239,22 @@ function PerfilPage() {
   );
 }
 
-function Stat({ icon, value }: { icon: React.ReactNode; value: React.ReactNode }) {
+function Stat({
+  icon,
+  value,
+  variant = "dark",
+}: {
+  icon: React.ReactNode;
+  value: React.ReactNode;
+  variant?: "dark" | "light";
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-white/80">
-      <span className="text-white/60">{icon}</span>
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        variant === "dark" ? "text-white/80" : "text-foreground"
+      }`}
+    >
+      <span className={variant === "dark" ? "text-white/60" : "text-muted-foreground"}>{icon}</span>
       <span className="font-semibold">{value}</span>
     </span>
   );
@@ -252,7 +264,7 @@ function SocialButton({ children, label }: { children: React.ReactNode; label: s
   return (
     <button
       aria-label={label}
-      className="h-9 w-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+      className="h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
     >
       {children}
     </button>
