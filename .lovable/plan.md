@@ -1,28 +1,40 @@
-## Aba "Resumo" — Meu Monetisex
+## Aba "Extratos" — Meu Monetisex
 
-Criar o conteúdo da sub-aba **Resumo** em `src/routes/_authenticated/my-monetisex-stats.tsx`, seguindo os 3 screenshots enviados. Como esta aba precisa de layout próprio (linhas de cards com larguras diferentes do 2/1 usado nas outras), quando `subTab === "Resumo"` o grid principal é substituído por um layout dedicado full-width; nas demais abas nada muda.
+Adicionar renderização condicional por `mainTab` em `src/routes/_authenticated/my-monetisex-stats.tsx`. Hoje só `subTab` altera o conteúdo — vamos passar a comutar a página inteira quando `mainTab === "Extratos"`, mantendo "Visão geral" intacta.
 
-### Estrutura visual (3 linhas)
+### Sub-abas próprias
+Quando `mainTab === "Extratos"`, substituir a `SubTabsRow` por um conjunto próprio:
+`Faturamento | Link de indicação | Ganhos por produto | Todos os produtos ▼` (o último é um dropdown com opções mock: Todos os produtos, Assinaturas, PPV, Mimos, Chat).
 
-**Linha 1** — grid `md:grid-cols-3`
-- `VendasNacionaisCard` — título "Vendas nacionais" + 3 blocos em coluna (Hoje, No mês, Total faturamento histórico), todos com `R$ 0,00`.
-- `VendasInternacionaisCard` — idêntico, título "Vendas internacionais".
-- `MeuBancoCard` — ícone laranja + "Você está no top +100 da Privacy!", "Faturamento hoje" com underline curto, bloco dividido em 2 colunas ("R$ 0,00 / Saldo liberado" e "R$ 0,00 / Saldo a liberar" com ícone Info), botão outline arredondado "Acessar Meu Banco".
+Estado local novo: `extratoTab` (default "Faturamento") e `produtoFilter` (default "Todos os produtos").
 
-**Linha 2** — grid `md:grid-cols-3`
-- `AssinantesCard` — "Total 0", "Ativos 0", linha expansível "Faturamento em relação a outros criadores" (com ícone `Minus`), rodapé centralizado "Parabéns, você está entre os melhores criadores Privacy! Continue assim!".
-- `ProjecaoFaturamentoCard` — título + subtítulo "July/26"; blocos "Total R$ 0,00", "Média Dia R$ 0,00", "Projeção" com `R$ 0,00` em laranja à direita e "+0% ↑" abaixo.
-- `FaturamentoPeriodoCard` — card simples "Faturamento no período" com `R$ 0,00`.
+### Layout (grid 2/1, igual ao restante)
 
-**Linha 3** — grid `md:grid-cols-2`
-- `RecordeDiaCard` — "Recorde de vendas no dia" com 3 linhas expansíveis TOP 1 / TOP 2 / TOP 3 (cada uma com um traço `—` como valor e ícone `Minus` à direita).
-- `RecordeMesCard` — idêntico, título "Recorde de vendas no mês".
+**Coluna principal (md:col-span-2), space-y-5:**
 
-### Detalhes técnicos
+1. `ExtratoChartCard` — card com:
+   - Header: título dinâmico (`produtoFilter`) + `R$ 0,00` grande + `(R$ 0,00 Bruto)` em `text-muted-foreground`; à direita legenda com dois pontos (● Faturamento em primary, ● Quantidade em muted).
+   - Área de gráfico placeholder (h-64) com 3 linhas horizontais tracejadas rotuladas `R$0` e eixo x com Jun 9/Jun 16/Jun 24/Jul 2/Jul 9, 2026 (mesmo padrão do `EarningsChartCard` existente, só maior).
 
-- Reaproveitar as classes já usadas: `rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`; sub-blocos internos em `rounded-xl bg-muted/60 p-4`.
-- Tipografia: título `text-lg font-bold tracking-tight`; labels `text-sm text-muted-foreground`; valores `text-lg font-bold`.
-- Ícones novos do `lucide-react`: `MessageCircle` (badge Privacy — já importado), `Minus`, `ArrowUpRight` (ou usar seta unicode existente). Adicionar imports faltantes.
-- No render principal, dentro de `<main>`, substituir o bloco `<div className="grid grid-cols-1 md:grid-cols-3 gap-5">…</div>` por um condicional: se `subTab === "Resumo"` renderiza `<ResumoPanel />` (full-width, próprio grid); caso contrário mantém o layout atual intacto.
-- Novo componente `ResumoPanel` compõe os 8 cards descritos acima em 3 linhas com `space-y-5`.
-- Todos os valores são placeholders estáticos (mock), sem lógica de dados — apenas UI, alinhado com o resto da página.
+2. `ExtratoFiltrosRow` — "Filtrar por" à esquerda com chips `Todos | Concluídos | A receber | Estornos` (reusar `Chip`); "Exportar extrato" à direita como botão outline arredondado com ícone `ExternalLink`.
+
+3. `ExtratoTable` — card com header `Data | Assinante | Valor | Sua comissão | Status` (grid 5 col, muted) e estado vazio centralizado "Nenhuma venda encontrada para este filtro." (pt-10 pb-6).
+
+**Coluna lateral (space-y-5):**
+
+- Reusar `TopBadgeCard` (Você está no top +100 / Faturamento hoje / Saldo liberado / Saldo a liberar / Acessar Meu Banco).
+- Novo `Top5PaisesCard` — "Top 5 países" + subtítulo "Países onde você mais faturou" (sem lista, estado vazio).
+- Novo `ExtratoFaturamentoCard` — título "Faturamento", bloco interno `rounded-xl bg-muted/60 p-4` com "Total" e `R$ 0,00`.
+
+### Alterações em `MyMonetisexStatsPage`
+
+- Ramificar o `<main>` por `mainTab`:
+  - `"Visão geral"` → mantém o comportamento atual (subtabs Faturamento/Destaques/Sequência/Resumo).
+  - `"Extratos"` → renderiza `<ExtratosPanel />` (contém as sub-abas próprias + layout descrito).
+  - Demais `mainTab` (Engajamento/Alcance/Assinantes) → mantêm o layout atual por ora (fora do escopo).
+
+### Detalhes
+
+- Nenhuma lógica de dados; tudo mock estático coerente com o resto da página.
+- Reusar tokens já usados: `rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`, `Chip`, `MessageCircle`, `Info`, ícones do `lucide-react` (`ExternalLink`, `ChevronDown`).
+- O texto "Monetisex" continua substituindo "Privacy" em títulos/mensagens (padrão do arquivo).
