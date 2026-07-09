@@ -175,9 +175,11 @@ function PerfilPage() {
           </div>
 
           {isOwner && (
-            <button className="w-full h-11 rounded-full border border-primary/30 bg-secondary text-sm font-semibold text-secondary-foreground hover:bg-muted transition-colors">
-              Editar perfil
-            </button>
+            <div className="pr-4 md:pr-6">
+              <button className="w-full h-9 rounded-xl border border-primary/30 bg-secondary text-sm font-semibold text-secondary-foreground hover:bg-muted transition-colors">
+                Editar perfil
+              </button>
+            </div>
           )}
         </div>
 
