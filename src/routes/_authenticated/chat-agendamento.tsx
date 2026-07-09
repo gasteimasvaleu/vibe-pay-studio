@@ -51,7 +51,12 @@ import { FilterChip } from "@/components/chat/FilterChip";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { cn } from "@/lib/utils";
 
+const searchSchema = z.object({
+  view: fallback(z.string(), "calendar").default("calendar"),
+});
+
 export const Route = createFileRoute("/_authenticated/chat-agendamento")({
+  validateSearch: zodValidator(searchSchema),
   component: ChatSchedulingPage,
 });
 
