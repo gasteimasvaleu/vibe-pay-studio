@@ -189,7 +189,7 @@ function ChatLayout() {
           </div>
         </aside>
 
-        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[100svh]")}>
+        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[calc(100svh-61px)]")}>
           <Outlet />
         </section>
       </div>
