@@ -16,6 +16,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
+import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
@@ -65,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedPublisherRoute = AuthenticatedPublisherRouteImport.update({
   id: '/publisher',
   path: '/publisher',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPromotionRoute = AuthenticatedPromotionRouteImport.update({
+  id: '/promotion',
+  path: '/promotion',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/promotion': typeof AuthenticatedPromotionRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/promotion': typeof AuthenticatedPromotionRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/dashboard'
     | '/feed'
+    | '/promotion'
     | '/publisher'
     | '/chat/$threadId'
     | '/perfil/$username'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/dashboard'
     | '/feed'
+    | '/promotion'
     | '/publisher'
     | '/chat/$threadId'
     | '/perfil/$username'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat-configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
+    | '/_authenticated/promotion'
     | '/_authenticated/publisher'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/perfil/$username'
@@ -365,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/publisher'
       fullPath: '/publisher'
       preLoaderRoute: typeof AuthenticatedPublisherRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/promotion': {
+      id: '/_authenticated/promotion'
+      path: '/promotion'
+      fullPath: '/promotion'
+      preLoaderRoute: typeof AuthenticatedPromotionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/feed': {
@@ -523,6 +542,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -537,6 +557,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
