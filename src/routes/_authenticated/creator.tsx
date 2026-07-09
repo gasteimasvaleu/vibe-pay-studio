@@ -20,8 +20,19 @@ export const Route = createFileRoute("/_authenticated/creator")({
       )
       .eq("user_id", userData.user.id)
       .maybeSingle();
-    if (profile?.account_type !== "creator") {
-      throw redirect({ to: homeForAccountType(profile?.account_type) });
+    if (!profile) {
+      throw redirect({ to: "/entrar" });
+    }
+
+    const hasCreatorOnboardingStarted =
+      !!profile.instagram_handle ||
+      !!profile.tiktok_handle ||
+      !!profile.x_handle ||
+      profile.price_monthly != null ||
+      profile.kyc_status !== "not_started";
+
+    if (profile.account_type !== "creator" && !hasCreatorOnboardingStarted) {
+      throw redirect({ to: homeForAccountType(profile.account_type) });
     }
 
     if (!profile.onboarding_completed_at) {
@@ -45,6 +56,10 @@ export const Route = createFileRoute("/_authenticated/creator")({
       if (kycProcessing) {
         throw redirect({ to: "/creator/onboarding/documentos/verificando" });
       }
+    }
+
+    if (profile.account_type !== "creator") {
+      throw redirect({ to: homeForAccountType(profile.account_type) });
     }
 
     return { username: profile.username };
