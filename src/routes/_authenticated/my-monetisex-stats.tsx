@@ -73,10 +73,14 @@ function MyMonetisexStatsPage() {
 
         <div className="space-y-3">
           <TabsRow tabs={MAIN_TABS} active={mainTab} onChange={setMainTab} />
-          <SubTabsRow tabs={SUB_TABS} active={subTab} onChange={setSubTab} />
+          {mainTab === "Visão geral" && (
+            <SubTabsRow tabs={SUB_TABS} active={subTab} onChange={setSubTab} />
+          )}
         </div>
 
-        {subTab === "Resumo" ? (
+        {mainTab === "Extratos" ? (
+          <ExtratosPanel />
+        ) : subTab === "Resumo" ? (
           <ResumoPanel />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
