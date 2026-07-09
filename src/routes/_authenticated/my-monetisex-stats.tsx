@@ -707,7 +707,7 @@ function RecordeCard({ title }: { title: string }) {
 }
 
 const EXTRATO_TABS = ["Faturamento", "Ganhos por produto"] as const;
-const PRODUTO_OPTIONS = ["Todos os produtos", "Assinaturas", "PPV", "Mimos", "Chat"] as const;
+const PRODUTO_OPTIONS = ["Todos os produtos", "Live", "Desafio", "Chat", "Postagem", "Videochamada", "Mimo", "Assinatura"] as const;
 const EXTRATO_FILTROS = ["Todos", "Concluídos", "A receber", "Estornos"] as const;
 
 function ExtratosPanel() {
