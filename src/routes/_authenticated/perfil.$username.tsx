@@ -148,22 +148,22 @@ function PerfilPage() {
         </motion.section>
 
         {/* Identity */}
-        <div className="pt-10 sm:pt-12 space-y-3">
+        <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight">{displayName}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">{displayName}</h2>
             <BadgeCheck className="h-6 w-6 text-fuchsia-400 fill-fuchsia-400/20" />
           </div>
-          <p className="text-sm text-white/60">@{profile.username}</p>
+          <p className="text-sm text-muted-foreground">@{profile.username}</p>
 
           {/* Mobile stats */}
-          <div className="sm:hidden flex items-center gap-4 text-xs text-white/70">
-            <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} />
-            <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} />
-            <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} />
-            <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} />
+          <div className="sm:hidden flex items-center gap-4 text-xs text-muted-foreground">
+            <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} variant="light" />
+            <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} variant="light" />
+            <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} variant="light" />
+            <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} variant="light" />
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-white/70">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />
             <span>{location}</span>
           </div>
@@ -239,10 +239,22 @@ function PerfilPage() {
   );
 }
 
-function Stat({ icon, value }: { icon: React.ReactNode; value: React.ReactNode }) {
+function Stat({
+  icon,
+  value,
+  variant = "dark",
+}: {
+  icon: React.ReactNode;
+  value: React.ReactNode;
+  variant?: "dark" | "light";
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-white/80">
-      <span className="text-white/60">{icon}</span>
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        variant === "dark" ? "text-white/80" : "text-foreground"
+      }`}
+    >
+      <span className={variant === "dark" ? "text-white/60" : "text-muted-foreground"}>{icon}</span>
       <span className="font-semibold">{value}</span>
     </span>
   );
@@ -252,7 +264,7 @@ function SocialButton({ children, label }: { children: React.ReactNode; label: s
   return (
     <button
       aria-label={label}
-      className="h-9 w-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+      className="h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
     >
       {children}
     </button>
