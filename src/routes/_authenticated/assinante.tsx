@@ -83,7 +83,7 @@ export const Route = createFileRoute("/_authenticated/assinante")({
 });
 
 function AssinantePage() {
-  const { username } = Route.useRouteContext();
+  const { username, creatorNextStep, creatorOnboardingStarted } = Route.useRouteContext();
   const router = useRouter();
 
   const stats = { fotos: 12, videos: 3, locked: 0, likes: 84 };
