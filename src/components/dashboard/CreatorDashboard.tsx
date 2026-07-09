@@ -46,6 +46,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<BadgePercent className="h-5 w-5" />}
             title="Ofertas"
             description="Aqui você pode gerir suas Ofertas"
+            to="/promotion"
           />
           <ActionCard
             icon={<UserPlus className="h-5 w-5" />}
