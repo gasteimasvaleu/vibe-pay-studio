@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { AppTopBar } from "@/components/site/AppTopBar";
 
 export const Route = createFileRoute("/_authenticated/chat-configuracoes")({
   component: ChatSettingsPage,
