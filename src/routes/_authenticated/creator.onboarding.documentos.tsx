@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ShieldCheck, Lock, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
@@ -18,36 +18,34 @@ export const Route = createFileRoute("/_authenticated/creator/onboarding/documen
 function DocumentosPage() {
   const navigate = useNavigate();
   const createSession = useServerFn(createIdentityVerificationSession);
-
-  const reserveVeriffTab = () => {
-    const tab = window.open("about:blank", "_blank");
-    if (tab) {
-      tab.opener = null;
-    }
-    return tab;
-  };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleStart = async () => {
-    const veriffTab = reserveVeriffTab();
-    navigate({ to: "/creator/onboarding/documentos/verificando" });
+    setError(null);
+    setLoading(true);
 
     try {
       const returnUrl = `${window.location.origin}/creator/onboarding/documentos/verificando`;
       const result = await createSession({ data: { return_url: returnUrl } });
       if (!result.ok) {
-        veriffTab?.close();
-        console.error(result.message);
+        setError(result.message);
+        setLoading(false);
         return;
       }
+
       const url = result.url ?? returnUrl;
-      if (veriffTab) {
-        veriffTab.location.href = url;
+      const veriffWindow = window.open(url, "_blank");
+
+      if (veriffWindow) {
+        veriffWindow.opener = null;
+        navigate({ to: "/creator/onboarding/documentos/verificando" });
       } else {
-        window.open(url, "_blank", "noopener,noreferrer");
+        window.location.href = url;
       }
     } catch (err) {
-      veriffTab?.close();
-      console.error(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
+      setError(err instanceof Error ? err.message : "Erro ao iniciar verificação.");
+      setLoading(false);
     }
   };
 
@@ -79,12 +77,19 @@ function DocumentosPage() {
           </Bullet>
         </div>
 
+        {error && (
+          <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
         <button
           type="button"
           onClick={handleStart}
+          disabled={loading}
           className="mt-10 w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
         >
-          Iniciar verificação
+          {loading ? "Preparando..." : "Iniciar verificação"}
         </button>
 
         <p className="mt-4 text-center text-xs text-white/40">
