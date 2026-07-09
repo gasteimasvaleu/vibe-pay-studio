@@ -1,23 +1,25 @@
-Ajustar o botão "Editar perfil" dentro do card branco de identidade em `src/routes/_authenticated/perfil.$username.tsx` mantendo a largura total, diminuindo a altura e o arredondamento, e centralizando-o horizontalmente dentro do card.
+## Redesenhar as tabs "Postagens / Mídias"
 
-### Alterações
+Adaptar o `TabsList` em `src/routes/_authenticated/perfil.$username.tsx` (linhas 197–210) para o layout do screenshot, usando as cores do app (primary laranja + card branco) em vez de fúcsia/roxo em fundo escuro.
 
-1. **Diminuir altura** (linha 178):
-   - Trocar `h-11` por `h-9`.
+### Mudanças
 
-2. **Diminuir border-radius**:
-   - Trocar `rounded-full` por `rounded-xl`.
+1. **Container (`TabsList`)**
+   - De: `w-full h-12 rounded-2xl bg-white/5 border border-white/10 p-1`
+   - Para: `w-full h-12 rounded-full bg-card border border-border p-0 overflow-hidden` (pílula clara com divisor central)
 
-3. **Centralizar o botão no card sem perder o deslocamento do nome/bio**:
-   - Manter `pl-4 md:pl-6` no card branco para o nome, @username, bio e botões sociais continuarem levemente deslocados para a direita.
-   - Envolver o botão "Editar perfil" em uma `<div>` com `pr-4 md:pr-6` para que o botão `w-full` fique com o mesmo espaço à esquerda e à direita, aparecendo centralizado dentro do card.
+2. **Cada `TabsTrigger`**
+   - Base: `flex-1 h-full rounded-none gap-2 text-sm font-semibold text-muted-foreground bg-transparent transition-colors`
+   - Ativo: `data-[state=active]:text-primary data-[state=active]:bg-transparent` + borda inferior laranja via `data-[state=active]:border-b-2 data-[state=active]:border-primary`
+   - Inativo mantém `text-muted-foreground` (legível sobre card branco)
+   - Adicionar ícone ao lado do texto:
+     - Postagens: `Smartphone` (lucide) — combina com o mock do print
+     - Mídias: manter `Film` ou usar `Clapperboard`
+   - Divisor visual entre as duas: `border-l border-border` no segundo trigger
 
-4. **Manter estilo visual**:
-   - Preservar `border border-primary/30`, `bg-secondary`, `text-secondary-foreground`, `hover:bg-muted` e `transition-colors`.
+3. **Garantir legibilidade**
+   - Nenhum texto branco sobre branco: ativo = `text-primary`, inativo = `text-muted-foreground`.
+   - Ícones herdam `currentColor`.
 
 ### Fora de escopo
-
-- Não alterar outras seções do perfil.
-- Não mexer no feed, onboarding ou Veriff.
-
-Após aprovado, aplico a mudança e verifico no preview.
+Feed, cards de posts, grid de mídias, header, botão Editar perfil, onboarding, Veriff.
