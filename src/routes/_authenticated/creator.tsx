@@ -63,6 +63,8 @@ export const Route = createFileRoute("/_authenticated/creator")({
     }
 
     return { username: profile.username };
+  },
+  component: CreatorHome,
 });
 
 function CreatorHome() {
