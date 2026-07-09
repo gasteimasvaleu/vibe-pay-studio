@@ -93,7 +93,10 @@ function MyMonetisexStatsPage() {
           <EngajamentoPanel />
         ) : mainTab === "Alcance" ? (
           <AlcancePanel />
+        ) : mainTab === "Assinantes" ? (
+          <AssinantesPanel />
         ) : subTab === "Resumo" ? (
+
           <ResumoPanel />
 
         ) : (
