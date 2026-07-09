@@ -196,17 +196,19 @@ function PerfilPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="w-full h-12 rounded-2xl bg-white/5 border border-white/10 p-1">
+          <TabsList className="w-full h-12 rounded-full bg-card border border-border p-0 overflow-hidden">
             <TabsTrigger
               value="posts"
-              className="flex-1 h-full rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-fuchsia-300 data-[state=active]:border data-[state=active]:border-fuchsia-400/30 text-white/60"
+              className="flex-1 h-full gap-2 rounded-none bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
+              <Smartphone className="h-4 w-4" />
               212 Postagens
             </TabsTrigger>
             <TabsTrigger
               value="midias"
-              className="flex-1 h-full rounded-xl text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-fuchsia-300 data-[state=active]:border data-[state=active]:border-fuchsia-400/30 text-white/60"
+              className="flex-1 h-full gap-2 rounded-none border-l border-border bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
+              <Clapperboard className="h-4 w-4" />
               411 Mídias
             </TabsTrigger>
           </TabsList>
