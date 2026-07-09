@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,7 +13,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const Route = createFileRoute("/_authenticated/chat/$threadId")({
+  params: {
+    parse: (raw) => {
+      const threadId = String(raw.threadId ?? "");
+      if (!UUID_RE.test(threadId)) throw notFound();
+      return { threadId };
+    },
+    stringify: (params) => ({ threadId: params.threadId }),
+  },
   component: ChatThreadView,
 });
 
