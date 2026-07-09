@@ -173,6 +173,12 @@ function PerfilPage() {
             <SocialButton label="X"><Twitter className="h-4 w-4" /></SocialButton>
             <SocialButton label="TikTok"><Music2 className="h-4 w-4" /></SocialButton>
           </div>
+
+          {isOwner && (
+            <button className="w-full h-11 rounded-full border border-primary/30 bg-secondary text-sm font-semibold text-secondary-foreground hover:bg-muted transition-colors">
+              Editar perfil
+            </button>
+          )}
         </div>
 
         {/* CTA */}
