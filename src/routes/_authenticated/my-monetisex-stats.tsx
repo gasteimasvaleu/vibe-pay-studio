@@ -705,3 +705,185 @@ function RecordeCard({ title }: { title: string }) {
     </div>
   );
 }
+
+const EXTRATO_TABS = ["Faturamento", "Link de indicação", "Ganhos por produto"] as const;
+const PRODUTO_OPTIONS = ["Todos os produtos", "Assinaturas", "PPV", "Mimos", "Chat"] as const;
+const EXTRATO_FILTROS = ["Todos", "Concluídos", "A receber", "Estornos"] as const;
+
+function ExtratosPanel() {
+  const [extratoTab, setExtratoTab] = useState<(typeof EXTRATO_TABS)[number]>("Faturamento");
+  const [produtoFilter, setProdutoFilter] =
+    useState<(typeof PRODUTO_OPTIONS)[number]>("Todos os produtos");
+  const [filtro, setFiltro] = useState<(typeof EXTRATO_FILTROS)[number]>("Todos");
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2">
+        {EXTRATO_TABS.map((t) => {
+          const isActive = t === extratoTab;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setExtratoTab(t)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                isActive
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-card text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {t}
+            </button>
+          );
+        })}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-card text-foreground border border-border hover:bg-accent transition-colors"
+            >
+              {produtoFilter}
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2"
+          >
+            {PRODUTO_OPTIONS.map((opt) => (
+              <DropdownMenuItem
+                key={opt}
+                onSelect={() => setProdutoFilter(opt)}
+                className="py-3 px-3 text-base cursor-pointer rounded-xl"
+              >
+                {opt}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="md:col-span-2 space-y-5">
+          <ExtratoChartCard title={produtoFilter} />
+          <ExtratoFiltrosRow active={filtro} onChange={setFiltro} />
+          <ExtratoTable />
+        </div>
+        <div className="space-y-5">
+          <TopBadgeCard />
+          <Top5PaisesCard />
+          <ExtratoFaturamentoCard />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExtratoChartCard({ title }: { title: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+          <span className="text-lg font-bold">R$ 0,00</span>
+          <span className="text-sm text-muted-foreground">(R$ 0,00 Bruto)</span>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span className="text-foreground">Faturamento</span>
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+            <span className="text-muted-foreground">Quantidade</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-6 relative h-64">
+        <div className="absolute inset-0 flex flex-col justify-between">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-8">R$0</span>
+              <div className="flex-1 border-t border-dashed border-border" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-between text-xs text-muted-foreground pl-11">
+        <span>Jun 9,<br />2026</span>
+        <span>Jun 16,<br />2026</span>
+        <span>Jun 24,<br />2026</span>
+        <span>Jul 2,<br />2026</span>
+        <span>Jul 9,<br />2026</span>
+      </div>
+    </div>
+  );
+}
+
+function ExtratoFiltrosRow({
+  active,
+  onChange,
+}: {
+  active: (typeof EXTRATO_FILTROS)[number];
+  onChange: (f: (typeof EXTRATO_FILTROS)[number]) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-sm font-semibold text-foreground">Filtrar por</span>
+        <div className="flex flex-wrap gap-2">
+          {EXTRATO_FILTROS.map((f) => (
+            <Chip key={f} label={f} active={f === active} onClick={() => onChange(f)} />
+          ))}
+        </div>
+      </div>
+      <button
+        type="button"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+      >
+        Exportar extrato
+        <ExternalLink className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function ExtratoTable() {
+  return (
+    <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="grid grid-cols-5 px-5 py-3 text-sm text-muted-foreground border-b border-border">
+        <span>Data</span>
+        <span>Assinante</span>
+        <span>Valor</span>
+        <span>Sua comissão</span>
+        <span>Status</span>
+      </div>
+      <p className="py-10 px-5 text-center text-sm text-muted-foreground">
+        Nenhuma venda encontrada para este filtro.
+      </p>
+    </div>
+  );
+}
+
+function Top5PaisesCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Top 5 países</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Países onde você mais faturou</p>
+    </div>
+  );
+}
+
+function ExtratoFaturamentoCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Faturamento</h3>
+      <div className="mt-4 rounded-xl bg-muted/60 p-4">
+        <p className="text-sm text-muted-foreground">Total</p>
+        <p className="mt-1 text-lg font-bold">R$ 0,00</p>
+      </div>
+    </div>
+  );
+}
