@@ -377,9 +377,9 @@ function Composer({
           {/* Right: message */}
           <section className="flex flex-col overflow-hidden">
             <div className="hidden md:block border-b border-border px-6 py-4">
-              <DialogTitle className="text-center text-base font-semibold">
+              <h2 className="text-center text-base font-semibold">
                 Selecionar usuários para enviar mensagem em massa
-              </DialogTitle>
+              </h2>
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-2">
