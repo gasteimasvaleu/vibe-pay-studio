@@ -76,6 +76,8 @@ function MyMonetisexStatsPage() {
           <div className="md:col-span-2 space-y-5">
             {subTab === "Destaques" ? (
               <DestaquesPanel />
+            ) : subTab === "Sequência de atividades" ? (
+              <SequenciaPanel />
             ) : (
               <>
                 <EarningsChartCard />
@@ -250,7 +252,7 @@ function RangeSelector() {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2 text-foreground">
-        <Calendar className="h-5 w-5 text-muted-foreground" />
+        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
         <span className="font-semibold">Últimos 30 dias</span>
       </div>
       <button
