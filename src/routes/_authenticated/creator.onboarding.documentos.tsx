@@ -90,7 +90,7 @@ function DocumentosPage() {
         </button>
 
         <p className="mt-4 text-center text-xs text-white/40">
-          Você será redirecionado para o ambiente seguro da Stripe.
+          Você será redirecionado para o ambiente seguro da Veriff.
         </p>
       </div>
     </OnboardingShell>
