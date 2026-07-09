@@ -830,22 +830,20 @@ function ExtratoFiltrosRow({
   onChange: (f: (typeof EXTRATO_FILTROS)[number]) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-semibold text-foreground">Filtrar por</span>
-        <div className="flex flex-wrap gap-2">
-          {EXTRATO_FILTROS.map((f) => (
-            <Chip key={f} label={f} active={f === active} onClick={() => onChange(f)} />
-          ))}
-        </div>
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="text-sm font-semibold text-foreground">Filtrar por</span>
+      <div className="flex flex-wrap items-center gap-2">
+        {EXTRATO_FILTROS.map((f) => (
+          <Chip key={f} label={f} active={f === active} onClick={() => onChange(f)} />
+        ))}
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+        >
+          Exportar extrato
+          <ExternalLink className="h-4 w-4" />
+        </button>
       </div>
-      <button
-        type="button"
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent transition-colors"
-      >
-        Exportar extrato
-        <ExternalLink className="h-4 w-4" />
-      </button>
     </div>
   );
 }
