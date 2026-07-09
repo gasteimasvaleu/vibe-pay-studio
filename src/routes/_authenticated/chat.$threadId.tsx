@@ -48,7 +48,6 @@ function ChatThreadView() {
     queryFn: () => getThreadFn({ data: { threadId } }),
   });
 
-  // Realtime insertions
   useEffect(() => {
     const channel = supabase
       .channel(`chat-thread-${threadId}`)
@@ -97,7 +96,6 @@ function ChatThreadView() {
     };
   }, [threadId, queryClient]);
 
-  // Mark read whenever thread opens or new messages arrive
   useEffect(() => {
     if (!data) return;
     markReadFn({ data: { threadId } })
@@ -107,7 +105,6 @@ function ChatThreadView() {
       .catch(() => {});
   }, [data, threadId, markReadFn, queryClient]);
 
-  // Autoscroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [data?.messages.length]);
@@ -134,34 +131,32 @@ function ChatThreadView() {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-[100svh] bg-[radial-gradient(ellipse_at_top,rgba(217,70,239,0.06),transparent_60%)]">
-      {/* Header */}
-      <header className="h-16 shrink-0 flex items-center gap-3 px-4 border-b border-white/10 bg-black/60 backdrop-blur-xl">
+    <div className="flex flex-col flex-1 min-h-[100svh] bg-gradient-soft">
+      <header className="h-16 shrink-0 flex items-center gap-3 px-4 border-b border-border bg-card/80 backdrop-blur-xl">
         <button
           type="button"
           onClick={() => navigate({ to: "/chat" })}
-          className="md:hidden h-9 w-9 grid place-items-center rounded-full hover:bg-white/10"
+          className="md:hidden h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
           aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center text-sm font-semibold">
+        <div className="h-10 w-10 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
           {(data?.partner.username ?? "??").slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0">
-          <div className="font-semibold truncate">
+          <div className="font-semibold truncate text-foreground">
             @{data?.partner.username ?? "…"}
           </div>
         </div>
       </header>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
         {isLoading && (
-          <div className="text-center text-white/40 text-sm">Carregando…</div>
+          <div className="text-center text-muted-foreground text-sm">Carregando…</div>
         )}
         {data?.messages.length === 0 && (
-          <div className="text-center text-white/40 text-sm py-16">
+          <div className="text-center text-muted-foreground text-sm py-16">
             Envie a primeira mensagem
           </div>
         )}
@@ -174,17 +169,17 @@ function ChatThreadView() {
             >
               <div
                 className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm",
+                  "max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-relaxed",
                   mine
-                    ? "bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white rounded-br-md"
-                    : "bg-white/5 border border-white/10 text-white rounded-bl-md",
+                    ? "bg-gradient-primary text-primary-foreground rounded-br-md shadow-glow"
+                    : "bg-card text-card-foreground border border-border rounded-bl-md shadow-card",
                 )}
               >
                 <div className="whitespace-pre-wrap break-words">{m.content}</div>
                 <div
                   className={cn(
                     "text-[10px] mt-1 text-right",
-                    mine ? "text-white/70" : "text-white/40",
+                    mine ? "text-primary-foreground/80" : "text-muted-foreground",
                   )}
                 >
                   {formatTime(m.createdAt)}
@@ -195,8 +190,7 @@ function ChatThreadView() {
         })}
       </div>
 
-      {/* Composer */}
-      <div className="shrink-0 border-t border-white/10 bg-black/60 backdrop-blur-xl px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+      <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
         <div className="flex items-end gap-2 max-w-3xl mx-auto">
           <Textarea
             value={text}
@@ -209,13 +203,13 @@ function ChatThreadView() {
             }}
             placeholder="Escreva uma mensagem…"
             rows={1}
-            className="flex-1 min-h-[44px] max-h-40 resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-fuchsia-500"
+            className="flex-1 min-h-[44px] max-h-40 resize-none focus-visible:ring-ring"
           />
           <button
             type="button"
             onClick={handleSend}
             disabled={!text.trim() || sendMutation.isPending}
-            className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Enviar"
           >
             <SendHorizontal className="h-5 w-5" />
