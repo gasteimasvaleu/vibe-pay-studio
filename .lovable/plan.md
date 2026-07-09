@@ -1,69 +1,42 @@
-# Página "Meu Monetisex" (estatísticas)
+# Aba "Destaques" — layout
 
-Primeira fase: apenas o **layout** das telas enviadas, adaptado ao tema escuro/laranja do app. Dados reais ficam para uma etapa futura — por ora, valores zerados / mockados estáticos.
+Adicionar o conteúdo da subtab **Destaques** em `src/routes/_authenticated/my-monetisex-stats.tsx`. Fase de layout apenas — sem dados reais, sem menus funcionais.
 
-## 1. Nova rota
+## Renderização condicional
+No corpo da página, quando `subTab === "Destaques"`, renderizar `<DestaquesPanel />` no lugar do bloco atual (`EarningsChartCard` + `ProductTable`). A coluna direita (TopBadgeCard + PeriodTotalCard) permanece igual.
 
-Arquivo: `src/routes/_authenticated/my-monetisex-stats.tsx`
-- `createFileRoute("/_authenticated/my-monetisex-stats")`
-- `head()` com `title: "Meu Monetisex · Monetisex"` e `robots: noindex`
-- Componente `MyMonetisexStatsPage` (client-only, sem loader por enquanto)
-- Estado local para tab principal e subtab (sem persistência)
+## Novos componentes (no mesmo arquivo)
 
-## 2. Wiring do botão
+### `DestaquesPanel`
+Empilha três cartões:
+1. `TopPostagemCard`
+2. `TopLiveCard`
+3. `TopAssinantesCard`
 
-`src/components/dashboard/CreatorDashboard.tsx`
-- No `ActionCard` "Meu Monetisex" adicionar `to="/my-monetisex-stats"`.
+### `TopPostagemCard`
+- Ícone `Smartphone` (lucide) laranja + título **"Top postagem"** em negrito
+- Linha de chips: `Mais vendida` (ativo), `Mimos`, `Curtidas`, `Comentários`
+- Menu `MoreVertical` no canto superior direito (visual, sem dropdown funcional por enquanto)
+- Estado vazio centralizado: **"Nenhuma postagem encontrada no período."** (`text-muted-foreground`)
+- `rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`
 
-## 3. Layout (fase 1 — só UI)
+### `TopLiveCard`
+- Ícone `Radio` laranja + título **"Top Live"**
+- Chips: `Mais vendida` (ativo), `Mimos`
+- `MoreVertical` no topo-direito
+- Bloco inferior: quadrado cinza (`aspect-square w-32 rounded-xl bg-muted grid place-items-center`) com ícone `Radio` grande laranja + ao lado um chip pequeno com ícone `Lock` e traço (representando item bloqueado)
 
-Reuso do padrão de `DashboardShell`: fundo `bg-background` + `--gradient-radial`, container `max-w-3xl mx-auto`, cabeçalho sticky com botão voltar (`router.history.back()`) e título centralizado **"Meu Monetisex"**.
+### `TopAssinantesCard`
+- Ícone `Users` laranja + título **"Top assinantes"**
+- Chips: `Total` (ativo), `Mais assinaturas`, `Mimos`, `Chat`
+- Estado vazio: **"Sem dados para este filtro."** (`text-muted-foreground`, centralizado)
 
-Estrutura do conteúdo (empilhada em mobile, 2 colunas em `md:` — coluna esquerda larga, direita estreita, como nos screenshots):
+## Padrões reutilizados
+- Chips: reaproveitar visual do `SubTabsRow` (pill com `bg-primary/15 text-primary border-primary/30` quando ativo, `bg-card text-muted-foreground border-border` quando inativo). Cada cartão terá seu próprio `useState` local para o chip selecionado.
+- Ícone de menu `MoreVertical` como `button` com `text-muted-foreground hover:text-foreground` (sem dropdown ainda — o menu "Exibir estatísticas / Copiar link / Fixar post / Arquivar post" fica para uma etapa posterior).
+- Todos os textos e ícones usam tokens (`text-primary`, `text-muted-foreground`, `text-foreground`) — sem cores hardcoded.
 
-```text
-┌─ Header sticky ─────────────────────────────┐
-│ ←    Meu Monetisex                          │
-├─────────────────────────────────────────────┤
-│ 📅 Últimos 30 dias   [ Jun 9 – Jul 9, 2026 ]│
-├─────────────────────────────────────────────┤
-│ Tabs: Visão geral | Extratos | Engajamento  │
-│       Alcance | Assinantes                  │
-│ Subtabs: Faturamento • Destaques •          │
-│          Sequência de atividades • Resumo   │
-├──────────────────────────┬──────────────────┤
-│ Card "Últimos 30 dias"   │ Card top +100    │
-│  R$ 0,00                 │  Faturamento hoje│
-│  [gráfico placeholder]   │  ───             │
-│  Jun 9 … Jul 9           │  R$0 / R$0       │
-│                          │  Saldo lib/liber │
-│                          │  [Acessar Banco] │
-│ Tabela Produto/Valor/… ──┼──────────────────┤
-│  ✓ Total   R$0,00  R$0,00│ Faturamento no   │
-│                          │  período  R$0,00 │
-└──────────────────────────┴──────────────────┘
-```
-
-### Componentes internos (definidos no mesmo arquivo por enquanto)
-- `RangeSelector` — ícone calendário + label + chip com intervalo (visual only)
-- `TabsRow` (principal) e `SubTabsRow` (chips) — botões controlados por `useState`, ativo com fundo `bg-primary/15` e texto `text-primary` (laranja do tema)
-- `EarningsChartCard` — título, valor à direita, área do gráfico como placeholder (`div` com linhas horizontais + labels de data, sem lib de charts nesta fase)
-- `ProductTable` — cabeçalho Produto / Valor / Sua comissão + linha Total com bolinha laranja de check (`lucide` `CheckCircle2`)
-- `TopBadgeCard` — ícone chat + "Você está no top +100 da Monetisex!" + bloco "Faturamento hoje" com traço + grid 2 colunas Saldo liberado / a liberar + botão outline "Acessar Meu Banco" (link para `/dashboard` provisório)
-- `PeriodTotalCard` — "Faturamento no período" + R$ 0,00
-
-### Tema
-- Todos os cartões: `rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]`
-- Sem cores hardcoded — usar tokens (`text-foreground`, `text-muted-foreground`, `text-primary`, `bg-primary/10`, `border-border`).
-- Adaptar o print (fundo bege claro) para o tema escuro atual do app; o laranja das tabs/badges mapeia para `--primary`.
-
-## 4. Fora do escopo (fase 1)
-- Sem chamadas de servidor, sem `createServerFn`, sem Supabase.
-- Sem biblioteca de gráficos — placeholder visual.
-- Sem seletor de datas funcional (só chip estático).
-- Sem alterações em schema / migrations.
-
-## 5. Detalhes técnicos
-- Rota criada como filha de `_authenticated`, então já protegida pelo gate existente.
-- `src/routeTree.gen.ts` é regenerado automaticamente.
-- Após criar o arquivo: rodar `tsgo` para validar tipos.
+## Fora do escopo
+- Sem dropdown funcional dos "3 pontinhos".
+- Sem fetch de dados (postagens/lives/assinantes).
+- Sem alterações em outras subtabs (Faturamento, Sequência de atividades, Resumo).
