@@ -122,7 +122,8 @@ function ChatLayout() {
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[100svh]">
+      <AppTopBar />
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[calc(100svh-61px)]">
         <aside
           className={cn(
             "border-r border-border bg-card/80 backdrop-blur-xl",
