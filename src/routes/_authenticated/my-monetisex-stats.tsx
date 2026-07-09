@@ -432,6 +432,22 @@ function SequenciaPanel() {
       <StreakCallout />
       <StreakStatsRow />
       <StreakDetailCard />
+      <StreakCalendarCard />
+    </div>
+  );
+}
+
+function StreakCalendarCard() {
+  const day = new Date(2026, 6, 9);
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+      <Calendar
+        mode="single"
+        selected={day}
+        defaultMonth={day}
+        showOutsideDays={false}
+        className="p-3 pointer-events-auto w-full"
+      />
     </div>
   );
 }
@@ -469,23 +485,13 @@ function StreakCallout() {
 function StreakStatsRow() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="rounded-2xl border-2 border-primary bg-card p-5 shadow-[var(--shadow-card)] text-center hover:bg-accent transition-colors"
-          >
-            <p className="text-sm text-muted-foreground">Sequência atual</p>
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
-              <span className="text-2xl font-bold text-primary">1 dia</span>
-            </div>
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="center" className="w-auto p-0">
-          <Calendar mode="single" selected={new Date()} />
-        </PopoverContent>
-      </Popover>
+      <div className="rounded-2xl border-2 border-primary bg-card p-5 shadow-[var(--shadow-card)] text-center">
+        <p className="text-sm text-muted-foreground">Sequência atual</p>
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <span className="text-2xl font-bold text-primary">1 dia</span>
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-center">
         <p className="text-sm text-muted-foreground">Sequência mais longa</p>
