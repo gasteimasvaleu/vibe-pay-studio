@@ -1,42 +1,13 @@
-## Nova página: Configurações do Chat
+## Mover configurações do chat para página independente
 
-Criar uma rota dedicada acessada pelo ícone de engrenagem (Settings) na sidebar de conversas, com o layout dos screenshots adaptado às cores e ao tema do app.
+Hoje `/chat/configuracoes` renderiza dentro do `<Outlet />` do layout `chat.tsx`, então a sidebar de conversas continua visível. Vou transformá-la em uma página totalmente separada.
 
-### Rota
-- Arquivo: `src/routes/_authenticated/chat.configuracoes.tsx` → URL `/chat/configuracoes`
-  - Como `chat.tsx` é layout com `<Outlet />`, esta página renderiza no painel direito (sem sair da experiência de chat).
-- Atualizar o ícone `Settings` em `src/routes/_authenticated/chat.tsx` para um `<Link to="/chat/configuracoes">`.
-
-### Layout (adaptado ao design system)
-Estrutura em coluna, centralizada, dentro do painel de conteúdo do chat:
-
-1. **Header**
-   - Botão voltar (ícone `ArrowLeft`) à esquerda → navega para `/chat`.
-   - Título centralizado "Configurações" (font-semibold, `text-foreground`).
-   - Borda inferior `border-border`.
-
-2. **Banner de dica** (equivalente ao verde claro do screenshot)
-   - Fundo suave usando token semântico (`bg-accent/40` ou `bg-muted`), borda `border-border`, cantos `rounded-xl`.
-   - Ícone `Lightbulb` em `text-primary`.
-   - Texto: "Aproveite o primeiro contato para se apresentar e oferecer uma mídia exclusiva de boas vindas".
-
-3. **Linha de toggle**
-   - Título "Habilitar mensagem de boas-vindas" + subtítulo "Sua mensagem de boas-vindas é enviada automaticamente aos novos assinantes".
-   - Componente `Switch` do shadcn à direita (herda `--primary` da paleta do app — sem laranja fixo).
-
-4. **Área do compositor** (só aparece quando o toggle está ativo)
-   - Container `rounded-2xl border border-border bg-card` com padding.
-   - `Textarea` sem borda, placeholder "Mín. 3 caracteres", altura mínima ~140px.
-   - Barra de ações abaixo: ícones `Image`, `Mic`, `Archive`, `Smile`, `Tag` (lucide), cada um com `Tooltip` (usando componente `Tooltip` do shadcn) — labels: "Adicionar mídia", "Gravar um áudio", "Adicionar mídia do acervo", "Adicionar um emoji", "Adicionar tag". Ícones apenas visuais nesta etapa (sem lógica).
-
-5. **Botão "Salvar alterações"**
-   - `Button` full-width, `rounded-full`, altura ~48px, usando `bg-gradient-primary text-primary-foreground shadow-glow` (padrão do app, ao invés do laranja do screenshot).
-   - Desabilitado quando o toggle está desligado ou o texto tem menos de 3 caracteres.
-
-### Estado
-- Local somente (nesta etapa): `enabled: boolean`, `message: string`.
-- Sem persistência backend — apenas UI. Se o usuário quiser salvar no Supabase depois, tratamos em um próximo pedido.
+### Mudanças
+- Renomear `src/routes/_authenticated/chat.configuracoes.tsx` → `src/routes/_authenticated/chat-configuracoes.tsx` (nova URL: `/chat-configuracoes`), fora do layout `chat.tsx`. A página assume a tela cheia sob o layout `_authenticated` (mantendo apenas `AppTopBar`/`BottomNav` do app).
+- Atualizar o ícone `Settings` na sidebar em `src/routes/_authenticated/chat.tsx` para apontar para `/chat-configuracoes`.
+- Ajustar o botão "Voltar" da página para `navigate({ to: "/chat" })` (sem mudança de comportamento).
+- Adicionar `AppTopBar` no topo da página para manter consistência com as outras telas fora do chat.
 
 ### Fora de escopo
-- Persistência da mensagem, upload de mídia, gravação de áudio, picker de emoji, sistema de tags.
-- Alterações em outras telas do chat.
+- Layout interno (banner, toggle, compositor, botão salvar) permanece igual.
+- Nenhuma alteração em outras rotas de chat.

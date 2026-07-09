@@ -156,7 +156,7 @@ function ChatLayout() {
                 <CalendarCheck className="h-5 w-5" />
               </IconBtn>
               <Link
-                to="/chat/configuracoes"
+                to="/chat-configuracoes"
                 aria-label="Configurações"
                 className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               >
