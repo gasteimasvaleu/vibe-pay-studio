@@ -1,29 +1,16 @@
-## Promover assinante para creator
+## Redirecionar assinantes para /feed após login
 
-Fluxo: assinante clica em CTA no painel → percorre onboarding de creator normalmente → conta só vira `creator` quando o KYC for aprovado.
+Hoje `homeForAccountType("subscriber")` em `src/lib/auth.ts` retorna `/assinante`, usado por `routeAfterAuth` e também como guarda em `/creator` e `/assinante`.
 
-### 1. CTA no painel do assinante (`/assinante`)
-- Adicionar card "Quer virar creator?" com botão "Começar agora" que navega para `/creator/onboarding/redes-sociais`.
+### Mudança
+- Em `src/lib/auth.ts`, trocar o retorno padrão de `homeForAccountType` de `/assinante` para `/feed`. Creator continua indo para `/creator`.
 
-### 2. Permitir assinante no onboarding de creator
-As rotas `creator.onboarding.*` hoje só verificam autenticação (não bloqueiam por `account_type`). Manter como está — assinante consegue percorrer os passos e preencher `instagram_handle`, `price_monthly`, etc., no próprio `profiles` sem trocar o tipo ainda.
+### Efeitos
+- Login/cadastro de assinante → cai em `/feed`.
+- Guarda de `/creator`: se um assinante acessa, é mandado para `/feed` (era `/assinante`). OK — `/feed` é a nova home.
+- `/assinante` continua acessível como página de perfil/conta (não é mais a home, mas o botão "Ver meu perfil público" e o CTA de virar creator seguem funcionando ao entrar manualmente).
 
-### 3. Guarda em `/creator` (painel)
-Hoje `_authenticated/creator.tsx` redireciona para `/assinante` se `account_type !== "creator"`. Ajustar: se `account_type === "subscriber"` **mas** o onboarding de creator está em andamento (tem `price_monthly` ou handle social preenchido) e o KYC ainda não foi aprovado, redirecionar para o próximo passo do onboarding em vez de `/assinante`.
+### Arquivos
+- `src/lib/auth.ts` — uma linha alterada.
 
-### 4. Promoção no webhook do Veriff
-Em `src/routes/api/public/webhooks/veriff-decision.ts`, quando a decisão for `approved`:
-- além de setar `kyc_status = 'verified'` e `kyc_verified_at`, também setar `account_type = 'creator'` e `onboarding_completed_at = now()` se ainda não estiver.
-
-Assim, ao terminar KYC, a página `/creator/onboarding/documentos/aprovado` mostra o sucesso e o painel `/creator` passa a liberar acesso.
-
-### 5. Detalhes de UX
-- No painel do assinante, mostrar o CTA apenas quando `account_type === 'subscriber'` e `kyc_status !== 'verified'`.
-- Caso o assinante já tenha iniciado onboarding (algum handle ou preço preenchido), o CTA vira "Continuar cadastro de creator" e leva ao passo pendente.
-
-### Arquivos a alterar
-- `src/routes/_authenticated/assinante.tsx` — novo card/CTA.
-- `src/routes/_authenticated/creator.tsx` — ajustar guarda para assinantes em onboarding.
-- `src/routes/api/public/webhooks/veriff-decision.ts` — promover para creator no `approved`.
-
-Sem mudanças de schema — os campos `account_type`, `kyc_status`, `onboarding_completed_at` já existem em `profiles`.
+Sem migrações, sem mudanças de UI.

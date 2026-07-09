@@ -5,7 +5,7 @@ export type AccountType = "subscriber" | "creator";
 
 export function homeForAccountType(accountType?: AccountType | string | null) {
   if (accountType === "creator") return "/creator" as const;
-  return "/assinante" as const;
+  return "/feed" as const;
 }
 
 /**
