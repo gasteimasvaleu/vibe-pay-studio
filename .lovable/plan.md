@@ -1,68 +1,57 @@
 ## Objetivo
 
-Preparar a dashboard para evoluir de forma independente para creator e assinante, e já reorganizar os cards do creator priorizando o que é essencial pra quem monetiza. Ajustes de assinante ficam para depois (quando você logar como assinante).
+Substituir o cabeçalho atual (avatar + nome inline, com classes `text-white`/`bg-black/20` que não batem com o tema claro do app) por um **card de perfil** no estilo do screenshot, usando os tokens semânticos do design system (`--card`, `--foreground`, `--muted-foreground`, `--primary`, `--gradient-primary`, `--shadow-card`), tanto no Creator quanto no Assinante.
 
-## O que muda
+## Layout do card (inspirado no screenshot, adaptado)
 
-### 1. Separar em dois componentes
+```
+┌───────────────────────────────────────────────────────────┐
+│                    ░░░ gradient banner ░░░       ┌──────┐ │
+│                                                  │+100° │ │
+│                                                  └──────┘ │
+│   ┌────┐                                                  │
+│   │ 🟣 │                                    Ver perfil →  │
+│   └────┘                                                  │
+│                                                           │
+│   Caio                                                    │
+│   @caiorobbb                                              │
+│   0  Superfãs / Assinaturas                               │
+└───────────────────────────────────────────────────────────┘
+```
 
-`src/routes/_authenticated/dashboard.tsx` mantém:
-- `head()`, `beforeLoad` (toda a lógica de redirect de onboarding e contexto), `errorComponent`
-- `component: DashboardPage` que só lê `accountType` do route context e renderiza:
-  - `<CreatorDashboard />` se creator
-  - `<SubscriberDashboard />` caso contrário
+Estrutura:
+- Card `rounded-2xl border bg-card shadow-[var(--shadow-card)] overflow-hidden`
+- **Faixa superior** (`h-24`): fundo `bg-gradient-primary` (usa o utility já definido em `styles.css`)
+  - No canto sup. direito: badge `+100°` — pill `rounded-full bg-background/80 backdrop-blur px-3 py-1 text-sm font-black text-primary` — o `°` fica menor com `text-xs align-super`. Fica como marco/nível decorativo (semântica ligamos depois).
+- **Corpo** (`px-5 pt-0 pb-5 -mt-10 relative`):
+  - Avatar circular `h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-black text-primary-foreground` com a primeira letra do username, sobrepondo a faixa.
+  - À direita, alinhado ao final da faixa: `<Link to="/perfil/$username">Ver perfil →</Link>` — texto `text-sm font-semibold text-foreground hover:text-primary`.
+  - Abaixo do avatar: nome grande `text-2xl font-black text-foreground` (com `BadgeCheck` do lucide em `text-primary` inline, só no creator), `@username` em `text-sm text-muted-foreground`, e a linha de contagem `0` em `text-lg font-black` + label em `text-sm text-muted-foreground` (`Superfãs` para creator, `Assinaturas` para assinante).
 
-Novos arquivos:
-- `src/components/dashboard/CreatorDashboard.tsx`
-- `src/components/dashboard/SubscriberDashboard.tsx`
-- `src/components/dashboard/ActionCard.tsx` (extrai o `ActionCard` atual, compartilhado)
-- `src/components/dashboard/DashboardShell.tsx` (extrai o wrapper: background, gradiente radial, grid pattern, header com botão voltar + título + link Feed, cabeçalho do perfil com avatar/nome/@/link "Ver perfil público") — usado pelos dois
+Sem toggle de modo escuro (o app é light, sem tema alternativo por enquanto).
 
-Ambos consomem o `Route.useRouteContext()` via props passadas pelo `DashboardPage` (ou re-lêem o contexto — usar props deixa mais explícito e testável).
+## Onde fica
 
-### 2. Reorganizar cards do CreatorDashboard
+Novo componente `src/components/dashboard/ProfileHeaderCard.tsx` — exportado e usado dentro de `DashboardShell` no lugar da `<motion.section>` atual do cabeçalho. Props:
+- `username: string`
+- `isCreator: boolean`
+- `stat?: { value: number; label: string }` — default: `{ value: 0, label: isCreator ? "Superfãs" : "Assinaturas" }`
+- `levelBadge?: string` — default `"+100°"` (fica flexível pra ligarmos a marcos depois)
 
-Nova ordem, em grupos visuais com um pequeno subtítulo cada:
+O `DashboardShell` passa `isCreator` (que já recebe) pra montar as defaults.
 
-**Meu negócio** (prioridade máxima do creator)
-1. Publicar — `PenSquare`
-2. Assinantes — `Users`
-3. Ganhos — `DollarSign`
-4. Carteira — `Wallet`
+## Ajustes de tema no DashboardShell (necessários pra não destoar)
 
-**Comunicação**
-5. Chat — `MessageCircle`
+O shell atual foi escrito assumindo dark (`text-white`, `bg-black/20`, gradient grid claro sobre fundo escuro). Como o app é light, corrijo pontualmente **apenas o que envolve o novo header e o wrapper que o rodeia**, deixando os grupos de cards do commit anterior intactos por enquanto (você vai iterar):
+- Container: remover `text-white`, deixar herdar `text-foreground`.
+- Camadas de fundo: manter só o `bg-background` + o `--gradient-radial` (que já é suave e claro); remover o overlay de grid escuro (`bg-[radial-gradient(...rgba(255,255,255,0.06)...)]`) que só faz sentido em fundo escuro.
+- Header (topbar "Meu painel"): trocar `bg-black/20 border-white/10` por `bg-card/80 border-border`, botão voltar `text-muted-foreground hover:bg-accent`, título `text-foreground`, link Feed `text-muted-foreground hover:text-foreground`.
 
-**Conta**
-6. Perfil — `User`
-7. Atividades — `Bookmark`
-8. Definições — `Settings`
-9. Ajuda — `HelpCircle`
-10. Sair — `LogOut` (tone danger)
+Cards (`ActionCard`) e grupos permanecem como estão neste passo — você pediu ajuste do **card header**; iteramos nos cards em mensagens seguintes.
 
-Removidos do creator: "Assinaturas" (creators que eu sigo) — pouco relevante pra creator no MVP e você indicou que veremos assinante depois. Pode voltar mais tarde se fizer sentido.
+## Fora de escopo
 
-Nada de métricas/resumo no topo agora — você disse que virão instruções aos poucos.
-
-### 3. SubscriberDashboard (mínimo viável, sem mexer no comportamento atual)
-
-Mantém exatamente os mesmos cards que hoje aparecem para `!isCreator`, na mesma ordem, só extraídos pro novo componente. Assim quando você logar como assinante nada muda visualmente e a gente evolui depois.
-
-### 4. Sem mudanças em
-
-- `beforeLoad`, redirects de onboarding, tipos de conta, Supabase
-- Rotas, navegação, `+` do chat, agendamento
-- Estilo global, tokens, cores — só reorganização de cards e agrupamento com `<h4 className="text-xs uppercase tracking-wider text-white/40">` acima de cada grupo
-
-## Detalhes técnicos
-
-- `ActionCard` fica idêntico ao atual (props `icon`, `title`, `description`, `tone`, `onClick`, `disabled`, `to`, `highlight`).
-- Grupos: cada bloco é `<section className="space-y-3"><h4>…</h4><div className="grid grid-cols-1 md:grid-cols-2 gap-4">…cards…</div></section>`, e as sections empilhadas com `space-y-6`.
-- Sign-out permanece no CreatorDashboard e SubscriberDashboard (cada um chama `supabase.auth.signOut()` — ou extraímos pra `useSignOut()` em `src/hooks/`, opcional).
-- Tipos de props: `CreatorDashboardProps { username: string }`, `SubscriberDashboardProps { username: string; creatorNextStep: string; creatorOnboardingStarted: boolean }`.
-
-## Fora de escopo (fica pra próximas mensagens)
-
-- Métricas/resumo no topo do creator
-- Ajustes específicos do assinante
-- Cards de destino real (`to=`) para Publicar/Assinantes/Ganhos/Carteira etc. — hoje são placeholders sem rota; continuam como botão sem ação até você pedir cada tela.
+- Buscar `superfãs` reais do Supabase (fixo em 0 por enquanto).
+- Toggle de modo escuro / tema alternativo.
+- Repaginar os `ActionCard`s pro tema claro (fica pra próxima instrução sua).
+- Rota real do badge de nível.
