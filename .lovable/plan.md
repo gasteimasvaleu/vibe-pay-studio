@@ -1,43 +1,37 @@
-## Objetivo
+## Diagnóstico
 
-Aplicar a mesma tipografia dos cards do dashboard (Faturamento/Liberado/Total) como padrão em todo o site, exceto na home (`src/routes/index.tsx`). Hoje há títulos em `text-4xl`, `5xl`, `6xl` e `7xl` com `font-black tracking-tighter` — o usuário considera essa escala agressiva demais.
+O screenshot de referência mostra pesos moderados (~700) com desenho arredondado — provavelmente renderizado com a fonte do sistema. O `/dashboard` atual usa:
+- Fonte Inter carregada via Google Fonts
+- `font-black` (peso 900) em títulos, valores e nome de perfil
 
-## Padrão de referência (extraído do card do screenshot)
+Resultado: parece mais grosso e "agressivo" do que a referência, mesmo com tamanhos iguais.
 
-Fonte: Inter (já é a padrão do projeto — não muda).
+## Mudanças
 
-| Uso | Classes |
-|---|---|
-| Título de página/seção principal (h1/h2 grande) | `text-2xl md:text-3xl font-black tracking-tight` |
-| Título de card/subseção (h3) | `text-lg font-black tracking-tight` |
-| Legenda/subtítulo dentro do card | `text-sm text-muted-foreground` |
-| Valor/número em destaque | `text-3xl font-black tracking-tight` |
-| Eyebrow/label uppercase | manter atual (`text-xs uppercase tracking-wider font-semibold`) |
+### 1. Reduzir o peso de `font-black` (900) para `font-bold` (700) nos componentes do dashboard
 
-Regra geral: nunca passar de `text-3xl` em telas md+; nunca usar `tracking-tighter`; manter `font-black tracking-tight` como peso padrão para títulos.
+- `src/components/dashboard/EarningsSummary.tsx`
+  - h3 do card: `font-black` → `font-bold`
+  - valor `R$ -`: `font-black` → `font-bold`
+- `src/components/dashboard/ProfileHeaderCard.tsx`
+  - Nome "Caio": `font-black` → `font-bold`
+  - Badge/avatar/contador de superfãs: `font-black` → `font-bold`
+- `src/components/dashboard/DashboardShell.tsx`
+  - Título da seção "Meu painel": manter `font-semibold` (já leve)
+  - Eyebrow do `DashboardGroup` ("ÁREA DO CRIADOR"): manter `font-semibold`
+- `src/components/dashboard/ActionCard.tsx` — já usa `font-semibold`, sem mudança.
+- `src/components/dashboard/SubscriberDashboard.tsx` — mesmo tratamento (`font-black` → `font-bold`).
 
-## Arquivos a alterar
+### 2. Trocar a família de fonte para system stack (opcional, mas casa com o screenshot)
 
-Ajustar tamanhos/peso/tracking dos títulos e valores nestes arquivos, seguindo a tabela acima. Não mexer em cores, layout, ícones ou copy.
-
-- `src/routes/sobre.tsx` — heros e h2 de seções (várias ocorrências `text-4xl/5xl/6xl/7xl`, `tracking-tighter`), estatística `text-5xl md:text-6xl`.
-- `src/routes/como-funciona.tsx` — hero `text-5xl md:text-7xl`, h2 `text-4xl md:text-5xl`, numeração `text-7xl`, valores `text-3xl md:text-4xl`.
-- `src/routes/entrar.tsx` — h1 `text-2xl md:text-3xl` (já OK, apenas confirmar).
-- `src/routes/cadastro.tsx` — h1 `text-2xl md:text-3xl` (já OK, apenas confirmar).
-- `src/routes/_authenticated/feed.tsx` — h1 do feed `text-2xl md:text-3xl` (já OK); h2 `text-xl md:text-2xl` mantém.
-- `src/routes/_authenticated/publisher.tsx` — título grande `text-3xl` e input `text-4xl` → padronizar para `text-3xl` no título; input mantém tamanho para editor.
-- `src/routes/_authenticated/perfil.$username.tsx` — h2 `text-2xl font-black` (já OK).
-- `src/routes/_authenticated/creator.onboarding.*` — títulos `text-2xl md:text-3xl` (já OK); `creator.onboarding.documentos.aprovado.tsx` reduzir de `text-3xl md:text-4xl` → `text-2xl md:text-3xl`.
-- `src/routes/__root.tsx` — 404 `text-7xl` → `text-5xl` (exceção visual permitida por ser código de erro, mas reduzir).
-- `src/components/dashboard/*`, `src/components/site/Navbar.tsx`, `Footer.tsx`, `AppTopBar.tsx` — já estão dentro do padrão; apenas conferir.
+- `src/styles.css`: alterar `--font-sans` de `"Inter", system-ui, sans-serif` para `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`.
+- `src/routes/__root.tsx`: remover o preconnect e o `<link>` do Google Fonts para Inter (não é mais necessário).
 
 ## Fora de escopo
 
-- `src/routes/index.tsx` (home) — não tocar.
-- Cores, gradientes, layout, espaçamento, componentes shadcn.
-- Corpo de texto (`text-base`, `text-sm`) e labels — mantidos.
-- Fonte em si (continua Inter).
+- Não mexer em cores, layout, ícones, copy ou nos outros arquivos que já foram ajustados (`/sobre`, `/como-funciona`, onboarding).
+- Não alterar peso em botões, badges do site público (Navbar/Footer) — só o dashboard.
 
 ## Validação
 
-Após as edições, rodar o build e checar visualmente as páginas `/sobre`, `/como-funciona`, `/dashboard`, onboarding do criador e feed para confirmar que os títulos ficaram no mesmo peso/tamanho dos cards de referência.
+Rodar o build, abrir `/dashboard` e comparar lado a lado com o screenshot: peso dos títulos, valor `R$ -` e nome do perfil devem bater.
