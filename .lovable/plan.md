@@ -1,17 +1,27 @@
-## Corrigir tela "Assinatura" (definir preço)
+## Corrigir início da verificação Veriff (tela branca com spinner)
 
-**Diagnóstico:** o backend (`saveSubscriptionPricing`) e o formulário funcionam. O problema é puramente de UX/layout — a página coloca no topo os **cards de preview** (Mensal/Trimestral/Semestral zerados), depois o botão "Simular ganhos", e só bem lá embaixo o campo de input real. O usuário vê "R$ 0,00" no topo, não percebe que precisa rolar até o input de "Assinatura Mensal", e conclui que a tela está quebrada.
+**Diagnóstico:** o server function `createIdentityVerificationSession` funciona (Network mostra 200 e URL Veriff válida). O problema é o cliente:
 
-### Mudanças em `src/routes/_authenticated/creator.onboarding.assinatura.tsx`
-1. **Inverter a ordem** do conteúdo dentro do `OnboardingShell`:
-   - Título + subtítulo
-   - **Formulário primeiro:** campo `Assinatura Mensal` (com destaque visual, hint de mín/máx logo abaixo) e, ao lado/abaixo, os dois campos de desconto (Trimestral / Semestral).
-   - **Preview de preços** (os três `PriceCard`) logo depois do formulário, com título "Como ficam seus planos" — atualiza ao vivo conforme o usuário digita.
-   - Link "Simular ganhos com assinatura" mantido como opcional abaixo do preview.
-   - Mensagem de erro + botão "Avançar" no final.
-2. **Placeholder guia** no campo mensal: `Ex: 29,90` em vez de `0,00`, para deixar claro que é ali que se digita.
-3. **Autofocus** no campo mensal ao montar a página.
-4. **Botão "Avançar"** continua desabilitado enquanto `monthly` está fora de `[19,90; 200,00]`; adicionar um pequeno texto auxiliar acima do botão quando desabilitado ("Digite um valor entre R$ 19,90 e R$ 200,00 para continuar.") para o usuário não ficar sem entender por que o botão está apagado.
-5. Sem mudanças de schema, backend, rotas ou lógica de cálculo — apenas reordenação/UX e microcopy.
+```ts
+window.location.href = result.url;
+```
 
-Isso resolve o "não estou conseguindo definir o valor": o input fica imediatamente visível e óbvio, e os preços de preview passam a ser consequência do que foi digitado.
+No preview do Lovable a app roda dentro de um iframe. `saas.veriff.com` envia `X-Frame-Options: DENY` / CSP `frame-ancestors`, então navegar o iframe para lá deixa a tela em branco (só o spinner do Veriff, sem conteúdo). Em produção fora de iframe funcionaria, mas o usuário nunca consegue testar/usar no preview.
+
+### Mudança — `src/routes/_authenticated/creator.onboarding.documentos.tsx`
+
+1. Substituir `window.location.href = result.url` por uma navegação de topo segura:
+   ```ts
+   const veriffUrl = result.url ?? returnUrl;
+   // Sempre navegar a janela do topo — funciona no preview (iframe) e em produção.
+   if (window.top && window.top !== window.self) {
+     window.top.location.href = veriffUrl;
+   } else {
+     window.location.href = veriffUrl;
+   }
+   ```
+2. Como fallback (caso o browser bloqueie navegação cross-origin do top), abrir também `window.open(veriffUrl, "_blank", "noopener")` e mostrar um link "Abrir verificação em nova aba" com `href={result.url}` para o usuário clicar manualmente se o pop-up for bloqueado.
+3. Navegar o próprio app para `/creator/onboarding/documentos/verificando` logo em seguida (`navigate({ to: ... })`) para que, quando o usuário voltar da Veriff, a tela de polling do KYC já esteja carregada.
+4. Manter o estado `loading` até o redirect efetivamente ocorrer e mostrar mensagem "Abrindo verificação segura..." para dar feedback.
+
+Sem mudanças no backend, no server function, nas rotas ou no schema. Só ajuste do handler `handleStart` e da UI de fallback.
