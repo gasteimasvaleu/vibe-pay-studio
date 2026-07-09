@@ -1,25 +1,15 @@
-## Redesenhar as tabs "Postagens / Mídias"
+## Problema
+A página `/perfil/$username` usa `max-w-3xl mx-auto` como largura dos cards. A `/feed` usa um grid de 3 colunas (`220px + 1fr + 300px`) dentro de `max-w-[1400px]`, então os cards do meio ficam com largura diferente (e desalinhados visualmente com o perfil).
 
-Adaptar o `TabsList` em `src/routes/_authenticated/perfil.$username.tsx` (linhas 197–210) para o layout do screenshot, usando as cores do app (primary laranja + card branco) em vez de fúcsia/roxo em fundo escuro.
+## Mudança em `src/routes/_authenticated/feed.tsx`
+1. Trocar o container do conteúdo para o mesmo shape do perfil:
+   - De: `max-w-[1400px] ... grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_300px] gap-8`
+   - Para: `max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6` (idêntico ao perfil)
+2. Remover a `<aside>` da sidebar esquerda e a `<aside>` do right rail — não cabem no layout single-column de 3xl e não são o que o usuário quer nesta tela.
+3. Ajustar o header topo para também usar `max-w-3xl` (hoje é `max-w-[1400px]`), para que a barra superior fique alinhada com os cards, igual ao perfil.
+4. Manter conteúdo do main intacto: card de boas-vindas ("Olá, @username") e card de estado vazio ("Seu feed ainda está vazio") — mesmas classes, só mudam de container.
 
-### Mudanças
-
-1. **Container (`TabsList`)**
-   - De: `w-full h-12 rounded-2xl bg-white/5 border border-white/10 p-1`
-   - Para: `w-full h-12 rounded-full bg-card border border-border p-0 overflow-hidden` (pílula clara com divisor central)
-
-2. **Cada `TabsTrigger`**
-   - Base: `flex-1 h-full rounded-none gap-2 text-sm font-semibold text-muted-foreground bg-transparent transition-colors`
-   - Ativo: `data-[state=active]:text-primary data-[state=active]:bg-transparent` + borda inferior laranja via `data-[state=active]:border-b-2 data-[state=active]:border-primary`
-   - Inativo mantém `text-muted-foreground` (legível sobre card branco)
-   - Adicionar ícone ao lado do texto:
-     - Postagens: `Smartphone` (lucide) — combina com o mock do print
-     - Mídias: manter `Film` ou usar `Clapperboard`
-   - Divisor visual entre as duas: `border-l border-border` no segundo trigger
-
-3. **Garantir legibilidade**
-   - Nenhum texto branco sobre branco: ativo = `text-primary`, inativo = `text-muted-foreground`.
-   - Ícones herdam `currentColor`.
-
-### Fora de escopo
-Feed, cards de posts, grid de mídias, header, botão Editar perfil, onboarding, Veriff.
+## Fora de escopo
+- Estilo interno dos cards, cores, animações, textos.
+- Rotas, auth, dados.
+- Página de perfil (não é alterada).

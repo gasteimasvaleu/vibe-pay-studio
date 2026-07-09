@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, Compass, Home, MessageCircle, Search, Settings, Sparkles, User } from "lucide-react";
+import { Bell, MessageCircle, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/feed")({
@@ -48,7 +48,7 @@ function FeedPage() {
 
       {/* Top bar */}
       <header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/30">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <Link to="/feed" className="text-lg font-black tracking-tight">
             monet<span className="text-gradient-primary">isex</span>
           </Link>
@@ -83,21 +83,8 @@ function FeedPage() {
         </div>
       </header>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_300px] gap-8">
-        {/* Sidebar */}
-        <aside className="hidden lg:block">
-          <nav className="sticky top-24 space-y-1">
-            <SideItem icon={<Home className="h-5 w-5" />} label="Feed" active />
-            <SideItem icon={<Compass className="h-5 w-5" />} label="Explorar" />
-            <SideItem icon={<MessageCircle className="h-5 w-5" />} label="Mensagens" />
-            <SideItem icon={<Bell className="h-5 w-5" />} label="Notificações" />
-            <SideItem icon={<User className="h-5 w-5" />} label="Perfil" />
-            <SideItem icon={<Settings className="h-5 w-5" />} label="Ajustes" />
-          </nav>
-        </aside>
+      <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
-        {/* Feed */}
-        <main className="space-y-6 min-w-0 max-w-3xl mx-auto w-full">
           {/* Welcome */}
           <motion.section
             initial={{ opacity: 0, y: 10 }}
@@ -136,21 +123,8 @@ function FeedPage() {
             >
               Ir para o painel
             </Link>
-          </motion.section>
-        </main>
-
-        {/* Right rail */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-5">
-              <p className="text-xs uppercase tracking-widest text-white/70">Em alta</p>
-              <p className="mt-3 text-sm text-white/70 leading-relaxed">
-                Em breve você verá aqui as tags e creators em destaque na plataforma.
-              </p>
-            </div>
-          </div>
-        </aside>
-      </div>
+        </motion.section>
+      </main>
     </div>
   );
 }
@@ -162,29 +136,6 @@ function IconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButton
       className="h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15 text-white/85 hover:bg-white/15 hover:text-white transition-colors"
     >
       {children}
-    </button>
-  );
-}
-
-function SideItem({
-  icon,
-  label,
-  active,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-        active
-          ? "bg-white/15 text-white"
-          : "text-white/75 hover:text-white hover:bg-white/10"
-      }`}
-    >
-      {icon}
-      {label}
     </button>
   );
 }
