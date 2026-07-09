@@ -112,9 +112,23 @@ function DocumentosPage() {
           {loading ? "Preparando..." : "Iniciar verificação"}
         </button>
 
-        <p className="mt-4 text-center text-xs text-white/40">
-          Você será redirecionado para o ambiente seguro da Veriff.
-        </p>
+        {veriffUrl ? (
+          <p className="mt-4 text-center text-xs text-white/60">
+            Não abriu?{" "}
+            <a
+              href={veriffUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-fuchsia-300 underline underline-offset-4 hover:text-fuchsia-200"
+            >
+              Abrir verificação em nova aba
+            </a>
+          </p>
+        ) : (
+          <p className="mt-4 text-center text-xs text-white/40">
+            Você será redirecionado para o ambiente seguro da Veriff.
+          </p>
+        )}
       </div>
     </OnboardingShell>
   );
