@@ -207,6 +207,7 @@ function PromotionPage() {
           </button>
         }
       >
+        <PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />
         <PromotionHeader title="Ofertas indisponíveis" />
         <div className="space-y-4 text-muted-foreground">
           <p>
