@@ -19,6 +19,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedCreatorRouteImport } from './routes/_authenticated/creator'
 import { Route as AuthenticatedAssinanteRouteImport } from './routes/_authenticated/assinante'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
+import { Route as ApiPublicWebhooksStripeIdentityRouteImport } from './routes/api/public/webhooks/stripe-identity'
 
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
@@ -70,6 +71,12 @@ const AuthenticatedPerfilUsernameRoute =
     path: '/perfil/$username',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicWebhooksStripeIdentityRoute =
+  ApiPublicWebhooksStripeIdentityRouteImport.update({
+    id: '/api/public/webhooks/stripe-identity',
+    path: '/api/public/webhooks/stripe-identity',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/creator': typeof AuthenticatedCreatorRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/creator': typeof AuthenticatedCreatorRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/api/public/webhooks/stripe-identity': typeof ApiPublicWebhooksStripeIdentityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/creator'
     | '/feed'
     | '/perfil/$username'
+    | '/api/public/webhooks/stripe-identity'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/creator'
     | '/feed'
     | '/perfil/$username'
+    | '/api/public/webhooks/stripe-identity'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator'
     | '/_authenticated/feed'
     | '/_authenticated/perfil/$username'
+    | '/api/public/webhooks/stripe-identity'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -150,6 +163,7 @@ export interface RootRouteChildren {
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
+  ApiPublicWebhooksStripeIdentityRoute: typeof ApiPublicWebhooksStripeIdentityRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/webhooks/stripe-identity': {
+      id: '/api/public/webhooks/stripe-identity'
+      path: '/api/public/webhooks/stripe-identity'
+      fullPath: '/api/public/webhooks/stripe-identity'
+      preLoaderRoute: typeof ApiPublicWebhooksStripeIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -251,6 +272,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
+  ApiPublicWebhooksStripeIdentityRoute: ApiPublicWebhooksStripeIdentityRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

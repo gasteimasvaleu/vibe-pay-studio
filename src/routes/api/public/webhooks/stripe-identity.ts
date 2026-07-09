@@ -62,7 +62,11 @@ export const Route = createFileRoute("/api/public/webhooks/stripe-identity")({
         const nextStatus = statusMap[event.type];
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const update: Record<string, unknown> = {
+        const update: {
+          kyc_status: string;
+          stripe_verification_session_id: string;
+          kyc_verified_at?: string;
+        } = {
           kyc_status: nextStatus,
           stripe_verification_session_id: session.id,
         };
