@@ -1,31 +1,21 @@
-## Diagnóstico
+## Objetivo
+Corrigir o layout da página `/promotion` para que a barra de progresso fique fora da navbar (acima do título de cada step) e reduzir o espaço vazio entre o input "Nome da campanha" e o botão "Avançar".
 
-O fundo da `/promotion` é branco (correto). O problema é que copiei classes escuras do onboarding (`text-white`, `border-white/10`, `bg-white/5`, `text-white/60`) — em fundo claro tudo some. Preciso trocar essas classes por tokens/valores visíveis em fundo branco, mantendo o fundo como está.
+## Alterações propostas
 
-## Mudanças
+### 1. `src/components/promotion/PromotionShell.tsx`
+- Remover a barra de progresso do `<header>` (linhas 36-43).
+- Manter o header apenas com botão Voltar + título "Criando oferta".
+- Criar/exportar um novo componente `PromotionProgress` que recebe `step` e `totalSteps` e renderiza a barra com largura máxima `max-w-2xl` e estilos atuais (`bg-muted`, preenchimento `bg-gradient-primary`).
+- Ajustar o `<main>` para ter menos `padding-top` (`py-6` ou `py-5` em vez de `py-8`) e o footer para ter menos `padding` (`py-3` em vez de `py-4`).
+- Manter o footer sticky (mobile-friendly), mas com altura menor para diminuir a distância visual entre o input e o botão.
 
-### `src/components/promotion/PromotionShell.tsx`
-- Container: remover `text-white`, usar `text-foreground`. Remover camadas escuras (`bg-[#0b0713]`, gradiente radial, textura de pontos) — não existem nesse arquivo hoje, apenas garantir que nada force fundo escuro.
-- Header: `border-b border-border bg-background/80 backdrop-blur-md`; botão de voltar `hover:bg-muted text-foreground`; título `text-foreground`.
-- Trilha da barra de progresso: `bg-muted` (em vez de `bg-white/10`); preenchimento continua `bg-gradient-primary`.
-- Footer: `border-t border-border bg-background/80 backdrop-blur-md`.
-- Botão secundário (Voltar) no footer: `border-border bg-background text-foreground hover:bg-muted`.
+### 2. `src/routes/_authenticated/promotion.tsx`
+- Em cada step, renderizar `<PromotionProgress step={stepIndex + 1} totalSteps={totalSteps} />` logo no início do children do `PromotionShell`, **antes** do `<PromotionHeader>`.
+- No step `name`, reduzir a margem inferior do `PromotionHeader` (`mb-6` em vez de `mb-8`) para aproximar o input do título.
+- Manter o botão "Avançar" no footer, mas aproveitar o padding menor do footer para que ele suba visualmente.
 
-### `src/routes/_authenticated/promotion.tsx`
-- `PromotionHeader`: título `text-foreground`, subtítulo `text-muted-foreground`.
-- `PillInput` / `PillSelect`: `bg-background text-foreground border-border placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20`.
-- Textarea da descrição: mesmos tokens acima.
-- Cards de opção (duração, gate, desconto): `bg-background border-border text-foreground`, estado selecionado `border-primary bg-primary/5`.
-- Tela de sucesso: ícone e textos com `text-foreground` / `text-muted-foreground`.
-- Botão CTA principal permanece com `bg-gradient-primary text-white` (já legível).
-
-Nenhuma mudança em outros arquivos, rotas ou lógica dos steps.
-
-## Validação
-
-Abrir `/promotion` em `/dashboard → Ofertas` e conferir:
-- Fundo branco preservado.
-- Título "Como você quer chamar essa oferta?" e subtítulo legíveis.
-- Input em pill com borda cinza clara, texto preto ao digitar.
-- Rodapé com botões visíveis.
-- Percorrer os 7 steps sem nenhum elemento sumindo.
+### 3. Verificação visual
+- Navegar até `/promotion` no preview.
+- Confirmar que a barra de progresso aparece abaixo do header fixo, acima do título "Dê um nome à sua oferta".
+- Confirmar que o espaço entre o input "Nome da campanha" e o botão "Avançar" ficou menor e equilibrado.
