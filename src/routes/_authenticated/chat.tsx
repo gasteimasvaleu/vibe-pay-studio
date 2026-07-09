@@ -500,7 +500,7 @@ function FiltersSheet({
         >
           Aplicar filtros
         </button>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
