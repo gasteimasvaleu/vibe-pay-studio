@@ -25,6 +25,7 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Images,
+  Info,
   Mic,
   Plus,
   Search,
@@ -361,6 +362,20 @@ function Composer({
                   {f}
                 </FilterChip>
               ))}
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/10 p-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 shrink-0 text-primary" />
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Novo limite de disparos em massa
+                  </h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Você tem até <strong className="text-foreground">5 disparos</strong> hoje. Planeje suas mensagens com antecedência.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="mt-auto pt-6">

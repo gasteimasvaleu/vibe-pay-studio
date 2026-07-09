@@ -149,9 +149,13 @@ function ChatLayout() {
           <div className="px-4 pt-6 pb-3 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-foreground">Conversas</h1>
             <div className="flex items-center gap-1 text-muted-foreground">
-              <IconBtn onClick={() => setOpenNewChat(true)} label="Nova conversa">
+              <Link
+                to="/chat-agendamento"
+                aria-label="Nova mensagem em massa"
+                className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <Plus className="h-5 w-5" />
-              </IconBtn>
+              </Link>
               <Link
                 to="/chat-agendamento"
                 aria-label="Agenda"
