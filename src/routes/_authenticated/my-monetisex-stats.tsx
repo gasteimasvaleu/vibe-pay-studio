@@ -706,7 +706,7 @@ function RecordeCard({ title }: { title: string }) {
   );
 }
 
-const EXTRATO_TABS = ["Faturamento", "Link de indicação", "Ganhos por produto"] as const;
+const EXTRATO_TABS = ["Faturamento", "Ganhos por produto"] as const;
 const PRODUTO_OPTIONS = ["Todos os produtos", "Assinaturas", "PPV", "Mimos", "Chat"] as const;
 const EXTRATO_FILTROS = ["Todos", "Concluídos", "A receber", "Estornos"] as const;
 
