@@ -38,8 +38,8 @@ export function PromotionShell({
       </main>
 
       {footer && (
-        <footer className="sticky bottom-0 border-t border-border bg-background/80 backdrop-blur-md">
-          <div className="mx-auto max-w-2xl px-5 py-3">{footer}</div>
+        <footer className="sticky bottom-8 z-10 bg-transparent">
+          <div className="mx-auto max-w-2xl px-5 pb-2 pt-3">{footer}</div>
         </footer>
       )}
     </div>
