@@ -69,7 +69,7 @@ function RedesSociaisPage() {
   };
 
   return (
-    <OnboardingShell title="Redes Sociais" step={1} backTo="/creator">
+    <OnboardingShell title="Redes Sociais" step={1} backTo="/dashboard">
       <div className="max-w-xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-black tracking-tight">
           Conecte suas redes sociais

@@ -72,7 +72,7 @@ function DocumentosPage() {
             {error}
             <button
               type="button"
-              onClick={() => navigate({ to: "/creator" })}
+              onClick={() => navigate({ to: "/dashboard" })}
               className="ml-2 underline"
             >
               Voltar ao painel
