@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Search, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Search, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/subscriptions")({
@@ -17,31 +23,36 @@ export const Route = createFileRoute("/_authenticated/subscriptions")({
 
 type TabKey = "ativas" | "expiradas";
 type FilterKey = "todas" | "gratuitas" | "pagas";
-type SortKey = "recentes" | "antigas" | "nome_asc" | "nome_desc";
+type SortKey =
+  | "proxima_expiracao"
+  | "distante_expiracao"
+  | "nome_asc"
+  | "nome_desc";
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "recentes", label: "Mais recentes" },
-  { key: "antigas", label: "Mais antigas" },
-  { key: "nome_asc", label: "Nome A–Z" },
-  { key: "nome_desc", label: "Nome Z–A" },
+  { key: "proxima_expiracao", label: "Mais próximo da expiração" },
+  { key: "distante_expiracao", label: "Mais distante da expiração" },
+  { key: "nome_asc", label: "Nome (A-Z)" },
+  { key: "nome_desc", label: "Nome (Z-A)" },
 ];
 
 function SubscriptionsPage() {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("ativas");
   const [filter, setFilter] = useState<FilterKey>("todas");
-  const [sort, setSort] = useState<SortKey>("recentes");
+  const [sort, setSort] = useState<SortKey>("proxima_expiracao");
   const [query, setQuery] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
 
-  // Sem dados por enquanto — placeholder para lista.
   const items = useMemo(() => [] as { id: string; name: string }[], []);
   const filtered = items.filter((i) =>
     i.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
-  const currentSortLabel =
-    SORT_OPTIONS.find((o) => o.key === sort)?.label ?? "Ordenar";
+  const sortButtonLabel =
+    sort === "proxima_expiracao"
+      ? "Ordenar"
+      : (SORT_OPTIONS.find((o) => o.key === sort)?.label ?? "Ordenar");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -129,38 +140,66 @@ function SubscriptionsPage() {
             })}
           </div>
 
-          <Popover open={sortOpen} onOpenChange={setSortOpen}>
-            <PopoverTrigger asChild>
+          <Sheet open={sortOpen} onOpenChange={setSortOpen}>
+            <SheetTrigger asChild>
               <button
                 type="button"
                 className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-1.5 text-sm hover:bg-accent"
               >
-                {currentSortLabel === "Mais recentes" ? "Ordenar" : currentSortLabel}
-                <ChevronDown className="h-4 w-4" />
+                {sortButtonLabel}
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    sortOpen && "rotate-180",
+                  )}
+                />
               </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 rounded-2xl p-1">
-              {SORT_OPTIONS.map((o) => {
-                const active = sort === o.key;
-                return (
-                  <button
-                    key={o.key}
-                    type="button"
-                    onClick={() => {
-                      setSort(o.key);
-                      setSortOpen(false);
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm hover:bg-accent"
-                  >
-                    <span className={cn(active && "text-primary font-medium")}>
-                      {o.label}
-                    </span>
-                    {active && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                );
-              })}
-            </PopoverContent>
-          </Popover>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="rounded-t-3xl border-t-0 p-0"
+            >
+              <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-muted" />
+              <SheetHeader className="px-6 pt-4 pb-2 text-left">
+                <SheetTitle className="text-xl font-semibold">
+                  Ordenar por
+                </SheetTitle>
+              </SheetHeader>
+              <div className="space-y-3 px-6 pb-8 pt-2">
+                {SORT_OPTIONS.map((o) => {
+                  const active = sort === o.key;
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => {
+                        setSort(o.key);
+                        setSortOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-2xl border bg-muted/50 px-5 py-4 text-left text-base transition-colors",
+                        active
+                          ? "border-primary"
+                          : "border-transparent hover:bg-muted",
+                      )}
+                    >
+                      <span className="font-medium">{o.label}</span>
+                      <span
+                        className={cn(
+                          "grid h-5 w-5 place-items-center rounded-full border-2",
+                          active ? "border-primary" : "border-muted-foreground/40",
+                        )}
+                      >
+                        {active && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Lista / estado vazio */}
