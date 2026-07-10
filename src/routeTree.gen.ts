@@ -38,6 +38,7 @@ import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authe
 import { Route as AuthenticatedSettingsSecurityMenuRouteImport } from './routes/_authenticated/settings.security-menu'
 import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings.security'
 import { Route as AuthenticatedSettingsPrivacyOptionsRouteImport } from './routes/_authenticated/settings.privacy-options'
+import { Route as AuthenticatedSettingsPrivacyMailRouteImport } from './routes/_authenticated/settings.privacy-mail'
 import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_authenticated/settings.privacy'
 import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
@@ -219,6 +220,12 @@ const AuthenticatedSettingsPrivacyOptionsRoute =
     path: '/settings/privacy-options',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsPrivacyMailRoute =
+  AuthenticatedSettingsPrivacyMailRouteImport.update({
+    id: '/settings/privacy-mail',
+    path: '/settings/privacy-mail',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsPrivacyRoute =
   AuthenticatedSettingsPrivacyRouteImport.update({
     id: '/settings/privacy',
@@ -390,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/privacy-mail': typeof AuthenticatedSettingsPrivacyMailRoute
   '/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -440,6 +448,7 @@ export interface FileRoutesByTo {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/privacy-mail': typeof AuthenticatedSettingsPrivacyMailRoute
   '/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/_authenticated/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/_authenticated/settings/privacy-mail': typeof AuthenticatedSettingsPrivacyMailRoute
   '/_authenticated/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -548,6 +558,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/privacy'
+    | '/settings/privacy-mail'
     | '/settings/privacy-options'
     | '/settings/security'
     | '/settings/security-menu'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/privacy'
+    | '/settings/privacy-mail'
     | '/settings/privacy-options'
     | '/settings/security'
     | '/settings/security-menu'
@@ -650,6 +662,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/myprofile'
     | '/_authenticated/settings/personal'
     | '/_authenticated/settings/privacy'
+    | '/_authenticated/settings/privacy-mail'
     | '/_authenticated/settings/privacy-options'
     | '/_authenticated/settings/security'
     | '/_authenticated/settings/security-menu'
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/privacy-options'
       fullPath: '/settings/privacy-options'
       preLoaderRoute: typeof AuthenticatedSettingsPrivacyOptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/privacy-mail': {
+      id: '/_authenticated/settings/privacy-mail'
+      path: '/settings/privacy-mail'
+      fullPath: '/settings/privacy-mail'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyMailRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/privacy': {
@@ -1172,6 +1192,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
   AuthenticatedSettingsPrivacyRoute: typeof AuthenticatedSettingsPrivacyRoute
+  AuthenticatedSettingsPrivacyMailRoute: typeof AuthenticatedSettingsPrivacyMailRoute
   AuthenticatedSettingsPrivacyOptionsRoute: typeof AuthenticatedSettingsPrivacyOptionsRoute
   AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
   AuthenticatedSettingsSecurityMenuRoute: typeof AuthenticatedSettingsSecurityMenuRoute
@@ -1209,6 +1230,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
   AuthenticatedSettingsPrivacyRoute: AuthenticatedSettingsPrivacyRoute,
+  AuthenticatedSettingsPrivacyMailRoute: AuthenticatedSettingsPrivacyMailRoute,
   AuthenticatedSettingsPrivacyOptionsRoute:
     AuthenticatedSettingsPrivacyOptionsRoute,
   AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
