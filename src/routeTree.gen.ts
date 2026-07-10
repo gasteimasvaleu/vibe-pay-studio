@@ -46,6 +46,7 @@ import { Route as AuthenticatedSettingsMutedRouteImport } from './routes/_authen
 import { Route as AuthenticatedSettingsDeviceManagementRouteImport } from './routes/_authenticated/settings.device-management'
 import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
+import { Route as AuthenticatedSettingsChatSettingsRouteImport } from './routes/_authenticated/settings.chat-settings'
 import { Route as AuthenticatedSettingsChangePasswordRouteImport } from './routes/_authenticated/settings.change-password'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
@@ -269,6 +270,12 @@ const AuthenticatedSettingsCreatorRoute =
     path: '/settings/creator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsChatSettingsRoute =
+  AuthenticatedSettingsChatSettingsRouteImport.update({
+    id: '/settings/chat-settings',
+    path: '/settings/chat-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsChangePasswordRoute =
   AuthenticatedSettingsChangePasswordRouteImport.update({
     id: '/settings/change-password',
@@ -398,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
+  '/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
@@ -451,6 +459,7 @@ export interface FileRoutesByTo {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
+  '/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/settings/muted': typeof AuthenticatedSettingsMutedRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
+  '/_authenticated/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/_authenticated/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/_authenticated/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/settings/change-password'
+    | '/settings/chat-settings'
     | '/settings/creator'
     | '/settings/details'
     | '/settings/device-management'
@@ -615,6 +626,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/settings/change-password'
+    | '/settings/chat-settings'
     | '/settings/creator'
     | '/settings/details'
     | '/settings/muted'
@@ -668,6 +680,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/settings/change-password'
+    | '/_authenticated/settings/chat-settings'
     | '/_authenticated/settings/creator'
     | '/_authenticated/settings/details'
     | '/_authenticated/settings/device-management'
@@ -969,6 +982,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsCreatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/chat-settings': {
+      id: '/_authenticated/settings/chat-settings'
+      path: '/settings/chat-settings'
+      fullPath: '/settings/chat-settings'
+      preLoaderRoute: typeof AuthenticatedSettingsChatSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/change-password': {
       id: '/_authenticated/settings/change-password'
       path: '/settings/change-password'
@@ -1206,6 +1226,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
+  AuthenticatedSettingsChatSettingsRoute: typeof AuthenticatedSettingsChatSettingsRoute
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
   AuthenticatedSettingsDetailsRoute: typeof AuthenticatedSettingsDetailsRoute
   AuthenticatedSettingsDeviceManagementRoute: typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
@@ -1244,6 +1265,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedSettingsChangePasswordRoute:
     AuthenticatedSettingsChangePasswordRoute,
+  AuthenticatedSettingsChatSettingsRoute:
+    AuthenticatedSettingsChatSettingsRoute,
   AuthenticatedSettingsCreatorRoute: AuthenticatedSettingsCreatorRoute,
   AuthenticatedSettingsDetailsRoute: AuthenticatedSettingsDetailsRoute,
   AuthenticatedSettingsDeviceManagementRoute:

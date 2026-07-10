@@ -111,7 +111,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<MessageCircle className="h-5 w-5" />}
             label="Configuração do chat"
-            to="/chat-configuracoes"
+            to="/settings/chat-settings"
           />
           <SettingsRow
             icon={<UserX className="h-5 w-5" />}
