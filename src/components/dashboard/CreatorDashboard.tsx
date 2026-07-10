@@ -122,6 +122,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Bookmark className="h-5 w-5" />}
             title="Atividades"
             description="Acesse suas mídias favoritas salvas"
+            to="/colecoes"
           />
           <ActionCard
             icon={<Settings className="h-5 w-5" />}
