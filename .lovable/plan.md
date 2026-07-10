@@ -1,25 +1,24 @@
-## Criar página `/settings/security-menu`
+## Criar página `/settings/device-management`
 
 ### Arquivos
-1. **`src/routes/_authenticated/settings.security-menu.tsx`** (novo)
-   - `createFileRoute("/_authenticated/settings/security-menu")` com `head` (title "Segurança · Monetisexy", noindex) e `beforeLoad` verificando `supabase.auth.getUser()`.
-   - Header padrão: botão voltar (ArrowLeft, `router.history.back()`), título centralizado "Segurança".
-   - **Bloco de opções** (card `rounded-2xl border bg-card divide-y`):
-     - "Alterar senha"
-     - "Autenticação de dois fatores"
-     - "Autenticação por rede social"
-     - Cada linha é um botão que dispara `toast.info("Em breve")` (sem chevron, seguindo screenshot).
-   - **Seção "Seus acessos"**:
-     - Título bold + subtítulo "Acessos conectados recentemente".
-     - Lista de cards com ícone Laptop, nome do dispositivo (ex: "Chrome"), localização ("João Pessoa, PB, BR"), data ("10 Jul 2026, 05:45"), IP + navegador.
-     - Botão de 3 pontos (MoreVertical) à direita abrindo `DropdownMenu` com "Renomear" e "Remover acesso" (vermelho). Ações disparam `toast.info("Em breve")`.
-     - Dados mockados (2 sessões de exemplo).
-   - **Rodapé**: card único "Ver todos acessos" com chevron (dispara `toast.info("Em breve")`).
+1. **`src/routes/_authenticated/settings.device-management.tsx`** (novo)
+   - `createFileRoute("/_authenticated/settings/device-management")` com `head` (title "Seus acessos · Monetisexy", noindex) e `beforeLoad` verificando `supabase.auth.getUser()`.
+   - Header padrão: botão voltar (ArrowLeft, `router.history.back()`), título "Seus acessos".
+   - **Seção "Acessos conectados"**:
+     - Título bold + parágrafo descritivo: "Estes são todos os acessos conectados à sua conta. Caso não reconheça algum deles, remova todos os acessos e `troque sua senha` para mais segurança" (com "troque sua senha" sublinhado, clicável → `toast.info("Em breve")`).
+   - **Subseção "Acesso atual"**:
+     - Título bold + 1 card do acesso atual (Chrome, João Pessoa PB BR, data, IP) com menu 3 pontos (Renomear / Remover acesso).
+   - **Subseção "Outros acessos"**:
+     - Título bold + lista de cards (mock com 3 sessões) mesmo formato. Suporte a `showAll` state — inicialmente mostra 2, botão "Ver mais" revela restante.
+   - **Botão "Ver mais"** (card branco full-width, texto centralizado) — visível apenas se houver mais sessões. Alterna `showAll`.
+   - **Botão "Remover todos os acessos"** (card branco full-width, texto centralizado `text-destructive`, dispara `toast.info("Em breve")`).
+   - **Card "Ver acessos removidos"** (chevron à direita, `toast.info("Em breve")`).
+   - Reutiliza `DropdownMenu` shadcn com "Renomear" / "Remover acesso" (vermelho).
 
-2. **`src/routes/_authenticated/settings.creator.tsx`** (editar linha 93–104)
-   - `SettingsRow` "Segurança" recebe `to="/settings/security-menu"`.
+2. **`src/routes/_authenticated/settings.security-menu.tsx`** (editar)
+   - Botão "Ver todos acessos" (linha 87) vira um `<Link to="/settings/device-management">` no lugar do `<button onClick={soon}>`.
 
 ### Detalhes visuais
-- Seguir estilo já usado em `settings.creator.tsx` (max-w-3xl, bg-card, border-border, shadow-card).
-- Dropdown via `@/components/ui/dropdown-menu` (shadcn já disponível).
-- Ícones: `Laptop`, `MoreVertical`, `Pencil`, `Trash2`, `ChevronRight`, `ArrowLeft` do lucide-react.
+- Mesmo estilo dos outros cards de settings (`rounded-2xl border-border bg-card shadow-card`).
+- Ícone Laptop para dispositivos, MoreVertical para menu, ChevronRight para "Ver acessos removidos".
+- Layout `max-w-3xl mx-auto` como as outras.
