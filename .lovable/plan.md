@@ -1,23 +1,38 @@
 ## Objetivo
-Ao clicar no botão "Adicionar novo cartão" em `/mywallet`, abrir um dialog com formulário de cadastro de cartão, conforme o screenshot.
+Atualizar a página dedicada `/mywallet/extrato` (já é o destino de "Ver todas as transações") para refletir os screenshots: título "Transações" e 4 filtros com dropdowns em pills.
+
+## Arquivo
+`src/routes/_authenticated/mywallet.extrato.tsx`
 
 ## Alterações
 
-**`src/routes/_authenticated/mywallet.index.tsx`**
-- Converter o botão "Adicionar novo cartão" no gatilho de um `<Dialog>` (shadcn).
-- Adicionar estado local para os campos do formulário.
+### Cabeçalho
+- Título muda de "Extrato" para **"Transações"**.
+- `head().title`: "Transações · Monetisex".
 
-## Conteúdo do Dialog (conforme screenshot)
-- Título: **Adicionar cartão**
-- Subtítulo: "Estamos em total conformidade com o padrão internacional de segurança de cartões PCI DSS."
-- Campos (inputs arredondados, fundo cinza claro, placeholder em maiúsculas):
-  - NÚMERO DO CARTÃO (com máscara `#### #### #### ####`)
-  - NOME (COMO ESCRITO NO CARTÃO)
-  - CPF DO TITULAR (máscara `###.###.###-##`)
-  - VALIDADE (`MM/AA`) e CVV (3–4 dígitos) lado a lado
-- Botão **Confirmar** (laranja, arredondado, alinhado à direita)
-- Botão de fechar (X) no canto superior direito
+### Layout dos filtros
+Grid 2 colunas (md+), 1 coluna no mobile:
+- Linha 1: **Tipo de item** | **Tipo de pagamento**
+- Linha 2: **Status** | **Data inicial — Até — Data final** (com ícone de calendário)
 
-## Comportamento
-- Ao confirmar: validação básica (todos os campos preenchidos, número com 16 dígitos, CVV 3–4 dígitos, validade formato MM/AA), exibir `toast` de sucesso "Cartão adicionado" e fechar o dialog. Sem persistência backend nesta etapa.
-- Sem alterações em rotas, backend ou outros arquivos.
+Todos os campos: pills arredondadas (`h-12 rounded-full`), fundo `bg-secondary` (bege claro), chevron à direita. Ao abrir, popover branco com pills de opções (mesma estética atual).
+
+### Opções por filtro
+- **Tipo de item**: Todos, Assinatura, Chat, Desafio, Live, Mimo, Postagem, Recarga Wallet, Videochamada
+- **Tipo de pagamento**: Todos, ApplePay, Cartão, GooglePay, PicPayWallet, Pix, Privacy Wallet
+- **Status**: Todos, Negado, Autorizado, Devolvido
+- **Datas**: mantém o range calendar existente
+
+### Estado / seleção
+- Um `useState` por filtro (`tipoItem`, `tipoPagamento`, `status`, `range`).
+- "Todos" limpa a seleção (`null`).
+- Selecionado ganha destaque (`bg-primary text-primary-foreground`).
+
+### Conteúdo
+- Remove o card "Últimas movimentações" e mostra apenas o texto centralizado **"Nenhuma transação encontrada"** abaixo dos filtros, conforme screenshots.
+
+### Remover
+- Constantes antigas `TIPO_ITEM_OPTIONS` (com Depósito/Bônus/Estorno) e `TIPO_MOV_OPTIONS`.
+- Filtro "Tipo de movimentação".
+
+Sem alterações em rotas, backend ou outros arquivos. O link "Ver todas as transações" em `mywallet.index.tsx` já aponta para essa rota — nada a alterar lá.
