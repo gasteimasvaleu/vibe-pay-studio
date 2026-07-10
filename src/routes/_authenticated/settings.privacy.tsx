@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/settings/privacy")({
 const ITEMS: { label: string; to?: string }[] = [
   { label: "Configurações de privacidade", to: "/settings/privacy-options" },
   { label: "Configurações de envio de e-mails", to: "/settings/privacy-mail" },
-  { label: "Perfis silenciados" },
+  { label: "Perfis silenciados", to: "/settings/muted" },
 ];
 
 function PrivacyPage() {
