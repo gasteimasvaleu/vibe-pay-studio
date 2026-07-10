@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -60,6 +61,9 @@ function VaultPage() {
   const [categoryName, setCategoryName] = useState("");
   const [sidebarSort, setSidebarSort] = useState<"padrao" | "nome" | "recentes" | "midias">("padrao");
   const [sidebarDirection, setSidebarDirection] = useState<"asc" | "desc">("asc");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const current = TABS.find((t) => t.key === activeTab)!;
   const isEmptyCategory = activeTab === "conversas" || activeTab === "envios";
@@ -68,6 +72,31 @@ function VaultPage() {
     setActiveTab(k);
     setMobileDetail(true);
   };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && searchOpen) {
+        closeSearch();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [searchOpen]);
+
+  const filteredTabs = TABS.filter((t) =>
+    t.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,24 +114,50 @@ function VaultPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-xl font-semibold tracking-wide text-foreground">ACERVO</h1>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                aria-label="Buscar"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddCategoryOpen(true)}
-                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                aria-label="Adicionar"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            </div>
+            {searchOpen ? (
+              <div className="flex items-center gap-2 flex-1">
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Fechar busca"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="relative flex-1">
+                  <Input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar"
+                    className="h-10 pr-10 rounded-full border-2 border-primary bg-background text-foreground placeholder:text-muted-foreground"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-semibold tracking-wide text-foreground">ACERVO</h1>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen(true)}
+                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    aria-label="Buscar"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddCategoryOpen(true)}
+                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    aria-label="Adicionar"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Right header */}
@@ -179,7 +234,7 @@ function VaultPage() {
           </div>
 
           <ul className="space-y-1">
-            {TABS.map((t) => {
+            {filteredTabs.map((t) => {
               const isActive = t.key === activeTab;
               return (
                 <li key={t.key}>
