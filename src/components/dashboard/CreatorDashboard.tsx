@@ -127,6 +127,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Settings className="h-5 w-5" />}
             title="Definições"
             description="Personalize sua experiência"
+            to="/settings/creator"
           />
           <ActionCard
             icon={<HelpCircle className="h-5 w-5" />}
