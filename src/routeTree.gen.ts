@@ -37,6 +37,7 @@ import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_
 import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
 import { Route as AuthenticatedSettingsSecurityMenuRouteImport } from './routes/_authenticated/settings.security-menu'
 import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings.security'
+import { Route as AuthenticatedSettingsPrivacyOptionsRouteImport } from './routes/_authenticated/settings.privacy-options'
 import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_authenticated/settings.privacy'
 import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
@@ -212,6 +213,12 @@ const AuthenticatedSettingsSecurityRoute =
     path: '/settings/security',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsPrivacyOptionsRoute =
+  AuthenticatedSettingsPrivacyOptionsRouteImport.update({
+    id: '/settings/privacy-options',
+    path: '/settings/privacy-options',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsPrivacyRoute =
   AuthenticatedSettingsPrivacyRouteImport.update({
     id: '/settings/privacy',
@@ -383,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
@@ -432,6 +440,7 @@ export interface FileRoutesByTo {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
@@ -484,6 +493,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/_authenticated/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/_authenticated/settings/privacy-options': typeof AuthenticatedSettingsPrivacyOptionsRoute
   '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
   '/_authenticated/settings/social': typeof AuthenticatedSettingsSocialRoute
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/privacy'
+    | '/settings/privacy-options'
     | '/settings/security'
     | '/settings/security-menu'
     | '/settings/social'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/privacy'
+    | '/settings/privacy-options'
     | '/settings/security'
     | '/settings/security-menu'
     | '/settings/social'
@@ -638,6 +650,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/myprofile'
     | '/_authenticated/settings/personal'
     | '/_authenticated/settings/privacy'
+    | '/_authenticated/settings/privacy-options'
     | '/_authenticated/settings/security'
     | '/_authenticated/settings/security-menu'
     | '/_authenticated/settings/social'
@@ -865,6 +878,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/security'
       fullPath: '/settings/security'
       preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/privacy-options': {
+      id: '/_authenticated/settings/privacy-options'
+      path: '/settings/privacy-options'
+      fullPath: '/settings/privacy-options'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyOptionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/privacy': {
@@ -1152,6 +1172,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
   AuthenticatedSettingsPrivacyRoute: typeof AuthenticatedSettingsPrivacyRoute
+  AuthenticatedSettingsPrivacyOptionsRoute: typeof AuthenticatedSettingsPrivacyOptionsRoute
   AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
   AuthenticatedSettingsSecurityMenuRoute: typeof AuthenticatedSettingsSecurityMenuRoute
   AuthenticatedSettingsSocialRoute: typeof AuthenticatedSettingsSocialRoute
@@ -1188,6 +1209,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
   AuthenticatedSettingsPrivacyRoute: AuthenticatedSettingsPrivacyRoute,
+  AuthenticatedSettingsPrivacyOptionsRoute:
+    AuthenticatedSettingsPrivacyOptionsRoute,
   AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
   AuthenticatedSettingsSecurityMenuRoute:
     AuthenticatedSettingsSecurityMenuRoute,
