@@ -28,6 +28,7 @@ import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
 import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
@@ -165,6 +166,11 @@ const AuthenticatedChatAgendamentoRoute =
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
+  id: '/bugreport',
+  path: '/bugreport',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBancoRoute = AuthenticatedBancoRouteImport.update({
@@ -414,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
+  '/bugreport': typeof AuthenticatedBugreportRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -474,6 +481,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
+  '/bugreport': typeof AuthenticatedBugreportRoute
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
@@ -531,6 +539,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
+  '/_authenticated/bugreport': typeof AuthenticatedBugreportRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -593,6 +602,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/account-status'
     | '/banco'
+    | '/bugreport'
     | '/chat'
     | '/chat-agendamento'
     | '/chat-configuracoes'
@@ -653,6 +663,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/account-status'
     | '/banco'
+    | '/bugreport'
     | '/chat-agendamento'
     | '/chat-configuracoes'
     | '/colecoes'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/_authenticated/account-status'
     | '/_authenticated/banco'
+    | '/_authenticated/bugreport'
     | '/_authenticated/chat'
     | '/_authenticated/chat-agendamento'
     | '/_authenticated/chat-configuracoes'
@@ -905,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bugreport': {
+      id: '/_authenticated/bugreport'
+      path: '/bugreport'
+      fullPath: '/bugreport'
+      preLoaderRoute: typeof AuthenticatedBugreportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/banco': {
@@ -1291,6 +1310,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountStatusRoute: typeof AuthenticatedAccountStatusRoute
   AuthenticatedBancoRoute: typeof AuthenticatedBancoRouteWithChildren
+  AuthenticatedBugreportRoute: typeof AuthenticatedBugreportRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAgendamentoRoute: typeof AuthenticatedChatAgendamentoRoute
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
@@ -1333,6 +1353,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountStatusRoute: AuthenticatedAccountStatusRoute,
   AuthenticatedBancoRoute: AuthenticatedBancoRouteWithChildren,
+  AuthenticatedBugreportRoute: AuthenticatedBugreportRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAgendamentoRoute: AuthenticatedChatAgendamentoRoute,
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
