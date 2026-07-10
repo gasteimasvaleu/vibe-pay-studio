@@ -166,7 +166,7 @@ function SettingsMyProfilePage() {
               Ao continuar, sua conta e os dados associados serão excluídos.
             </DialogDescription>
 
-            <div className="mt-8 flex items-center justify-end gap-2 w-full">
+            <div className="mt-8 flex items-center justify-center gap-3 w-full">
               <Button
                 type="button"
                 variant="ghost"
