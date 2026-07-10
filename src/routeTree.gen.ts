@@ -32,6 +32,7 @@ import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authen
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedSettingsTwoFactorRouteImport } from './routes/_authenticated/settings.two-factor'
+import { Route as AuthenticatedSettingsThemeRouteImport } from './routes/_authenticated/settings.theme'
 import { Route as AuthenticatedSettingsSubscriptionRouteImport } from './routes/_authenticated/settings.subscription'
 import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_authenticated/settings.social-media'
 import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
@@ -185,6 +186,12 @@ const AuthenticatedSettingsTwoFactorRoute =
   AuthenticatedSettingsTwoFactorRouteImport.update({
     id: '/settings/two-factor',
     path: '/settings/two-factor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsThemeRoute =
+  AuthenticatedSettingsThemeRouteImport.update({
+    id: '/settings/theme',
+    path: '/settings/theme',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsSubscriptionRoute =
@@ -428,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
+  '/settings/theme': typeof AuthenticatedSettingsThemeRoute
   '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
@@ -482,6 +490,7 @@ export interface FileRoutesByTo {
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
+  '/settings/theme': typeof AuthenticatedSettingsThemeRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -539,6 +548,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/_authenticated/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/_authenticated/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
+  '/_authenticated/settings/theme': typeof AuthenticatedSettingsThemeRoute
   '/_authenticated/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/settings/social'
     | '/settings/social-media'
     | '/settings/subscription'
+    | '/settings/theme'
     | '/settings/two-factor'
     | '/chat/'
     | '/mywallet/'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/settings/social'
     | '/settings/social-media'
     | '/settings/subscription'
+    | '/settings/theme'
     | '/chat'
     | '/mywallet'
     | '/creator/onboarding/assinatura'
@@ -708,6 +720,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/social'
     | '/_authenticated/settings/social-media'
     | '/_authenticated/settings/subscription'
+    | '/_authenticated/settings/theme'
     | '/_authenticated/settings/two-factor'
     | '/_authenticated/chat/'
     | '/_authenticated/mywallet/'
@@ -895,6 +908,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/two-factor'
       fullPath: '/settings/two-factor'
       preLoaderRoute: typeof AuthenticatedSettingsTwoFactorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/theme': {
+      id: '/_authenticated/settings/theme'
+      path: '/settings/theme'
+      fullPath: '/settings/theme'
+      preLoaderRoute: typeof AuthenticatedSettingsThemeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/subscription': {
@@ -1262,6 +1282,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsSocialRoute: typeof AuthenticatedSettingsSocialRoute
   AuthenticatedSettingsSocialMediaRoute: typeof AuthenticatedSettingsSocialMediaRoute
   AuthenticatedSettingsSubscriptionRoute: typeof AuthenticatedSettingsSubscriptionRoute
+  AuthenticatedSettingsThemeRoute: typeof AuthenticatedSettingsThemeRoute
   AuthenticatedSettingsTwoFactorRoute: typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
@@ -1308,6 +1329,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsSocialMediaRoute: AuthenticatedSettingsSocialMediaRoute,
   AuthenticatedSettingsSubscriptionRoute:
     AuthenticatedSettingsSubscriptionRoute,
+  AuthenticatedSettingsThemeRoute: AuthenticatedSettingsThemeRoute,
   AuthenticatedSettingsTwoFactorRoute:
     AuthenticatedSettingsTwoFactorRouteWithChildren,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
