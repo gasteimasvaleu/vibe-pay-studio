@@ -114,24 +114,50 @@ function VaultPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-xl font-semibold tracking-wide text-foreground">ACERVO</h1>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                aria-label="Buscar"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddCategoryOpen(true)}
-                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                aria-label="Adicionar"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            </div>
+            {searchOpen ? (
+              <div className="flex items-center gap-2 flex-1">
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Fechar busca"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="relative flex-1">
+                  <Input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar"
+                    className="h-10 pr-10 rounded-full border-2 border-primary bg-background text-foreground placeholder:text-muted-foreground"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-semibold tracking-wide text-foreground">ACERVO</h1>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen(true)}
+                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    aria-label="Buscar"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddCategoryOpen(true)}
+                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    aria-label="Adicionar"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Right header */}
