@@ -13,6 +13,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const COMPOSER_ICONS: { icon: typeof Mic; label: string }[] = [
+  { icon: ImageIcon, label: "Adicionar mídia" },
+  { icon: Mic, label: "Gravar um áudio" },
+  { icon: Archive, label: "Adicionar mídia do acervo" },
+  { icon: Smile, label: "Adicionar um emoji" },
+  { icon: Tag, label: "Adicionar tag" },
+];
 
 export const Route = createFileRoute("/_authenticated/settings/chat-settings")({
   head: () => ({
@@ -94,13 +108,24 @@ function ChatSettingsPage() {
               rows={5}
               className="w-full bg-transparent border-0 focus:outline-none resize-none text-foreground placeholder:text-muted-foreground"
             />
-            <div className="flex items-center gap-4 text-muted-foreground">
-              <ImageIcon className="h-5 w-5" />
-              <Mic className="h-5 w-5" />
-              <Archive className="h-5 w-5" />
-              <Smile className="h-5 w-5" />
-              <Tag className="h-5 w-5" />
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                {COMPOSER_ICONS.map(({ icon: Icon, label }) => (
+                  <Tooltip key={label}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={label}
+                        className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <Icon className="h-5 w-5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{label}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </TooltipProvider>
           </div>
         )}
 
