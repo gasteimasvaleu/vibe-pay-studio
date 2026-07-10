@@ -72,6 +72,7 @@ export function SubscriberDashboard({
             icon={<Bookmark className="h-5 w-5" />}
             title="Atividades"
             description="Mídias favoritas e salvas"
+            to="/colecoes"
           />
           <ActionCard
             icon={<User className="h-5 w-5" />}

@@ -24,6 +24,7 @@ import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
+import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
 import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
@@ -144,6 +145,11 @@ const AuthenticatedContentLeakReportRoute =
     path: '/content-leak-report',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedColecoesRoute = AuthenticatedColecoesRouteImport.update({
+  id: '/colecoes',
+  path: '/colecoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatConfiguracoesRoute =
   AuthenticatedChatConfiguracoesRouteImport.update({
     id: '/chat-configuracoes',
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
+  '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
+  '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -526,6 +534,7 @@ export interface FileRoutesById {
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
+  '/_authenticated/colecoes': typeof AuthenticatedColecoesRoute
   '/_authenticated/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
@@ -587,6 +596,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/chat-agendamento'
     | '/chat-configuracoes'
+    | '/colecoes'
     | '/content-leak-report'
     | '/dashboard'
     | '/feed'
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/banco'
     | '/chat-agendamento'
     | '/chat-configuracoes'
+    | '/colecoes'
     | '/content-leak-report'
     | '/dashboard'
     | '/feed'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat'
     | '/_authenticated/chat-agendamento'
     | '/_authenticated/chat-configuracoes'
+    | '/_authenticated/colecoes'
     | '/_authenticated/content-leak-report'
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
@@ -865,6 +877,13 @@ declare module '@tanstack/react-router' {
       path: '/content-leak-report'
       fullPath: '/content-leak-report'
       preLoaderRoute: typeof AuthenticatedContentLeakReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/colecoes': {
+      id: '/_authenticated/colecoes'
+      path: '/colecoes'
+      fullPath: '/colecoes'
+      preLoaderRoute: typeof AuthenticatedColecoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chat-configuracoes': {
@@ -1275,6 +1294,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAgendamentoRoute: typeof AuthenticatedChatAgendamentoRoute
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
+  AuthenticatedColecoesRoute: typeof AuthenticatedColecoesRoute
   AuthenticatedContentLeakReportRoute: typeof AuthenticatedContentLeakReportRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -1316,6 +1336,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAgendamentoRoute: AuthenticatedChatAgendamentoRoute,
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
+  AuthenticatedColecoesRoute: AuthenticatedColecoesRoute,
   AuthenticatedContentLeakReportRoute: AuthenticatedContentLeakReportRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
