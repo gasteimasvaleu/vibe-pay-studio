@@ -75,7 +75,7 @@ function SecurityMenuPage() {
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border shadow-card">
           {[
             { label: "Alterar senha", to: "/settings/change-password" },
-            { label: "Autenticação de dois fatores" },
+            { label: "Autenticação de dois fatores", to: "/settings/two-factor" },
             { label: "Autenticação por rede social" },
           ].map((item) =>
             item.to ? (
