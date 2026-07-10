@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import {
+  AlertCircle,
   ArrowLeft,
   AtSign,
   Camera,
@@ -10,11 +11,18 @@ import {
   Lock,
   Trash2,
   User,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/settings/myprofile")({
   head: () => ({
