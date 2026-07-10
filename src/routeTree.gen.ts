@@ -37,6 +37,7 @@ import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authe
 import { Route as AuthenticatedSettingsSecurityMenuRouteImport } from './routes/_authenticated/settings.security-menu'
 import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
+import { Route as AuthenticatedSettingsDeviceManagementRouteImport } from './routes/_authenticated/settings.device-management'
 import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
 import { Route as AuthenticatedSettingsChangePasswordRouteImport } from './routes/_authenticated/settings.change-password'
@@ -204,6 +205,12 @@ const AuthenticatedSettingsMyprofileRoute =
     path: '/settings/myprofile',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsDeviceManagementRoute =
+  AuthenticatedSettingsDeviceManagementRouteImport.update({
+    id: '/settings/device-management',
+    path: '/settings/device-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsDetailsRoute =
   AuthenticatedSettingsDetailsRouteImport.update({
     id: '/settings/details',
@@ -323,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
+  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -365,6 +373,7 @@ export interface FileRoutesByTo {
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
+  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -410,6 +419,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/_authenticated/settings/details': typeof AuthenticatedSettingsDetailsRoute
+  '/_authenticated/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/_authenticated/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/settings/change-password'
     | '/settings/creator'
     | '/settings/details'
+    | '/settings/device-management'
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/security-menu'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/settings/change-password'
     | '/settings/creator'
     | '/settings/details'
+    | '/settings/device-management'
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/security-menu'
@@ -542,6 +554,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/change-password'
     | '/_authenticated/settings/creator'
     | '/_authenticated/settings/details'
+    | '/_authenticated/settings/device-management'
     | '/_authenticated/settings/myprofile'
     | '/_authenticated/settings/personal'
     | '/_authenticated/settings/security-menu'
@@ -767,6 +780,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsMyprofileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/device-management': {
+      id: '/_authenticated/settings/device-management'
+      path: '/settings/device-management'
+      fullPath: '/settings/device-management'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/details': {
       id: '/_authenticated/settings/details'
       path: '/settings/details'
@@ -956,6 +976,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
   AuthenticatedSettingsDetailsRoute: typeof AuthenticatedSettingsDetailsRoute
+  AuthenticatedSettingsDeviceManagementRoute: typeof AuthenticatedSettingsDeviceManagementRoute
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
   AuthenticatedSettingsSecurityMenuRoute: typeof AuthenticatedSettingsSecurityMenuRoute
@@ -987,6 +1008,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedSettingsChangePasswordRoute,
   AuthenticatedSettingsCreatorRoute: AuthenticatedSettingsCreatorRoute,
   AuthenticatedSettingsDetailsRoute: AuthenticatedSettingsDetailsRoute,
+  AuthenticatedSettingsDeviceManagementRoute:
+    AuthenticatedSettingsDeviceManagementRoute,
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
   AuthenticatedSettingsSecurityMenuRoute:
