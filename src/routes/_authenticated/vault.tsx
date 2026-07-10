@@ -56,6 +56,8 @@ function VaultPage() {
   const [mediaFilter, setMediaFilter] = useState<(typeof MEDIA_FILTERS)[number]>("TODAS");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
 
   const current = TABS.find((t) => t.key === activeTab)!;
   const isEmptyCategory = activeTab === "conversas" || activeTab === "envios";
