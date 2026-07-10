@@ -47,6 +47,7 @@ import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_auth
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
+import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
@@ -265,6 +266,12 @@ const ApiPublicWebhooksVeriffDecisionRoute =
     path: '/api/public/webhooks/veriff-decision',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedSettingsDeviceManagementRemovedRoute =
+  AuthenticatedSettingsDeviceManagementRemovedRouteImport.update({
+    id: '/removed',
+    path: '/removed',
+    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
     id: '/creator/onboarding/redes-sociais',
@@ -330,7 +337,7 @@ export interface FileRoutesByFullPath {
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
-  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
+  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -342,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -373,7 +381,7 @@ export interface FileRoutesByTo {
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
-  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
+  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -384,6 +392,7 @@ export interface FileRoutesByTo {
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -419,7 +428,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/_authenticated/settings/details': typeof AuthenticatedSettingsDetailsRoute
-  '/_authenticated/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRoute
+  '/_authenticated/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/_authenticated/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -431,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
+    | '/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
@@ -520,6 +531,7 @@ export interface FileRouteTypes {
     | '/mywallet'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
+    | '/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
+    | '/_authenticated/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
     | '/_authenticated/creator/onboarding/documentos/verificando'
@@ -850,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings/device-management/removed': {
+      id: '/_authenticated/settings/device-management/removed'
+      path: '/removed'
+      fullPath: '/settings/device-management/removed'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRouteImport
+      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+    }
     '/_authenticated/creator/onboarding/redes-sociais': {
       id: '/_authenticated/creator/onboarding/redes-sociais'
       path: '/creator/onboarding/redes-sociais'
@@ -936,6 +956,21 @@ const AuthenticatedMywalletRouteWithChildren =
     AuthenticatedMywalletRouteChildren,
   )
 
+interface AuthenticatedSettingsDeviceManagementRouteChildren {
+  AuthenticatedSettingsDeviceManagementRemovedRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRoute
+}
+
+const AuthenticatedSettingsDeviceManagementRouteChildren: AuthenticatedSettingsDeviceManagementRouteChildren =
+  {
+    AuthenticatedSettingsDeviceManagementRemovedRoute:
+      AuthenticatedSettingsDeviceManagementRemovedRoute,
+  }
+
+const AuthenticatedSettingsDeviceManagementRouteWithChildren =
+  AuthenticatedSettingsDeviceManagementRoute._addFileChildren(
+    AuthenticatedSettingsDeviceManagementRouteChildren,
+  )
+
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -976,7 +1011,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
   AuthenticatedSettingsDetailsRoute: typeof AuthenticatedSettingsDetailsRoute
-  AuthenticatedSettingsDeviceManagementRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+  AuthenticatedSettingsDeviceManagementRoute: typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
   AuthenticatedSettingsSecurityMenuRoute: typeof AuthenticatedSettingsSecurityMenuRoute
@@ -1009,7 +1044,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsCreatorRoute: AuthenticatedSettingsCreatorRoute,
   AuthenticatedSettingsDetailsRoute: AuthenticatedSettingsDetailsRoute,
   AuthenticatedSettingsDeviceManagementRoute:
-    AuthenticatedSettingsDeviceManagementRoute,
+    AuthenticatedSettingsDeviceManagementRouteWithChildren,
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
   AuthenticatedSettingsSecurityMenuRoute:
