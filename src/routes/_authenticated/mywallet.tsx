@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,10 @@ function MyWalletPage() {
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Saldo na carteira */}
         <section>
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] flex items-center gap-4">
+          <Link
+            to="/mywallet/extrato"
+            className="block rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] flex items-center gap-4 hover:bg-accent/40 transition-colors"
+          >
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground">Saldo na carteira</p>
               <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
@@ -56,14 +59,18 @@ function MyWalletPage() {
                 fácil
               </p>
               <Button
-                onClick={soon}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  soon();
+                }}
                 className="mt-4 h-11 px-6 rounded-full bg-gradient-primary text-primary-foreground"
               >
                 Recarregar
               </Button>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-          </div>
+          </Link>
         </section>
 
         {/* Meus Cartões */}
@@ -98,11 +105,11 @@ function MyWalletPage() {
             Nenhuma transação encontrada
           </p>
           <Button
+            asChild
             variant="outline"
-            onClick={soon}
             className="rounded-full text-primary border-primary hover:text-primary hover:bg-primary/10"
           >
-            Ver todas as transações
+            <Link to="/mywallet/extrato">Ver todas as transações</Link>
           </Button>
         </section>
       </main>
