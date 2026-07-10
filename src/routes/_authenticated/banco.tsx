@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/banco")({
 function BancoPage() {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -114,9 +115,10 @@ function BancoPage() {
             Dados bancários
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <Link
-              to="/banco/cadastrar"
-              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between hover:border-primary/60 hover:bg-accent transition-colors"
+            <button
+              type="button"
+              onClick={() => setCadastroOpen(true)}
+              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
             >
               <Plus className="h-6 w-6 text-primary" />
               <span className="text-sm font-semibold text-foreground leading-tight">
@@ -124,7 +126,7 @@ function BancoPage() {
                 <br />
                 novo banco
               </span>
-            </Link>
+            </button>
           </div>
         </section>
 
