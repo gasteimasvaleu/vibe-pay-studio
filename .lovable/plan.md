@@ -1,15 +1,13 @@
-## Problema
+Vou corrigir a navegação da carteira para que a URL e o conteúdo da página mudem juntos.
 
-O card "Saldo na carteira" tem um `<Link to="/mywallet/extrato">` envolvendo tudo, e dentro dele há outro `<Link to="/mywallet/recarregar">` (o botão Recarregar). HTML não permite `<a>` aninhado — o navegador quebra a estrutura, e nenhum dos dois links funciona de forma confiável.
+Plano:
+1. Transformar `src/routes/_authenticated/mywallet.tsx` em uma rota pai com `<Outlet />`, porque existem páginas filhas em `/mywallet/extrato` e `/mywallet/recarregar`.
+2. Mover o conteúdo atual da carteira para uma nova rota index: `src/routes/_authenticated/mywallet.index.tsx`, mantendo o visual atual do card.
+3. Garantir que os links internos continuem apontando para:
+   - `/mywallet/extrato` ao clicar no saldo, seta `>` ou “Ver todas as transações”
+   - `/mywallet/recarregar` ao clicar em “Recarregar”
+4. Não editar `src/routeTree.gen.ts`; ele será regenerado automaticamente pelo TanStack Router.
+5. Verificar depois no preview que clicar nos botões troca realmente o conteúdo da tela, não só a URL.
 
-## Correção em `src/routes/_authenticated/mywallet.tsx`
-
-Remover o aninhamento, mantendo os dois destinos clicáveis:
-
-1. Trocar o `<Link>` externo do card por uma `<div>` (mesmas classes visuais, sem `hover:bg-accent/40` pra não parecer clicável inteiro).
-2. Envolver **apenas** a área do saldo (label "Saldo na carteira", valor `R$ -`, texto de apoio) e o `ChevronRight` em um `<Link to="/mywallet/extrato">` — essa é a área que abre o extrato.
-3. Deixar o botão **Recarregar** como um `<Button asChild><Link to="/mywallet/recarregar">…</Link></Button>` irmão, fora do link do extrato. Sem `stopPropagation`, já que não há mais link pai.
-
-Resultado: clicar no saldo/seta abre `/mywallet/extrato`; clicar em Recarregar abre `/mywallet/recarregar`.
-
-Nenhum outro arquivo muda.
+Detalhe técnico:
+O problema provável é que `mywallet.tsx` está como rota pai e página ao mesmo tempo. Sem `<Outlet />`, as rotas filhas são reconhecidas, a URL muda, mas o conteúdo filho não aparece.
