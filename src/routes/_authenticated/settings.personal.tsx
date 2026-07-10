@@ -1,0 +1,296 @@
+import { useState, type ReactNode } from "react";
+import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export const Route = createFileRoute("/_authenticated/settings/personal")({
+  head: () => ({
+    meta: [
+      { title: "Dados Pessoais · Monetisexy" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  beforeLoad: async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw redirect({ to: "/entrar" });
+    return { email: userData.user.email ?? "" };
+  },
+  component: PersonalPage,
+});
+
+const BR_STATES = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+];
+
+function PersonalPage() {
+  const router = useRouter();
+  const { email } = Route.useRouteContext();
+  const [tab, setTab] = useState<"info" | "address">("info");
+
+  // Info
+  const [nickname, setNickname] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Endereço
+  const [cep, setCep] = useState("");
+  const [address, setAddress] = useState("");
+  const [number, setNumber] = useState("");
+  const [complement, setComplement] = useState("");
+  const [district, setDistrict] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [attempted, setAttempted] = useState(false);
+
+  const requiredMissing = {
+    cep: !cep.trim(),
+    address: !address.trim(),
+    number: !number.trim(),
+    district: !district.trim(),
+    city: !city.trim(),
+    state: !state.trim(),
+  };
+  const hasErrors = Object.values(requiredMissing).some(Boolean);
+
+  const handleSave = () => {
+    setAttempted(true);
+    if (hasErrors) {
+      setTab("address");
+      toast.error("Preencha os campos obrigatórios");
+      return;
+    }
+    toast.info("Em breve");
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="relative z-10 border-b border-border backdrop-blur-md bg-card/80">
+        <div className="max-w-4xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Dados Pessoais
+          </h1>
+          <span className="w-9" />
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 pb-28">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "info" | "address")}>
+          <TabsList className="w-full h-auto bg-transparent p-0 border-b border-border rounded-none justify-stretch gap-0">
+            <TabsTrigger
+              value="info"
+              className="flex-1 rounded-none border-b-2 border-transparent bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none text-muted-foreground py-3 text-base"
+            >
+              Informações
+            </TabsTrigger>
+            <TabsTrigger
+              value="address"
+              className="flex-1 rounded-none border-b-2 border-transparent bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none text-muted-foreground py-3 text-base"
+            >
+              Endereço
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Informações */}
+          <TabsContent value="info" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              <FloatingField
+                label="Apelido"
+                value={nickname}
+                onChange={setNickname}
+                placeholder="Seu apelido"
+              />
+              <FloatingField
+                label="Celular"
+                value={phone}
+                onChange={setPhone}
+                placeholder="(00) 00000-0000"
+                inputMode="tel"
+              />
+
+              <p className="md:col-span-2 text-sm text-muted-foreground mt-2">
+                Os campos abaixo não podem ser editados
+              </p>
+
+              <FloatingField label="CPF" value="" placeholder="000.000.000-00" disabled />
+              <FloatingField label="E-mail" value={email} disabled />
+              <FloatingField label="Nome Completo" value="" placeholder="Nome completo" disabled />
+              <FloatingField label="Data de Nascimento" value="" placeholder="DD/MM/AAAA" disabled />
+            </div>
+          </TabsContent>
+
+          {/* Endereço */}
+          <TabsContent value="address" className="mt-6 space-y-4">
+            <FieldShell label="País">
+              <div className="flex items-center justify-between">
+                <span className="text-base text-muted-foreground">Brasil</span>
+              </div>
+            </FieldShell>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              <FloatingField
+                label="CEP"
+                value={cep}
+                onChange={setCep}
+                placeholder="00000-000"
+                required
+                error={attempted && requiredMissing.cep}
+              />
+              <FloatingField
+                label="Endereço"
+                value={address}
+                onChange={setAddress}
+                placeholder="Rua, avenida..."
+                required
+                error={attempted && requiredMissing.address}
+              />
+              <FloatingField
+                label="Número"
+                value={number}
+                onChange={setNumber}
+                placeholder="Número"
+                required
+                error={attempted && requiredMissing.number}
+              />
+              <FloatingField
+                label="Complemento"
+                value={complement}
+                onChange={setComplement}
+                placeholder="Complemento"
+              />
+              <FloatingField
+                label="Bairro"
+                value={district}
+                onChange={setDistrict}
+                placeholder="Bairro"
+                required
+                error={attempted && requiredMissing.district}
+              />
+              <FloatingField
+                label="Cidade"
+                value={city}
+                onChange={setCity}
+                placeholder="Cidade"
+                required
+                error={attempted && requiredMissing.city}
+              />
+            </div>
+
+            <div>
+              <div
+                className={`rounded-2xl bg-muted px-5 py-2 ${
+                  attempted && requiredMissing.state ? "ring-2 ring-destructive" : ""
+                }`}
+              >
+                <Select value={state} onValueChange={setState}>
+                  <SelectTrigger className="border-0 bg-transparent shadow-none h-10 px-0 focus:ring-0 text-base text-foreground data-[placeholder]:text-muted-foreground">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BR_STATES.map((uf) => (
+                      <SelectItem key={uf} value={uf}>
+                        {uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {attempted && requiredMissing.state && (
+                <p className="mt-1 px-1 text-sm text-destructive">Campo obrigatório</p>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-3">
+          <Button
+            type="button"
+            onClick={handleSave}
+            className="w-full h-12 rounded-full text-base font-semibold"
+          >
+            Salvar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FieldShell({
+  label,
+  children,
+  error,
+}: {
+  label: string;
+  children: ReactNode;
+  error?: boolean;
+}) {
+  return (
+    <div className={`rounded-2xl bg-muted px-5 py-3 ${error ? "ring-2 ring-destructive" : ""}`}>
+      <p className={`text-xs ${error ? "text-destructive" : "text-muted-foreground"}`}>{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function FloatingField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  required,
+  error,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange?: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  error?: boolean;
+  inputMode?: "text" | "tel" | "numeric" | "email" | "decimal";
+}) {
+  return (
+    <div>
+      <FieldShell label={label} error={error}>
+        <Input
+          type="text"
+          inputMode={inputMode}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`border-0 bg-transparent shadow-none h-8 px-0 text-base focus-visible:ring-0 disabled:opacity-100 disabled:cursor-not-allowed placeholder:text-muted-foreground/60 ${
+            error ? "text-destructive" : disabled ? "text-muted-foreground/70" : "text-foreground"
+          }`}
+        />
+      </FieldShell>
+      {required && error && (
+        <p className="mt-1 px-1 text-sm text-destructive">Campo obrigatório</p>
+      )}
+    </div>
+  );
+}
