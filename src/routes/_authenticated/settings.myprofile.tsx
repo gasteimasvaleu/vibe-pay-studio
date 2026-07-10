@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import {
   ArrowLeft,
   AtSign,
