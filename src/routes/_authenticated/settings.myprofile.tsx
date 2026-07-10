@@ -195,6 +195,7 @@ function SettingsRow({
   label,
   variant,
   to,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
