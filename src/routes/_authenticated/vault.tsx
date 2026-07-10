@@ -156,13 +156,26 @@ function VaultPage() {
             <span className="text-sm font-bold tracking-wider text-muted-foreground">
               PADRÃO
             </span>
-            <button
-              type="button"
-              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              aria-label="Ordenar"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Ordenar"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64 rounded-2xl p-2">
+                <RadioRow label="Padrão" active={sidebarSort === "padrao"} onClick={() => setSidebarSort("padrao")} />
+                <RadioRow label="Nome" active={sidebarSort === "nome"} onClick={() => setSidebarSort("nome")} />
+                <RadioRow label="Recentes" active={sidebarSort === "recentes"} onClick={() => setSidebarSort("recentes")} />
+                <RadioRow label="Mídias" active={sidebarSort === "midias"} onClick={() => setSidebarSort("midias")} />
+                <div className="my-2 border-t border-border" />
+                <RadioRow label="Ascendente" active={sidebarDirection === "asc"} onClick={() => setSidebarDirection("asc")} />
+                <RadioRow label="Decrescente" active={sidebarDirection === "desc"} onClick={() => setSidebarDirection("desc")} />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <ul className="space-y-1">
