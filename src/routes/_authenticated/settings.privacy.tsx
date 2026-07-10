@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,10 +17,10 @@ export const Route = createFileRoute("/_authenticated/settings/privacy")({
   component: PrivacyPage,
 });
 
-const ITEMS = [
-  "Configurações de privacidade",
-  "Configurações de envio de e-mails",
-  "Perfis silenciados",
+const ITEMS: { label: string; to?: string }[] = [
+  { label: "Configurações de privacidade", to: "/settings/privacy-options" },
+  { label: "Configurações de envio de e-mails" },
+  { label: "Perfis silenciados" },
 ];
 
 function PrivacyPage() {
@@ -48,18 +48,29 @@ function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6">
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border shadow-card">
-          {ITEMS.map((label) => (
-            <button
-              key={label}
-              type="button"
-              onClick={soon}
-              className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
-            >
-              {label}
-            </button>
-          ))}
+          {ITEMS.map((item) =>
+            item.to ? (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.label}
+                type="button"
+                onClick={soon}
+                className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
+              >
+                {item.label}
+              </button>
+            )
+          )}
         </div>
       </main>
     </div>
   );
 }
+

@@ -1,0 +1,108 @@
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+
+export const Route = createFileRoute("/_authenticated/settings/privacy-options")({
+  head: () => ({
+    meta: [
+      { title: "Configurações de privacidade · Monetisexy" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/entrar" });
+  },
+  component: PrivacyOptionsPage,
+});
+
+const OPTIONS: { id: string; label: string; description: string }[] = [
+  {
+    id: "restrict_search",
+    label: "Restringir perfil das pesquisas",
+    description: "Esta opção pode demorar até uma hora para ter efeito.",
+  },
+  {
+    id: "restrict_search_br",
+    label: "Restringir perfil das pesquisas no Brasil",
+    description:
+      "Esta opção pode demorar até uma hora para ter efeito. O perfil continuará visível para usuários de outros países.",
+  },
+  {
+    id: "restrict_search_country",
+    label: "Restringir perfil das pesquisas no meu país",
+    description:
+      "Esta opção pode demorar até uma hora para ter efeito. O perfil continuará visível para usuários de outros países.",
+  },
+  {
+    id: "show_followers",
+    label: "Exibir quantidade de seguidores no perfil",
+    description:
+      "Esta opção permite que o perfil exiba a quantidade de seguidores.",
+  },
+  {
+    id: "restrict_mentions",
+    label: "Restringir menções ao perfil",
+    description:
+      "Esta opção permite que o perfil não seja mencionado em outros perfis.",
+  },
+  {
+    id: "restrict_friendships",
+    label: "Restringir amizades",
+    description:
+      "Esta opção restringirá que seu perfil apareça como amigo em outros perfis.",
+  },
+  {
+    id: "email_sending",
+    label: "Configuração de envio de e-mails",
+    description: "Ao desativar, a Monetisexy não enviará mais e-mails.",
+  },
+];
+
+function PrivacyOptionsPage() {
+  const router = useRouter();
+  const [state, setState] = useState<Record<string, boolean>>({});
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="relative z-10 border-b border-border backdrop-blur-md bg-card/80">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Configurações de privacidade
+          </h1>
+          <span className="w-9" />
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
+        {OPTIONS.map((o) => (
+          <div key={o.id} className="flex items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold text-foreground">{o.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {o.description}
+              </p>
+            </div>
+            <Switch
+              checked={!!state[o.id]}
+              onCheckedChange={(v) =>
+                setState((s) => ({ ...s, [o.id]: v }))
+              }
+              aria-label={o.label}
+            />
+          </div>
+        ))}
+      </main>
+    </div>
+  );
+}
