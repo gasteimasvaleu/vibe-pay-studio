@@ -156,7 +156,7 @@ function SettingsMyProfilePage() {
         >
           <div className="flex flex-col items-center text-center pt-2">
             <div className="h-16 w-16 rounded-full border-[3px] border-primary grid place-items-center mb-5">
-              <AlertCircle className="h-9 w-9 text-primary" strokeWidth={0} fill="transparent" />
+              <AlertCircle className="h-9 w-9 text-primary" />
               <span className="sr-only">Atenção</span>
             </div>
             <DialogTitle className="text-2xl font-bold text-foreground">
