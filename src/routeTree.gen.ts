@@ -15,6 +15,7 @@ import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
 import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
@@ -98,6 +99,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPublisherRoute = AuthenticatedPublisherRouteImport.update({
   id: '/publisher',
@@ -434,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
+  '/vault': typeof AuthenticatedVaultRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
+  '/vault': typeof AuthenticatedVaultRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
+  '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -616,6 +625,7 @@ export interface FileRouteTypes {
     | '/promotion'
     | '/promotions'
     | '/publisher'
+    | '/vault'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -675,6 +685,7 @@ export interface FileRouteTypes {
     | '/promotion'
     | '/promotions'
     | '/publisher'
+    | '/vault'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -734,6 +745,7 @@ export interface FileRouteTypes {
     | '/_authenticated/promotion'
     | '/_authenticated/promotions'
     | '/_authenticated/publisher'
+    | '/_authenticated/vault'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/mywallet/extrato'
@@ -827,6 +839,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/vault': {
+      id: '/_authenticated/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof AuthenticatedVaultRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/publisher': {
       id: '/_authenticated/publisher'
@@ -1324,6 +1343,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
+  AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
   AuthenticatedSettingsChatSettingsRoute: typeof AuthenticatedSettingsChatSettingsRoute
@@ -1367,6 +1387,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
+  AuthenticatedVaultRoute: AuthenticatedVaultRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedSettingsChangePasswordRoute:
     AuthenticatedSettingsChangePasswordRoute,
