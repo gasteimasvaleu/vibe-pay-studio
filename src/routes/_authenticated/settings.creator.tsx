@@ -93,6 +93,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<User className="h-5 w-5" />}
             label="Dados Pessoais"
+            to="/settings/personal"
           />
         </SettingsGroup>
 

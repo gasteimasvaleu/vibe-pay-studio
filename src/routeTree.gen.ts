@@ -34,6 +34,7 @@ import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsSubscriptionRouteImport } from './routes/_authenticated/settings.subscription'
 import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_authenticated/settings.social-media'
 import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
+import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
 import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
@@ -184,6 +185,12 @@ const AuthenticatedSettingsSocialRoute =
     path: '/settings/social',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsPersonalRoute =
+  AuthenticatedSettingsPersonalRouteImport.update({
+    id: '/settings/personal',
+    path: '/settings/personal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsMyprofileRoute =
   AuthenticatedSettingsMyprofileRouteImport.update({
     id: '/settings/myprofile',
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
+  '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
@@ -350,6 +358,7 @@ export interface FileRoutesByTo {
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
+  '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
@@ -393,6 +402,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/_authenticated/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
+  '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/_authenticated/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/_authenticated/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/_authenticated/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/settings/creator'
     | '/settings/details'
     | '/settings/myprofile'
+    | '/settings/personal'
     | '/settings/social'
     | '/settings/social-media'
     | '/settings/subscription'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/settings/creator'
     | '/settings/details'
     | '/settings/myprofile'
+    | '/settings/personal'
     | '/settings/social'
     | '/settings/social-media'
     | '/settings/subscription'
@@ -519,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/creator'
     | '/_authenticated/settings/details'
     | '/_authenticated/settings/myprofile'
+    | '/_authenticated/settings/personal'
     | '/_authenticated/settings/social'
     | '/_authenticated/settings/social-media'
     | '/_authenticated/settings/subscription'
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSocialRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/personal': {
+      id: '/_authenticated/settings/personal'
+      path: '/settings/personal'
+      fullPath: '/settings/personal'
+      preLoaderRoute: typeof AuthenticatedSettingsPersonalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/myprofile': {
       id: '/_authenticated/settings/myprofile'
       path: '/settings/myprofile'
@@ -917,6 +937,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
   AuthenticatedSettingsDetailsRoute: typeof AuthenticatedSettingsDetailsRoute
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
+  AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
   AuthenticatedSettingsSocialRoute: typeof AuthenticatedSettingsSocialRoute
   AuthenticatedSettingsSocialMediaRoute: typeof AuthenticatedSettingsSocialMediaRoute
   AuthenticatedSettingsSubscriptionRoute: typeof AuthenticatedSettingsSubscriptionRoute
@@ -946,6 +967,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsCreatorRoute: AuthenticatedSettingsCreatorRoute,
   AuthenticatedSettingsDetailsRoute: AuthenticatedSettingsDetailsRoute,
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
+  AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
   AuthenticatedSettingsSocialRoute: AuthenticatedSettingsSocialRoute,
   AuthenticatedSettingsSocialMediaRoute: AuthenticatedSettingsSocialMediaRoute,
   AuthenticatedSettingsSubscriptionRoute:
