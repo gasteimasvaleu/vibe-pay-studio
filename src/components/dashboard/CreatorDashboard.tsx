@@ -113,6 +113,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<ShieldAlert className="h-5 w-5" />}
             title="Vazamento"
             description="Alguém usou seu conteúdo?"
+            to="/content-leak-report"
           />
         </DashboardGroup>
 
