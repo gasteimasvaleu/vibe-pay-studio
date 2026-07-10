@@ -31,6 +31,7 @@ import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
@@ -160,6 +161,12 @@ const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedChatRoute,
 } as any)
+const AuthenticatedSettingsMyprofileRoute =
+  AuthenticatedSettingsMyprofileRouteImport.update({
+    id: '/settings/myprofile',
+    path: '/settings/myprofile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsCreatorRoute =
   AuthenticatedSettingsCreatorRouteImport.update({
     id: '/settings/creator',
@@ -265,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
+  '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -299,6 +307,7 @@ export interface FileRoutesByTo {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
+  '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -336,6 +345,7 @@ export interface FileRoutesById {
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
+  '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/settings/creator'
+    | '/settings/myprofile'
     | '/chat/'
     | '/mywallet/'
     | '/creator/onboarding/assinatura'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/settings/creator'
+    | '/settings/myprofile'
     | '/chat'
     | '/mywallet'
     | '/creator/onboarding/assinatura'
@@ -444,6 +456,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/settings/creator'
+    | '/_authenticated/settings/myprofile'
     | '/_authenticated/chat/'
     | '/_authenticated/mywallet/'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/settings/myprofile': {
+      id: '/_authenticated/settings/myprofile'
+      path: '/settings/myprofile'
+      fullPath: '/settings/myprofile'
+      preLoaderRoute: typeof AuthenticatedSettingsMyprofileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/creator': {
       id: '/_authenticated/settings/creator'
       path: '/settings/creator'
@@ -794,6 +814,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
+  AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -816,6 +837,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedSettingsCreatorRoute: AuthenticatedSettingsCreatorRoute,
+  AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:

@@ -65,8 +65,7 @@ function SettingsCreatorPage() {
 
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-8">
         <Link
-          to="/perfil/$username"
-          params={{ username }}
+          to="/settings/myprofile"
           className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-card hover:bg-accent transition-colors"
         >
           <Avatar className="h-16 w-16">

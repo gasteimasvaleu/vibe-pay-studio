@@ -1,27 +1,32 @@
-## Plano: página `/settings/creator`
+## Nova página `/settings/myprofile`
 
-**Nova rota:** `src/routes/_authenticated/settings.creator.tsx` (autenticada, `noindex`).
+Página acessada ao clicar no card de perfil (avatar + nome + @username) em `/settings/creator`.
 
-**Link:** em `CreatorDashboard.tsx`, adicionar `to="/settings/creator"` no `ActionCard` "Definições".
+### Arquivos
 
-**Layout** (seguindo os screenshots, mesma estrutura das outras páginas do dashboard):
+**Criar** `src/routes/_authenticated/settings.myprofile.tsx`
+- Rota autenticada, `noindex`, título "Meu perfil · Monetisex"
+- `beforeLoad` busca `username` do profile (mesmo padrão de `settings.creator.tsx`)
+- Header padrão do dashboard (border-b, back button, título "Meu perfil")
 
-- Header padrão full-width: `border-b border-border backdrop-blur-md bg-card/80`, com botão voltar à esquerda (`ArrowLeft`, `router.history.back()`), título centralizado **"Configurações de Perfil"** e spacer `w-9` à direita.
-- Main `max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-8`.
-- **Card de perfil** (destaque no topo): `rounded-2xl border border-border bg-card p-4 shadow-card`, com `Avatar` grande à esquerda (dados vindos do `useAuth`/`profile` já usado no dashboard — nome + `@username`), textos no meio, `ChevronRight` à direita. Link para `/perfil/$username` com o username do usuário atual.
-- **Grupo "Perfil"** (h2 `text-sm font-bold` acima): lista dentro de um wrapper `rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border` com 2 linhas:
-  - `Assinatura` — ícone `DollarSign`, `to="/mywallet"` (placeholder até ter rota específica).
-  - `Dados Pessoais` — ícone `User`, `to="/creator/onboarding/documentos"` (placeholder).
-- **Grupo "Geral"** (h2 `text-sm font-bold` acima): mesmo wrapper com 6 linhas:
-  - `Segurança` — `Shield`.
-  - `Privacidade` — `EyeOff`.
-  - `Configuração do chat` — `MessageCircle`, `to="/chat-configuracoes"`.
-  - `Assinantes restritos` — `UserX`.
-  - `Tema` — `CircleHalf` (ou `Contrast`).
-  - `Idioma` — `Globe`.
+**Editar** `src/routes/_authenticated/settings.creator.tsx`
+- Trocar o `Link to="/perfil/$username"` do card de perfil por `Link to="/settings/myprofile"`
 
-Rows sem rota ainda navegam via `onClick` com `toast.info("Em breve")` (sem quebrar o layout). Todas as linhas têm hover `hover:bg-accent`, altura confortável (`px-4 py-4`), ícone à esquerda em `text-foreground`, label `text-base`, `ChevronRight` à direita em `text-muted-foreground`.
+### Layout da página (seguindo o screenshot)
 
-**Componente auxiliar interno** `SettingsRow` no mesmo arquivo — recebe `icon`, `label`, `to?`, `onClick?` — para evitar repetição.
+Bloco central (topo do main):
+- Avatar grande (h-28 w-28) centralizado com badge de câmera (ícone `Camera` em círculo escuro no canto inferior direito) — botão sem ação (toast "Em breve")
+- Nome (display name) em bold, centralizado
+- `@username` em muted, centralizado
+- Botão outline arredondado "Copiar meu link Privacy" com ícone `Copy` — copia `${window.location.origin}/perfil/{username}` para clipboard e mostra toast
 
-**Sem alterações** em backend, outras rotas ou outros arquivos além dos dois listados.
+Lista de opções (mesmo componente `SettingsGroup`/`SettingsRow` de `settings.creator.tsx`, um único grupo sem título):
+1. `User` — Nome de perfil e identificador
+2. `Image` — Foto de capa, biografia e localização
+3. `AtSign` — Redes Sociais
+4. `Lock` — Alterar senha
+5. `Trash2` — Excluir conta (variante destaque vermelho: `text-destructive`)
+
+Todos os itens sem `to` → `toast.info("Em breve")`. Item "Excluir conta" recebe prop opcional `variant="destructive"` na `SettingsRow` para pintar ícone e label em vermelho.
+
+Nada de backend, nada de outras rotas alteradas.
