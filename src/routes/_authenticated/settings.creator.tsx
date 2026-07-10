@@ -106,6 +106,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<EyeOff className="h-5 w-5" />}
             label="Privacidade"
+            to="/settings/privacy"
           />
           <SettingsRow
             icon={<MessageCircle className="h-5 w-5" />}
