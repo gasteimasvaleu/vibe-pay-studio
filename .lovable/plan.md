@@ -1,28 +1,33 @@
-Implementar o campo de busca do cabeçalho esquerdo da página `/vault` conforme o screenshot de referência.
+## Nova rota: /subscriptions
 
-## Alterações em `src/routes/_authenticated/vault.tsx`
+Criar `src/routes/_authenticated/subscriptions.tsx` e conectar o botão "Assinaturas" do dashboard (SubscriberDashboard) a essa rota.
 
-1. **Adicionar estados de busca**:
-   - `searchOpen: boolean` (controla se o input de busca está aberto).
-   - `searchQuery: string` (valor digitado no input).
+### Layout (baseado no screenshot)
 
-2. **Comportamento do cabeçalho esquerdo**:
-   - Quando `searchOpen` é `false`, exibir o título "ACERVO" e os botões de lupa e + (como está hoje).
-   - Quando `searchOpen` é `true`, ocultar o título "ACERVO" e o botão +, e exibir um campo de busca no lugar.
+```text
+[←]              Assinaturas
+┌──────────────────────────────────────┐
+│ 🔍  Pesquisar                        │
+└──────────────────────────────────────┘
 
-3. **Design do campo de busca** (baseado no screenshot):
-   - Input arredondado tipo "pill" com borda laranja/coral (`border-primary` ou tom semelhante).
-   - Placeholder "Buscar".
-   - Botão de **X** à esquerda para fechar o input e restaurar o título/botões.
-   - Ícone de **lupa** à direita (dentro do input ou como elemento decorativo).
-   - Foco automático ao abrir.
-   - Fechar também ao pressionar `Escape`.
+     Ativas (ativo)     |     Expiradas
+     ──────────────
 
-4. **Filtrar a lista da sidebar**:
-   - Aplicar `searchQuery` como filtro nos itens do menu "PADRÃO" (Todas as mídias, Publicações, Conversas, Envios), comparando o termo com o `label` de cada aba (case-insensitive).
-   - Se `searchQuery` estiver vazio, mostrar todos os itens normalmente.
+ (Todas)  Gratuitas  Pagas          [ Ordenar ⌄ ]
 
-5. **Acessibilidade**:
-   - Manter rótulos `aria-label` nos botões de fechar e buscar.
+ <lista de assinaturas / estado vazio>
+```
 
-Nenhuma nova rota, servidor ou banco de dados será criado. Apenas UI e estado local no componente existente.
+### Componentes / comportamento
+- **Header**: botão voltar (ícone seta, `router.history.back()`), título "Assinaturas" centralizado.
+- **Busca**: input com ícone de lupa, placeholder "Pesquisar", filtra a lista por nome do creator (case-insensitive).
+- **Tabs**: "Ativas" | "Expiradas" — underline coral na ativa, estado local.
+- **Filtros (pills)**: "Todas" | "Gratuitas" | "Pagas" — pill selecionada com borda/texto coral; demais neutras.
+- **Ordenar**: botão pill à direita abrindo um Popover com opções (Mais recentes, Mais antigas, Nome A–Z, Nome Z–A).
+- **Lista**: por enquanto renderiza estado vazio ("Você ainda não tem assinaturas ativas." / "Nenhuma assinatura expirada.") — sem backend nesta etapa.
+
+### Wiring
+- Em `SubscriberDashboard.tsx`, adicionar `to="/subscriptions"` ao `ActionCard` "Assinaturas".
+- Nova rota usa `createFileRoute("/_authenticated/subscriptions")` com `head()` (title "Assinaturas · Monetisexy", `robots: noindex`).
+
+Sem alterações de banco, backend ou outras páginas.
