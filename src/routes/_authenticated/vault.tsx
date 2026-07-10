@@ -94,6 +94,10 @@ function VaultPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [searchOpen]);
 
+  const filteredTabs = TABS.filter((t) =>
+    t.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/80 backdrop-blur-md">
