@@ -200,13 +200,40 @@ function VaultPage() {
                 <span className="text-sm font-bold tracking-wider text-muted-foreground">
                   MAIS RECENTES
                 </span>
-                <button
-                  type="button"
-                  className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  aria-label="Ordenar"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      aria-label="Ordenar"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 rounded-2xl p-2">
+                    <RadioRow
+                      label="Todo o tempo"
+                      active={timeRange === "all"}
+                      onClick={() => setTimeRange("all")}
+                    />
+                    <RadioRow
+                      label="Data específica"
+                      active={timeRange === "specific"}
+                      onClick={() => setTimeRange("specific")}
+                    />
+                    <div className="my-2 border-t border-border" />
+                    <RadioRow
+                      label="Mais recentes"
+                      active={sortOrder === "recent"}
+                      onClick={() => setSortOrder("recent")}
+                    />
+                    <RadioRow
+                      label="Mais antigas"
+                      active={sortOrder === "oldest"}
+                      onClick={() => setSortOrder("oldest")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
