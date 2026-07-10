@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 export function ActionCard({
   icon,
@@ -18,6 +18,7 @@ export function ActionCard({
   disabled?: boolean;
   to?: string;
 }) {
+  const navigate = useNavigate();
   const isDanger = tone === "danger";
   const className =
     "group text-left rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40 hover:bg-accent disabled:opacity-60";
@@ -46,16 +47,19 @@ export function ActionCard({
     </>
   );
 
-  if (to) {
-    return (
-      <Link to={to} className={className}>
-        {content}
-      </Link>
-    );
-  }
-
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={className}>
+    <button
+      type="button"
+      onClick={() => {
+        if (to) {
+          navigate({ to: to as never });
+          return;
+        }
+        onClick?.();
+      }}
+      disabled={disabled}
+      className={className}
+    >
       {content}
     </button>
   );

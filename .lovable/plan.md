@@ -1,33 +1,9 @@
-## Nova rota: /subscriptions
+Vou corrigir o botão selecionado de forma direta:
 
-Criar `src/routes/_authenticated/subscriptions.tsx` e conectar o botão "Assinaturas" do dashboard (SubscriberDashboard) a essa rota.
+1. Ajustar o `ActionCard` para que, quando receber `to`, use navegação programática do TanStack Router em um `<button>` real, em vez de depender do `<Link>` renderizado como anchor. Isso mantém o mesmo visual do dashboard e evita o caso em que o clique no card não dispara a navegação na prévia.
+2. Manter o destino atual do card "Assinaturas" como `/subscriptions`.
+3. Verificar rapidamente que clicar no card muda a URL para `/subscriptions` e abre a página criada.
 
-### Layout (baseado no screenshot)
-
-```text
-[←]              Assinaturas
-┌──────────────────────────────────────┐
-│ 🔍  Pesquisar                        │
-└──────────────────────────────────────┘
-
-     Ativas (ativo)     |     Expiradas
-     ──────────────
-
- (Todas)  Gratuitas  Pagas          [ Ordenar ⌄ ]
-
- <lista de assinaturas / estado vazio>
-```
-
-### Componentes / comportamento
-- **Header**: botão voltar (ícone seta, `router.history.back()`), título "Assinaturas" centralizado.
-- **Busca**: input com ícone de lupa, placeholder "Pesquisar", filtra a lista por nome do creator (case-insensitive).
-- **Tabs**: "Ativas" | "Expiradas" — underline coral na ativa, estado local.
-- **Filtros (pills)**: "Todas" | "Gratuitas" | "Pagas" — pill selecionada com borda/texto coral; demais neutras.
-- **Ordenar**: botão pill à direita abrindo um Popover com opções (Mais recentes, Mais antigas, Nome A–Z, Nome Z–A).
-- **Lista**: por enquanto renderiza estado vazio ("Você ainda não tem assinaturas ativas." / "Nenhuma assinatura expirada.") — sem backend nesta etapa.
-
-### Wiring
-- Em `SubscriberDashboard.tsx`, adicionar `to="/subscriptions"` ao `ActionCard` "Assinaturas".
-- Nova rota usa `createFileRoute("/_authenticated/subscriptions")` com `head()` (title "Assinaturas · Monetisexy", `robots: noindex`).
-
-Sem alterações de banco, backend ou outras páginas.
+Detalhes técnicos:
+- Alteração principal em `src/components/dashboard/ActionCard.tsx`.
+- Se necessário, ajustar o tipo de `to` para aceitar strings de rota sem quebrar os cards existentes.
