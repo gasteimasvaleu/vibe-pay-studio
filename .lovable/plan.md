@@ -1,38 +1,21 @@
-## Objetivo
-Atualizar a página dedicada `/mywallet/extrato` (já é o destino de "Ver todas as transações") para refletir os screenshots: título "Transações" e 4 filtros com dropdowns em pills.
+## Plano: página `/content-leak-report`
 
-## Arquivo
-`src/routes/_authenticated/mywallet.extrato.tsx`
+**Rota nova:** `src/routes/_authenticated/content-leak-report.tsx` (autenticada, `noindex`).
 
-## Alterações
+**Link:** no `CreatorDashboard.tsx`, adicionar `to="/content-leak-report"` no `ActionCard` do botão "Vazamento".
 
-### Cabeçalho
-- Título muda de "Extrato" para **"Transações"**.
-- `head().title`: "Transações · Monetisex".
+**Layout da página** (seguindo os screenshots):
 
-### Layout dos filtros
-Grid 2 colunas (md+), 1 coluna no mobile:
-- Linha 1: **Tipo de item** | **Tipo de pagamento**
-- Linha 2: **Status** | **Data inicial — Até — Data final** (com ícone de calendário)
+- Header: botão voltar (ArrowLeft, `router.history.back()`) à esquerda + título centralizado **"Reportar vazamento de conteúdo"**.
+- Seção **"Qual conteúdo foi vazado?"** (h2 bold) com subtítulo em `text-muted-foreground`: "Informe os detalhes do uso não autorizado do seu conteúdo. O link é essencial para rastrearmos e investigarmos o caso."
+- Campo **Título** — `Input` com placeholder `Ex: Meu post foi copiado sem permissão`.
+- Campo **URL do conteúdo vazado** — `Input` type url, placeholder `Ex: https://site.com/pagina-com-meu-conteudo`.
+- Campo **Descrição** — `Textarea` (rows ~5, maxLength 5000), placeholder `Descreva onde e como seu conteúdo foi vazado`, com contador `{length} / 5000` alinhado à direita abaixo.
+- Seção **Enviar mídia (opcional)** com subtítulo "Print, vídeo ou gravação de tela (até 5 mídias)": dropzone quadrado tracejado (`border-dashed`) com ícone `Upload` e texto "Subir mídia"; `<input type="file" multiple accept="image/*,video/*">` escondido, limite 5, mostra thumbnails/lista após seleção com botão remover.
+- Botão **Enviar** full-width no rodapé, desabilitado enquanto Título, URL ou Descrição estiverem vazios.
 
-Todos os campos: pills arredondadas (`h-12 rounded-full`), fundo `bg-secondary` (bege claro), chevron à direita. Ao abrir, popover branco com pills de opções (mesma estética atual).
+**Estado:** `useState` para title, url, description, files. Submit apenas chama `toast.success("Denúncia enviada")`, limpa o form e volta — sem backend (pode ser adicionado depois).
 
-### Opções por filtro
-- **Tipo de item**: Todos, Assinatura, Chat, Desafio, Live, Mimo, Postagem, Recarga Wallet, Videochamada
-- **Tipo de pagamento**: Todos, ApplePay, Cartão, GooglePay, PicPayWallet, Pix, Privacy Wallet
-- **Status**: Todos, Negado, Autorizado, Devolvido
-- **Datas**: mantém o range calendar existente
+**Componentes usados:** `Input`, `Textarea`, `Button`, `toast` (sonner) — todos já existem.
 
-### Estado / seleção
-- Um `useState` por filtro (`tipoItem`, `tipoPagamento`, `status`, `range`).
-- "Todos" limpa a seleção (`null`).
-- Selecionado ganha destaque (`bg-primary text-primary-foreground`).
-
-### Conteúdo
-- Remove o card "Últimas movimentações" e mostra apenas o texto centralizado **"Nenhuma transação encontrada"** abaixo dos filtros, conforme screenshots.
-
-### Remover
-- Constantes antigas `TIPO_ITEM_OPTIONS` (com Depósito/Bônus/Estorno) e `TIPO_MOV_OPTIONS`.
-- Filtro "Tipo de movimentação".
-
-Sem alterações em rotas, backend ou outros arquivos. O link "Ver todas as transações" em `mywallet.index.tsx` já aponta para essa rota — nada a alterar lá.
+**Sem outras mudanças** (nenhum ajuste em backend, rotas ou outros arquivos).
