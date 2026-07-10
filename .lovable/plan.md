@@ -1,13 +1,23 @@
-Vou corrigir a navegação da carteira para que a URL e o conteúdo da página mudem juntos.
+## Objetivo
+Ao clicar no botão "Adicionar novo cartão" em `/mywallet`, abrir um dialog com formulário de cadastro de cartão, conforme o screenshot.
 
-Plano:
-1. Transformar `src/routes/_authenticated/mywallet.tsx` em uma rota pai com `<Outlet />`, porque existem páginas filhas em `/mywallet/extrato` e `/mywallet/recarregar`.
-2. Mover o conteúdo atual da carteira para uma nova rota index: `src/routes/_authenticated/mywallet.index.tsx`, mantendo o visual atual do card.
-3. Garantir que os links internos continuem apontando para:
-   - `/mywallet/extrato` ao clicar no saldo, seta `>` ou “Ver todas as transações”
-   - `/mywallet/recarregar` ao clicar em “Recarregar”
-4. Não editar `src/routeTree.gen.ts`; ele será regenerado automaticamente pelo TanStack Router.
-5. Verificar depois no preview que clicar nos botões troca realmente o conteúdo da tela, não só a URL.
+## Alterações
 
-Detalhe técnico:
-O problema provável é que `mywallet.tsx` está como rota pai e página ao mesmo tempo. Sem `<Outlet />`, as rotas filhas são reconhecidas, a URL muda, mas o conteúdo filho não aparece.
+**`src/routes/_authenticated/mywallet.index.tsx`**
+- Converter o botão "Adicionar novo cartão" no gatilho de um `<Dialog>` (shadcn).
+- Adicionar estado local para os campos do formulário.
+
+## Conteúdo do Dialog (conforme screenshot)
+- Título: **Adicionar cartão**
+- Subtítulo: "Estamos em total conformidade com o padrão internacional de segurança de cartões PCI DSS."
+- Campos (inputs arredondados, fundo cinza claro, placeholder em maiúsculas):
+  - NÚMERO DO CARTÃO (com máscara `#### #### #### ####`)
+  - NOME (COMO ESCRITO NO CARTÃO)
+  - CPF DO TITULAR (máscara `###.###.###-##`)
+  - VALIDADE (`MM/AA`) e CVV (3–4 dígitos) lado a lado
+- Botão **Confirmar** (laranja, arredondado, alinhado à direita)
+- Botão de fechar (X) no canto superior direito
+
+## Comportamento
+- Ao confirmar: validação básica (todos os campos preenchidos, número com 16 dígitos, CVV 3–4 dígitos, validade formato MM/AA), exibir `toast` de sucesso "Cartão adicionado" e fechar o dialog. Sem persistência backend nesta etapa.
+- Sem alterações em rotas, backend ou outros arquivos.
