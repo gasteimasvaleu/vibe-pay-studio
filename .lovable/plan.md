@@ -1,29 +1,42 @@
 ## Objetivo
-Criar a página **Meus assinantes** (rota `/follow`) acessada ao clicar no card "Meus assinantes" do dashboard do creator. Layout conforme screenshot: header padrão (voltar + título), campo de busca e estado vazio "Sem resultados para sua pesquisa.".
+Criar a página **Carteira** (rota `/mywallet`) acessada ao clicar no card "Carteira" do dashboard do creator. Layout conforme screenshots: saldo, Meus Cartões, Últimas Transações.
 
 ## Rota
-- **novo** `src/routes/_authenticated/follow.tsx` → URL `/follow`
-  - `head()`: `title: "Meus assinantes · Monetisex"`, `robots: noindex`
-  - Header estilo `DashboardShell` (fundo `--gradient-radial`, header `border-b border-border backdrop-blur-md bg-card/80`, container `max-w-3xl mx-auto`).
-  - Botão voltar (`ArrowLeft` → `router.history.back()`), título "Meus assinantes", espaçador.
+- **novo** `src/routes/_authenticated/mywallet.tsx` → URL `/mywallet`
+  - `head()`: `title: "Carteira · Monetisex"`, `robots: noindex`
+  - Header padrão (voltar + título "Carteira") no estilo `/banco` (fundo `--gradient-radial`, `border-b border-border backdrop-blur-md bg-card/80`, container `max-w-3xl mx-auto`).
 
-## Conteúdo da página
-1. **Campo de busca**
-   - Input com ícone `Search` (lucide) à esquerda, placeholder "Busca".
-   - Estilo pill (`h-12 rounded-full pl-10`), state local `query`.
-2. **Estado vazio (mock)**
-   - Quando não houver assinantes cadastrados (por ora sempre), exibir texto centralizado em negrito: **"Sem resultados para sua pesquisa."**
-   - Sem lista real — apenas UI estática.
+## Conteúdo
 
-## Wiring no dashboard
-- **editar** `src/components/dashboard/CreatorDashboard.tsx` — no `ActionCard` "Meus assinantes" (linhas 79-83) adicionar `to="/follow"`.
+### 1. Card "Saldo na carteira"
+Card grande arredondado (`rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`) com layout flex entre conteúdo e `ChevronRight`:
+- Label pequeno "Saldo na carteira"
+- Valor grande `R$ -` (mock)
+- Descrição: "Recarregue a sua carteira e compre conteúdos de forma simples e fácil"
+- Botão pill primário **Recarregar** (`bg-gradient-primary text-primary-foreground rounded-full`)
+- `ChevronRight` à direita, alinhado verticalmente
+
+### 2. Seção "Meus Cartões"
+- Título `Meus Cartões`
+- Grid `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4`
+- Card único "Adicionar novo cartão" (aspect-square, borda tracejada, ícone `Plus` no topo, título "Adicionar novo cartão" em duas linhas)
+- Reaproveita o mesmo estilo do card "Adicionar novo banco" em `/banco`
+
+### 3. Divisor + Seção "Últimas Transações"
+- `<hr className="border-border" />`
+- Título `Últimas Transações`
+- Estado vazio centralizado: texto em `text-muted-foreground` "Nenhuma transação encontrada"
+- Botão outline pill "Ver todas as transações" (`variant="outline" className="rounded-full text-primary border-primary"`) — sem destino ainda
+
+## Wiring
+- **editar** `src/components/dashboard/CreatorDashboard.tsx` — no `ActionCard` "Carteira" (linhas 89-93) adicionar `to="/mywallet"`.
 
 ## Detalhes técnicos
-- Usar componentes shadcn existentes: `Input`.
-- Ícones lucide: `ArrowLeft`, `Search`.
-- Tudo estático (sem chamadas Supabase).
-- Reaproveita padrões visuais do `/banco` (header, fundo gradient).
+- Tudo estático/mock, sem chamadas Supabase.
+- Botão "Recarregar" e "Adicionar novo cartão" apenas mostram `toast("Em breve")` no clique (sonner).
+- Ícones lucide: `ArrowLeft`, `ChevronRight`, `Plus`.
+- Sem novas dependências.
 
 ## Arquivos alterados/criados
-- **novo** `src/routes/_authenticated/follow.tsx`
-- **editar** `src/components/dashboard/CreatorDashboard.tsx` (adicionar `to="/follow"` no card "Meus assinantes")
+- **novo** `src/routes/_authenticated/mywallet.tsx`
+- **editar** `src/components/dashboard/CreatorDashboard.tsx`

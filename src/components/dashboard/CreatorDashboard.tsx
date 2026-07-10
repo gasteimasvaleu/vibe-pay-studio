@@ -91,6 +91,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Wallet className="h-5 w-5" />}
             title="Carteira"
             description="Escolha como paga e veja seus gastos"
+            to="/mywallet"
           />
           <ActionCard
             icon={<FolderPlus className="h-5 w-5" />}
