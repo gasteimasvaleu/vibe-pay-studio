@@ -52,6 +52,8 @@ function SettingsMyProfilePage() {
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   const handleCopyLink = async () => {
     try {
       const link = `${window.location.origin}/perfil/${username}`;
@@ -60,6 +62,11 @@ function SettingsMyProfilePage() {
     } catch {
       toast.error("Não foi possível copiar o link");
     }
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteOpen(false);
+    toast.info("Em breve");
   };
 
   return (
