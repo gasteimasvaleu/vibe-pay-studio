@@ -121,6 +121,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<Contrast className="h-5 w-5" />}
             label="Tema"
+            to="/settings/theme"
           />
           <SettingsRow
             icon={<Globe className="h-5 w-5" />}
