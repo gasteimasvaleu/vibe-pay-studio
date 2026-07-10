@@ -69,6 +69,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Landmark className="h-5 w-5" />}
             title="Meu Banco"
             description="Gerencie saques e saldo disponível"
+            to="/banco"
           />
           <ActionCard
             icon={<TrendingUp className="h-5 w-5" />}
