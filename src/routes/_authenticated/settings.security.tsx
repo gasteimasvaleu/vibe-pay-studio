@@ -21,7 +21,7 @@ type Provider = {
   id: string;
   name: string;
   connected: boolean;
-  icon: JSX.Element;
+  icon: React.ReactNode;
 };
 
 const GoogleIcon = () => (
