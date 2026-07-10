@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/settings/myprofile")({
   head: () => ({
     meta: [
-      { title: "Meu perfil · Monetisex" },
+      { title: "Meu perfil · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -101,7 +101,7 @@ function SettingsMyProfilePage() {
             className="mt-2 h-11 px-6 rounded-full gap-2"
           >
             <Copy className="h-4 w-4" />
-            Copiar meu link Privacy
+            Copiar meu link Monetisexy
           </Button>
         </section>
 

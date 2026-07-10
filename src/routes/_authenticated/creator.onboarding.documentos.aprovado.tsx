@@ -12,7 +12,7 @@ export const Route = createFileRoute(
 )({
   head: () => ({
     meta: [
-      { title: "Identidade aprovada · Monetisex" },
+      { title: "Identidade aprovada · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

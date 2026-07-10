@@ -11,7 +11,7 @@ import { PublicationCard } from "@/components/feed/PublicationCard";
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
     meta: [
-      { title: "Seu feed · Monetisex" },
+      { title: "Seu feed · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

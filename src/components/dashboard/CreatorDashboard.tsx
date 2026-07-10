@@ -55,7 +55,7 @@ export function CreatorDashboard({ username }: { username: string }) {
           />
           <ActionCard
             icon={<LineChart className="h-5 w-5" />}
-            title="Meu Monetisex"
+            title="Meu Monetisexy"
             description="Veja suas vendas e engajamento"
             to="/my-monetisex-stats"
           />

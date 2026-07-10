@@ -7,7 +7,7 @@ import { saveSubscriptionPricing } from "@/lib/onboarding.functions";
 export const Route = createFileRoute("/_authenticated/creator/onboarding/assinatura")({
   head: () => ({
     meta: [
-      { title: "Preço de Assinatura · Monetisex" },
+      { title: "Preço de Assinatura · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

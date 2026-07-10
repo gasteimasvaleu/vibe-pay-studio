@@ -8,7 +8,7 @@ type AccountType = "subscriber" | "creator";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Meu painel · Monetisex" },
+      { title: "Meu painel · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

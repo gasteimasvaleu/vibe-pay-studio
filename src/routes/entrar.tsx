@@ -5,8 +5,8 @@ import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
     meta: [
-      { title: "Entrar · Monetisex" },
-      { name: "description", content: "Acesse sua conta Monetisex." },
+      { title: "Entrar · Monetisexy" },
+      { name: "description", content: "Acesse sua conta Monetisexy." },
     ],
   }),
   component: EntrarPage,

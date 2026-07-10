@@ -58,7 +58,7 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-start gap-4 text-xs text-muted-foreground">
-          <p>©2026 Monetisex. Todos os direitos reservados.</p>
+          <p>©2026 Monetisexy. Todos os direitos reservados.</p>
           <p className="max-w-md">
             Plataforma exclusiva para maiores de 18 anos. Conteúdo protegido por DRM.
           </p>

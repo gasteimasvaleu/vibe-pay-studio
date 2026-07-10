@@ -1,32 +1,14 @@
-## Nova página `/settings/myprofile`
+## Rename Monetisex → Monetisexy
 
-Página acessada ao clicar no card de perfil (avatar + nome + @username) em `/settings/creator`.
+Substituição global em strings visíveis do app.
 
-### Arquivos
+### Mudanças
 
-**Criar** `src/routes/_authenticated/settings.myprofile.tsx`
-- Rota autenticada, `noindex`, título "Meu perfil · Monetisex"
-- `beforeLoad` busca `username` do profile (mesmo padrão de `settings.creator.tsx`)
-- Header padrão do dashboard (border-b, back button, título "Meu perfil")
+1. **Botão em `settings.myprofile.tsx`**: "Copiar meu link Privacy" → "Copiar meu link Monetisexy".
 
-**Editar** `src/routes/_authenticated/settings.creator.tsx`
-- Trocar o `Link to="/perfil/$username"` do card de perfil por `Link to="/settings/myprofile"`
+2. **Substituir `Monetisex` por `Monetisexy` em todo o conteúdo** dos arquivos abaixo (via `sed`, apenas texto — sem tocar em nomes de arquivo/rota como `my-monetisex-stats.tsx`, nem em identificadores CSS/domínios):
+   - `src/routes/__root.tsx`, `index.tsx`, `sobre.tsx`, `entrar.tsx`, `cadastro.tsx`, `como-funciona.tsx`
+   - `src/routes/_authenticated/`: `dashboard.tsx`, `feed.tsx`, `follow.tsx`, `publisher.tsx`, `promotion.tsx`, `promotions.tsx`, `perfil.$username.tsx`, `banco.tsx`, `banco.cadastrar.tsx`, `mywallet.index.tsx`, `mywallet.recarregar.tsx`, `mywallet.extrato.tsx`, `my-monetisex-stats.tsx`, `content-leak-report.tsx`, `settings.creator.tsx`, `settings.myprofile.tsx`, `creator.onboarding.assinatura.tsx`, `creator.onboarding.redes-sociais.tsx`, `creator.onboarding.documentos.index.tsx`, `creator.onboarding.documentos.aprovado.tsx`, `creator.onboarding.documentos.verificando.tsx`
+   - `src/components/site/Footer.tsx`, `src/components/dashboard/CreatorDashboard.tsx`
 
-### Layout da página (seguindo o screenshot)
-
-Bloco central (topo do main):
-- Avatar grande (h-28 w-28) centralizado com badge de câmera (ícone `Camera` em círculo escuro no canto inferior direito) — botão sem ação (toast "Em breve")
-- Nome (display name) em bold, centralizado
-- `@username` em muted, centralizado
-- Botão outline arredondado "Copiar meu link Privacy" com ícone `Copy` — copia `${window.location.origin}/perfil/{username}` para clipboard e mostra toast
-
-Lista de opções (mesmo componente `SettingsGroup`/`SettingsRow` de `settings.creator.tsx`, um único grupo sem título):
-1. `User` — Nome de perfil e identificador
-2. `Image` — Foto de capa, biografia e localização
-3. `AtSign` — Redes Sociais
-4. `Lock` — Alterar senha
-5. `Trash2` — Excluir conta (variante destaque vermelho: `text-destructive`)
-
-Todos os itens sem `to` → `toast.info("Em breve")`. Item "Excluir conta" recebe prop opcional `variant="destructive"` na `SettingsRow` para pintar ícone e label em vermelho.
-
-Nada de backend, nada de outras rotas alteradas.
+Nada de mudanças em banco, rotas, ou nomes de arquivo.

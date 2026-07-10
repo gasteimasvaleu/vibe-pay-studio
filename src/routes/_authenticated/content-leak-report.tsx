@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 export const Route = createFileRoute("/_authenticated/content-leak-report")({
   head: () => ({
     meta: [
-      { title: "Reportar vazamento de conteúdo · Monetisex" },
+      { title: "Reportar vazamento de conteúdo · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -14,7 +14,7 @@ import {
 export const Route = createFileRoute("/_authenticated/promotion")({
   head: () => ({
     meta: [
-      { title: "Criar oferta · Monetisex" },
+      { title: "Criar oferta · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

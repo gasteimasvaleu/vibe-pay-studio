@@ -19,7 +19,7 @@ import { Route as AuthenticatedPublisherRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
 import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticated/mywallet'
-import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
+import { Route as AuthenticatedMyMonetisexyStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
 import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -95,8 +95,8 @@ const AuthenticatedMywalletRoute = AuthenticatedMywalletRouteImport.update({
   path: '/mywallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMyMonetisexStatsRoute =
-  AuthenticatedMyMonetisexStatsRouteImport.update({
+const AuthenticatedMyMonetisexyStatsRoute =
+  AuthenticatedMyMonetisexyStatsRouteImport.update({
     id: '/my-monetisex-stats',
     path: '/my-monetisex-stats',
     getParentRoute: () => AuthenticatedRouteRoute,
@@ -261,7 +261,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
-  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
+  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexyStatsRoute
   '/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
@@ -297,7 +297,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
-  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
+  '/my-monetisex-stats': typeof AuthenticatedMyMonetisexyStatsRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -334,7 +334,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/follow': typeof AuthenticatedFollowRoute
-  '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
+  '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexyStatsRoute
   '/_authenticated/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
@@ -554,7 +554,7 @@ declare module '@tanstack/react-router' {
       id: '/_authenticated/my-monetisex-stats'
       path: '/my-monetisex-stats'
       fullPath: '/my-monetisex-stats'
-      preLoaderRoute: typeof AuthenticatedMyMonetisexStatsRouteImport
+      preLoaderRoute: typeof AuthenticatedMyMonetisexyStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/follow': {
@@ -807,7 +807,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedFollowRoute: typeof AuthenticatedFollowRoute
-  AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
+  AuthenticatedMyMonetisexyStatsRoute: typeof AuthenticatedMyMonetisexyStatsRoute
   AuthenticatedMywalletRoute: typeof AuthenticatedMywalletRouteWithChildren
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
@@ -830,7 +830,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedFollowRoute: AuthenticatedFollowRoute,
-  AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
+  AuthenticatedMyMonetisexyStatsRoute: AuthenticatedMyMonetisexyStatsRoute,
   AuthenticatedMywalletRoute: AuthenticatedMywalletRouteWithChildren,
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,

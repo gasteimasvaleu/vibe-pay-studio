@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/mywallet/extrato")({
   head: () => ({
     meta: [
-      { title: "Transações · Monetisex" },
+      { title: "Transações · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

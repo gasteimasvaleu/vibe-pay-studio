@@ -8,7 +8,7 @@ import { createIdentityVerificationSession } from "@/lib/onboarding.functions";
 export const Route = createFileRoute("/_authenticated/creator/onboarding/documentos/")({
   head: () => ({
     meta: [
-      { title: "Verificação de Documentos · Monetisex" },
+      { title: "Verificação de Documentos · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -60,7 +60,7 @@ function DocumentosPage() {
           Verificação de documentos
         </h2>
         <p className="mt-3 text-white/70 leading-relaxed">
-          Faltam poucos passos para você se tornar um(a) creator Monetisex.
+          Faltam poucos passos para você se tornar um(a) creator Monetisexy.
           Precisamos apenas validar alguns documentos — o processo é rápido,
           seguro e sigiloso, feito em parceria com a Veriff.
         </p>

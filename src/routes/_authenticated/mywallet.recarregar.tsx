@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 export const Route = createFileRoute("/_authenticated/mywallet/recarregar")({
   head: () => ({
     meta: [
-      { title: "Recarregar carteira · Monetisex" },
+      { title: "Recarregar carteira · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

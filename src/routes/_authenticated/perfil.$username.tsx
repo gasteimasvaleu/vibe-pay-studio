@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
   head: ({ params }) => ({
     meta: [
-      { title: `@${params.username} · Monetisex` },
+      { title: `@${params.username} · Monetisexy` },
       { name: "robots", content: "noindex" },
     ],
   }),

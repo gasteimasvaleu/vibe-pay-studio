@@ -123,7 +123,7 @@ function LoginCard() {
           <div className="relative text-center mb-8">
             <img
               src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisex2..png"
-              alt="Monetisex"
+              alt="Monetisexy"
               className="mx-auto mb-4 h-12 w-auto object-contain drop-shadow-lg"
             />
             <p className="text-sm text-white/60">
@@ -329,13 +329,13 @@ function HomePage() {
             <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-white shadow-card border border-border flex flex-col items-center">
               <div className="pt-8 pb-2 text-center pointer-events-none bg-white">
                 <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
-                  Monetisex,<br />
+                  Monetisexy,<br />
                   <span className="text-gradient-primary">do seu jeito.</span>
                 </h1>
               </div>
               <img
                 src={heroBg}
-                alt="Ilustração Monetisex"
+                alt="Ilustração Monetisexy"
                 width={1200}
                 height={1200}
                 className="w-full h-[58%] object-cover mt-4"
