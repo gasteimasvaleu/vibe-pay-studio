@@ -1,29 +1,22 @@
-## Nova página `/settings/change-password`
+## Dialog de confirmação para "Excluir conta"
 
-Acessada ao clicar em "Alterar senha" em `/settings/myprofile`.
+Ao clicar no botão **Excluir conta** em `/settings/myprofile`, abrir um dialog de confirmação seguindo o modelo do screenshot, adaptado às cores do site.
 
-### Arquivos
+### Alterações
 
-**Criar** `src/routes/_authenticated/settings.change-password.tsx`
-- Rota autenticada, `noindex`, título "Alterar Senha · Monetisexy"
-- Header padrão (border-b, back button, título "Alterar Senha")
+**`src/routes/_authenticated/settings.myprofile.tsx`**
+- Importar `AlertDialog` (shadcn) e ícone `AlertCircle` do lucide-react.
+- Adicionar `useState` `deleteOpen` para controlar abertura.
+- Envolver o botão "Excluir conta" com `AlertDialogTrigger` (ou setar `onClick` que abre o dialog).
+- Adicionar o `AlertDialog` no final da página com:
+  - Ícone circular de alerta (AlertCircle) no topo, cor `text-primary` (dourado/âmbar do tema do site).
+  - Título grande e bold: **"Deseja continuar?"**
+  - Descrição: **"Ao continuar, sua conta e os dados associados serão excluídos."**
+  - Botão "X" para fechar no canto superior direito.
+  - Ações: **Cancelar** (ghost/link) e **Continuar** (variante padrão com bg `bg-muted` / arredondado full, seguindo o estilo do print).
+- O botão "Continuar" por enquanto apenas mostra `toast.info("Em breve")` e fecha o dialog (não implementa exclusão real — fora do escopo desta task de UI).
 
-**Editar** `src/routes/_authenticated/settings.myprofile.tsx`
-- Adicionar `to="/settings/change-password"` no `SettingsRow` "Alterar senha"
-
-### Layout (seguindo o screenshot)
-
-`main max-w-3xl mx-auto px-4 md:px-6 py-6 pb-28`:
-
-1. **Senha atual** — largura total, `rounded-2xl bg-muted px-5 py-3`, `Input type="password"` sem borda/background, placeholder "Senha atual", `useState`.
-2. **Grid 2 colunas** (`grid grid-cols-1 md:grid-cols-2 gap-3 mt-3`):
-   - **Nova Senha** — mesmo padrão, placeholder "Nova Senha".
-   - **Repetir a nova senha** — mesmo padrão, placeholder "Repetir a nova senha".
-
-**Barra fixa "Salvar"** no rodapé: `fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20` com `Button` largura total `h-12 rounded-full`.
-
-Botão desabilitado até: senha atual preenchida, nova senha ≥ 8 chars, e confirmação = nova senha.
-
-onClick chama `supabase.auth.updateUser({ password: nova })`. Supabase não valida a senha atual, mas por UX exigimos que o usuário digite; em caso de erro mostra `toast.error` com mensagem. Em sucesso, `toast.success("Senha alterada")` e `router.history.back()`.
-
-Sem mudanças de backend nem em outros arquivos.
+### Estilo
+- Card branco arredondado (`rounded-3xl`), sombra suave, centralizado, largura `max-w-md`.
+- Usar tokens semânticos do design system (`bg-background`, `text-foreground`, `text-primary`, `bg-muted`) — sem cores hardcoded.
+- Botões arredondados full (`rounded-full`), altura confortável (`h-12`).
