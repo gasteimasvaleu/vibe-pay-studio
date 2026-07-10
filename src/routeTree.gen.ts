@@ -30,6 +30,7 @@ import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
+import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
@@ -149,6 +150,12 @@ const AuthenticatedPerfilUsernameRoute =
     path: '/perfil/$username',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMywalletExtratoRoute =
+  AuthenticatedMywalletExtratoRouteImport.update({
+    id: '/extrato',
+    path: '/extrato',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -219,12 +226,13 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
-  '/mywallet': typeof AuthenticatedMywalletRoute
+  '/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -249,12 +257,13 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
-  '/mywallet': typeof AuthenticatedMywalletRoute
+  '/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -281,12 +290,13 @@ export interface FileRoutesById {
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/follow': typeof AuthenticatedFollowRoute
   '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
-  '/_authenticated/mywallet': typeof AuthenticatedMywalletRoute
+  '/_authenticated/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/publisher'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/mywallet/extrato'
     | '/perfil/$username'
     | '/chat/'
     | '/creator/onboarding/assinatura'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/publisher'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/mywallet/extrato'
     | '/perfil/$username'
     | '/chat'
     | '/creator/onboarding/assinatura'
@@ -381,6 +393,7 @@ export interface FileRouteTypes {
     | '/_authenticated/publisher'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/mywallet/extrato'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/chat/'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -551,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mywallet/extrato': {
+      id: '/_authenticated/mywallet/extrato'
+      path: '/extrato'
+      fullPath: '/mywallet/extrato'
+      preLoaderRoute: typeof AuthenticatedMywalletExtratoRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -641,6 +661,19 @@ const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
 const AuthenticatedChatRouteWithChildren =
   AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
 
+interface AuthenticatedMywalletRouteChildren {
+  AuthenticatedMywalletExtratoRoute: typeof AuthenticatedMywalletExtratoRoute
+}
+
+const AuthenticatedMywalletRouteChildren: AuthenticatedMywalletRouteChildren = {
+  AuthenticatedMywalletExtratoRoute: AuthenticatedMywalletExtratoRoute,
+}
+
+const AuthenticatedMywalletRouteWithChildren =
+  AuthenticatedMywalletRoute._addFileChildren(
+    AuthenticatedMywalletRouteChildren,
+  )
+
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -672,7 +705,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedFollowRoute: typeof AuthenticatedFollowRoute
   AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
-  AuthenticatedMywalletRoute: typeof AuthenticatedMywalletRoute
+  AuthenticatedMywalletRoute: typeof AuthenticatedMywalletRouteWithChildren
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
@@ -692,7 +725,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedFollowRoute: AuthenticatedFollowRoute,
   AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
-  AuthenticatedMywalletRoute: AuthenticatedMywalletRoute,
+  AuthenticatedMywalletRoute: AuthenticatedMywalletRouteWithChildren,
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
