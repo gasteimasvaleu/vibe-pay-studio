@@ -58,6 +58,8 @@ function VaultPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [sidebarSort, setSidebarSort] = useState<"padrao" | "nome" | "recentes" | "midias">("padrao");
+  const [sidebarDirection, setSidebarDirection] = useState<"asc" | "desc">("asc");
 
   const current = TABS.find((t) => t.key === activeTab)!;
   const isEmptyCategory = activeTab === "conversas" || activeTab === "envios";
