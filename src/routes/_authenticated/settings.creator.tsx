@@ -126,6 +126,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<Globe className="h-5 w-5" />}
             label="Idioma"
+            to="/settings/language"
           />
         </SettingsGroup>
       </main>

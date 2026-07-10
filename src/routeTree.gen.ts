@@ -45,6 +45,7 @@ import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
 import { Route as AuthenticatedSettingsMutedRouteImport } from './routes/_authenticated/settings.muted'
+import { Route as AuthenticatedSettingsLanguageRouteImport } from './routes/_authenticated/settings.language'
 import { Route as AuthenticatedSettingsDeviceManagementRouteImport } from './routes/_authenticated/settings.device-management'
 import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
@@ -266,6 +267,12 @@ const AuthenticatedSettingsMutedRoute =
     path: '/settings/muted',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsLanguageRoute =
+  AuthenticatedSettingsLanguageRouteImport.update({
+    id: '/settings/language',
+    path: '/settings/language',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsDeviceManagementRoute =
   AuthenticatedSettingsDeviceManagementRouteImport.update({
     id: '/settings/device-management',
@@ -423,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
+  '/settings/language': typeof AuthenticatedSettingsLanguageRoute
   '/settings/muted': typeof AuthenticatedSettingsMutedRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
@@ -478,6 +486,7 @@ export interface FileRoutesByTo {
   '/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
+  '/settings/language': typeof AuthenticatedSettingsLanguageRoute
   '/settings/muted': typeof AuthenticatedSettingsMutedRoute
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
@@ -536,6 +545,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/_authenticated/settings/details': typeof AuthenticatedSettingsDetailsRoute
   '/_authenticated/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
+  '/_authenticated/settings/language': typeof AuthenticatedSettingsLanguageRoute
   '/_authenticated/settings/muted': typeof AuthenticatedSettingsMutedRoute
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/personal': typeof AuthenticatedSettingsPersonalRoute
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/settings/creator'
     | '/settings/details'
     | '/settings/device-management'
+    | '/settings/language'
     | '/settings/muted'
     | '/settings/myprofile'
     | '/settings/personal'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/settings/chat-settings'
     | '/settings/creator'
     | '/settings/details'
+    | '/settings/language'
     | '/settings/muted'
     | '/settings/myprofile'
     | '/settings/personal'
@@ -708,6 +720,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/creator'
     | '/_authenticated/settings/details'
     | '/_authenticated/settings/device-management'
+    | '/_authenticated/settings/language'
     | '/_authenticated/settings/muted'
     | '/_authenticated/settings/myprofile'
     | '/_authenticated/settings/personal'
@@ -1001,6 +1014,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsMutedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/language': {
+      id: '/_authenticated/settings/language'
+      path: '/settings/language'
+      fullPath: '/settings/language'
+      preLoaderRoute: typeof AuthenticatedSettingsLanguageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/device-management': {
       id: '/_authenticated/settings/device-management'
       path: '/settings/device-management'
@@ -1270,6 +1290,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
   AuthenticatedSettingsDetailsRoute: typeof AuthenticatedSettingsDetailsRoute
   AuthenticatedSettingsDeviceManagementRoute: typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
+  AuthenticatedSettingsLanguageRoute: typeof AuthenticatedSettingsLanguageRoute
   AuthenticatedSettingsMutedRoute: typeof AuthenticatedSettingsMutedRoute
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsPersonalRoute: typeof AuthenticatedSettingsPersonalRoute
@@ -1313,6 +1334,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsDetailsRoute: AuthenticatedSettingsDetailsRoute,
   AuthenticatedSettingsDeviceManagementRoute:
     AuthenticatedSettingsDeviceManagementRouteWithChildren,
+  AuthenticatedSettingsLanguageRoute: AuthenticatedSettingsLanguageRoute,
   AuthenticatedSettingsMutedRoute: AuthenticatedSettingsMutedRoute,
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsPersonalRoute: AuthenticatedSettingsPersonalRoute,
