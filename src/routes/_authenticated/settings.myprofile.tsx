@@ -200,6 +200,7 @@ function SettingsRow({
   label: string;
   variant?: "destructive";
   to?: string;
+  onClick?: () => void;
 }) {
   const isDestructive = variant === "destructive";
   const className =
@@ -229,7 +230,7 @@ function SettingsRow({
   return (
     <button
       type="button"
-      onClick={() => toast.info("Em breve")}
+      onClick={onClick ?? (() => toast.info("Em breve"))}
       className={className}
     >
       {content}
