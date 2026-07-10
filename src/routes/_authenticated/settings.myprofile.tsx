@@ -152,18 +152,8 @@ function SettingsMyProfilePage() {
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent
-          showCloseButton={false}
-          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl"
+          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl [&>button]:top-4 [&>button]:right-4 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-full [&>button]:bg-muted [&>button]:grid [&>button]:place-items-center [&>button]:opacity-100"
         >
-          <button
-            type="button"
-            onClick={() => setDeleteOpen(false)}
-            aria-label="Fechar"
-            className="absolute top-4 right-4 h-9 w-9 grid place-items-center rounded-full bg-muted text-muted-foreground hover:bg-accent transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-
           <div className="flex flex-col items-center text-center pt-2">
             <div className="h-16 w-16 rounded-full border-[3px] border-primary grid place-items-center mb-5">
               <AlertCircle className="h-9 w-9 text-primary" strokeWidth={0} fill="transparent" />
