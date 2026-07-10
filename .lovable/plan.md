@@ -1,21 +1,13 @@
-## Plano: página `/content-leak-report`
+## Correção — divisor do header em `/content-leak-report`
 
-**Rota nova:** `src/routes/_authenticated/content-leak-report.tsx` (autenticada, `noindex`).
+Após varredura de `src/routes/_authenticated/*.tsx`, **apenas `content-leak-report.tsx`** está sem a linha inferior do header. Todas as outras páginas com botão voltar já usam a classe padrão `border-b border-border backdrop-blur-md bg-card/80`.
 
-**Link:** no `CreatorDashboard.tsx`, adicionar `to="/content-leak-report"` no `ActionCard` do botão "Vazamento".
+**Mudança em `src/routes/_authenticated/content-leak-report.tsx`:**
 
-**Layout da página** (seguindo os screenshots):
+Reorganizar o layout para seguir o mesmo padrão de `mywallet.recarregar.tsx`:
 
-- Header: botão voltar (ArrowLeft, `router.history.back()`) à esquerda + título centralizado **"Reportar vazamento de conteúdo"**.
-- Seção **"Qual conteúdo foi vazado?"** (h2 bold) com subtítulo em `text-muted-foreground`: "Informe os detalhes do uso não autorizado do seu conteúdo. O link é essencial para rastrearmos e investigarmos o caso."
-- Campo **Título** — `Input` com placeholder `Ex: Meu post foi copiado sem permissão`.
-- Campo **URL do conteúdo vazado** — `Input` type url, placeholder `Ex: https://site.com/pagina-com-meu-conteudo`.
-- Campo **Descrição** — `Textarea` (rows ~5, maxLength 5000), placeholder `Descreva onde e como seu conteúdo foi vazado`, com contador `{length} / 5000` alinhado à direita abaixo.
-- Seção **Enviar mídia (opcional)** com subtítulo "Print, vídeo ou gravação de tela (até 5 mídias)": dropzone quadrado tracejado (`border-dashed`) com ícone `Upload` e texto "Subir mídia"; `<input type="file" multiple accept="image/*,video/*">` escondido, limite 5, mostra thumbnails/lista após seleção com botão remover.
-- Botão **Enviar** full-width no rodapé, desabilitado enquanto Título, URL ou Descrição estiverem vazios.
+- Wrapper externo full-width (sem padding lateral).
+- `<header>` full-width com `relative z-10 border-b border-border backdrop-blur-md bg-card/80`, contendo um inner `max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3` com botão voltar à esquerda, `<h1>` ao centro e spacer `w-9` à direita.
+- `<main className="max-w-3xl mx-auto px-4 md:px-6 py-8">` envolvendo o formulário existente (todos os campos, upload e botão Enviar permanecem iguais).
 
-**Estado:** `useState` para title, url, description, files. Submit apenas chama `toast.success("Denúncia enviada")`, limpa o form e volta — sem backend (pode ser adicionado depois).
-
-**Componentes usados:** `Input`, `Textarea`, `Button`, `toast` (sonner) — todos já existem.
-
-**Sem outras mudanças** (nenhum ajuste em backend, rotas ou outros arquivos).
+Sem outras alterações.

@@ -59,22 +59,28 @@ function ContentLeakReportPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-6">
-      <header className="relative flex items-center justify-center pb-6">
-        <button
-          type="button"
-          onClick={() => router.history.back()}
-          className="absolute left-0 grid h-10 w-10 place-items-center rounded-full text-foreground hover:bg-accent"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-base font-semibold text-foreground">
-          Reportar vazamento de conteúdo
-        </h1>
+    <div className="min-h-screen bg-background">
+      <header className="relative z-10 border-b border-border backdrop-blur-md bg-card/80">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Reportar vazamento de conteúdo
+          </h1>
+          <span className="w-9" />
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+
+
         <section className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">
@@ -196,7 +202,9 @@ function ContentLeakReportPage() {
         >
           Enviar
         </Button>
-      </form>
+        </form>
+      </main>
     </div>
   );
 }
+
