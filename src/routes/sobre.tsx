@@ -5,9 +5,9 @@ import { ArrowRight, Target, Zap, Lock, Bot, Globe2, CreditCard } from "lucide-r
 export const Route = createFileRoute("/sobre")({
   head: () => ({
     meta: [
-      { title: "Sobre · Monetisex" },
-      { name: "description", content: "A história da Monetisex: a maior plataforma de creator economy da América Latina." },
-      { property: "og:title", content: "Sobre · Monetisex" },
+      { title: "Sobre · Monetisexy" },
+      { name: "description", content: "A história da Monetisexy: a maior plataforma de creator economy da América Latina." },
+      { property: "og:title", content: "Sobre · Monetisexy" },
       { property: "og:description", content: "Criadores no controle. Comunidade de verdade." },
     ],
   }),
@@ -49,7 +49,7 @@ function SobrePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <span className="label-caps text-primary">Nossa história</span>
           <h1 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-            A história da <span className="text-gradient-primary">Monetisex</span>
+            A história da <span className="text-gradient-primary">Monetisexy</span>
           </h1>
           <p className="mt-8 text-lg text-muted-foreground max-w-2xl">
             Construímos a infraestrutura que coloca os criadores no controle. Sem algoritmos, sem intermediários — conexão direta com a sua comunidade.

@@ -8,7 +8,7 @@ import { saveSocialLinks } from "@/lib/onboarding.functions";
 export const Route = createFileRoute("/_authenticated/creator/onboarding/redes-sociais")({
   head: () => ({
     meta: [
-      { title: "Redes Sociais · Monetisex" },
+      { title: "Redes Sociais · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

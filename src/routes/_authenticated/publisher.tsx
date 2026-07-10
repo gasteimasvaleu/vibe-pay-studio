@@ -380,7 +380,7 @@ function PublisherPage() {
             />
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
-              label="Acervo no Monetisex"
+              label="Acervo no Monetisexy"
               onClick={triggerFileInput}
             />
             <PickerOption

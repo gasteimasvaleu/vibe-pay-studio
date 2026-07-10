@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/_authenticated/mywallet/")({
   head: () => ({
     meta: [
-      { title: "Carteira · Monetisex" },
+      { title: "Carteira · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

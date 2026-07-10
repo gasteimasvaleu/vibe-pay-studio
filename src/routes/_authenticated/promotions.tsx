@@ -14,7 +14,7 @@ const promotionsQueryOptions = queryOptions({
 export const Route = createFileRoute("/_authenticated/promotions")({
   head: () => ({
     meta: [
-      { title: "Ofertas · Monetisex" },
+      { title: "Ofertas · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

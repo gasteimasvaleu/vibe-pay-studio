@@ -12,9 +12,9 @@ import { ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/como-funciona")({
   head: () => ({
     meta: [
-      { title: "Como funciona · Monetisex" },
-      { name: "description", content: "Entenda como funciona a plataforma Monetisex: cadastro, publicação, monetização e saques via Pix." },
-      { property: "og:title", content: "Como funciona · Monetisex" },
+      { title: "Como funciona · Monetisexy" },
+      { name: "description", content: "Entenda como funciona a plataforma Monetisexy: cadastro, publicação, monetização e saques via Pix." },
+      { property: "og:title", content: "Como funciona · Monetisexy" },
       { property: "og:description", content: "Passo a passo, taxas, proteção de conteúdo e calculadora de ganhos." },
     ],
   }),

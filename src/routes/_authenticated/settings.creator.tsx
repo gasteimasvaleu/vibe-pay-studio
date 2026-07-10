@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export const Route = createFileRoute("/_authenticated/settings/creator")({
   head: () => ({
     meta: [
-      { title: "Configurações de Perfil · Monetisex" },
+      { title: "Configurações de Perfil · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

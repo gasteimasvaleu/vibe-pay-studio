@@ -5,7 +5,7 @@ import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 export const Route = createFileRoute("/_authenticated/banco/cadastrar")({
   head: () => ({
     meta: [
-      { title: "Cadastrar Dados Bancários · Monetisex" },
+      { title: "Cadastrar Dados Bancários · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

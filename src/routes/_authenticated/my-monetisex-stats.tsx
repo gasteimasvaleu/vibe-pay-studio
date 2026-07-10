@@ -40,17 +40,17 @@ import {
 export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
   head: () => ({
     meta: [
-      { title: "Meu Monetisex · Monetisex" },
+      { title: "Meu Monetisexy · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: MyMonetisexStatsPage,
+  component: MyMonetisexyStatsPage,
 });
 
 const MAIN_TABS = ["Visão geral", "Extratos", "Engajamento", "Alcance", "Assinantes"] as const;
 const SUB_TABS = ["Faturamento", "Destaques", "Sequência de atividades", "Resumo"] as const;
 
-function MyMonetisexStatsPage() {
+function MyMonetisexyStatsPage() {
   const router = useRouter();
   const [mainTab, setMainTab] = useState<(typeof MAIN_TABS)[number]>("Visão geral");
   const [subTab, setSubTab] = useState<(typeof SUB_TABS)[number]>("Faturamento");
@@ -72,7 +72,7 @@ function MyMonetisexStatsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold">Meu Monetisex</h1>
+          <h1 className="text-base font-semibold">Meu Monetisexy</h1>
           <div className="w-9" />
         </div>
       </header>
@@ -416,7 +416,7 @@ function TopBadgeCard() {
         <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
           <MessageCircle className="h-5 w-5" />
         </div>
-        <span className="font-semibold">Você está no top +100 da Monetisex!</span>
+        <span className="font-semibold">Você está no top +100 da Monetisexy!</span>
       </div>
 
       <div>
@@ -618,7 +618,7 @@ function MeuBancoCard() {
         <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
           <MessageCircle className="h-5 w-5" />
         </div>
-        <span className="font-semibold">Você está no top +100 da Monetisex!</span>
+        <span className="font-semibold">Você está no top +100 da Monetisexy!</span>
       </div>
       <div>
         <p className="text-sm text-muted-foreground">Faturamento hoje</p>
@@ -666,7 +666,7 @@ function AssinantesCard() {
         <Minus className="h-4 w-4 text-muted-foreground" />
       </button>
       <p className="pt-2 text-center text-sm text-muted-foreground">
-        Parabéns, você está entre os melhores criadores Monetisex! Continue assim!
+        Parabéns, você está entre os melhores criadores Monetisexy! Continue assim!
       </p>
     </div>
   );

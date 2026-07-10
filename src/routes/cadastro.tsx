@@ -13,8 +13,8 @@ import {
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
     meta: [
-      { title: "Criar conta · Monetisex" },
-      { name: "description", content: "Crie sua conta grátis na Monetisex e comece a monetizar seu conteúdo." },
+      { title: "Criar conta · Monetisexy" },
+      { name: "description", content: "Crie sua conta grátis na Monetisexy e comece a monetizar seu conteúdo." },
     ],
   }),
   component: CadastroPage,
@@ -148,7 +148,7 @@ function CadastroPage() {
                   className="mt-1 accent-primary"
                 />
                 <span>
-                  Ao se cadastrar na Monetisex, você atesta que leu e concorda com nossos{" "}
+                  Ao se cadastrar na Monetisexy, você atesta que leu e concorda com nossos{" "}
                   <a href="#" className="text-primary hover:underline">Termos</a> e{" "}
                   <a href="#" className="text-primary hover:underline">Privacidade</a> e confirma que tem pelo menos 18 anos de idade.
                 </span>

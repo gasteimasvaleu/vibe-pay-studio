@@ -27,7 +27,7 @@ import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
     meta: [
-      { title: "Meu Banco · Monetisex" },
+      { title: "Meu Banco · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -154,7 +154,7 @@ function BancoPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-left">
-              Entenda como funciona os saques na Monetisex
+              Entenda como funciona os saques na Monetisexy
             </DialogTitle>
           </DialogHeader>
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/_authenticated/follow")({
   head: () => ({
     meta: [
-      { title: "Meus assinantes · Monetisex" },
+      { title: "Meus assinantes · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),

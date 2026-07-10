@@ -12,7 +12,7 @@ export const Route = createFileRoute(
 )({
   head: () => ({
     meta: [
-      { title: "Validando · Monetisex" },
+      { title: "Validando · Monetisexy" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -88,7 +88,7 @@ function VerificandoPage() {
       return {
         color: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200",
         icon: <CheckCircle2 className="w-5 h-5" />,
-        text: "Sua identidade foi verificada. Bem-vindo(a) à Monetisex!",
+        text: "Sua identidade foi verificada. Bem-vindo(a) à Monetisexy!",
       };
     }
     if (status === "requires_input") {
@@ -130,7 +130,7 @@ function VerificandoPage() {
             <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-white/10 shadow-glow">
               <img
                 src={mosaicImg}
-                alt="Creators da Monetisex"
+                alt="Creators da Monetisexy"
                 width={1024}
                 height={1024}
                 loading="lazy"
@@ -147,7 +147,7 @@ function VerificandoPage() {
 
             <p className="mt-6 text-sm text-white/60 max-w-lg mx-auto">
               Estamos validando os dados informados. Avisaremos nos próximos minutos
-              o resultado — enquanto isso, aproveite para explorar a Monetisex.
+              o resultado — enquanto isso, aproveite para explorar a Monetisexy.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
