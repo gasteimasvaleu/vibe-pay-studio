@@ -28,6 +28,7 @@ import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_auth
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
+import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
@@ -140,6 +141,12 @@ const AuthenticatedAccountStatusRoute =
     path: '/account-status',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMywalletIndexRoute =
+  AuthenticatedMywalletIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
+  '/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -265,7 +273,6 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
-  '/mywallet': typeof AuthenticatedMywalletRouteWithChildren
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
+  '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/chat/'
+    | '/mywallet/'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
@@ -366,7 +376,6 @@ export interface FileRouteTypes {
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
-    | '/mywallet'
     | '/promotion'
     | '/promotions'
     | '/publisher'
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/chat'
+    | '/mywallet'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
     | '/api/public/webhooks/veriff-decision'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/chat/'
+    | '/_authenticated/mywallet/'
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
@@ -563,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountStatusRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mywallet/': {
+      id: '/_authenticated/mywallet/'
+      path: '/'
+      fullPath: '/mywallet/'
+      preLoaderRoute: typeof AuthenticatedMywalletIndexRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
+    }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
       path: '/'
@@ -684,11 +702,13 @@ const AuthenticatedChatRouteWithChildren =
 interface AuthenticatedMywalletRouteChildren {
   AuthenticatedMywalletExtratoRoute: typeof AuthenticatedMywalletExtratoRoute
   AuthenticatedMywalletRecarregarRoute: typeof AuthenticatedMywalletRecarregarRoute
+  AuthenticatedMywalletIndexRoute: typeof AuthenticatedMywalletIndexRoute
 }
 
 const AuthenticatedMywalletRouteChildren: AuthenticatedMywalletRouteChildren = {
   AuthenticatedMywalletExtratoRoute: AuthenticatedMywalletExtratoRoute,
   AuthenticatedMywalletRecarregarRoute: AuthenticatedMywalletRecarregarRoute,
+  AuthenticatedMywalletIndexRoute: AuthenticatedMywalletIndexRoute,
 }
 
 const AuthenticatedMywalletRouteWithChildren =
@@ -775,3 +795,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
