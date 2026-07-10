@@ -97,6 +97,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<FolderPlus className="h-5 w-5" />}
             title="Acervo"
             description="Gerencie seus conteúdos com praticidade"
+            to="/vault"
           />
           <ActionCard
             icon={<Radio className="h-5 w-5" />}
