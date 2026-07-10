@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,6 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
