@@ -1,32 +1,29 @@
 ## Objetivo
-Ao clicar no card "Adicionar novo banco" na página `/banco`, abrir o formulário "Cadastrar Dados Bancários" dentro de um **Sheet vindo de baixo para cima** (bottom sheet) em vez de navegar para a rota `/banco/cadastrar`.
+Criar a página **Meus assinantes** (rota `/follow`) acessada ao clicar no card "Meus assinantes" do dashboard do creator. Layout conforme screenshot: header padrão (voltar + título), campo de busca e estado vazio "Sem resultados para sua pesquisa.".
 
-## Mudanças
+## Rota
+- **novo** `src/routes/_authenticated/follow.tsx` → URL `/follow`
+  - `head()`: `title: "Meus assinantes · Monetisex"`, `robots: noindex`
+  - Header estilo `DashboardShell` (fundo `--gradient-radial`, header `border-b border-border backdrop-blur-md bg-card/80`, container `max-w-3xl mx-auto`).
+  - Botão voltar (`ArrowLeft` → `router.history.back()`), título "Meus assinantes", espaçador.
 
-### `src/routes/_authenticated/banco.tsx`
-- Importar `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle` de `@/components/ui/sheet`.
-- Adicionar state `cadastroOpen`.
-- Trocar o `<Link to="/banco/cadastrar">` do card "Adicionar novo banco" por `<button onClick={() => setCadastroOpen(true)}>` (mesmo visual).
-- Renderizar `<Sheet open={cadastroOpen} onOpenChange={setCadastroOpen}>` com:
-  - `<SheetContent side="bottom" className="h-[90vh] rounded-t-2xl overflow-y-auto p-0">`
-  - Header sticky no topo (botão `ArrowLeft` à esquerda que chama `setCadastroOpen(false)`, título centralizado "Cadastrar Dados Bancários", espaçador à direita).
-  - Corpo: `<CadastrarBancoForm onClose={() => setCadastroOpen(false)} />`.
+## Conteúdo da página
+1. **Campo de busca**
+   - Input com ícone `Search` (lucide) à esquerda, placeholder "Busca".
+   - Estilo pill (`h-12 rounded-full pl-10`), state local `query`.
+2. **Estado vazio (mock)**
+   - Quando não houver assinantes cadastrados (por ora sempre), exibir texto centralizado em negrito: **"Sem resultados para sua pesquisa."**
+   - Sem lista real — apenas UI estática.
 
-### Novo componente: `src/components/banco/CadastrarBancoForm.tsx`
-- Extrair o formulário (Banco, Tipo de conta, Agência, Número da conta, Tipo de chave Pix, Chave Pix + botões Voltar/Salvar) do arquivo `banco.cadastrar.tsx`.
-- Props: `onClose: () => void`.
-- Botão "Voltar" e submit chamam `onClose()`.
-- Mantém `BANCOS`, `PIX_PLACEHOLDERS`, ícones e estilos idênticos.
-
-### `src/routes/_authenticated/banco.cadastrar.tsx`
-- Manter a rota como fallback via URL direta, simplificando para reusar `CadastrarBancoForm` com `onClose = () => router.history.back()`.
+## Wiring no dashboard
+- **editar** `src/components/dashboard/CreatorDashboard.tsx` — no `ActionCard` "Meus assinantes" (linhas 79-83) adicionar `to="/follow"`.
 
 ## Detalhes técnicos
-- Sem alterações de backend/dados — apenas UI.
-- Usa `Sheet` do shadcn com `side="bottom"` (bottom sheet).
-- Preserva design system (tokens semânticos).
+- Usar componentes shadcn existentes: `Input`.
+- Ícones lucide: `ArrowLeft`, `Search`.
+- Tudo estático (sem chamadas Supabase).
+- Reaproveita padrões visuais do `/banco` (header, fundo gradient).
 
 ## Arquivos alterados/criados
-- **novo** `src/components/banco/CadastrarBancoForm.tsx`
-- **editar** `src/routes/_authenticated/banco.tsx`
-- **editar** `src/routes/_authenticated/banco.cadastrar.tsx`
+- **novo** `src/routes/_authenticated/follow.tsx`
+- **editar** `src/components/dashboard/CreatorDashboard.tsx` (adicionar `to="/follow"` no card "Meus assinantes")

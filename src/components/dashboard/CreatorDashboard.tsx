@@ -80,6 +80,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Users className="h-5 w-5" />}
             title="Meus assinantes"
             description="Acompanhe quem mais te apoia"
+            to="/follow"
           />
           <ActionCard
             icon={<UserPlus className="h-5 w-5" />}
