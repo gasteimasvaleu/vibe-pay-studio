@@ -114,6 +114,7 @@ function SettingsMyProfilePage() {
           <SettingsRow
             icon={<ImageIcon className="h-5 w-5" />}
             label="Foto de capa, biografia e localização"
+            to="/settings/details"
           />
           <SettingsRow
             icon={<AtSign className="h-5 w-5" />}
