@@ -88,7 +88,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<DollarSign className="h-5 w-5" />}
             label="Assinatura"
-            to="/mywallet"
+            to="/settings/subscription"
           />
           <SettingsRow
             icon={<User className="h-5 w-5" />}
