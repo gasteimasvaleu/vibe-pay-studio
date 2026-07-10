@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/settings/two-factor")({
+export const Route = createFileRoute("/_authenticated/settings/two-factor/")({
   head: () => ({
     meta: [
       { title: "Autenticação de Dois Fatores · Monetisexy" },
@@ -47,13 +47,12 @@ function TwoFactorPage() {
             <span className="h-2 w-2 rounded-full bg-destructive" aria-hidden />
             <span className="text-base text-foreground">Não configurada</span>
           </div>
-          <Button
-            type="button"
-            onClick={() => toast.info("Em breve")}
-            className="w-full h-12 rounded-full bg-gradient-primary text-primary-foreground"
+          <Link
+            to="/settings/two-factor/setup"
+            className="flex items-center justify-center w-full h-12 rounded-full bg-gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
           >
             Habilitar
-          </Button>
+          </Link>
         </div>
       </main>
     </div>
