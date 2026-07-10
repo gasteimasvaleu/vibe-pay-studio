@@ -234,7 +234,7 @@ function VaultPage() {
           </div>
 
           <ul className="space-y-1">
-            {TABS.map((t) => {
+            {filteredTabs.map((t) => {
               const isActive = t.key === activeTab;
               return (
                 <li key={t.key}>
