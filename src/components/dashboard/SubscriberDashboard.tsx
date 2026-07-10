@@ -62,6 +62,7 @@ export function SubscriberDashboard({
             icon={<UserPlus className="h-5 w-5" />}
             title="Assinaturas"
             description="Veja os creators que você assina"
+            to="/subscriptions"
           />
           <ActionCard
             icon={<Wallet className="h-5 w-5" />}
