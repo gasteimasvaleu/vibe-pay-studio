@@ -8,8 +8,11 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 type TimeRange = "all" | "specific";
