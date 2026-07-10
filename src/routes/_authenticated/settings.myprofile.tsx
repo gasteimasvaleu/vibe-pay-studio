@@ -109,6 +109,7 @@ function SettingsMyProfilePage() {
           <SettingsRow
             icon={<User className="h-5 w-5" />}
             label="Nome de perfil e identificador"
+            to="/settings/social"
           />
           <SettingsRow
             icon={<ImageIcon className="h-5 w-5" />}
@@ -137,18 +138,18 @@ function SettingsRow({
   icon,
   label,
   variant,
+  to,
 }: {
   icon: ReactNode;
   label: string;
   variant?: "destructive";
+  to?: string;
 }) {
   const isDestructive = variant === "destructive";
-  return (
-    <button
-      type="button"
-      onClick={() => toast.info("Em breve")}
-      className="flex items-center gap-3 px-4 py-4 hover:bg-accent transition-colors w-full text-left"
-    >
+  const className =
+    "flex items-center gap-3 px-4 py-4 hover:bg-accent transition-colors w-full text-left";
+  const content = (
+    <>
       <span className={isDestructive ? "text-destructive" : "text-foreground"}>
         {icon}
       </span>
@@ -160,6 +161,23 @@ function SettingsRow({
         {label}
       </span>
       <ChevronRight className="h-5 w-5 text-muted-foreground" />
+    </>
+  );
+  if (to) {
+    return (
+      <Link to={to} className={className}>
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => toast.info("Em breve")}
+      className={className}
+    >
+      {content}
     </button>
   );
 }
+
