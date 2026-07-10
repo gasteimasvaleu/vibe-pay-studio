@@ -74,19 +74,29 @@ function SecurityMenuPage() {
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-8">
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border shadow-card">
           {[
-            "Alterar senha",
-            "Autenticação de dois fatores",
-            "Autenticação por rede social",
-          ].map((label) => (
-            <button
-              key={label}
-              type="button"
-              onClick={soon}
-              className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
-            >
-              {label}
-            </button>
-          ))}
+            { label: "Alterar senha", to: "/settings/change-password" },
+            { label: "Autenticação de dois fatores" },
+            { label: "Autenticação por rede social" },
+          ].map((item) =>
+            item.to ? (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.label}
+                type="button"
+                onClick={soon}
+                className="flex items-center px-4 py-4 hover:bg-accent transition-colors w-full text-left text-base text-foreground"
+              >
+                {item.label}
+              </button>
+            )
+          )}
         </div>
 
         <section className="space-y-3">
