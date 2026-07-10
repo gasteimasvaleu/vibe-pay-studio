@@ -31,6 +31,7 @@ import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedSettingsSubscriptionRouteImport } from './routes/_authenticated/settings.subscription'
 import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_authenticated/settings.social-media'
 import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
 import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
@@ -165,6 +166,12 @@ const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedChatRoute,
 } as any)
+const AuthenticatedSettingsSubscriptionRoute =
+  AuthenticatedSettingsSubscriptionRouteImport.update({
+    id: '/settings/subscription',
+    path: '/settings/subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsSocialMediaRoute =
   AuthenticatedSettingsSocialMediaRouteImport.update({
     id: '/settings/social-media',
@@ -305,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
+  '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -344,6 +352,7 @@ export interface FileRoutesByTo {
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
+  '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -386,6 +395,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/_authenticated/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/_authenticated/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
+  '/_authenticated/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/social'
     | '/settings/social-media'
+    | '/settings/subscription'
     | '/chat/'
     | '/mywallet/'
     | '/creator/onboarding/assinatura'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/settings/myprofile'
     | '/settings/social'
     | '/settings/social-media'
+    | '/settings/subscription'
     | '/chat'
     | '/mywallet'
     | '/creator/onboarding/assinatura'
@@ -509,6 +521,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/myprofile'
     | '/_authenticated/settings/social'
     | '/_authenticated/settings/social-media'
+    | '/_authenticated/settings/subscription'
     | '/_authenticated/chat/'
     | '/_authenticated/mywallet/'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -685,6 +698,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat/'
       preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
       parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/settings/subscription': {
+      id: '/_authenticated/settings/subscription'
+      path: '/settings/subscription'
+      fullPath: '/settings/subscription'
+      preLoaderRoute: typeof AuthenticatedSettingsSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/social-media': {
       id: '/_authenticated/settings/social-media'
@@ -899,6 +919,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsMyprofileRoute: typeof AuthenticatedSettingsMyprofileRoute
   AuthenticatedSettingsSocialRoute: typeof AuthenticatedSettingsSocialRoute
   AuthenticatedSettingsSocialMediaRoute: typeof AuthenticatedSettingsSocialMediaRoute
+  AuthenticatedSettingsSubscriptionRoute: typeof AuthenticatedSettingsSubscriptionRoute
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -927,6 +948,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsMyprofileRoute: AuthenticatedSettingsMyprofileRoute,
   AuthenticatedSettingsSocialRoute: AuthenticatedSettingsSocialRoute,
   AuthenticatedSettingsSocialMediaRoute: AuthenticatedSettingsSocialMediaRoute,
+  AuthenticatedSettingsSubscriptionRoute:
+    AuthenticatedSettingsSubscriptionRoute,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:
