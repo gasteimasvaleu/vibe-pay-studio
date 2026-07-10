@@ -1,7 +1,17 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/mywallet/")({
   head: () => ({
@@ -16,7 +26,51 @@ export const Route = createFileRoute("/_authenticated/mywallet/")({
 function MyWalletPage() {
   const router = useRouter();
 
-  const soon = () => toast("Em breve");
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState("");
+  const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [validity, setValidity] = useState("");
+  const [cvv, setCvv] = useState("");
+
+  const formatNumber = (v: string) =>
+    v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+  const formatCpf = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    return d
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  };
+  const formatValidity = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 4);
+    if (d.length < 3) return d;
+    return `${d.slice(0, 2)}/${d.slice(2)}`;
+  };
+
+  const handleConfirm = () => {
+    const digits = number.replace(/\D/g, "");
+    const cpfDigits = cpf.replace(/\D/g, "");
+    if (
+      digits.length !== 16 ||
+      !name.trim() ||
+      cpfDigits.length !== 11 ||
+      !/^\d{2}\/\d{2}$/.test(validity) ||
+      cvv.length < 3
+    ) {
+      toast.error("Preencha todos os campos corretamente");
+      return;
+    }
+    toast.success("Cartão adicionado");
+    setOpen(false);
+    setNumber("");
+    setName("");
+    setCpf("");
+    setValidity("");
+    setCvv("");
+  };
+
+
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -81,19 +135,80 @@ function MyWalletPage() {
             Meus Cartões
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <button
-              type="button"
-              onClick={soon}
-              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
-            >
-              <Plus className="h-6 w-6 text-primary" />
-              <span className="text-sm font-semibold text-foreground leading-tight">
-                Adicionar
-                <br />
-                novo cartão
-              </span>
-            </button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
+                >
+                  <Plus className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-semibold text-foreground leading-tight">
+                    Adicionar
+                    <br />
+                    novo cartão
+                  </span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg rounded-3xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">Adicionar cartão</DialogTitle>
+                  <DialogDescription>
+                    Estamos em total conformidade com o padrão internacional de
+                    segurança de cartões PCI DSS.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 pt-2">
+                  <Input
+                    inputMode="numeric"
+                    placeholder="NÚMERO DO CARTÃO"
+                    value={number}
+                    onChange={(e) => setNumber(formatNumber(e.target.value))}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <Input
+                    placeholder="NOME (COMO ESCRITO NO CARTÃO)"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toUpperCase())}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <Input
+                    inputMode="numeric"
+                    placeholder="CPF DO TITULAR"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpf(e.target.value))}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      inputMode="numeric"
+                      placeholder="VALIDADE"
+                      value={validity}
+                      onChange={(e) => setValidity(formatValidity(e.target.value))}
+                      className="h-12 rounded-full bg-muted border-0 px-5"
+                    />
+                    <Input
+                      inputMode="numeric"
+                      placeholder="CVV"
+                      value={cvv}
+                      onChange={(e) =>
+                        setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                      }
+                      className="h-12 rounded-full bg-muted border-0 px-5"
+                    />
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleConfirm}
+                      className="h-11 px-8 rounded-full bg-gradient-primary text-primary-foreground"
+                    >
+                      Confirmar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
+
         </section>
 
         <hr className="border-border" />
