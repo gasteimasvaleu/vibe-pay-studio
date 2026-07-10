@@ -1,48 +1,15 @@
-## Objetivo
-Criar a página **Recarregar carteira** dentro de `/mywallet`, acessada ao clicar no botão "Recarregar" do card de saldo. Layout conforme screenshots: seletor de valor com −/+, slider, resumo (Saldo atual / Você adiciona / Saldo final) e CTA "Continuar" fixado no rodapé.
+## Problema
 
-## Rota
-- **novo** `src/routes/_authenticated/mywallet.recarregar.tsx` → URL `/mywallet/recarregar`
-  - `head()`: `title: "Recarregar carteira · Monetisex"`, `robots: noindex`
-  - Header padrão (voltar + título "Recarregar carteira"), mesmo estilo das outras páginas.
+O card "Saldo na carteira" tem um `<Link to="/mywallet/extrato">` envolvendo tudo, e dentro dele há outro `<Link to="/mywallet/recarregar">` (o botão Recarregar). HTML não permite `<a>` aninhado — o navegador quebra a estrutura, e nenhum dos dois links funciona de forma confiável.
 
-## Wiring em `/mywallet`
-- **editar** `src/routes/_authenticated/mywallet.tsx` — trocar o botão "Recarregar":
-  - Remover `onClick={soon}` e o `preventDefault/stopPropagation`.
-  - Usar `<Button asChild>` com `<Link to="/mywallet/recarregar" onClick={(e) => e.stopPropagation()}>Recarregar</Link>` (o `stopPropagation` mantém o clique no botão sem também acionar o Link exterior do card, que aponta para `/mywallet/extrato`).
+## Correção em `src/routes/_authenticated/mywallet.tsx`
 
-## Conteúdo `/mywallet/recarregar`
+Remover o aninhamento, mantendo os dois destinos clicáveis:
 
-### Seletor de valor (topo, centralizado)
-- Estado local `amount: number` (default `50`), min `10`, max `1000`, step `10`.
-- Layout: `flex items-center justify-center gap-4 mt-16`
-  - Botão circular `−` (`h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center`) → decrementa `step`
-  - Valor grande `text-4xl md:text-5xl font-extrabold tracking-tight` formatado como `R$ {valor,fixed(2)}` com vírgula (usar `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`)
-  - Botão circular `+` (mesmo estilo) → incrementa
-- Botões desabilitam nos limites.
+1. Trocar o `<Link>` externo do card por uma `<div>` (mesmas classes visuais, sem `hover:bg-accent/40` pra não parecer clicável inteiro).
+2. Envolver **apenas** a área do saldo (label "Saldo na carteira", valor `R$ -`, texto de apoio) e o `ChevronRight` em um `<Link to="/mywallet/extrato">` — essa é a área que abre o extrato.
+3. Deixar o botão **Recarregar** como um `<Button asChild><Link to="/mywallet/recarregar">…</Link></Button>` irmão, fora do link do extrato. Sem `stopPropagation`, já que não há mais link pai.
 
-### Slider
-- Componente shadcn `Slider` (`min={10} max={1000} step={10}`) espelhando `amount`.
-- `className="mt-8"`, cor do track/thumb via classes existentes do componente (já usa `--primary`).
+Resultado: clicar no saldo/seta abre `/mywallet/extrato`; clicar em Recarregar abre `/mywallet/recarregar`.
 
-### Resumo
-- Título `Resumo` (`text-lg font-bold mt-10`)
-- Lista de linhas com divisor `border-b border-border` entre elas:
-  - `Saldo atual` → `R$ -`
-  - `Você adiciona` → valor formatado
-  - `Saldo final` → mesmo valor (saldo atual é `-`, então só mostra o novo)
-- Layout de cada linha: `flex justify-between py-4 text-sm md:text-base font-semibold text-foreground`
-
-### CTA "Continuar"
-- Botão largo pill primário fixado abaixo do resumo com `mt-10 w-full h-12 rounded-full bg-gradient-primary text-primary-foreground`.
-- `onClick` mostra `toast.success("Em breve")` e volta com `router.history.back()`.
-
-## Detalhes técnicos
-- Componentes shadcn: `Button`, `Slider`.
-- Ícones lucide: `ArrowLeft`, `Minus`, `Plus`.
-- Sonner `toast` já configurado.
-- Sem dados persistentes / sem backend.
-
-## Arquivos alterados/criados
-- **novo** `src/routes/_authenticated/mywallet.recarregar.tsx`
-- **editar** `src/routes/_authenticated/mywallet.tsx` (botão "Recarregar" vira `Link` para `/mywallet/recarregar`)
+Nenhum outro arquivo muda.
