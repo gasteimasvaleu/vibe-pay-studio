@@ -133,6 +133,7 @@ function VaultPage() {
               {activeTab === "envios" && (
                 <button
                   type="button"
+                  onClick={() => setAddCategoryOpen(true)}
                   className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                   aria-label="Adicionar"
                 >
