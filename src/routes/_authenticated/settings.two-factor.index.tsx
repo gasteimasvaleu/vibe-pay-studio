@@ -1,8 +1,6 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/settings/two-factor/")({
   head: () => ({
