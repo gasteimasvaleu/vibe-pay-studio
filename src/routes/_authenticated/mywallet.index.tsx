@@ -26,7 +26,51 @@ export const Route = createFileRoute("/_authenticated/mywallet/")({
 function MyWalletPage() {
   const router = useRouter();
 
-  const soon = () => toast("Em breve");
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState("");
+  const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [validity, setValidity] = useState("");
+  const [cvv, setCvv] = useState("");
+
+  const formatNumber = (v: string) =>
+    v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+  const formatCpf = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    return d
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  };
+  const formatValidity = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 4);
+    if (d.length < 3) return d;
+    return `${d.slice(0, 2)}/${d.slice(2)}`;
+  };
+
+  const handleConfirm = () => {
+    const digits = number.replace(/\D/g, "");
+    const cpfDigits = cpf.replace(/\D/g, "");
+    if (
+      digits.length !== 16 ||
+      !name.trim() ||
+      cpfDigits.length !== 11 ||
+      !/^\d{2}\/\d{2}$/.test(validity) ||
+      cvv.length < 3
+    ) {
+      toast.error("Preencha todos os campos corretamente");
+      return;
+    }
+    toast.success("Cartão adicionado");
+    setOpen(false);
+    setNumber("");
+    setName("");
+    setCpf("");
+    setValidity("");
+    setCvv("");
+  };
+
+
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
