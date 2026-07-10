@@ -59,14 +59,15 @@ function MyWalletPage() {
                 fácil
               </p>
               <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  soon();
-                }}
+                asChild
                 className="mt-4 h-11 px-6 rounded-full bg-gradient-primary text-primary-foreground"
               >
-                Recarregar
+                <Link
+                  to="/mywallet/recarregar"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Recarregar
+                </Link>
               </Button>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />

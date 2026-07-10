@@ -30,6 +30,7 @@ import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
+import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
@@ -150,6 +151,12 @@ const AuthenticatedPerfilUsernameRoute =
     path: '/perfil/$username',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMywalletRecarregarRoute =
+  AuthenticatedMywalletRecarregarRouteImport.update({
+    id: '/recarregar',
+    path: '/recarregar',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
 const AuthenticatedMywalletExtratoRoute =
   AuthenticatedMywalletExtratoRouteImport.update({
     id: '/extrato',
@@ -233,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
+  '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -264,6 +272,7 @@ export interface FileRoutesByTo {
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
+  '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -297,6 +306,7 @@ export interface FileRoutesById {
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
+  '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
+    | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/chat/'
     | '/creator/onboarding/assinatura'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
+    | '/mywallet/recarregar'
     | '/perfil/$username'
     | '/chat'
     | '/creator/onboarding/assinatura'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/mywallet/extrato'
+    | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/chat/'
     | '/_authenticated/creator/onboarding/assinatura'
@@ -564,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mywallet/recarregar': {
+      id: '/_authenticated/mywallet/recarregar'
+      path: '/recarregar'
+      fullPath: '/mywallet/recarregar'
+      preLoaderRoute: typeof AuthenticatedMywalletRecarregarRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
+    }
     '/_authenticated/mywallet/extrato': {
       id: '/_authenticated/mywallet/extrato'
       path: '/extrato'
@@ -663,10 +683,12 @@ const AuthenticatedChatRouteWithChildren =
 
 interface AuthenticatedMywalletRouteChildren {
   AuthenticatedMywalletExtratoRoute: typeof AuthenticatedMywalletExtratoRoute
+  AuthenticatedMywalletRecarregarRoute: typeof AuthenticatedMywalletRecarregarRoute
 }
 
 const AuthenticatedMywalletRouteChildren: AuthenticatedMywalletRouteChildren = {
   AuthenticatedMywalletExtratoRoute: AuthenticatedMywalletExtratoRoute,
+  AuthenticatedMywalletRecarregarRoute: AuthenticatedMywalletRecarregarRoute,
 }
 
 const AuthenticatedMywalletRouteWithChildren =
