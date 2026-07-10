@@ -101,6 +101,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<Shield className="h-5 w-5" />}
             label="Segurança"
+            to="/settings/security-menu"
           />
           <SettingsRow
             icon={<EyeOff className="h-5 w-5" />}
