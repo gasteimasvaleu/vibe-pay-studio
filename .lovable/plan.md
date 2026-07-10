@@ -1,25 +1,28 @@
-## Nova página `/settings/social`
+## Nova página `/settings/details`
 
-Acessada ao clicar na linha "Nome de perfil e identificador" em `/settings/myprofile`.
+Acessada ao clicar em "Foto de capa, biografia e localização" em `/settings/myprofile`.
 
 ### Arquivos
 
-**Criar** `src/routes/_authenticated/settings.social.tsx`
-- Rota autenticada, `noindex`, título "Nome de perfil e identificador · Monetisexy"
-- `beforeLoad` busca `username` (e tenta `display_name` se existir na tabela `profiles`; caso não exista, deriva do username como já é feito hoje)
-- Header padrão (border-b, back button, título "Nome de perfil e Identificador")
+**Criar** `src/routes/_authenticated/settings.details.tsx`
+- Rota autenticada, `noindex`, título "Foto de capa, biografia e localização · Monetisexy"
+- Header padrão (border-b, back button, título "Foto de capa, biografia e localização")
 
 **Editar** `src/routes/_authenticated/settings.myprofile.tsx`
-- Trocar o primeiro `SettingsRow` ("Nome de perfil e identificador") para navegar para `/settings/social` (adicionar prop `to` no componente `SettingsRow`, análogo ao padrão de `settings.creator.tsx`)
+- Adicionar `to="/settings/details"` no `SettingsRow` "Foto de capa, biografia e localização"
 
-### Layout (seguindo o screenshot)
+### Layout (seguindo os screenshots)
 
-`main max-w-3xl mx-auto py-6 space-y-3`:
+`main max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4 pb-28` (padding-bottom para não sobrepor à barra fixa de salvar):
 
-1. **Campo "Nome do Perfil"** — container arredondado (`rounded-2xl bg-muted px-5 py-3`) com label flutuante pequena em cima ("Nome do Perfil") e `Input` sem borda/background dentro (`border-0 bg-transparent p-0 h-auto text-lg`), controlado por `useState` inicializado com o display name.
+1. **Foto de capa** — banner `rounded-2xl h-40 md:h-48` com fundo gradiente cinza (`bg-gradient-to-b from-muted to-foreground/70`), botão redondo escuro (`h-14 w-14 bg-foreground text-background`) centralizado com ícone `Camera`. onClick → toast "Em breve".
 
-2. **Campo "identificador"** — mesmo estilo, com ícone `AtSign` (ou `MessageCircle` para casar com o balão do screenshot) à esquerda, label pequena "monetisexy.com.br/(seu @)" e valor `@username` abaixo em `text-lg`. Também `Input` controlado.
+2. **Sobre Mim** — container `rounded-2xl bg-muted px-5 py-4` com label "Sobre Mim" (`text-xs text-muted-foreground`) e `Textarea` sem borda/background dentro (`border-0 bg-transparent p-0 min-h-[180px] resize-none shadow-none focus-visible:ring-0`), `maxLength={3000}`, `useState`.
+   - Contador `{value.length} / 3000` alinhado à direita abaixo do textarea (`text-xs text-muted-foreground text-right`).
 
-Sem botão de salvar visível no screenshot; ao editar mostra `toast.info("Em breve")` no `onBlur`/`onChange` debounced — mais simples: apenas armazenar em state local, sem persistência (backend fica para depois). Nada de mudanças em banco.
+3. **Localização** — container `rounded-2xl bg-muted px-5 py-3` com ícone `MapPin` à esquerda e `Input` "Localização" sem borda/background, `useState`.
+   - Texto auxiliar `text-xs text-muted-foreground` abaixo: "Sua localização será exibida abaixo da biografia no seu perfil".
 
-Observação: o domínio na label passa a ser `monetisexy.com.br` (o screenshot mostra `privacy.com.br` da referência antiga, mas o site já foi renomeado para Monetisexy).
+4. **Barra fixa de Salvar** — `fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20`, com `Button` largura total `h-12 rounded-full` texto "Salvar". Habilitado só quando algum campo foi alterado; onClick → toast.info("Em breve") (sem persistência agora).
+
+Sem mudanças de backend nem em outros arquivos.
