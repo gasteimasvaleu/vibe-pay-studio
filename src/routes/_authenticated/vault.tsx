@@ -270,6 +270,51 @@ function VaultPage() {
           )}
         </section>
       </main>
+
+      <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
+        <DialogContent className="sm:max-w-3xl rounded-3xl p-8 md:p-10">
+          <DialogTitle className="text-xl font-bold tracking-wide uppercase text-foreground">
+            Adicionar nova categoria
+          </DialogTitle>
+
+          <div className="relative mt-2">
+            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              placeholder="Envios"
+              className="h-12 pl-12 rounded-full text-base"
+            />
+          </div>
+
+          <div className="mt-6 min-h-[280px]">
+            <button
+              type="button"
+              className="h-56 w-56 rounded-2xl bg-muted hover:bg-muted/80 transition-colors grid place-items-center gap-2 text-foreground"
+            >
+              <Plus className="h-10 w-10" strokeWidth={2} />
+              <span className="text-lg font-bold">Adicionar mídia</span>
+            </button>
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setAddCategoryOpen(false)}
+              className="h-11 px-6 rounded-full border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
+            >
+              Confirmar
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddCategoryOpen(false)}
+              className="h-11 px-6 rounded-full border-2 border-foreground text-foreground font-semibold hover:bg-accent transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
