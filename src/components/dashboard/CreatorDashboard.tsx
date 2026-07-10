@@ -108,6 +108,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<Bug className="h-5 w-5" />}
             title="Reportar bug"
             description="Teve um problema? Conte pra gente"
+            to="/bugreport"
           />
           <ActionCard
             icon={<ShieldAlert className="h-5 w-5" />}
