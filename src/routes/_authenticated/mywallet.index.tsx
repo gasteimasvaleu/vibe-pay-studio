@@ -135,19 +135,80 @@ function MyWalletPage() {
             Meus Cartões
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <button
-              type="button"
-              onClick={soon}
-              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
-            >
-              <Plus className="h-6 w-6 text-primary" />
-              <span className="text-sm font-semibold text-foreground leading-tight">
-                Adicionar
-                <br />
-                novo cartão
-              </span>
-            </button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
+                >
+                  <Plus className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-semibold text-foreground leading-tight">
+                    Adicionar
+                    <br />
+                    novo cartão
+                  </span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg rounded-3xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">Adicionar cartão</DialogTitle>
+                  <DialogDescription>
+                    Estamos em total conformidade com o padrão internacional de
+                    segurança de cartões PCI DSS.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 pt-2">
+                  <Input
+                    inputMode="numeric"
+                    placeholder="NÚMERO DO CARTÃO"
+                    value={number}
+                    onChange={(e) => setNumber(formatNumber(e.target.value))}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <Input
+                    placeholder="NOME (COMO ESCRITO NO CARTÃO)"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toUpperCase())}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <Input
+                    inputMode="numeric"
+                    placeholder="CPF DO TITULAR"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpf(e.target.value))}
+                    className="h-12 rounded-full bg-muted border-0 px-5"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      inputMode="numeric"
+                      placeholder="VALIDADE"
+                      value={validity}
+                      onChange={(e) => setValidity(formatValidity(e.target.value))}
+                      className="h-12 rounded-full bg-muted border-0 px-5"
+                    />
+                    <Input
+                      inputMode="numeric"
+                      placeholder="CVV"
+                      value={cvv}
+                      onChange={(e) =>
+                        setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                      }
+                      className="h-12 rounded-full bg-muted border-0 px-5"
+                    />
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleConfirm}
+                      className="h-11 px-8 rounded-full bg-gradient-primary text-primary-foreground"
+                    >
+                      Confirmar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
+
         </section>
 
         <hr className="border-border" />
