@@ -1,19 +1,22 @@
-## Dialog "Adicionar nova categoria"
+## Popover de ordenação para a sidebar "PADRÃO"
 
-Ambos os botões "+" (o do header "ACERVO" ao lado da lupa, e o "+" que aparece no header direito da aba "Envios") abrem o mesmo dialog.
+O botão de sliders no header da sidebar "PADRÃO" (linha 105 de `vault.tsx`) deve abrir um popover com dois grupos de radios, seguindo o screenshot.
 
 ### Alterações em `src/routes/_authenticated/vault.tsx`
 
-- Novo estado `addCategoryOpen: boolean`.
-- Ambos botões `+` passam a chamar `setAddCategoryOpen(true)`.
-- Usar `Dialog`/`DialogContent` do `@/components/ui/dialog` (largura `sm:max-w-3xl`, altura mínima ~`min-h-[520px]`, `rounded-3xl`, padding generoso).
-- Conteúdo do dialog:
-  - Título "ADICIONAR NOVA CATEGORIA" (em bold, uppercase, tracking-wide) no topo à esquerda; botão X no canto superior direito (usar o close do DialogContent existente já serve).
-  - `Input` full-width com ícone `Sparkles` (lucide) à esquerda, placeholder "Envios", `rounded-full`, borda sutil, altura `h-12`.
-  - Área de mídia: card cinza claro (`bg-muted`) `rounded-2xl` de ~`h-64 w-64`, com ícone `Plus` grande e label "Adicionar mídia" em bold. É um botão (por enquanto apenas visual, sem ação).
-  - Footer alinhado à direita com dois botões pill:
-    - "Confirmar" — outline `border-primary text-primary`.
-    - "Cancelar" — outline `border-foreground text-foreground`.
-  - Ambos apenas fecham o dialog (sem persistência).
-- Novo estado local `categoryName: string` para o input controlado.
-- Sem backend nem lógica de criação real por enquanto.
+- Envolver o botão existente com `Popover`/`PopoverTrigger`/`PopoverContent` (já importados).
+- Reutilizar o componente `RadioRow` já existente para as linhas.
+- Dois novos estados locais:
+  - `sidebarSort: "padrao" | "nome" | "recentes" | "midias"` (default `"padrao"`)
+  - `sidebarDirection: "asc" | "desc"` (default `"asc"`)
+- Conteúdo do popover (`align="start"`, `w-64`, `rounded-2xl`, `p-2`):
+  - Grupo 1 (radio):
+    - Padrão (default)
+    - Nome
+    - Recentes
+    - Mídias
+  - Divider `border-t border-border` com `my-2`.
+  - Grupo 2 (radio):
+    - Ascendente (default)
+    - Decrescente
+- Sem lógica de ordenação real por enquanto (apenas UI/estado; sidebar ainda é estática).
