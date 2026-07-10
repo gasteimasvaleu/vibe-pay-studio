@@ -1,42 +1,36 @@
 ## Objetivo
-Criar a página **Carteira** (rota `/mywallet`) acessada ao clicar no card "Carteira" do dashboard do creator. Layout conforme screenshots: saldo, Meus Cartões, Últimas Transações.
+Criar a página **Extrato** dentro de `/mywallet`, acessada ao clicar no card "Saldo na carteira" (chevron à direita) — e também no botão "Ver todas as transações". Layout conforme screenshots: header, 3 filtros (Tipo de item, Tipo de movimentação, intervalo de datas) e "Últimas movimentações" com estado vazio.
 
 ## Rota
-- **novo** `src/routes/_authenticated/mywallet.tsx` → URL `/mywallet`
-  - `head()`: `title: "Carteira · Monetisex"`, `robots: noindex`
-  - Header padrão (voltar + título "Carteira") no estilo `/banco` (fundo `--gradient-radial`, `border-b border-border backdrop-blur-md bg-card/80`, container `max-w-3xl mx-auto`).
+- **novo** `src/routes/_authenticated/mywallet.extrato.tsx` → URL `/mywallet/extrato`
+  - `head()`: `title: "Extrato · Monetisex"`, `robots: noindex`
+  - Header padrão (voltar via `router.history.back()` + título "Extrato"), mesmo estilo das outras páginas.
 
-## Conteúdo
+## Wiring em `/mywallet`
+- **editar** `src/routes/_authenticated/mywallet.tsx`:
+  - Envolver o conteúdo do card "Saldo na carteira" num `<Link to="/mywallet/extrato">` (mantém o mesmo visual, torna o card todo clicável). O botão **Recarregar** interno continua com `onClick={soon}` + `e.stopPropagation()` / `e.preventDefault()` para não abrir o extrato.
+  - Ligar o botão "Ver todas as transações" via `<Link to="/mywallet/extrato">` (substituindo `onClick={soon}`).
 
-### 1. Card "Saldo na carteira"
-Card grande arredondado (`rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`) com layout flex entre conteúdo e `ChevronRight`:
-- Label pequeno "Saldo na carteira"
-- Valor grande `R$ -` (mock)
-- Descrição: "Recarregue a sua carteira e compre conteúdos de forma simples e fácil"
-- Botão pill primário **Recarregar** (`bg-gradient-primary text-primary-foreground rounded-full`)
-- `ChevronRight` à direita, alinhado verticalmente
+## Conteúdo `/mywallet/extrato`
 
-### 2. Seção "Meus Cartões"
-- Título `Meus Cartões`
-- Grid `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4`
-- Card único "Adicionar novo cartão" (aspect-square, borda tracejada, ícone `Plus` no topo, título "Adicionar novo cartão" em duas linhas)
-- Reaproveita o mesmo estilo do card "Adicionar novo banco" em `/banco`
+### Barra de filtros
+Grid `grid-cols-1 md:grid-cols-3 gap-3`, todos os controles pill (`h-12 rounded-full`):
 
-### 3. Divisor + Seção "Últimas Transações"
-- `<hr className="border-border" />`
-- Título `Últimas Transações`
-- Estado vazio centralizado: texto em `text-muted-foreground` "Nenhuma transação encontrada"
-- Botão outline pill "Ver todas as transações" (`variant="outline" className="rounded-full text-primary border-primary"`) — sem destino ainda
+1. **Tipo de item** — `Popover` acionado por botão outline pill mostrando "Tipo de item" + `ChevronDown`. Ao abrir, `PopoverContent` mostra chips clicáveis: **Todos, Depósito, Bônus promocional, Estorno** (usar o mesmo estilo do componente `Chip` já existente ou botões pill `bg-secondary text-secondary-foreground`). Selecionar fecha o popover e atualiza o label do botão.
+2. **Tipo de movimentação** — mesmo padrão, opções: **Todos, Entradas, Saídas**.
+3. **Intervalo de datas** — botão outline pill com ícone `Calendar` + "Data inicial" + "Até" + "Data final". Ao clicar, abre `Popover` contendo `Calendar` (shadcn) em `mode="range"` com `numberOfMonths={2}` e `pointer-events-auto`. Valores selecionados atualizam os labels formatados (`date-fns` `format(..., "dd/MM/yyyy")`).
 
-## Wiring
-- **editar** `src/components/dashboard/CreatorDashboard.tsx` — no `ActionCard` "Carteira" (linhas 89-93) adicionar `to="/mywallet"`.
+### Seção "Últimas movimentações"
+- Título `Últimas movimentações` (`text-lg font-bold`).
+- Card grande (`rounded-2xl border border-border bg-card p-8`) com estado vazio centralizado: "Nenhuma transação encontrada" (`text-muted-foreground`).
 
 ## Detalhes técnicos
-- Tudo estático/mock, sem chamadas Supabase.
-- Botão "Recarregar" e "Adicionar novo cartão" apenas mostram `toast("Em breve")` no clique (sonner).
-- Ícones lucide: `ArrowLeft`, `ChevronRight`, `Plus`.
-- Sem novas dependências.
+- Uso de shadcn `Popover`, `PopoverContent`, `PopoverTrigger`, `Calendar`, `Button`.
+- Ícones lucide: `ArrowLeft`, `ChevronDown`, `Calendar`.
+- `date-fns` já disponível (usado em outras páginas).
+- Estado local para `tipoItem`, `tipoMovimentacao`, `dateRange: DateRange | undefined`.
+- Tudo mock, sem dados reais.
 
 ## Arquivos alterados/criados
-- **novo** `src/routes/_authenticated/mywallet.tsx`
-- **editar** `src/components/dashboard/CreatorDashboard.tsx`
+- **novo** `src/routes/_authenticated/mywallet.extrato.tsx`
+- **editar** `src/routes/_authenticated/mywallet.tsx` (card do saldo + botão "Ver todas as transações" viram `Link` para `/mywallet/extrato`)
