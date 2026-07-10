@@ -119,6 +119,7 @@ function SettingsMyProfilePage() {
           <SettingsRow
             icon={<AtSign className="h-5 w-5" />}
             label="Redes Sociais"
+            to="/settings/social-media"
           />
           <SettingsRow
             icon={<Lock className="h-5 w-5" />}
