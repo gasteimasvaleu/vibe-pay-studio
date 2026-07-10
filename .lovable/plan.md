@@ -1,21 +1,19 @@
-## Popover de ordenação para "MAIS RECENTES"
+## Dialog "Adicionar nova categoria"
 
-O botão de sliders no header "MAIS RECENTES" (abas Todas as mídias e Publicações) deve abrir um popover conforme o screenshot.
+Ambos os botões "+" (o do header "ACERVO" ao lado da lupa, e o "+" que aparece no header direito da aba "Envios") abrem o mesmo dialog.
 
 ### Alterações em `src/routes/_authenticated/vault.tsx`
 
-- Usar `Popover`/`PopoverTrigger`/`PopoverContent` do `@/components/ui/popover` no botão da linha 126 (o mesmo componente serve para ambas as abas, já que o botão é compartilhado).
-- Dois estados locais:
-  - `timeRange: "all" | "specific"` (default `"all"`).
-  - `sortOrder: "recent" | "oldest"` (default `"recent"`).
-- Conteúdo do popover (card branco, `rounded-2xl`, `shadow-lg`, largura ~260px, `align="end"`):
-  - Grupo 1 (radio):
-    - "Todo o tempo" (selecionado por padrão)
-    - "Data específica"
-  - Divider (`border-t border-border`)
-  - Grupo 2 (radio):
-    - "Mais recentes" (selecionado por padrão)
-    - "Mais antigas"
-  - Cada linha é um botão com um círculo radio à esquerda: quando ativo, círculo preenchido `bg-primary` com anel branco interno (donut); quando inativo, apenas borda `border-muted-foreground/40`. Rótulo `text-foreground` em fonte semibold.
-- Sem lógica de filtragem por enquanto (apenas UI/estado, já que a lista ainda está vazia).
-- O botão da sidebar ("PADRÃO") não é alterado nesta task.
+- Novo estado `addCategoryOpen: boolean`.
+- Ambos botões `+` passam a chamar `setAddCategoryOpen(true)`.
+- Usar `Dialog`/`DialogContent` do `@/components/ui/dialog` (largura `sm:max-w-3xl`, altura mínima ~`min-h-[520px]`, `rounded-3xl`, padding generoso).
+- Conteúdo do dialog:
+  - Título "ADICIONAR NOVA CATEGORIA" (em bold, uppercase, tracking-wide) no topo à esquerda; botão X no canto superior direito (usar o close do DialogContent existente já serve).
+  - `Input` full-width com ícone `Sparkles` (lucide) à esquerda, placeholder "Envios", `rounded-full`, borda sutil, altura `h-12`.
+  - Área de mídia: card cinza claro (`bg-muted`) `rounded-2xl` de ~`h-64 w-64`, com ícone `Plus` grande e label "Adicionar mídia" em bold. É um botão (por enquanto apenas visual, sem ação).
+  - Footer alinhado à direita com dois botões pill:
+    - "Confirmar" — outline `border-primary text-primary`.
+    - "Cancelar" — outline `border-foreground text-foreground`.
+  - Ambos apenas fecham o dialog (sem persistência).
+- Novo estado local `categoryName: string` para o input controlado.
+- Sem backend nem lógica de criação real por enquanto.
