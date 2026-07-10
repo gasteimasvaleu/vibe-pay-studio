@@ -116,6 +116,7 @@ function SettingsCreatorPage() {
           <SettingsRow
             icon={<UserX className="h-5 w-5" />}
             label="Assinantes restritos"
+            to="/settings/restrictions"
           />
           <SettingsRow
             icon={<Contrast className="h-5 w-5" />}
