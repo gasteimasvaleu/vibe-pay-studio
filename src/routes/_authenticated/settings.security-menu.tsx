@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Laptop, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,14 +140,13 @@ function SecurityMenuPage() {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={soon}
+          <Link
+            to="/settings/device-management"
             className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card hover:bg-accent transition-colors w-full text-left"
           >
             <span className="flex-1 text-base text-foreground">Ver todos acessos</span>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
+          </Link>
         </section>
       </main>
     </div>
