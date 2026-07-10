@@ -78,6 +78,8 @@ function ContentLeakReportPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+
 
         <section className="space-y-6">
           <div>
@@ -200,7 +202,9 @@ function ContentLeakReportPage() {
         >
           Enviar
         </Button>
-      </form>
+        </form>
+      </main>
     </div>
   );
 }
+
