@@ -1,28 +1,29 @@
-## Nova página `/settings/social-media`
+## Nova página `/settings/change-password`
 
-Acessada ao clicar em "Redes Sociais" em `/settings/myprofile`.
+Acessada ao clicar em "Alterar senha" em `/settings/myprofile`.
 
 ### Arquivos
 
-**Criar** `src/routes/_authenticated/settings.social-media.tsx`
-- Rota autenticada, `noindex`, título "Redes Sociais · Monetisexy"
-- Header padrão (border-b, back button, título "Redes Sociais")
+**Criar** `src/routes/_authenticated/settings.change-password.tsx`
+- Rota autenticada, `noindex`, título "Alterar Senha · Monetisexy"
+- Header padrão (border-b, back button, título "Alterar Senha")
 
 **Editar** `src/routes/_authenticated/settings.myprofile.tsx`
-- Adicionar `to="/settings/social-media"` no `SettingsRow` "Redes Sociais"
+- Adicionar `to="/settings/change-password"` no `SettingsRow` "Alterar senha"
 
 ### Layout (seguindo o screenshot)
 
-`main max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3 pb-28`:
+`main max-w-3xl mx-auto px-4 md:px-6 py-6 pb-28`:
 
-Três campos com o mesmo padrão (`rounded-2xl bg-muted px-5 py-3 flex items-center gap-3`), cada um com ícone à esquerda e `Input` sem borda/background (`border-0 bg-transparent p-0 h-auto text-base shadow-none focus-visible:ring-0`):
+1. **Senha atual** — largura total, `rounded-2xl bg-muted px-5 py-3`, `Input type="password"` sem borda/background, placeholder "Senha atual", `useState`.
+2. **Grid 2 colunas** (`grid grid-cols-1 md:grid-cols-2 gap-3 mt-3`):
+   - **Nova Senha** — mesmo padrão, placeholder "Nova Senha".
+   - **Repetir a nova senha** — mesmo padrão, placeholder "Repetir a nova senha".
 
-1. **Instagram** — ícone `Instagram` (lucide), placeholder `instagram.com/`, state `instagram`.
-2. **TikTok** — SVG inline do logo TikTok (não existe no lucide-react), placeholder `tiktok.com/(seu @)`, state `tiktok`.
-3. **X** — SVG inline do logo X (Twitter), placeholder `x.com/(seu @)`, state `x`.
+**Barra fixa "Salvar"** no rodapé: `fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20` com `Button` largura total `h-12 rounded-full`.
 
-Cada input sanitiza para minúsculas + `[a-z0-9_.]` e limite 30 chars.
+Botão desabilitado até: senha atual preenchida, nova senha ≥ 8 chars, e confirmação = nova senha.
 
-**Barra fixa "Salvar"** no rodapé: `fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20` com `Button` largura total `h-12 rounded-full`, desabilitado quando nenhum campo mudou; onClick → `toast.info("Em breve")`.
+onClick chama `supabase.auth.updateUser({ password: nova })`. Supabase não valida a senha atual, mas por UX exigimos que o usuário digite; em caso de erro mostra `toast.error` com mensagem. Em sucesso, `toast.success("Senha alterada")` e `router.history.back()`.
 
-Sem backend nem outras alterações.
+Sem mudanças de backend nem em outros arquivos.

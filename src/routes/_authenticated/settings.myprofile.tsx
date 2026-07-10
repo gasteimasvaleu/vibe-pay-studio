@@ -124,6 +124,7 @@ function SettingsMyProfilePage() {
           <SettingsRow
             icon={<Lock className="h-5 w-5" />}
             label="Alterar senha"
+            to="/settings/change-password"
           />
           <SettingsRow
             icon={<Trash2 className="h-5 w-5" />}
