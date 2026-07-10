@@ -9,7 +9,11 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+
+type TimeRange = "all" | "specific";
+type SortOrder = "recent" | "oldest";
 
 type TabKey = "todas" | "publicacoes" | "conversas" | "envios";
 
