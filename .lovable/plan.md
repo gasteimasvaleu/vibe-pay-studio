@@ -1,71 +1,32 @@
 ## Objetivo
-Criar a página "Meu Banco" acessada ao clicar no card **Meu Banco** do dashboard do creator, seguindo os 4 screenshots enviados (adaptados ao design system atual — tokens semânticos, sem cores hardcoded, mantendo o visual escuro/glass do painel).
+Ao clicar no card "Adicionar novo banco" na página `/banco`, abrir o formulário "Cadastrar Dados Bancários" dentro de um **Sheet vindo de baixo para cima** (bottom sheet) em vez de navegar para a rota `/banco/cadastrar`.
 
-## Rota
-- Novo arquivo: `src/routes/_authenticated/banco.tsx` → URL `/banco`
-  - `head()`: `title: "Meu Banco · Monetisex"`, `robots: noindex`
-  - Layout com header estilo `DashboardShell` (botão voltar à esquerda, título "Meu Banco" ao centro, botão ícone "i" à direita que abre um modal informativo).
-- Adicionar sub-rota: `src/routes/_authenticated/banco.cadastrar.tsx` → `/banco/cadastrar` (form "Cadastrar Dados Bancários").
-- Ligar o card no `CreatorDashboard.tsx`: adicionar `to="/banco"` no `ActionCard` "Meu Banco".
+## Mudanças
 
-## Conteúdo da página `/banco`
+### `src/routes/_authenticated/banco.tsx`
+- Importar `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle` de `@/components/ui/sheet`.
+- Adicionar state `cadastroOpen`.
+- Trocar o `<Link to="/banco/cadastrar">` do card "Adicionar novo banco" por `<button onClick={() => setCadastroOpen(true)}>` (mesmo visual).
+- Renderizar `<Sheet open={cadastroOpen} onOpenChange={setCadastroOpen}>` com:
+  - `<SheetContent side="bottom" className="h-[90vh] rounded-t-2xl overflow-y-auto p-0">`
+  - Header sticky no topo (botão `ArrowLeft` à esquerda que chama `setCadastroOpen(false)`, título centralizado "Cadastrar Dados Bancários", espaçador à direita).
+  - Corpo: `<CadastrarBancoForm onClose={() => setCadastroOpen(false)} />`.
 
-### 1. Cards de saldo (grid 2 colunas)
-Dois cards lado a lado — **Nacional** e **Internacional**:
-- Título pequeno (label) do tipo de conta
-- "Liberado para saque" + valor grande `R$ -`
-- "Saldo a liberar" + `R$ -`
-- Botão "Sacar" (desabilitado quando sem saldo)
+### Novo componente: `src/components/banco/CadastrarBancoForm.tsx`
+- Extrair o formulário (Banco, Tipo de conta, Agência, Número da conta, Tipo de chave Pix, Chave Pix + botões Voltar/Salvar) do arquivo `banco.cadastrar.tsx`.
+- Props: `onClose: () => void`.
+- Botão "Voltar" e submit chamam `onClose()`.
+- Mantém `BANCOS`, `PIX_PLACEHOLDERS`, ícones e estilos idênticos.
 
-### 2. Seção "Extrato"
-- Título "Extrato"
-- Estado vazio: banner com ícone de alerta + "Aqui você verá as movimentações da sua conta"
-
-### 3. Seção "Dados bancários"
-- Título "Dados bancários"
-- Card "Adicionar novo banco" (ícone `+`, `Link` para `/banco/cadastrar`)
-- Lista futura de bancos cadastrados (por ora apenas o card de adicionar)
-
-### 4. Card "Minha carteira"
-- Ícone carteira + título "Minha carteira"
-- Texto: "Veja seu saldo, gerencie suas formas de pagamento e acompanhe suas transações"
-- Botão "Acessar carteira" (por ora sem destino, ou `#`)
-
-### 5. Modal informativo (ícone "i" no header)
-Dialog (shadcn `Dialog`) com título "Entenda como funciona os saques na Privacy" adaptado para "Monetisex":
-- Bloco "Disponível para saque" (ícone caixa eletrônico) + descrição
-- Bloco "Saldo pendente" (ícone relógio) + descrição
-- Divisor
-- "Processo de liberação do saldo" + subtítulo
-- "Cartão de crédito: **14 dias**"
-- "Outros métodos de pagamento":
-  - → Live: **3 dias**
-  - → Internacional: **14 dias**
-  - → Nacional: **Instantâneo** (destaque em verde via token `text-emerald-500`/semantic success)
-- Botão "Entendido" fecha o modal
-
-## Conteúdo da página `/banco/cadastrar`
-Form "Cadastrar Dados Bancários" com header (voltar + título centralizado):
-Campos (todos obrigatórios, `*`):
-1. **Banco** — Select com ícone `Landmark`
-2. **Tipo de conta** — Select (Corrente / Poupança) com ícone
-3. **Agência** — Input texto
-4. **Número da conta (com dígito)** — Input texto
-5. **Tipo de chave Pix** — Select (CPF/CNPJ/E-mail/Telefone/Aleatória)
-6. **Chave Pix** — Input (placeholder muda conforme tipo)
-
-Rodapé com dois botões lado a lado:
-- "Voltar" (outline) → `router.history.back()`
-- "Salvar" (primary, com gradient) → por ora apenas mostra toast "Em breve" e volta
+### `src/routes/_authenticated/banco.cadastrar.tsx`
+- Manter a rota como fallback via URL direta, simplificando para reusar `CadastrarBancoForm` com `onClose = () => router.history.back()`.
 
 ## Detalhes técnicos
-- Usar componentes shadcn existentes: `Dialog`, `Button`, `Input`, `Select`, `Label`.
-- Tudo estático/mock (sem chamadas Supabase) — apenas UI.
-- Ícones lucide: `ArrowLeft`, `Info`, `Plus`, `Wallet`, `Landmark`, `CreditCard`, `Building2`, `Hash`, `QrCode`, `Diamond`, `AlertCircle`, `Clock`, `Banknote`.
-- Reaproveitar o padrão de header/background do `DashboardShell` (fundo com `--gradient-radial`, header `border-b border-border backdrop-blur-md bg-card/80`, container `max-w-3xl mx-auto`).
-- Nenhuma mudança em backend, tipos ou migrations.
+- Sem alterações de backend/dados — apenas UI.
+- Usa `Sheet` do shadcn com `side="bottom"` (bottom sheet).
+- Preserva design system (tokens semânticos).
 
 ## Arquivos alterados/criados
-- **novo** `src/routes/_authenticated/banco.tsx`
-- **novo** `src/routes/_authenticated/banco.cadastrar.tsx`
-- **editar** `src/components/dashboard/CreatorDashboard.tsx` (adicionar `to="/banco"` no card "Meu Banco")
+- **novo** `src/components/banco/CadastrarBancoForm.tsx`
+- **editar** `src/routes/_authenticated/banco.tsx`
+- **editar** `src/routes/_authenticated/banco.cadastrar.tsx`

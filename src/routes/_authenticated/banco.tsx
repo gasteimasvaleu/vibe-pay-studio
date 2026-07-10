@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,6 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
@@ -30,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/banco")({
 function BancoPage() {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -107,9 +115,10 @@ function BancoPage() {
             Dados bancários
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <Link
-              to="/banco/cadastrar"
-              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between hover:border-primary/60 hover:bg-accent transition-colors"
+            <button
+              type="button"
+              onClick={() => setCadastroOpen(true)}
+              className="group aspect-square rounded-2xl border border-dashed border-border bg-card p-4 flex flex-col justify-between text-left hover:border-primary/60 hover:bg-accent transition-colors"
             >
               <Plus className="h-6 w-6 text-primary" />
               <span className="text-sm font-semibold text-foreground leading-tight">
@@ -117,7 +126,7 @@ function BancoPage() {
                 <br />
                 novo banco
               </span>
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -217,6 +226,32 @@ function BancoPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={cadastroOpen} onOpenChange={setCadastroOpen}>
+        <SheetContent
+          side="bottom"
+          className="h-[90vh] rounded-t-2xl overflow-y-auto p-0"
+        >
+          <SheetHeader className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-md px-4 md:px-6 py-3">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCadastroOpen(false)}
+                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <SheetTitle className="text-base font-semibold text-foreground truncate">
+                Cadastrar Dados Bancários
+              </SheetTitle>
+              <span className="w-9" />
+            </div>
+          </SheetHeader>
+          <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
+            <CadastrarBancoForm onClose={() => setCadastroOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
