@@ -1,20 +1,23 @@
-## Criar página `/bugreport`
+## Criar página /vault (Acervo)
 
-### 1. Nova rota `src/routes/_authenticated/bugreport.tsx`
-- `createFileRoute("/_authenticated/bugreport")`
-- `head()`: título "Reportar bug · Monetisexy" + `robots: noindex`
-- `beforeLoad` com auth check → redirect `/entrar`
-- Layout `max-w-3xl mx-auto`, header padrão com botão voltar e título centralizado "Reportar bug"
-- Corpo do formulário (state local, sem persistência):
-  - Título de seção: **"O que aconteceu?"** com subtítulo `text-muted-foreground` "Descreva o bug e nos ajude a resolver rápido."
-  - Campo **Título** — `Input` com placeholder "Ex: Falha ao sacar", `maxLength={120}`
-  - Campo **Descrição** — `Textarea` com placeholder "Conte o que aconteceu e em qual tela você estava...", `maxLength={5000}`, altura ~180px; contador `{n} / 5000` alinhado à direita abaixo
-  - Bloco **Enviar mídia (opcional)** — label + subtítulo "Print, vídeo ou gravação de tela (até 5 mídias)"
-    - Grid horizontal de miniaturas + tile de upload com borda `border-dashed`, ícone `Upload` e texto "Subir mídia"
-    - `input type="file"` oculto, `accept="image/*,video/*"`, `multiple`, limite 5. Preview via `URL.createObjectURL`, botão X para remover cada uma
-  - Botão **"Enviar"** full-width no rodapé, desabilitado enquanto `titulo.trim()` ou `descricao.trim()` estiverem vazios; ao clicar: `toast.success("Bug reportado com sucesso")` + reset (mock)
+### 1. Nova rota `src/routes/_authenticated/vault.tsx`
+- `createFileRoute("/_authenticated/vault")`, `head()` com "Acervo · Monetisexy" + `noindex`.
+- Layout `max-w-6xl mx-auto`, header com botão voltar + título "ACERVO" + ícones de busca (lupa) e adicionar (+).
+- Grid 2 colunas em desktop (`md:grid-cols-[minmax(0,360px)_1fr]`), stack em mobile — no mobile mostra só a sidebar; ao tocar num item vai para a view de detalhe (mesma página, controlada por estado `activeTab`).
+- **Sidebar esquerda** ("PADRÃO"): lista com 4 itens
+  - Todas as mídias (contador `1`, com ícone imagem)
+  - Publicações (contador `1`, com ícone imagem)
+  - Conversas — "Vazio"
+  - Envios — "Vazio"
+  - Item ativo com fundo `bg-primary/10` (rosa claro).
+- **Painel direito** muda conforme aba ativa:
+  - **Todas as mídias / Publicações**: header "MAIS RECENTES" + filtros pill (TODAS, FOTO, VÍDEO, ÁUDIO, GIF); área de conteúdo vazia (sem cards, conforme instrução do usuário).
+  - **Conversas / Envios**: estado vazio centralizado com ilustração cinza (SVG simples de frames de mídia empilhados) + texto "Categoria vazia".
+- Ícone extra no header direito muda por aba: Publicações → checkbox; Envios → `+`; outras → nenhum.
 
-### 2. Editar `src/components/dashboard/CreatorDashboard.tsx` (card "Reportar bug", linha ~107-112)
-- Adicionar `to="/bugreport"` ao `ActionCard`
+### 2. Editar `src/components/dashboard/CreatorDashboard.tsx`
+- Adicionar `to="/vault"` ao `ActionCard` "Acervo" (linhas 58-62).
 
-Sem backend/upload real nesta etapa — só UI conforme o screenshot.
+### Nota técnica
+- Puramente presentacional/UI, sem backend. Estados vazios são fixos por enquanto.
+- Ícones do `lucide-react`: `ArrowLeft`, `Search`, `Plus`, `ImageIcon`, `CheckSquare`, `SlidersHorizontal`.
