@@ -76,7 +76,7 @@ function SecurityMenuPage() {
           {[
             { label: "Alterar senha", to: "/settings/change-password" },
             { label: "Autenticação de dois fatores", to: "/settings/two-factor" },
-            { label: "Autenticação por rede social" },
+            { label: "Autenticação por rede social", to: "/settings/security" },
           ].map((item) =>
             item.to ? (
               <Link
