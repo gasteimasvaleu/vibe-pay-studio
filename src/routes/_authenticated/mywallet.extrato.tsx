@@ -40,7 +40,6 @@ const TIPO_PAGAMENTO_OPTIONS = [
   "GooglePay",
   "PicPayWallet",
   "Pix",
-  "Privacy Wallet",
 ];
 const STATUS_OPTIONS = ["Todos", "Negado", "Autorizado", "Devolvido"];
 
