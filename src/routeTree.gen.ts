@@ -24,10 +24,12 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
 import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
+import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
@@ -113,6 +115,11 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBancoRoute = AuthenticatedBancoRouteImport.update({
+  id: '/banco',
+  path: '/banco',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAccountStatusRoute =
   AuthenticatedAccountStatusRouteImport.update({
     id: '/account-status',
@@ -135,6 +142,12 @@ const AuthenticatedChatThreadIdRoute =
     id: '/$threadId',
     path: '/$threadId',
     getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedBancoCadastrarRoute =
+  AuthenticatedBancoCadastrarRouteImport.update({
+    id: '/cadastrar',
+    path: '/cadastrar',
+    getParentRoute: () => AuthenticatedBancoRoute,
   } as any)
 const ApiPublicWebhooksVeriffDecisionRoute =
   ApiPublicWebhooksVeriffDecisionRouteImport.update({
@@ -186,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
+  '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -195,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
+  '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
@@ -213,6 +228,7 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
+  '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -221,6 +237,7 @@ export interface FileRoutesByTo {
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
+  '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
@@ -240,6 +257,7 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
+  '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -249,6 +267,7 @@ export interface FileRoutesById {
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
+  '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
@@ -269,6 +288,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/account-status'
+    | '/banco'
     | '/chat'
     | '/chat-agendamento'
     | '/chat-configuracoes'
@@ -278,6 +298,7 @@ export interface FileRouteTypes {
     | '/promotion'
     | '/promotions'
     | '/publisher'
+    | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/perfil/$username'
     | '/chat/'
@@ -296,6 +317,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/account-status'
+    | '/banco'
     | '/chat-agendamento'
     | '/chat-configuracoes'
     | '/dashboard'
@@ -304,6 +326,7 @@ export interface FileRouteTypes {
     | '/promotion'
     | '/promotions'
     | '/publisher'
+    | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/perfil/$username'
     | '/chat'
@@ -322,6 +345,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/_authenticated/account-status'
+    | '/_authenticated/banco'
     | '/_authenticated/chat'
     | '/_authenticated/chat-agendamento'
     | '/_authenticated/chat-configuracoes'
@@ -331,6 +355,7 @@ export interface FileRouteTypes {
     | '/_authenticated/promotion'
     | '/_authenticated/promotions'
     | '/_authenticated/publisher'
+    | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/perfil/$username'
     | '/_authenticated/chat/'
@@ -460,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/banco': {
+      id: '/_authenticated/banco'
+      path: '/banco'
+      fullPath: '/banco'
+      preLoaderRoute: typeof AuthenticatedBancoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/account-status': {
       id: '/_authenticated/account-status'
       path: '/account-status'
@@ -487,6 +519,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat/$threadId'
       preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
       parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/banco/cadastrar': {
+      id: '/_authenticated/banco/cadastrar'
+      path: '/cadastrar'
+      fullPath: '/banco/cadastrar'
+      preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
+      parentRoute: typeof AuthenticatedBancoRoute
     }
     '/api/public/webhooks/veriff-decision': {
       id: '/api/public/webhooks/veriff-decision'
@@ -540,6 +579,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedBancoRouteChildren {
+  AuthenticatedBancoCadastrarRoute: typeof AuthenticatedBancoCadastrarRoute
+}
+
+const AuthenticatedBancoRouteChildren: AuthenticatedBancoRouteChildren = {
+  AuthenticatedBancoCadastrarRoute: AuthenticatedBancoCadastrarRoute,
+}
+
+const AuthenticatedBancoRouteWithChildren =
+  AuthenticatedBancoRoute._addFileChildren(AuthenticatedBancoRouteChildren)
+
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
@@ -576,6 +626,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountStatusRoute: typeof AuthenticatedAccountStatusRoute
+  AuthenticatedBancoRoute: typeof AuthenticatedBancoRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAgendamentoRoute: typeof AuthenticatedChatAgendamentoRoute
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
@@ -593,6 +644,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountStatusRoute: AuthenticatedAccountStatusRoute,
+  AuthenticatedBancoRoute: AuthenticatedBancoRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAgendamentoRoute: AuthenticatedChatAgendamentoRoute,
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
