@@ -93,7 +93,7 @@ function PersonalPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 pb-28">
+      <main className="max-w-4xl mx-auto px-4 md:px-6 py-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as "info" | "address")}>
           <TabsList className="w-full h-auto bg-transparent p-0 border-b border-border rounded-none justify-stretch gap-0">
             <TabsTrigger
@@ -220,10 +220,8 @@ function PersonalPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </main>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 py-3">
+        <div className="mt-6">
           <Button
             type="button"
             onClick={handleSave}
@@ -232,7 +230,7 @@ function PersonalPage() {
             Salvar
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
