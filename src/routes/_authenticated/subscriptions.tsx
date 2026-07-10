@@ -157,7 +157,7 @@ function SubscriptionsPage() {
             </SheetTrigger>
             <SheetContent
               side="bottom"
-              className="rounded-t-3xl border-t-0 p-0"
+              className="rounded-t-3xl border-t-0 p-0 sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
             >
               <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-muted" />
               <SheetHeader className="px-6 pt-4 pb-2 text-left">

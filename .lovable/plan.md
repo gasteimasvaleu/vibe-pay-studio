@@ -1,16 +1,22 @@
-Atualizar o seletor "Ordenar" da página `/subscriptions` para bater com o screenshot.
+## Ajuste no Sheet de ordenação de Assinaturas
 
-## Mudanças em `src/routes/_authenticated/subscriptions.tsx`
+O sheet de ordenação em `src/routes/_authenticated/subscriptions.tsx` está ocupando toda a largura horizontal na versão desktop. Vamos alinhar ele com o mesmo padrão usado no sheet "Filtrar por" do chat.
 
-1. **Trocar `Popover` por um bottom sheet** usando `Sheet` do shadcn (`side="bottom"`), com cantos superiores arredondados e um handle (barra cinza) no topo.
-2. **Cabeçalho do sheet**: título "Ordenar por" à esquerda e botão de fechar (X) à direita.
-3. **Novas opções de ordenação** (substituindo as atuais):
-   - `proxima_expiracao` — "Mais próximo da expiração" (default)
-   - `distante_expiracao` — "Mais distante da expiração"
-   - `nome_asc` — "Nome (A-Z)"
-   - `nome_desc` — "Nome (Z-A)"
-4. **Estilo das opções**: cada uma é um cartão arredondado (`rounded-2xl`) com fundo `muted`, label à esquerda e um radio circular à direita. A opção selecionada ganha borda `primary` e o radio preenchido em `primary`.
-5. **Rótulo do botão "Ordenar"** no topo permanece "Ordenar" quando a opção default estiver ativa; caso contrário exibe o label da opção selecionada (mantendo comportamento atual).
-6. Selecionar uma opção fecha o sheet.
+### O que será feito
 
-Sem mudanças de dados/lógica de negócio — apenas UI do seletor de ordenação.
+- Alterar a classe `className` do `SheetContent` na rota `subscriptions.tsx` para limitar a largura a **420px** em telas a partir de `sm`.
+- Manter os estilos atuais do sheet: cantos arredondados no topo, sem borda superior, sem padding interno padrão.
+
+### Classe resultante esperada
+
+```text
+"rounded-t-3xl border-t-0 p-0 sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+```
+
+### Por quê
+
+O `SheetContent` com `side="bottom"` usa `inset-x-0` por padrão, o que força largura total. Nos outros sheets da aplicação (como o de filtros do chat), essa largura é limitada no breakpoint `sm:` com `max-w-[420px]` + `mx-auto` + `left-0`/`right-0` para centralizar o conteúdo sem estourar a tela.
+
+### Escopo
+
+Apenas UI. Sem mudança de comportamento, estado, lógica de negócio ou dados.
