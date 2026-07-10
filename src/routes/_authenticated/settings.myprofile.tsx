@@ -145,9 +145,57 @@ function SettingsMyProfilePage() {
             icon={<Trash2 className="h-5 w-5" />}
             label="Excluir conta"
             variant="destructive"
+            onClick={() => setDeleteOpen(true)}
           />
         </section>
       </main>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl"
+        >
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(false)}
+            aria-label="Fechar"
+            className="absolute top-4 right-4 h-9 w-9 grid place-items-center rounded-full bg-muted text-muted-foreground hover:bg-accent transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="flex flex-col items-center text-center pt-2">
+            <div className="h-16 w-16 rounded-full border-[3px] border-primary grid place-items-center mb-5">
+              <AlertCircle className="h-9 w-9 text-primary" strokeWidth={0} fill="transparent" />
+              <span className="sr-only">Atenção</span>
+            </div>
+            <DialogTitle className="text-2xl font-bold text-foreground">
+              Deseja continuar?
+            </DialogTitle>
+            <DialogDescription className="mt-3 text-base text-muted-foreground">
+              Ao continuar, sua conta e os dados associados serão excluídos.
+            </DialogDescription>
+
+            <div className="mt-8 flex items-center justify-end gap-2 w-full">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setDeleteOpen(false)}
+                className="h-12 px-6 rounded-full text-foreground hover:bg-accent"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="h-12 px-8 rounded-full bg-muted text-foreground hover:bg-accent"
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
