@@ -45,34 +45,38 @@ function MyWalletPage() {
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Saldo na carteira */}
         <section>
-          <Link
-            to="/mywallet/extrato"
-            className="block rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] flex items-center gap-4 hover:bg-accent/40 transition-colors"
-          >
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] flex items-center gap-4">
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">Saldo na carteira</p>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
-                R$ -
-              </p>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Recarregue a sua carteira e compre conteúdos de forma simples e
-                fácil
-              </p>
+              <Link
+                to="/mywallet/extrato"
+                className="block -m-2 p-2 rounded-lg hover:bg-accent/40 transition-colors"
+              >
+                <p className="text-sm text-muted-foreground">Saldo na carteira</p>
+                <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+                  R$ -
+                </p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Recarregue a sua carteira e compre conteúdos de forma simples e
+                  fácil
+                </p>
+              </Link>
               <Button
                 asChild
                 className="mt-4 h-11 px-6 rounded-full bg-gradient-primary text-primary-foreground"
               >
-                <Link
-                  to="/mywallet/recarregar"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Recarregar
-                </Link>
+                <Link to="/mywallet/recarregar">Recarregar</Link>
               </Button>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-          </Link>
+            <Link
+              to="/mywallet/extrato"
+              aria-label="Ver extrato"
+              className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Link>
+          </div>
         </section>
+
 
         {/* Meus Cartões */}
         <section className="space-y-3">
