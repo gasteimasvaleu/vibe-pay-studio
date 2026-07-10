@@ -47,8 +47,10 @@ import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_a
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
+import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
+import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
 import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
@@ -268,6 +270,12 @@ const AuthenticatedBancoCadastrarRoute =
     path: '/cadastrar',
     getParentRoute: () => AuthenticatedBancoRoute,
   } as any)
+const AuthenticatedSettingsTwoFactorIndexRoute =
+  AuthenticatedSettingsTwoFactorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+  } as any)
 const AuthenticatedSettingsDeviceManagementIndexRoute =
   AuthenticatedSettingsDeviceManagementIndexRouteImport.update({
     id: '/',
@@ -279,6 +287,12 @@ const ApiPublicWebhooksVeriffDecisionRoute =
     id: '/api/public/webhooks/veriff-decision',
     path: '/api/public/webhooks/veriff-decision',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedSettingsTwoFactorSetupRoute =
+  AuthenticatedSettingsTwoFactorSetupRouteImport.update({
+    id: '/setup',
+    path: '/setup',
+    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
   } as any)
 const AuthenticatedSettingsDeviceManagementRemovedRoute =
   AuthenticatedSettingsDeviceManagementRemovedRouteImport.update({
@@ -358,15 +372,17 @@ export interface FileRoutesByFullPath {
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
-  '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRoute
+  '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
+  '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
+  '/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -403,14 +419,15 @@ export interface FileRoutesByTo {
   '/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
-  '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
+  '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
+  '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -452,15 +469,17 @@ export interface FileRoutesById {
   '/_authenticated/settings/social': typeof AuthenticatedSettingsSocialRoute
   '/_authenticated/settings/social-media': typeof AuthenticatedSettingsSocialMediaRoute
   '/_authenticated/settings/subscription': typeof AuthenticatedSettingsSubscriptionRoute
-  '/_authenticated/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRoute
+  '/_authenticated/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
+  '/_authenticated/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
+  '/_authenticated/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/_authenticated/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -509,8 +528,10 @@ export interface FileRouteTypes {
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
+    | '/settings/two-factor/setup'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management/'
+    | '/settings/two-factor/'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos/'
@@ -547,14 +568,15 @@ export interface FileRouteTypes {
     | '/settings/social'
     | '/settings/social-media'
     | '/settings/subscription'
-    | '/settings/two-factor'
     | '/chat'
     | '/mywallet'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
+    | '/settings/two-factor/setup'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management'
+    | '/settings/two-factor'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos'
@@ -602,8 +624,10 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/_authenticated/settings/device-management/removed'
+    | '/_authenticated/settings/two-factor/setup'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/settings/device-management/'
+    | '/_authenticated/settings/two-factor/'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
     | '/_authenticated/creator/onboarding/documentos/verificando'
     | '/_authenticated/creator/onboarding/documentos/'
@@ -887,6 +911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
       parentRoute: typeof AuthenticatedBancoRoute
     }
+    '/_authenticated/settings/two-factor/': {
+      id: '/_authenticated/settings/two-factor/'
+      path: '/'
+      fullPath: '/settings/two-factor/'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    }
     '/_authenticated/settings/device-management/': {
       id: '/_authenticated/settings/device-management/'
       path: '/'
@@ -900,6 +931,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/webhooks/veriff-decision'
       preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings/two-factor/setup': {
+      id: '/_authenticated/settings/two-factor/setup'
+      path: '/setup'
+      fullPath: '/settings/two-factor/setup'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorSetupRouteImport
+      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
     }
     '/_authenticated/settings/device-management/removed': {
       id: '/_authenticated/settings/device-management/removed'
@@ -1012,6 +1050,24 @@ const AuthenticatedSettingsDeviceManagementRouteWithChildren =
     AuthenticatedSettingsDeviceManagementRouteChildren,
   )
 
+interface AuthenticatedSettingsTwoFactorRouteChildren {
+  AuthenticatedSettingsTwoFactorSetupRoute: typeof AuthenticatedSettingsTwoFactorSetupRoute
+  AuthenticatedSettingsTwoFactorIndexRoute: typeof AuthenticatedSettingsTwoFactorIndexRoute
+}
+
+const AuthenticatedSettingsTwoFactorRouteChildren: AuthenticatedSettingsTwoFactorRouteChildren =
+  {
+    AuthenticatedSettingsTwoFactorSetupRoute:
+      AuthenticatedSettingsTwoFactorSetupRoute,
+    AuthenticatedSettingsTwoFactorIndexRoute:
+      AuthenticatedSettingsTwoFactorIndexRoute,
+  }
+
+const AuthenticatedSettingsTwoFactorRouteWithChildren =
+  AuthenticatedSettingsTwoFactorRoute._addFileChildren(
+    AuthenticatedSettingsTwoFactorRouteChildren,
+  )
+
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
@@ -1059,7 +1115,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsSocialRoute: typeof AuthenticatedSettingsSocialRoute
   AuthenticatedSettingsSocialMediaRoute: typeof AuthenticatedSettingsSocialMediaRoute
   AuthenticatedSettingsSubscriptionRoute: typeof AuthenticatedSettingsSubscriptionRoute
-  AuthenticatedSettingsTwoFactorRoute: typeof AuthenticatedSettingsTwoFactorRoute
+  AuthenticatedSettingsTwoFactorRoute: typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -1095,7 +1151,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsSocialMediaRoute: AuthenticatedSettingsSocialMediaRoute,
   AuthenticatedSettingsSubscriptionRoute:
     AuthenticatedSettingsSubscriptionRoute,
-  AuthenticatedSettingsTwoFactorRoute: AuthenticatedSettingsTwoFactorRoute,
+  AuthenticatedSettingsTwoFactorRoute:
+    AuthenticatedSettingsTwoFactorRouteWithChildren,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:
