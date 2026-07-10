@@ -46,6 +46,7 @@ import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_a
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
+import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -260,6 +261,12 @@ const AuthenticatedBancoCadastrarRoute =
     path: '/cadastrar',
     getParentRoute: () => AuthenticatedBancoRoute,
   } as any)
+const AuthenticatedSettingsDeviceManagementIndexRoute =
+  AuthenticatedSettingsDeviceManagementIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+  } as any)
 const ApiPublicWebhooksVeriffDecisionRoute =
   ApiPublicWebhooksVeriffDecisionRouteImport.update({
     id: '/api/public/webhooks/veriff-decision',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -381,7 +389,6 @@ export interface FileRoutesByTo {
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
   '/settings/details': typeof AuthenticatedSettingsDetailsRoute
-  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementRouteWithChildren
   '/settings/myprofile': typeof AuthenticatedSettingsMyprofileRoute
   '/settings/personal': typeof AuthenticatedSettingsPersonalRoute
   '/settings/security-menu': typeof AuthenticatedSettingsSecurityMenuRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -442,6 +450,7 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/_authenticated/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
+    | '/settings/device-management/'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos/'
@@ -520,7 +530,6 @@ export interface FileRouteTypes {
     | '/settings/change-password'
     | '/settings/creator'
     | '/settings/details'
-    | '/settings/device-management'
     | '/settings/myprofile'
     | '/settings/personal'
     | '/settings/security-menu'
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
+    | '/settings/device-management'
     | '/creator/onboarding/documentos/aprovado'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/_authenticated/settings/device-management/removed'
     | '/api/public/webhooks/veriff-decision'
+    | '/_authenticated/settings/device-management/'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
     | '/_authenticated/creator/onboarding/documentos/verificando'
     | '/_authenticated/creator/onboarding/documentos/'
@@ -856,6 +867,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
       parentRoute: typeof AuthenticatedBancoRoute
     }
+    '/_authenticated/settings/device-management/': {
+      id: '/_authenticated/settings/device-management/'
+      path: '/'
+      fullPath: '/settings/device-management/'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+    }
     '/api/public/webhooks/veriff-decision': {
       id: '/api/public/webhooks/veriff-decision'
       path: '/api/public/webhooks/veriff-decision'
@@ -958,12 +976,15 @@ const AuthenticatedMywalletRouteWithChildren =
 
 interface AuthenticatedSettingsDeviceManagementRouteChildren {
   AuthenticatedSettingsDeviceManagementRemovedRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRoute
+  AuthenticatedSettingsDeviceManagementIndexRoute: typeof AuthenticatedSettingsDeviceManagementIndexRoute
 }
 
 const AuthenticatedSettingsDeviceManagementRouteChildren: AuthenticatedSettingsDeviceManagementRouteChildren =
   {
     AuthenticatedSettingsDeviceManagementRemovedRoute:
       AuthenticatedSettingsDeviceManagementRemovedRoute,
+    AuthenticatedSettingsDeviceManagementIndexRoute:
+      AuthenticatedSettingsDeviceManagementIndexRoute,
   }
 
 const AuthenticatedSettingsDeviceManagementRouteWithChildren =
