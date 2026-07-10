@@ -226,6 +226,32 @@ function BancoPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={cadastroOpen} onOpenChange={setCadastroOpen}>
+        <SheetContent
+          side="bottom"
+          className="h-[90vh] rounded-t-2xl overflow-y-auto p-0"
+        >
+          <SheetHeader className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-md px-4 md:px-6 py-3">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCadastroOpen(false)}
+                className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <SheetTitle className="text-base font-semibold text-foreground truncate">
+                Cadastrar Dados Bancários
+              </SheetTitle>
+              <span className="w-9" />
+            </div>
+          </SheetHeader>
+          <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
+            <CadastrarBancoForm onClose={() => setCadastroOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
