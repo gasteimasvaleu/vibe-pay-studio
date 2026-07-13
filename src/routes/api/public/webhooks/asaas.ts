@@ -157,10 +157,27 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           amountCents?: number;
         };
 
-        let targetStatus: "paid" | "refunded" | "cancelled" | null = null;
-        if (TERMINAL_PAID.has(eventType)) targetStatus = "paid";
-        else if (TERMINAL_REFUNDED.has(eventType)) targetStatus = "refunded";
-        else if (TERMINAL_CANCELLED.has(eventType)) targetStatus = "cancelled";
+        let targetStatus: TargetStatus | null = null;
+        if (TERMINAL_PAID.has(eventType) || RISK_APPROVED.has(eventType)) {
+          targetStatus = "paid";
+        } else if (TERMINAL_PARTIAL_REFUND.has(eventType)) {
+          targetStatus = "partially_refunded";
+        } else if (TERMINAL_REFUNDED.has(eventType)) {
+          targetStatus = "refunded";
+        } else if (TERMINAL_CANCELLED.has(eventType) || RISK_REPROVED.has(eventType)) {
+          targetStatus = "cancelled";
+        } else if (TERMINAL_AUTHORIZED.has(eventType)) {
+          targetStatus = "authorized";
+        } else if (RISK_PENDING.has(eventType)) {
+          targetStatus = "in_analysis";
+        } else if (SPLIT_EVENTS.has(eventType)) {
+          console.warn("[asaas webhook] split event", {
+            eventType,
+            paymentId,
+            externalRef,
+          });
+        }
+
 
         try {
           if (targetStatus && meta.referenceTable) {
