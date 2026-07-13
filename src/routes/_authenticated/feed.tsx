@@ -105,15 +105,3 @@ function FeedPage() {
     </div>
   );
 }
-
-
-function IconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...rest}
-      className="h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15 text-white/85 hover:bg-white/15 hover:text-white transition-colors"
-    >
-      {children}
-    </button>
-  );
-}
