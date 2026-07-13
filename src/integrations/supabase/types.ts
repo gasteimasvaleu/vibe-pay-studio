@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
       chat_message_unlocks: {
         Row: {
           amount_cents: number
@@ -136,6 +166,51 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["report_target"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       creator_wallets: {
         Row: {
           pending_international_cents: number
@@ -209,6 +284,7 @@ export type Database = {
           discount_semiannual: number
           id: string
           instagram_handle: string | null
+          kyc_rejection_reason: string | null
           kyc_status: string
           kyc_verified_at: string | null
           onboarding_completed_at: string | null
@@ -230,6 +306,7 @@ export type Database = {
           discount_semiannual?: number
           id?: string
           instagram_handle?: string | null
+          kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
           onboarding_completed_at?: string | null
@@ -251,6 +328,7 @@ export type Database = {
           discount_semiannual?: number
           id?: string
           instagram_handle?: string | null
+          kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
           onboarding_completed_at?: string | null
@@ -419,6 +497,8 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          moderation_note: string | null
+          moderation_status: Database["public"]["Enums"]["moderation_status"]
           pinned: boolean
           price_cents: number | null
           published_at: string | null
@@ -434,6 +514,8 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          moderation_note?: string | null
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
           pinned?: boolean
           price_cents?: number | null
           published_at?: string | null
@@ -449,6 +531,8 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          moderation_note?: string | null
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
           pinned?: boolean
           price_cents?: number | null
           published_at?: string | null
@@ -860,8 +944,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
+      moderation_status: "pending" | "approved" | "hidden" | "removed"
       payment_method: "pix" | "credit_card" | "boleto" | "wallet" | "manual"
       promotion_status: "active" | "paused" | "ended"
+      report_status: "open" | "reviewing" | "actioned" | "dismissed"
+      report_target: "publication" | "profile" | "chat_message"
       subscription_plan: "monthly" | "quarterly" | "semiannual"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
       transaction_kind:
@@ -1026,8 +1113,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "creator", "subscriber"],
+      moderation_status: ["pending", "approved", "hidden", "removed"],
       payment_method: ["pix", "credit_card", "boleto", "wallet", "manual"],
       promotion_status: ["active", "paused", "ended"],
+      report_status: ["open", "reviewing", "actioned", "dismissed"],
+      report_target: ["publication", "profile", "chat_message"],
       subscription_plan: ["monthly", "quarterly", "semiannual"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
       transaction_kind: [
