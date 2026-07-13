@@ -37,11 +37,36 @@ export const Route = createFileRoute("/_authenticated/feed")({
 function FeedPage() {
   const { username } = Route.useRouteContext();
   const fetchFeed = useServerFn(getFeed);
+  const unlock = useServerFn(createUnlockPayment);
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState<string | null>(null);
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
     queryFn: () => fetchFeed({ data: { limit: 20 } }),
   });
+
+  const handleUnlock = async (item: FeedItem) => {
+    if (unlocking) return;
+    setUnlocking(item.id);
+    try {
+      const res = await unlock({
+        data: { publicationId: item.id, method: "PIX" },
+      });
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar pagamento");
+    } finally {
+      setUnlocking(null);
+    }
+  };
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
