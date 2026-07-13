@@ -300,6 +300,7 @@ export type Database = {
           provider_ref: string | null
           publication_id: string
           status: string
+          transaction_id: string | null
         }
         Insert: {
           amount_cents: number
@@ -310,6 +311,7 @@ export type Database = {
           provider_ref?: string | null
           publication_id: string
           status?: string
+          transaction_id?: string | null
         }
         Update: {
           amount_cents?: number
@@ -320,6 +322,7 @@ export type Database = {
           provider_ref?: string | null
           publication_id?: string
           status?: string
+          transaction_id?: string | null
         }
         Relationships: [
           {
@@ -327,6 +330,13 @@ export type Database = {
             columns: ["publication_id"]
             isOneToOne: false
             referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_unlocks_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -396,6 +406,125 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          auto_renew: boolean
+          cancelled_at: string | null
+          created_at: string
+          creator_id: string
+          current_period_end: string
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_paid: number
+          promotion_id: string | null
+          provider: string
+          provider_ref: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          subscriber_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          creator_id: string
+          current_period_end: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_paid: number
+          promotion_id?: string | null
+          provider?: string
+          provider_ref?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscriber_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          creator_id?: string
+          current_period_end?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_paid?: number
+          promotion_id?: string | null
+          provider?: string
+          provider_ref?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscriber_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tips: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          creator_id: string
+          id: string
+          message: string | null
+          provider: string
+          provider_ref: string | null
+          publication_id: string | null
+          sender_id: string
+          status: Database["public"]["Enums"]["transaction_status"]
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          creator_id: string
+          id?: string
+          message?: string | null
+          provider?: string
+          provider_ref?: string | null
+          publication_id?: string | null
+          sender_id: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          creator_id?: string
+          id?: string
+          message?: string | null
+          provider?: string
+          provider_ref?: string | null
+          publication_id?: string | null
+          sender_id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tips_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
@@ -596,6 +725,8 @@ export type Database = {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
       payment_method: "pix" | "credit_card" | "boleto" | "wallet" | "manual"
       promotion_status: "active" | "paused" | "ended"
+      subscription_plan: "monthly" | "quarterly" | "semiannual"
+      subscription_status: "active" | "cancelled" | "expired" | "pending"
       transaction_kind:
         | "subscription"
         | "publication_unlock"
@@ -753,6 +884,8 @@ export const Constants = {
       app_role: ["admin", "moderator", "creator", "subscriber"],
       payment_method: ["pix", "credit_card", "boleto", "wallet", "manual"],
       promotion_status: ["active", "paused", "ended"],
+      subscription_plan: ["monthly", "quarterly", "semiannual"],
+      subscription_status: ["active", "cancelled", "expired", "pending"],
       transaction_kind: [
         "subscription",
         "publication_unlock",
