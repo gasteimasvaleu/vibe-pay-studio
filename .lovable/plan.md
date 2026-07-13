@@ -1,64 +1,57 @@
 ## Objetivo
-Alterar o background da seção de título da página (header abaixo da navbar superior) para `#FFFFFF` em todas as páginas do app.
 
-## Contexto
-O elemento selecionado está em `src/components/dashboard/DashboardShell.tsx` e usa `bg-card/80 backdrop-blur-md`. Várias outras páginas possuem headers idênticos ou similares com `bg-card/80`, `bg-background/80` e `backdrop-blur-md`.
+Padronizar visualmente o cabeçalho abaixo da navbar em todas as páginas autenticadas: mesmo estilo de título, mesmo botão de voltar (com efeito hover em círculo).
 
-## Escopo de alteração
-Aplicar background `#FFFFFF` aos headers de **título de página** abaixo da navbar principal, removendo o efeito de transparência/blur onde presente.
+## Padrão único
 
-Arquivos identificados para ajuste:
-- `src/components/dashboard/DashboardShell.tsx`
-- `src/routes/_authenticated/content-leak-report.tsx`
-- `src/routes/_authenticated/vault.tsx`
-- `src/routes/_authenticated/promotions.tsx`
-- `src/routes/_authenticated/mywallet.extrato.tsx`
-- `src/routes/_authenticated/follow.tsx`
-- `src/routes/_authenticated/colecoes.tsx`
-- `src/routes/_authenticated/my-monetisex-stats.tsx`
-- `src/routes/_authenticated/settings.two-factor.setup.tsx`
-- `src/routes/_authenticated/mywallet.recarregar.tsx`
-- `src/routes/_authenticated/mywallet.index.tsx`
-- `src/routes/_authenticated/settings.two-factor.index.tsx`
-- `src/routes/_authenticated/settings.personal.tsx`
-- `src/routes/_authenticated/settings.device-management.index.tsx`
-- `src/routes/_authenticated/settings.myprofile.tsx`
-- `src/routes/_authenticated/settings.details.tsx`
-- `src/routes/_authenticated/bugreport.tsx`
-- `src/routes/_authenticated/settings.creator.tsx`
-- `src/routes/_authenticated/settings.muted.tsx`
-- `src/routes/_authenticated/settings.theme.tsx`
-- `src/routes/_authenticated/settings.device-management.removed.tsx`
-- `src/routes/_authenticated/settings.subscription.tsx`
-- `src/routes/_authenticated/settings.social.tsx`
-- `src/routes/_authenticated/settings.change-password.tsx`
-- `src/routes/_authenticated/settings.social-media.tsx`
-- `src/routes/_authenticated/settings.privacy-options.tsx`
-- `src/routes/_authenticated/settings.security.tsx`
-- `src/routes/_authenticated/settings.privacy.tsx`
-- `src/routes/_authenticated/settings.privacy-mail.tsx`
-- `src/routes/_authenticated/banco.tsx` (header principal da página)
-- `src/routes/_authenticated/banco.cadastrar.tsx`
-- `src/routes/_authenticated/settings.restrictions.tsx`
-- `src/routes/_authenticated/settings.chat-settings.tsx`
-- `src/routes/_authenticated/settings.language.tsx`
-- `src/routes/_authenticated/settings.security-menu.tsx`
+**Título (h1):**
+- `text-base font-semibold text-foreground truncate` (mesmo padrão já usado no `DashboardShell`)
 
-## Fora de escopo (preservados)
-- `src/components/site/TopNav.tsx` — navbar superior
-- `src/components/site/Navbar.tsx` — navbar
-- `src/components/site/AppTopBar.tsx` — top bar do app
-- Headers de chat (`chat.tsx`, `chat.$threadId.tsx`)
-- `OnboardingShell.tsx` e `perfil.$username.tsx` — usam estilo escuro próprio
-- Sheet/modal internos (ex.: `banco.tsx` SheetHeader)
+**Botão voltar:**
+- `h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors`
+- Ícone: `<ArrowLeft className="h-5 w-5" />`
+- `aria-label="Voltar"`
+
+Esse é exatamente o mesmo padrão que já existe em `src/components/dashboard/DashboardShell.tsx` (usado como referência canônica).
 
 ## Implementação
-1. Substituir em cada header de página:
-   - `bg-card/80 backdrop-blur-md` → `bg-white`
-   - `bg-background/80 backdrop-blur-md` → `bg-white`
-2. Manter `border-b border-border`, `relative z-10`, `sticky top-0` e outras classes estruturais intactas.
-3. Verificar build/typecheck após as alterações.
 
-## Validação
-- `tsgo --noEmit` para garantir que não há erros de tipo.
-- Verificação visual no preview para confirmar header branco na página selecionada e páginas de configurações.
+1. Criar um componente compartilhado `src/components/site/PageHeader.tsx` com:
+   - Props: `title: string`, `onBack?: () => void` (default: `router.history.back()`), `right?: ReactNode`
+   - Renderiza `<header class="... bg-white">` com o botão voltar padronizado à esquerda, título centralizado e slot opcional à direita.
+   - Mantém o wrapper existente (`max-w-3xl mx-auto ... py-3`, `bg-white`, `border-b`).
+
+2. Substituir os `<header>` manuais nas seguintes páginas para usar `<PageHeader />`, preservando qualquer conteúdo do slot direito (ex: botões de "Salvar", menus, ações):
+
+   - `profile.$username.tsx` (título "Meu perfil" + dropdown à direita)
+   - `perfil.$username.tsx`
+   - `vault.tsx` (2 headers)
+   - `subscriptions.tsx`
+   - `settings.two-factor.setup.tsx`, `settings.two-factor.index.tsx`
+   - `settings.theme.tsx`, `settings.subscription.tsx`
+   - `settings.social.tsx`, `settings.social-media.tsx`
+   - `settings.security.tsx`, `settings.security-menu.tsx`
+   - `settings.restrictions.tsx`, `settings.details.tsx`
+   - `settings.change-password.tsx`, `settings.muted.tsx`
+   - `settings.device-management.index.tsx`, `settings.device-management.removed.tsx`
+   - `settings.privacy.tsx`, `settings.privacy-mail.tsx`, `settings.privacy-options.tsx`
+   - `settings.personal.tsx`, `settings.creator.tsx`, `settings.myprofile.tsx`
+   - `settings.chat-settings.tsx`, `settings.language.tsx`
+   - `mywallet.index.tsx`, `mywallet.extrato.tsx`, `mywallet.recarregar.tsx`
+   - `content-leak-report.tsx`, `my-monetisex-stats.tsx`
+   - `follow.tsx`, `bugreport.tsx`, `colecoes.tsx`, `promotions.tsx`
+   - `banco.tsx` (2 headers), `banco.cadastrar.tsx`
+   - `account-status.tsx`, `publisher.tsx`
+   - `criar-perfil-gratuito.tsx`
+   - `PromotionShell.tsx`
+
+3. Manter fora do padrão (têm layout próprio):
+   - `DashboardShell.tsx` (já é a referência, mas manter o link "Feed" no slot direito)
+   - `OnboardingShell.tsx` (fluxo de onboarding)
+   - Cabeçalhos internos de chat (`chat.$threadId.tsx`, `chat-agendamento.tsx`, `chat-configuracoes.tsx`) — pertencem à UI de chat, não ao padrão de página; podem opcionalmente usar `PageHeader` se você quiser incluí-los. **Confirmar se devem entrar.**
+
+4. Validar com `tsgo --noEmit` e `bun run build`.
+
+## Pergunta
+
+Os cabeçalhos das telas de chat (`chat.$threadId.tsx`, `chat-agendamento.tsx`, `chat-configuracoes.tsx`) devem também seguir o padrão, ou ficam com o layout próprio da UI de chat?
