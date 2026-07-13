@@ -80,11 +80,11 @@ function CriarPerfilGratuitoPage() {
           type="button"
           onClick={() => (step === 1 ? navigate({ to: "/dashboard" }) : setStep(1))}
           aria-label="Voltar"
-          className="absolute left-4 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground"
+          className="absolute left-4 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-semibold">
+        <h1 className="text-base font-semibold text-foreground truncate">
           {step === 1 ? "Crie seu perfil gratuito" : "Personalizando perfil"}
         </h1>
       </header>

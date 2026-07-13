@@ -48,20 +48,20 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-4">
+      <header className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
         <button
           type="button"
           onClick={() => navigate({ to: "/dashboard" })}
-          className="p-1 -ml-1"
+          className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           aria-label="Voltar"
         >
-          <ArrowLeft className="h-6 w-6 text-foreground" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-base font-semibold text-foreground">Meu perfil</h1>
+        <h1 className="text-base font-semibold text-foreground truncate">Meu perfil</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="p-1 -mr-1" aria-label="Mais opções">
-              <MoreVertical className="h-6 w-6 text-foreground" />
+            <button type="button" className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label="Mais opções">
+              <MoreVertical className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">

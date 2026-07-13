@@ -291,11 +291,11 @@ function PublisherPage() {
           <button
             onClick={goBack}
             aria-label="Voltar"
-            className="p-2 -ml-2 rounded-md hover:bg-muted"
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="flex-1 text-center text-base font-semibold pr-6">
+          <h1 className="flex-1 text-center text-base font-semibold text-foreground truncate pr-9">
             {step === 1 ? "Enviando mídia" : "Criando publicação"}
           </h1>
         </div>

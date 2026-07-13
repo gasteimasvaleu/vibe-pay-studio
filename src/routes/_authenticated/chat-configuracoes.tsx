@@ -32,11 +32,11 @@ function ChatSettingsPage() {
           type="button"
           aria-label="Voltar"
           onClick={() => navigate({ to: "/chat" })}
-          className="absolute left-3 h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-foreground transition-colors"
+          className="absolute left-3 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-base font-semibold text-foreground">Configurações</h1>
+        <h1 className="text-base font-semibold text-foreground truncate">Configurações</h1>
       </header>
 
       <div className="flex-1 overflow-y-auto">

@@ -77,11 +77,11 @@ function PromotionsListPage() {
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
             aria-label="Voltar"
-            className="h-9 w-9 grid place-items-center rounded-full text-foreground hover:bg-muted transition"
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <p className="flex-1 text-center text-sm font-medium text-foreground">Ofertas</p>
+          <h1 className="flex-1 text-center text-base font-semibold text-foreground truncate">Ofertas</h1>
           <span className="h-9 w-9" />
         </div>
       </header>

@@ -146,7 +146,7 @@ function ChatThreadView() {
         <button
           type="button"
           onClick={() => navigate({ to: "/chat" })}
-          className="md:hidden h-9 w-9 grid place-items-center rounded-full hover:bg-accent text-muted-foreground"
+          className="md:hidden h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
