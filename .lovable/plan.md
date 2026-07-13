@@ -1,30 +1,33 @@
-## Objetivo
+## Ajustes no `PublicationCard`
 
-Trocar o bloco de mídia único do `PublicationCard` por um carrossel estilo Instagram/Privacy, mostrando as imagens sem distorção e igual ao screenshot.
+### 1. Reduzir altura da mídia
+No `MediaCarousel` e nos containers de locked/"sem mídia", trocar `aspect-[4/5]` por `aspect-[16/10]` (mais baixo, próximo ao screenshot). O `object-contain` continua garantindo que a imagem não estica; o fundo blur preenche as laterais.
 
-## Mudanças em `src/components/feed/PublicationCard.tsx`
+### 2. Novo estilo das setas do carrossel
+Substituir os círculos `bg-black/40` por setas "chevron finas" brancas sem fundo, estilo Privacy:
+- `absolute left-2 / right-2 top-1/2 -translate-y-1/2`
+- Sem background, apenas `text-white/90 drop-shadow-lg hover:text-white`
+- Ícone `ChevronLeft` / `ChevronRight` maior (`h-8 w-8`) com `strokeWidth={1.5}`
+- Área clicável de `h-12 w-12` (padding invisível)
 
-1. **Estado do carrossel:** `const [index, setIndex] = useState(0)` — sempre presente, ativo quando `item.media.length > 1`.
+### 3. Barra de ações inferior
+Adicionar após a mídia (antes do `caption`) uma linha de ações:
 
-2. **Container da mídia:**
-   - Substituir `aspect-[4/5]` fixo por um wrapper com `bg-black` (fundo escuro para as barras laterais quando a imagem tem outra proporção — como aparece no screenshot com efeito blur nas laterais).
-   - Altura: manter `aspect-[4/5]` mas trocar `object-cover` por `object-contain` para NÃO esticar.
-   - Adicionar camada de fundo blur com a mesma imagem (`img` absoluto `object-cover blur-2xl scale-110 opacity-60`) atrás da imagem principal, para preencher as laterais como no screenshot.
+```
+[❤ Curtir]  [💬 Comentar]                    [🔖 Salvar]
+```
 
-3. **Controles de carrossel (só quando `media.length > 1` e não bloqueado):**
-   - Botão `‹` à esquerda e `›` à direita, verticalmente centralizados, círculos semi-transparentes `bg-black/30 hover:bg-black/50 text-white`, escondidos nos extremos (`index === 0` esconde o esquerdo, `index === last` esconde o direito).
-   - Badge "N/Total" no canto inferior/central com ícone `Images` (lucide) — `absolute bottom-3 left-1/2 -translate-x-1/2`, `bg-black/60 text-white text-xs px-2 py-1 rounded-full`, seguindo o screenshot.
-   - Indicador de "pilha de cards" no canto superior direito (ícone `Layers` ou `Copy` da lucide) — `absolute top-3 right-3 text-white/90`.
-   - Suporte a swipe horizontal em touch (via `onTouchStart`/`onTouchEnd` calculando delta).
+- Container: `flex items-center gap-4 px-4 pt-3`
+- Ícones lucide: `Heart`, `MessageCircle` à esquerda; `Bookmark` empurrado à direita com `ml-auto`
+- Botões `type="button"`, `h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 text-white/90`
+- Ícones `h-6 w-6` com `strokeWidth={1.75}`
+- Estado local: `useState` para `liked` e `saved` — quando ativo, ícone recebe `fill-current` e cor (vermelho para curtir, branco para salvar). Ações são apenas visuais nesta iteração (sem persistência backend).
+- Não renderizar a barra quando `item.locked` for `true`.
 
-4. **Vídeo:** manter renderização como `<video controls>` com `object-contain` e mesmo fundo blur.
-
-5. **Áudio + carrossel:** o player de áudio continua acima da mídia (já implementado), sem mudanças.
-
-6. **Bloqueado:** quando `locked`, manter o `LockedOverlay` num único container `aspect-[4/5]` sem carrossel.
+### 4. Espaçamento
+Ajustar `caption` para `px-4 py-2` (menor) já que agora existem as ações acima.
 
 ## Fora do escopo
-
-- Zoom/pinch nas imagens.
-- Autoplay do vídeo.
-- Paginação por dots (usar apenas o badge "N/Total" como no screenshot).
+- Persistir curtidas/comentários/favoritos no backend.
+- Abrir modal de comentários.
+- Contadores numéricos.

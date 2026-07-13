@@ -2,11 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import {
   AudioLines,
+  Bookmark,
   ChevronLeft,
   ChevronRight,
+  Heart,
   Images,
   Layers,
   Lock,
+  MessageCircle,
   Trophy,
 } from "lucide-react";
 import type { FeedItem } from "@/lib/publications.functions";
@@ -23,6 +26,9 @@ export function PublicationCard({
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
 }) {
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+
   return (
     <article className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.04] backdrop-blur-md">
       <header className="flex items-center gap-3 px-4 py-3">
@@ -62,19 +68,53 @@ export function PublicationCard({
       )}
 
       {item.locked ? (
-        <div className="relative aspect-[4/5] bg-black/40">
+        <div className="relative aspect-[16/10] bg-black/40">
           <LockedOverlay item={item} onUnlock={onUnlock} />
         </div>
       ) : item.media.length > 0 ? (
         <MediaCarousel media={item.media} />
       ) : !item.audio_url ? (
-        <div className="relative aspect-[4/5] bg-black/40 grid place-items-center text-white/50 text-sm">
+        <div className="relative aspect-[16/10] bg-black/40 grid place-items-center text-white/50 text-sm">
           Sem mídia
         </div>
       ) : null}
 
+      {!item.locked && (
+        <div className="flex items-center gap-1 px-3 pt-2">
+          <button
+            type="button"
+            aria-label={liked ? "Descurtir" : "Curtir"}
+            onClick={() => setLiked((v) => !v)}
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+          >
+            <Heart
+              className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "text-white/90"}`}
+              strokeWidth={1.75}
+            />
+          </button>
+          <button
+            type="button"
+            aria-label="Comentar"
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/90"
+          >
+            <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
+          </button>
+          <button
+            type="button"
+            aria-label={saved ? "Remover dos salvos" : "Salvar"}
+            onClick={() => setSaved((v) => !v)}
+            className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+          >
+            <Bookmark
+              className={`h-6 w-6 ${saved ? "fill-white text-white" : "text-white/90"}`}
+              strokeWidth={1.75}
+            />
+          </button>
+        </div>
+      )}
+
       {item.caption && (
-        <p className="px-4 py-3 text-sm text-white/90 whitespace-pre-wrap">
+        <p className="px-4 py-2 pb-3 text-sm text-white/90 whitespace-pre-wrap">
           {item.caption}
         </p>
       )}
@@ -104,11 +144,10 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
 
   return (
     <div
-      className="relative aspect-[4/5] bg-black overflow-hidden select-none"
+      className="relative aspect-[16/10] bg-black overflow-hidden select-none"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* blurred backdrop matching the image */}
       {current.type === "image" && (
         <img
           src={current.url}
@@ -141,9 +180,9 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
               type="button"
               aria-label="Anterior"
               onClick={() => go(-1)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur"
+              className="absolute left-1 top-1/2 -translate-y-1/2 h-12 w-12 grid place-items-center text-white/90 hover:text-white transition-colors drop-shadow-lg"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
             </button>
           )}
           {index < total - 1 && (
@@ -151,9 +190,9 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
               type="button"
               aria-label="Próximo"
               onClick={() => go(1)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-12 w-12 grid place-items-center text-white/90 hover:text-white transition-colors drop-shadow-lg"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
             </button>
           )}
 
