@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/site/BottomNav";
+import { TopNav } from "@/components/site/TopNav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
