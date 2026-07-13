@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
+import { TipDialog } from "@/components/payments/TipDialog";
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
   head: ({ params }) => ({
@@ -45,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, account_type")
+      .select("user_id, username, account_type, price_monthly")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -57,6 +59,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         userId: profile.user_id,
         username: profile.username,
         accountType: profile.account_type,
+        priceMonthly: profile.price_monthly ?? 0,
       },
     };
   },
@@ -97,6 +100,9 @@ function PerfilPage() {
   const { viewerId, profile } = Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
 
   // Dados mock — plugar em tabelas reais em pedido futuro
   const stats = { fotos: 292, videos: 119, locked: 32, likes: "7.4K" };
@@ -104,7 +110,10 @@ function PerfilPage() {
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const location = "São Paulo - BRA";
-  const subscriptionPrice = "R$ 29,90";
+  const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  const subscriptionPrice = profile.priceMonthly > 0
+    ? `${brl.format(profile.priceMonthly / 100)}`
+    : null;
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
@@ -200,8 +209,11 @@ function PerfilPage() {
 
         {/* CTA */}
         <div>
-          {!isOwner && (
-            <button className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-bold shadow-lg shadow-purple-900/40 hover:brightness-110 transition">
+          {!isOwner && subscriptionPrice && (
+            <button
+              onClick={() => setSubscribeOpen(true)}
+              className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-bold shadow-lg shadow-purple-900/40 hover:brightness-110 transition"
+            >
               Assinar por {subscriptionPrice}/mês
             </button>
           )}
@@ -234,6 +246,10 @@ function PerfilPage() {
                 username={profile.username}
                 displayName={displayName}
                 delay={i * 0.05}
+                onTip={() => {
+                  setTipPubId(undefined);
+                  setTipOpen(true);
+                }}
               />
             ))}
           </TabsContent>
@@ -256,6 +272,24 @@ function PerfilPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {!isOwner && (
+        <>
+          <SubscribeDialog
+            open={subscribeOpen}
+            onOpenChange={setSubscribeOpen}
+            creatorId={profile.userId}
+            creatorName={displayName}
+          />
+          <TipDialog
+            open={tipOpen}
+            onOpenChange={setTipOpen}
+            creatorId={profile.userId}
+            creatorName={displayName}
+            publicationId={tipPubId}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -297,11 +331,13 @@ function ProfilePostCard({
   username,
   displayName,
   delay,
+  onTip,
 }: {
   post: ProfilePost;
   username: string;
   displayName: string;
   delay: number;
+  onTip?: () => void;
 }) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -355,7 +391,7 @@ function ProfilePostCard({
             <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
           </IconAction>
           <IconAction label="Comentar"><MessageCircle className="h-5 w-5" /></IconAction>
-          <IconAction label="Enviar gorjeta"><DollarSign className="h-5 w-5" /></IconAction>
+          <IconAction label="Enviar gorjeta" onClick={onTip}><DollarSign className="h-5 w-5" /></IconAction>
         </div>
         <IconAction
           active={saved}
