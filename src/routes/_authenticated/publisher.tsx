@@ -462,7 +462,7 @@ function PublisherPage() {
                 </div>
               )}
               <Button
-                className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold disabled:opacity-40 disabled:bg-muted disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+                className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
                 disabled={!canContinue}
                 onClick={() => setStep(2)}
               >
@@ -473,7 +473,7 @@ function PublisherPage() {
             </div>
           ) : (
             <Button
-              className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold disabled:opacity-50"
+              className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
               disabled={mutation.isPending || !canContinue}
               onClick={onPost}
             >
