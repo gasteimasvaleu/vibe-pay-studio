@@ -64,7 +64,9 @@ export function PublicationCard({
         items: prev.items.map((it) =>
           it.id === item.id ? { ...it, ...patch } : it,
         ),
-      };
+  };
+
+  const [optionsOpen, setOptionsOpen] = useState(false);
     });
   };
 
