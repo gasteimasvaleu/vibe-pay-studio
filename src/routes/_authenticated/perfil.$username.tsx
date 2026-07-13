@@ -100,6 +100,9 @@ function PerfilPage() {
   const { viewerId, profile } = Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
 
   // Dados mock — plugar em tabelas reais em pedido futuro
   const stats = { fotos: 292, videos: 119, locked: 32, likes: "7.4K" };
@@ -107,7 +110,10 @@ function PerfilPage() {
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const location = "São Paulo - BRA";
-  const subscriptionPrice = "R$ 29,90";
+  const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  const subscriptionPrice = profile.priceMonthly > 0
+    ? `${brl.format(profile.priceMonthly / 100)}`
+    : null;
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
