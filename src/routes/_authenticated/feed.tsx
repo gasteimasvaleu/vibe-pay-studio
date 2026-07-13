@@ -103,7 +103,7 @@ function FeedPage() {
           ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
             <div className="space-y-4">
               {feedQuery.data.items.map((item) => (
-                <PublicationCard key={item.id} item={item} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} />
               ))}
             </div>
           ) : (
