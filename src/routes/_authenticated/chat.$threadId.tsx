@@ -1,8 +1,10 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, SendHorizontal } from "lucide-react";
+import { ArrowLeft, DollarSign, Lock, SendHorizontal } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getThreadWithPartner,
@@ -10,7 +12,11 @@ import {
   sendMessage,
   type ChatMessage,
 } from "@/lib/chat.functions";
+import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { Textarea } from "@/components/ui/textarea";
+import { ComposerIcon } from "@/components/chat/ComposerIcon";
+import { PriceDialog } from "@/components/chat/PriceDialog";
+import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
 import { cn } from "@/lib/utils";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,6 +33,11 @@ export const Route = createFileRoute("/_authenticated/chat/$threadId")({
   component: ChatThreadView,
 });
 
+type ThreadData = {
+  messages: ChatMessage[];
+  partner: { userId: string; username: string; avatarUrl: string | null };
+};
+
 function formatTime(iso: string) {
   try {
     return new Date(iso).toLocaleTimeString("pt-BR", {
@@ -38,6 +49,13 @@ function formatTime(iso: string) {
   }
 }
 
+function formatBRL(cents: number) {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
 function ChatThreadView() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
@@ -45,15 +63,38 @@ function ChatThreadView() {
   const getThreadFn = useServerFn(getThreadWithPartner);
   const sendFn = useServerFn(sendMessage);
   const markReadFn = useServerFn(markThreadRead);
+  const unlockFn = useServerFn(createChatUnlockPayment);
+
   const [meId, setMeId] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [priceCents, setPriceCents] = useState<number | null>(null);
+  const [priceOpen, setPriceOpen] = useState(false);
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
   }, []);
 
-  const { data, isLoading } = useQuery({
+  const { data: accountType } = useQuery({
+    queryKey: ["viewer-account-type"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return "subscriber" as const;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      return (profile?.account_type ?? "subscriber") as "subscriber" | "creator";
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const isCreator = accountType === "creator";
+
+  const { data, isLoading } = useQuery<ThreadData>({
     queryKey: ["chat", "messages", threadId],
     queryFn: () => getThreadFn({ data: { threadId } }),
   });
@@ -77,34 +118,35 @@ function ChatThreadView() {
             content: string;
             read_at: string | null;
             created_at: string;
+            price_cents: number | null;
           };
-          queryClient.setQueryData<
-            { messages: ChatMessage[]; partner: { userId: string; username: string; avatarUrl: string | null } }
-          >(["chat", "messages", threadId], (old) => {
-            if (!old) return old;
-            if (old.messages.some((x) => x.id === m.id)) return old;
-            return {
-              ...old,
-              messages: [
-                ...old.messages,
-                {
-                  id: m.id,
-                  threadId: m.thread_id,
-                  senderId: m.sender_id,
-                  content: m.content,
-                  readAt: m.read_at,
-                  createdAt: m.created_at,
-                },
-              ],
-            };
-          });
+          queryClient.setQueryData<ThreadData>(
+            ["chat", "messages", threadId],
+            (old) => {
+              if (!old) return old;
+              if (old.messages.some((x) => x.id === m.id)) return old;
+              const price = m.price_cents ?? 0;
+              const mine = m.sender_id === meId;
+              const newMsg: ChatMessage = {
+                id: m.id,
+                threadId: m.thread_id,
+                senderId: m.sender_id,
+                content: m.content,
+                readAt: m.read_at,
+                createdAt: m.created_at,
+                priceCents: price > 0 ? price : null,
+                unlocked: price <= 0 || mine,
+              };
+              return { ...old, messages: [...old.messages, newMsg] };
+            },
+          );
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [threadId, queryClient]);
+  }, [threadId, queryClient, meId]);
 
   useEffect(() => {
     if (!data) return;
@@ -120,25 +162,59 @@ function ChatThreadView() {
   }, [data?.messages.length]);
 
   const sendMutation = useMutation({
-    mutationFn: (content: string) => sendFn({ data: { threadId, content } }),
+    mutationFn: (vars: { content: string; priceCents: number | null }) =>
+      sendFn({
+        data: {
+          threadId,
+          content: vars.content,
+          priceCents: vars.priceCents ?? 0,
+        },
+      }),
     onSuccess: (msg) => {
-      queryClient.setQueryData<
-        { messages: ChatMessage[]; partner: { userId: string; username: string; avatarUrl: string | null } }
-      >(["chat", "messages", threadId], (old) => {
-        if (!old) return old;
-        if (old.messages.some((x) => x.id === msg.id)) return old;
-        return { ...old, messages: [...old.messages, msg] };
-      });
+      queryClient.setQueryData<ThreadData>(
+        ["chat", "messages", threadId],
+        (old) => {
+          if (!old) return old;
+          if (old.messages.some((x) => x.id === msg.id)) return old;
+          return { ...old, messages: [...old.messages, msg] };
+        },
+      );
       queryClient.invalidateQueries({ queryKey: ["chat", "threads"] });
     },
+    onError: (err: Error) => toast.error(err.message ?? "Erro ao enviar"),
   });
 
   const handleSend = () => {
     const content = text.trim();
     if (!content || sendMutation.isPending) return;
+    const price = priceCents;
     setText("");
-    sendMutation.mutate(content);
+    setPriceCents(null);
+    sendMutation.mutate({ content, priceCents: price });
   };
+
+  const handleUnlock = async (messageId: string) => {
+    try {
+      setUnlockingId(messageId);
+      const res = await unlockFn({ data: { messageId, method: "PIX" } });
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Erro ao gerar pagamento");
+    } finally {
+      setUnlockingId(null);
+    }
+  };
+
+  const priceLabel = useMemo(
+    () => (priceCents ? formatBRL(priceCents) : null),
+    [priceCents],
+  );
 
   return (
     <div className="flex flex-col flex-1 min-h-[100svh] bg-gradient-soft">
@@ -172,6 +248,39 @@ function ChatThreadView() {
         )}
         {data?.messages.map((m) => {
           const mine = m.senderId === meId;
+          const locked = !mine && m.priceCents && !m.unlocked;
+
+          if (locked) {
+            return (
+              <div key={m.id} className="flex justify-start">
+                <div className="max-w-[75%] rounded-2xl rounded-bl-md border border-primary/30 bg-card/80 shadow-card p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Lock className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">
+                      Mensagem exclusiva
+                    </span>
+                  </div>
+                  <div className="text-sm text-muted-foreground italic blur-[3px] select-none">
+                    {"•".repeat(Math.min(60, Math.max(20, m.content.length)))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnlock(m.id)}
+                    disabled={unlockingId === m.id}
+                    className="w-full h-10 rounded-full bg-gradient-primary text-primary-foreground text-sm font-semibold shadow-glow disabled:opacity-60"
+                  >
+                    {unlockingId === m.id
+                      ? "Gerando PIX…"
+                      : `Desbloquear por ${formatBRL(m.priceCents!)}`}
+                  </button>
+                  <div className="text-[10px] text-right text-muted-foreground">
+                    {formatTime(m.createdAt)}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={m.id}
@@ -186,6 +295,19 @@ function ChatThreadView() {
                 )}
               >
                 <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                {m.priceCents ? (
+                  <div
+                    className={cn(
+                      "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      mine
+                        ? "bg-white/15 text-primary-foreground"
+                        : "bg-emerald-500/15 text-emerald-500",
+                    )}
+                  >
+                    <Lock className="h-2.5 w-2.5" />
+                    {formatBRL(m.priceCents)} · {mine ? "Paga" : "Desbloqueada"}
+                  </div>
+                ) : null}
                 <div
                   className={cn(
                     "text-[10px] mt-1 text-right",
@@ -201,31 +323,86 @@ function ChatThreadView() {
       </div>
 
       <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="flex items-end gap-2 max-w-3xl mx-auto">
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
+        <div className="max-w-3xl mx-auto space-y-2">
+          {priceLabel ? (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">
+                <DollarSign className="h-3 w-3" />
+                Mensagem paga · {priceLabel}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPriceCents(null)}
+                className="text-muted-foreground hover:text-foreground underline"
+              >
+                remover
+              </button>
+            </div>
+          ) : null}
+
+          <div className="flex items-end gap-2">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={
+                priceLabel
+                  ? "Escreva a mensagem exclusiva…"
+                  : "Escreva uma mensagem…"
               }
-            }}
-            placeholder="Escreva uma mensagem…"
-            rows={1}
-            className="flex-1 min-h-[44px] max-h-40 resize-none focus-visible:ring-ring"
-          />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!text.trim() || sendMutation.isPending}
-            className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Enviar"
-          >
-            <SendHorizontal className="h-5 w-5" />
-          </button>
+              rows={1}
+              className="flex-1 min-h-[44px] max-h-40 resize-none focus-visible:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!text.trim() || sendMutation.isPending}
+              className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Enviar"
+            >
+              <SendHorizontal className="h-5 w-5" />
+            </button>
+          </div>
+
+          {isCreator ? (
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center gap-1">
+                <ComposerIcon
+                  icon={DollarSign}
+                  label="Definir valor da mensagem"
+                  active={!!priceCents}
+                  onClick={() => setPriceOpen(true)}
+                />
+              </div>
+            </TooltipProvider>
+          ) : null}
         </div>
       </div>
+
+      <PriceDialog
+        open={priceOpen}
+        onOpenChange={setPriceOpen}
+        initialCents={priceCents}
+        onConfirm={(cents) => setPriceCents(cents)}
+      />
+
+      <PaymentModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Desbloquear mensagem"
+        checkout={checkout}
+        onPaid={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["chat", "messages", threadId],
+          });
+          toast.success("Mensagem desbloqueada");
+        }}
+      />
     </div>
   );
 }

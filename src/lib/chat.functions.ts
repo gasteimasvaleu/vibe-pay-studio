@@ -19,7 +19,10 @@ export type ChatMessage = {
   content: string;
   readAt: string | null;
   createdAt: string;
+  priceCents: number | null;
+  unlocked: boolean;
 };
+
 
 export type PartnerProfile = {
   userId: string;
@@ -148,11 +151,25 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: msgs, error: mErr } = await supabase
         .from("chat_messages")
-        .select("id, thread_id, sender_id, content, read_at, created_at")
+        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
       if (mErr) throw new Error(mErr.message);
+
+      const paidPartnerMsgIds = (msgs ?? [])
+        .filter((m) => m.sender_id !== userId && (m.price_cents ?? 0) > 0)
+        .map((m) => m.id);
+      const unlockedSet = new Set<string>();
+      if (paidPartnerMsgIds.length > 0) {
+        const { data: unlocks } = await supabase
+          .from("chat_message_unlocks")
+          .select("message_id, status")
+          .eq("buyer_id", userId)
+          .in("message_id", paidPartnerMsgIds)
+          .eq("status", "paid");
+        for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
+      }
 
       return {
         partner: {
@@ -160,14 +177,20 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           username: profile?.username ?? "usuário",
           avatarUrl: null,
         },
-        messages: (msgs ?? []).map((m) => ({
-          id: m.id,
-          threadId: m.thread_id,
-          senderId: m.sender_id,
-          content: m.content,
-          readAt: m.read_at,
-          createdAt: m.created_at,
-        })),
+        messages: (msgs ?? []).map((m) => {
+          const price = m.price_cents ?? 0;
+          const mine = m.sender_id === userId;
+          return {
+            id: m.id,
+            threadId: m.thread_id,
+            senderId: m.sender_id,
+            content: m.content,
+            readAt: m.read_at,
+            createdAt: m.created_at,
+            priceCents: price > 0 ? price : null,
+            unlocked: price <= 0 || mine || unlockedSet.has(m.id),
+          };
+        }),
       };
     },
   );
@@ -179,21 +202,25 @@ export const sendMessage = createServerFn({ method: "POST" })
       .object({
         threadId: z.string().uuid(),
         content: z.string().min(1).max(4000),
+        priceCents: z.number().int().min(0).max(50000).optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }): Promise<ChatMessage> => {
     const { supabase, userId } = context;
+    const price = data.priceCents ?? 0;
     const { data: row, error } = await supabase
       .from("chat_messages")
       .insert({
         thread_id: data.threadId,
         sender_id: userId,
         content: data.content,
+        price_cents: price,
       })
-      .select("id, thread_id, sender_id, content, read_at, created_at")
+      .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
       .single();
     if (error) throw new Error(error.message);
+    const finalPrice = row.price_cents ?? 0;
     return {
       id: row.id,
       threadId: row.thread_id,
@@ -201,8 +228,11 @@ export const sendMessage = createServerFn({ method: "POST" })
       content: row.content,
       readAt: row.read_at,
       createdAt: row.created_at,
+      priceCents: finalPrice > 0 ? finalPrice : null,
+      unlocked: true,
     };
   });
+
 
 export const markThreadRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
