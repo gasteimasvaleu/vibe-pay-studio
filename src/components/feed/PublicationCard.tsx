@@ -30,16 +30,16 @@ export function PublicationCard({
   const [saved, setSaved] = useState(false);
 
   return (
-    <article className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.04] backdrop-blur-md">
+    <article className="rounded-3xl overflow-hidden border border-primary/30 bg-white/[0.04] backdrop-blur-md">
       <header className="flex items-center gap-3 px-4 py-3">
-        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 grid place-items-center text-sm font-bold text-white">
+        <div className="h-9 w-9 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
           {(item.author_username ?? "?").slice(0, 1).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <Link
             to="/perfil/$username"
             params={{ username: item.author_username ?? "" }}
-            className="text-sm font-semibold truncate hover:underline"
+            className="text-sm font-semibold truncate text-black hover:underline"
           >
             @{item.author_username ?? "usuario"}
           </Link>

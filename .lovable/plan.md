@@ -1,14 +1,7 @@
-## Correção da barra de ações invisível
+Ajustar três estilos visuais no componente `src/components/feed/PublicationCard.tsx`:
 
-A barra foi adicionada, mas os ícones estão em `text-white/90` sobre um card semitransparente numa página de fundo claro — resultado: invisíveis.
+1. **Borda roxa no card:** substituir `border border-white/10` por uma borda fina usando a cor primária roxa do app (`border-primary/30` ou `border-primary/25`) no `<article>`.
+2. **Avatar sem imagem:** trocar o gradiente laranja/rosa (`bg-gradient-to-br from-orange-400 to-pink-500`) do círculo do perfil por uma cor roxa padrão (`bg-primary` ou gradiente roxo do tema).
+3. **Nome do usuário:** definir cor preta explicitamente no link do username (`text-black`).
 
-### Edição em `src/components/feed/PublicationCard.tsx`
-
-Na barra de ações (curtir / comentar / salvar):
-
-1. Trocar `text-white/90` por `text-foreground/80` e `hover:text-foreground`.
-2. Trocar `hover:bg-white/10` por `hover:bg-foreground/10`.
-3. Estado salvo: `fill-foreground text-foreground` (curtir permanece `fill-red-500 text-red-500`).
-4. Adicionar `border-t border-border/40 mt-1` no container das ações e ajustar padding para `px-3 py-1.5` para dar separação visual da mídia.
-
-Nada mais é alterado.
+Nenhuma outra alteração de funcionalidade será feita — apenas os tokens/cores de estilo no componente.
