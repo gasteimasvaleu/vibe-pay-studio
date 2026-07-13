@@ -195,12 +195,20 @@ function ChatThreadView() {
     sendMutation.mutate({ content, priceCents: price });
   };
 
-  const handleUnlock = async (messageId: string) => {
+  const handleUnlock = (messageId: string, priceCents: number) => {
+    setPendingMsg({ id: messageId, priceCents });
+  };
+
+  const confirmUnlockPayment = async (method: PaymentMethod) => {
+    if (!pendingMsg) return;
+    const messageId = pendingMsg.id;
     try {
       setUnlockingId(messageId);
-      const res = await unlockFn({ data: { messageId, method: "PIX" } });
+      const res = await unlockFn({ data: { messageId, method } });
+      setPendingMsg(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
+        method,
         pixQrCode: res.pixQrCode,
         pixCopyPaste: res.pixCopyPaste,
         invoiceUrl: res.invoiceUrl,
