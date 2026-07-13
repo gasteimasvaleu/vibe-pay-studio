@@ -119,6 +119,7 @@ export type FeedItem = {
   expires_at: string | null;
   published_at: string;
   locked: boolean;
+  audio_url: string | null;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
 };
 
