@@ -1,9 +1,8 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Bell, MessageCircle, Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getFeed } from "@/lib/publications.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
@@ -33,19 +32,12 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const { username } = Route.useRouteContext();
-  const [signingOut, setSigningOut] = useState(false);
   const fetchFeed = useServerFn(getFeed);
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
     queryFn: () => fetchFeed({ data: { limit: 20 } }),
   });
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
@@ -55,43 +47,6 @@ function FeedPage() {
         style={{ background: "var(--gradient-radial)" }}
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
-
-      {/* Top bar */}
-      <header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/30">
-        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
-          <Link to="/feed" className="text-lg font-black tracking-tight">
-            monet<span className="text-gradient-primary">isex</span>
-          </Link>
-          <div className="hidden md:flex flex-1 max-w-md mx-6">
-            <label className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
-              <input
-                type="search"
-                placeholder="Buscar creators, tags, posts..."
-                className="w-full h-10 pl-10 pr-4 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder:text-white/55 outline-none focus:border-white/40 focus:bg-white/15 transition-colors"
-              />
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <IconButton aria-label="Notificações"><Bell className="h-5 w-5" /></IconButton>
-            <IconButton aria-label="Mensagens"><MessageCircle className="h-5 w-5" /></IconButton>
-            <button
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="hidden sm:inline text-xs text-white/75 hover:text-white transition-colors px-3"
-            >
-              {signingOut ? "Saindo..." : "Sair"}
-            </button>
-            <Link
-              to="/dashboard"
-              aria-label="Meu painel"
-              className="h-9 w-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 grid place-items-center font-bold text-sm shadow-lg shadow-purple-500/40 hover:opacity-90 transition-opacity"
-            >
-              {username.slice(0, 1).toUpperCase()}
-            </Link>
-          </div>
-        </div>
-      </header>
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
@@ -148,17 +103,5 @@ function FeedPage() {
           )}
       </main>
     </div>
-  );
-}
-
-
-function IconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...rest}
-      className="h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15 text-white/85 hover:bg-white/15 hover:text-white transition-colors"
-    >
-      {children}
-    </button>
   );
 }
