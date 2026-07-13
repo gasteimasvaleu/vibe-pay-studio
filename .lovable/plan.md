@@ -1,22 +1,26 @@
-## Ajuste
+## Ajustes no CommentsSheet
 
-Trocar o `Dialog` central usado em `CommentsSheet.tsx` pelo componente `Sheet` (`@/components/ui/sheet`) do padrão do app, ancorado na parte inferior — o mesmo padrão já usado em `publisher.tsx`, `banco.tsx`, etc.
+### Problema
+O sheet inferior de comentários está ocupando toda a largura horizontal na versão desktop, e o avatar do usuário logado no rodapé do input está vazio (sem a inicial do nome).
 
-## Mudanças em `src/components/feed/CommentsSheet.tsx`
+### Solução
 
-- Substituir `Dialog` / `DialogContent` por `Sheet` / `SheetContent side="bottom"`.
-- `SheetContent` com `className` que:
-  - Fixa altura ~85vh (`h-[85vh]`).
-  - Cantos superiores arredondados (`rounded-t-3xl`).
-  - `flex flex-col p-0 gap-0` para acomodar header / lista / input.
-- Manter o mesmo layout interno:
-  - Header "Comentários" (o `SheetContent` já traz um botão de fechar padrão do app).
-  - Área rolável com estado vazio ("Ainda não há nenhum comentário / Inicie a conversa.") ou lista.
-  - Barra inferior fixa com avatar + input arredondado + botão enviar.
-- Remover imports não usados (`Dialog`, `DialogContent`).
+1. **Largura do sheet no desktop**
+   - Seguir o padrão dos outros sheets do app (`subscriptions.tsx`, `chat.tsx`, `publisher.tsx`), mas com **480px** em vez de 420px.
+   - Adicionar à `className` do `SheetContent`:
+     ```
+     sm:max-w-[480px] sm:mx-auto sm:left-0 sm:right-0
+     ```
 
-Sem mudanças de backend, sem mudanças em `feed.tsx` ou `PublicationCard.tsx` — a API do componente (`open`, `onOpenChange`, `publicationId`, `commentsDisabled`, `onCountChange`) permanece idêntica.
+2. **Inicial do perfil no avatar do input**
+   - Adicionar prop `currentUserName?: string` ao componente `CommentsSheet`.
+   - Em `feed.tsx`, passar o `username` obtido de `Route.useRouteContext()` para o `CommentsSheet`.
+   - No círculo do avatar do rodapé (linha 136), renderizar a primeira letra de `currentUserName` em maiúsculo, com fallback `"?"`, usando o mesmo estilo dos avatares dos comentários (`bg-primary`, texto branco, fonte bold).
 
-## Arquivos alterados
-
+### Arquivos alterados
 - `src/components/feed/CommentsSheet.tsx`
+- `src/routes/_authenticated/feed.tsx`
+
+### Resultado esperado
+- No desktop, o sheet de comentários fica centralizado com no máximo 480px de largura.
+- O avatar do usuário logado no input de comentário exibe a inicial do nome de perfil quando não houver imagem.
