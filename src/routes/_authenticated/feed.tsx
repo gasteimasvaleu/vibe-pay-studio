@@ -1,11 +1,15 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getFeed } from "@/lib/publications.functions";
+import { getFeed, type FeedItem } from "@/lib/publications.functions";
+import { createUnlockPayment } from "@/lib/payments.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
+import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
@@ -33,11 +37,36 @@ export const Route = createFileRoute("/_authenticated/feed")({
 function FeedPage() {
   const { username } = Route.useRouteContext();
   const fetchFeed = useServerFn(getFeed);
+  const unlock = useServerFn(createUnlockPayment);
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState<string | null>(null);
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
     queryFn: () => fetchFeed({ data: { limit: 20 } }),
   });
+
+  const handleUnlock = async (item: FeedItem) => {
+    if (unlocking) return;
+    setUnlocking(item.id);
+    try {
+      const res = await unlock({
+        data: { publicationId: item.id, method: "PIX" },
+      });
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar pagamento");
+    } finally {
+      setUnlocking(null);
+    }
+  };
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
@@ -74,7 +103,7 @@ function FeedPage() {
           ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
             <div className="space-y-4">
               {feedQuery.data.items.map((item) => (
-                <PublicationCard key={item.id} item={item} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} />
               ))}
             </div>
           ) : (
@@ -102,6 +131,17 @@ function FeedPage() {
             </motion.section>
           )}
       </main>
+
+      <PaymentModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Desbloquear publicação"
+        checkout={checkout}
+        onPaid={() => {
+          toast.success("Pagamento confirmado! Recarregando feed...");
+          feedQuery.refetch();
+        }}
+      />
     </div>
   );
 }
