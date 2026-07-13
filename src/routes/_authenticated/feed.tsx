@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
@@ -9,8 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
+import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
+
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
@@ -37,12 +39,15 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const { username } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
+  const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
@@ -113,7 +118,7 @@ function FeedPage() {
           ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
             <div className="space-y-4">
               {feedQuery.data.items.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} />
               ))}
             </div>
           ) : (
@@ -161,6 +166,32 @@ function FeedPage() {
           feedQuery.refetch();
         }}
       />
+
+      <CommentsSheet
+        publicationId={commentsFor?.id ?? null}
+        commentsDisabled={commentsFor?.comments_disabled}
+        open={!!commentsFor}
+        onOpenChange={(v) => !v && setCommentsFor(null)}
+        onCountChange={(delta) => {
+          const id = commentsFor?.id;
+          if (!id) return;
+          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+            ["feed"],
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    items: prev.items.map((it) =>
+                      it.id === id
+                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                        : it,
+                    ),
+                  }
+                : prev,
+          );
+        }}
+      />
+
     </div>
   );
 }
