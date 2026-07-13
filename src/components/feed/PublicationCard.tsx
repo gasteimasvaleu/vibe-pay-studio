@@ -13,6 +13,7 @@ import {
   Layers,
   Lock,
   MessageCircle,
+  MoreVertical,
   Trophy,
 } from "lucide-react";
 import {
@@ -20,6 +21,20 @@ import {
   toggleBookmark,
   type FeedItem,
 } from "@/lib/publications.functions";
+import { PublicationOptionsSheet } from "./PublicationOptionsSheet";
+
+function formatRelativeTime(iso: string): string {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return "agora";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  const w = Math.floor(d / 7);
+  return `${w}sem`;
+}
 
 const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",
