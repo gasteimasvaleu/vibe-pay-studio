@@ -190,7 +190,10 @@ export function CommentsSheet({
           ) : (
             <ul className="space-y-5">
               {comments.map((c) => {
-                const isMine = currentUserId === c.user_id;
+                const canDelete =
+                  !!currentUserId &&
+                  (currentUserId === c.user_id ||
+                    currentUserId === publicationAuthorId);
                 return (
                   <li key={c.id} className="flex items-start gap-3">
                     <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
