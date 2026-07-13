@@ -839,16 +839,29 @@ function StepCompose({
             </div>
           </SortableContext>
         </DndContext>
+      ) : media.length === 1 && first ? (
+        <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
+          {first.type === "video" ? (
+            <video src={first.previewUrl} className="w-full h-full object-cover" />
+          ) : (
+            <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
+          )}
+        </div>
       ) : (
-        first && (
-          <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
-            {first.type === "video" ? (
-              <video src={first.previewUrl} className="w-full h-full object-cover" />
-            ) : (
-              <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
-            )}
-          </div>
-        )
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+          {media.map((m) => (
+            <div
+              key={m.id}
+              className="shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+            >
+              {m.type === "video" ? (
+                <video src={m.previewUrl} className="w-full h-full object-cover" />
+              ) : (
+                <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+              )}
+            </div>
+          ))}
+        </div>
       )}
 
       <Textarea
