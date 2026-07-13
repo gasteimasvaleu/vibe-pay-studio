@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { listComments, addComment } from "@/lib/publications.functions";
 
 function timeAgo(iso: string): string {
@@ -73,11 +73,15 @@ export function CommentsSheet({
   const comments = query.data ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 gap-0 max-w-lg w-full sm:rounded-3xl overflow-hidden bg-background border-border max-h-[85vh] flex flex-col">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="p-0 gap-0 h-[85vh] rounded-t-3xl bg-background border-border flex flex-col"
+      >
         <header className="px-5 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Comentários</h2>
         </header>
+
 
 
         <div className="flex-1 min-h-[240px] overflow-y-auto px-5 py-6">
@@ -156,7 +160,8 @@ export function CommentsSheet({
             </button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
+
   );
 }
