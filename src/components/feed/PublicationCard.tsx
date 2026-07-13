@@ -13,6 +13,7 @@ import {
   Layers,
   Lock,
   MessageCircle,
+  MoreVertical,
   Trophy,
 } from "lucide-react";
 import {
@@ -20,6 +21,20 @@ import {
   toggleBookmark,
   type FeedItem,
 } from "@/lib/publications.functions";
+import { PublicationOptionsSheet } from "./PublicationOptionsSheet";
+
+function formatRelativeTime(iso: string): string {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return "agora";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  const w = Math.floor(d / 7);
+  return `${w}sem`;
+}
 
 const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -52,6 +67,8 @@ export function PublicationCard({
       };
     });
   };
+
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const likeMutation = useMutation({
     mutationFn: () => likeFn({ data: { publicationId: item.id } }),
@@ -106,7 +123,25 @@ export function PublicationCard({
             fixado
           </span>
         )}
+        <span className="text-xs text-muted-foreground shrink-0">
+          {formatRelativeTime(item.published_at)}
+        </span>
+        <button
+          type="button"
+          aria-label="Mais opções"
+          onClick={() => setOptionsOpen(true)}
+          className="-mr-2 h-9 w-9 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/70"
+        >
+          <MoreVertical className="h-5 w-5" strokeWidth={1.75} />
+        </button>
       </header>
+
+      <PublicationOptionsSheet
+        item={item}
+        open={optionsOpen}
+        onOpenChange={setOptionsOpen}
+        onToggleBookmark={() => bookmarkMutation.mutate()}
+      />
 
       {!item.locked && item.audio_url && (
         <div className="px-4 pb-3">
