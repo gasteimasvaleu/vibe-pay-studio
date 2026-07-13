@@ -636,6 +636,11 @@ function PublisherPage() {
             setMedia={setMedia}
             reorderMode={reorderMode}
             setReorderMode={setReorderMode}
+            audio={audio}
+            onStartAudio={startAudioRecording}
+            onCancelAudio={cancelAudioRecording}
+            onConfirmAudio={confirmAudioRecording}
+            onRemoveAudio={removeAudio}
           />
         )}
       </main>
