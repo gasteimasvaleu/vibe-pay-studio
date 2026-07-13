@@ -57,6 +57,7 @@ import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
 import { Route as AuthenticatedSettingsChatSettingsRouteImport } from './routes/_authenticated/settings.chat-settings'
 import { Route as AuthenticatedSettingsChangePasswordRouteImport } from './routes/_authenticated/settings.change-password'
+import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile.$username'
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
@@ -341,6 +342,12 @@ const AuthenticatedSettingsChangePasswordRoute =
     path: '/settings/change-password',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProfileUsernameRoute =
+  AuthenticatedProfileUsernameRouteImport.update({
+    id: '/profile/$username',
+    path: '/profile/$username',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerfilUsernameRoute =
   AuthenticatedPerfilUsernameRouteImport.update({
     id: '/perfil/$username',
@@ -469,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
@@ -532,6 +540,7 @@ export interface FileRoutesByTo {
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/settings/creator': typeof AuthenticatedSettingsCreatorRoute
@@ -596,6 +605,7 @@ export interface FileRoutesById {
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
+  '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/settings/change-password': typeof AuthenticatedSettingsChangePasswordRoute
   '/_authenticated/settings/chat-settings': typeof AuthenticatedSettingsChatSettingsRoute
   '/_authenticated/settings/creator': typeof AuthenticatedSettingsCreatorRoute
@@ -663,6 +673,7 @@ export interface FileRouteTypes {
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
     | '/perfil/$username'
+    | '/profile/$username'
     | '/settings/change-password'
     | '/settings/chat-settings'
     | '/settings/creator'
@@ -726,6 +737,7 @@ export interface FileRouteTypes {
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
     | '/perfil/$username'
+    | '/profile/$username'
     | '/settings/change-password'
     | '/settings/chat-settings'
     | '/settings/creator'
@@ -789,6 +801,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mywallet/extrato'
     | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
+    | '/_authenticated/profile/$username'
     | '/_authenticated/settings/change-password'
     | '/_authenticated/settings/chat-settings'
     | '/_authenticated/settings/creator'
@@ -1172,6 +1185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile/$username': {
+      id: '/_authenticated/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil/$username': {
       id: '/_authenticated/perfil/$username'
       path: '/perfil/$username'
@@ -1407,6 +1427,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
+  AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
   AuthenticatedSettingsChatSettingsRoute: typeof AuthenticatedSettingsChatSettingsRoute
   AuthenticatedSettingsCreatorRoute: typeof AuthenticatedSettingsCreatorRoute
@@ -1454,6 +1475,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
+  AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedSettingsChangePasswordRoute:
     AuthenticatedSettingsChangePasswordRoute,
   AuthenticatedSettingsChatSettingsRoute:
