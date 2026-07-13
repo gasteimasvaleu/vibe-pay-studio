@@ -15,7 +15,19 @@ type AsaasWebhookPayload = {
     failReason?: string | null;
     description?: string | null;
   };
+  subscription?: {
+    id: string;
+    status?: string;
+    externalReference?: string | null;
+  };
 };
+
+const SUBSCRIPTION_SPLIT_EVENTS = new Set([
+  "SUBSCRIPTION_SPLIT_DISABLED",
+  "SUBSCRIPTION_SPLIT_DIVERGENCE_BLOCK",
+  "SUBSCRIPTION_SPLIT_DIVERGENCE_BLOCK_FINISHED",
+]);
+
 
 type WithdrawalStatus =
   | "requested"
