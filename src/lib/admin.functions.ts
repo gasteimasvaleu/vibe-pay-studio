@@ -266,16 +266,14 @@ export const setKycStatus = createServerFn({ method: "POST" })
       throw new Error("apenas admin pode aprovar/reprovar KYC");
     }
 
-    const update: Record<string, unknown> = {
-      kyc_status: data.status,
-      veriff_session_id: data.veriffSessionId ?? undefined,
-      kyc_rejection_reason: data.status === "rejected" ? data.rejectionReason ?? null : null,
-      kyc_verified_at: data.status === "verified" ? new Date().toISOString() : null,
-    };
-
     const { data: row, error } = await supabase
       .from("profiles")
-      .update(update)
+      .update({
+        kyc_status: data.status,
+        veriff_session_id: data.veriffSessionId ?? undefined,
+        kyc_rejection_reason: data.status === "rejected" ? data.rejectionReason ?? null : null,
+        kyc_verified_at: data.status === "verified" ? new Date().toISOString() : null,
+      })
       .eq("user_id", data.userId)
       .select("user_id, kyc_status, kyc_verified_at")
       .single();
