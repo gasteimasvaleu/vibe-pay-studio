@@ -103,6 +103,18 @@ type MediaItem = {
   error?: string;
 };
 
+type AudioRecording = {
+  status: "idle" | "recording" | "uploading" | "ready" | "error";
+  previewUrl?: string;
+  storagePath?: string;
+  publicUrl?: string;
+  elapsedSec: number;
+  uploadProgress: number;
+  error?: string;
+};
+
+const MAX_AUDIO_SEC = 300;
+
 type Toggles = {
   paid: { enabled: boolean; priceCents: number | null };
   challenge: { enabled: boolean; priceCents: number | null };
