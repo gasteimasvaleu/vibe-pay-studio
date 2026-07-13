@@ -28,6 +28,7 @@ function timeAgo(iso: string): string {
 
 export function CommentsSheet({
   publicationId,
+  publicationAuthorId,
   open,
   onOpenChange,
   onCountChange,
@@ -35,6 +36,7 @@ export function CommentsSheet({
   currentUserName,
 }: {
   publicationId: string | null;
+  publicationAuthorId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCountChange?: (delta: number) => void;
@@ -190,7 +192,10 @@ export function CommentsSheet({
           ) : (
             <ul className="space-y-5">
               {comments.map((c) => {
-                const isMine = currentUserId === c.user_id;
+                const canDelete =
+                  !!currentUserId &&
+                  (currentUserId === c.user_id ||
+                    currentUserId === publicationAuthorId);
                 return (
                   <li key={c.id} className="flex items-start gap-3">
                     <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
@@ -218,7 +223,7 @@ export function CommentsSheet({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      {isMine && (
+                      {canDelete && (
                         <Popover>
                           <PopoverTrigger asChild>
                             <button

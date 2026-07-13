@@ -169,6 +169,7 @@ function FeedPage() {
 
       <CommentsSheet
         publicationId={commentsFor?.id ?? null}
+        publicationAuthorId={commentsFor?.author_id}
         commentsDisabled={commentsFor?.comments_disabled}
         currentUserName={username}
         open={!!commentsFor}
