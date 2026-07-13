@@ -28,6 +28,7 @@ function timeAgo(iso: string): string {
 
 export function CommentsSheet({
   publicationId,
+  publicationAuthorId,
   open,
   onOpenChange,
   onCountChange,
@@ -35,6 +36,7 @@ export function CommentsSheet({
   currentUserName,
 }: {
   publicationId: string | null;
+  publicationAuthorId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCountChange?: (delta: number) => void;
