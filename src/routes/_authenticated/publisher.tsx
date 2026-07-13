@@ -367,9 +367,175 @@ function PublisherPage() {
     if (item) URL.revokeObjectURL(item.previewUrl);
   };
 
+  const stopMediaRecorder = () => {
+    if (audioTimerRef.current !== null) {
+      window.clearInterval(audioTimerRef.current);
+      audioTimerRef.current = null;
+    }
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      try {
+        rec.stop();
+      } catch {
+        // noop
+      }
+    }
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+  };
+
+  const uploadAudioBlob = async (blob: Blob, previewUrl: string) => {
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes.data.session;
+    const userId = session?.user.id;
+    const token = session?.access_token;
+    if (!userId || !token) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      URL.revokeObjectURL(previewUrl);
+      setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+      return;
+    }
+    const id = crypto.randomUUID();
+    const path = `posts/${userId}/drafts/audio-${id}.webm`;
+    const file = new File([blob], `audio-${id}.webm`, {
+      type: blob.type || "audio/webm",
+    });
+    setAudio((a) => ({
+      ...a,
+      status: "uploading",
+      previewUrl,
+      storagePath: path,
+      uploadProgress: 0,
+    }));
+    try {
+      await uploadWithProgress({
+        file,
+        path,
+        token,
+        onProgress: (progress) =>
+          setAudio((a) => ({ ...a, uploadProgress: progress })),
+      });
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+      if (signErr || !signed) throw new Error(signErr?.message ?? "Falha ao gerar URL do áudio");
+      setAudio((a) => ({
+        ...a,
+        status: "ready",
+        previewUrl,
+        storagePath: path,
+        publicUrl: signed.signedUrl,
+        uploadProgress: 100,
+      }));
+    } catch (err) {
+      URL.revokeObjectURL(previewUrl);
+      setAudio({
+        status: "error",
+        elapsedSec: 0,
+        uploadProgress: 0,
+        error: err instanceof Error ? err.message : "Falha no upload do áudio",
+      });
+      toast.error("Falha ao enviar áudio");
+    }
+  };
+
+  const startAudioRecording = async () => {
+    if (audio.status === "recording" || audio.status === "uploading") return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "";
+      const rec = mime
+        ? new MediaRecorder(stream, { mimeType: mime })
+        : new MediaRecorder(stream);
+      mediaRecorderRef.current = rec;
+      audioChunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        const chunks = audioChunksRef.current;
+        audioChunksRef.current = [];
+        if (chunks.length === 0) {
+          setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+          return;
+        }
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        const previewUrl = URL.createObjectURL(blob);
+        void uploadAudioBlob(blob, previewUrl);
+      };
+      rec.start();
+      setAudio({ status: "recording", elapsedSec: 0, uploadProgress: 0 });
+      audioTimerRef.current = window.setInterval(() => {
+        setAudio((a) => {
+          if (a.status !== "recording") return a;
+          const next = a.elapsedSec + 1;
+          if (next >= MAX_AUDIO_SEC) {
+            // hit cap: stop and process
+            stopMediaRecorder();
+            return { ...a, elapsedSec: MAX_AUDIO_SEC };
+          }
+          return { ...a, elapsedSec: next };
+        });
+      }, 1000);
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.name === "NotAllowedError"
+          ? "Permissão de microfone negada"
+          : "Não foi possível acessar o microfone",
+      );
+    }
+  };
+
+  const cancelAudioRecording = () => {
+    // Discard the blob: swap onstop to reset only
+    const rec = mediaRecorderRef.current;
+    if (rec) {
+      rec.onstop = () => {
+        audioChunksRef.current = [];
+        setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+      };
+    }
+    stopMediaRecorder();
+    if (!rec) setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+  };
+
+  const confirmAudioRecording = () => {
+    stopMediaRecorder(); // triggers onstop → upload
+  };
+
+  const removeAudio = async () => {
+    const prev = audio;
+    if (prev.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+    setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+    if (prev.storagePath) {
+      try {
+        await deleteDraft({ data: { storagePath: prev.storagePath } });
+      } catch {
+        // silencioso
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (audioTimerRef.current !== null) {
+        window.clearInterval(audioTimerRef.current);
+      }
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (audio.previewUrl) URL.revokeObjectURL(audio.previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onPost = () => {
     const readyMedia = media.filter((m) => m.status === "ready" && m.storagePath && m.publicUrl);
     if (readyMedia.length === 0) return;
+    if (audio.status === "recording" || audio.status === "uploading") return;
     const visibility: "public" | "paid" | "challenge" = toggles.paid.enabled
       ? "paid"
       : toggles.challenge.enabled
@@ -390,6 +556,10 @@ function PublisherPage() {
           url: m.publicUrl!,
           type: m.type,
         })),
+        audio:
+          audio.status === "ready" && audio.storagePath && audio.publicUrl
+            ? { storagePath: audio.storagePath, url: audio.publicUrl }
+            : null,
       },
     });
   };
