@@ -1,22 +1,16 @@
-## Plano
+## Problema
 
-1. **Corrigir a seleção pela biblioteca**
-   - Ajustar o fluxo do botão “Biblioteca do dispositivo” para fechar a Sheet antes de acionar o input de arquivo, mas ainda preservar o clique do usuário.
-   - Garantir que o arquivo escolhido seja inserido na tela imediatamente com preview local, antes do upload terminar.
+Na tela **"Criando publicação"** (Step 2) só aparece a primeira imagem porque o código renderiza apenas `media[0]` fora do modo reordenar (`publisher.tsx` linha 809/843-851).
 
-2. **Adicionar progresso de upload**
-   - Criar um estado de progresso por mídia (`0–100%`).
-   - Exibir uma barra de progresso sobre cada imagem/vídeo enquanto está enviando.
-   - Mostrar também progresso agregado no rodapé quando houver uploads ativos.
+## Correção
 
-3. **Trocar o upload para permitir progresso real**
-   - Substituir o upload atual do Supabase Storage SDK por uma requisição `XMLHttpRequest` autenticada para o endpoint do Storage.
-   - Isso permite capturar `upload.onprogress`, algo que o método atual `.upload()` não expõe no browser.
-   - Manter o bucket privado `publications` e continuar gerando signed URL após o upload.
+Substituir o preview único por uma **tira horizontal de miniaturas** com todas as mídias enviadas (mantendo a proporção 3/4 já usada), assim as 2+ imagens do Step 1 aparecem no Step 2.
 
-4. **Melhorar tratamento de erro**
-   - Se o upload falhar, manter o card visível com estado de falha e mensagem.
-   - Se a signed URL falhar, marcar a mídia como erro em vez de sumir silenciosamente.
+- Se houver 1 mídia: mostrar o preview grande atual (comportamento inalterado).
+- Se houver 2+: renderizar um scroll horizontal (`flex gap-2 overflow-x-auto`) com cada item em `w-32 aspect-[3/4] rounded-2xl`, primeira imagem em destaque.
+- Vídeos continuam usando `<video>`, imagens usam `<img>` com `object-cover`.
+- Modo reordenar (grid 3 colunas com DnD) permanece igual.
 
-5. **Verificação**
-   - Testar o caminho `/publisher`: abrir seletor, escolher imagem, confirmar preview imediato, barra de progresso e estado pronto após envio.
+Arquivo alterado: `src/routes/_authenticated/publisher.tsx` (bloco do `StepCompose`, linhas ~843-852).
+
+Nenhuma mudança em upload, estado ou backend.
