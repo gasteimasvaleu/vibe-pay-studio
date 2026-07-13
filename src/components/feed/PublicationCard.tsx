@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import {
   AudioLines,
   Bookmark,
@@ -22,6 +21,7 @@ import {
   type FeedItem,
 } from "@/lib/publications.functions";
 import { PublicationOptionsMenu } from "./PublicationOptionsMenu";
+import { showTopBanner } from "@/components/ui/top-banner";
 
 function formatRelativeTime(iso: string): string {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -84,7 +84,7 @@ export function PublicationCard({
     },
     onError: (e: unknown) => {
       patchItem({ liked_by_me: item.liked_by_me, like_count: item.like_count });
-      toast.error(e instanceof Error ? e.message : "Erro ao curtir");
+      showTopBanner(e instanceof Error ? e.message : "Erro ao curtir");
     },
   });
 
@@ -95,11 +95,11 @@ export function PublicationCard({
     },
     onSuccess: (res) => {
       patchItem({ saved_by_me: res.saved });
-      toast.success(res.saved ? "Post favoritado" : "Removido dos favoritos");
+      showTopBanner(res.saved ? "Post favoritado" : "Post removido dos favoritos");
     },
     onError: (e: unknown) => {
       patchItem({ saved_by_me: item.saved_by_me });
-      toast.error(e instanceof Error ? e.message : "Erro ao favoritar");
+      showTopBanner(e instanceof Error ? e.message : "Erro ao favoritar");
     },
   });
 
