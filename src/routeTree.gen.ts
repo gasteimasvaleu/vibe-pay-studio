@@ -26,6 +26,7 @@ import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedEmAltaRouteImport } from './routes/_authenticated/em-alta'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCriarPerfilGratuitoRouteImport } from './routes/_authenticated/criar-perfil-gratuito'
 import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
 import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
@@ -159,6 +160,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCriarPerfilGratuitoRoute =
+  AuthenticatedCriarPerfilGratuitoRouteImport.update({
+    id: '/criar-perfil-gratuito',
+    path: '/criar-perfil-gratuito',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentLeakReportRoute =
   AuthenticatedContentLeakReportRouteImport.update({
     id: '/content-leak-report',
@@ -445,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -508,6 +516,7 @@ export interface FileRoutesByTo {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -570,6 +579,7 @@ export interface FileRoutesById {
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/_authenticated/colecoes': typeof AuthenticatedColecoesRoute
   '/_authenticated/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/_authenticated/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/em-alta': typeof AuthenticatedEmAltaRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/colecoes'
     | '/content-leak-report'
+    | '/criar-perfil-gratuito'
     | '/dashboard'
     | '/em-alta'
     | '/feed'
@@ -699,6 +710,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/colecoes'
     | '/content-leak-report'
+    | '/criar-perfil-gratuito'
     | '/dashboard'
     | '/em-alta'
     | '/feed'
@@ -760,6 +772,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat-configuracoes'
     | '/_authenticated/colecoes'
     | '/_authenticated/content-leak-report'
+    | '/_authenticated/criar-perfil-gratuito'
     | '/_authenticated/dashboard'
     | '/_authenticated/em-alta'
     | '/_authenticated/feed'
@@ -940,6 +953,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/criar-perfil-gratuito': {
+      id: '/_authenticated/criar-perfil-gratuito'
+      path: '/criar-perfil-gratuito'
+      fullPath: '/criar-perfil-gratuito'
+      preLoaderRoute: typeof AuthenticatedCriarPerfilGratuitoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/content-leak-report': {
@@ -1374,6 +1394,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
   AuthenticatedColecoesRoute: typeof AuthenticatedColecoesRoute
   AuthenticatedContentLeakReportRoute: typeof AuthenticatedContentLeakReportRoute
+  AuthenticatedCriarPerfilGratuitoRoute: typeof AuthenticatedCriarPerfilGratuitoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmAltaRoute: typeof AuthenticatedEmAltaRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -1420,6 +1441,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
   AuthenticatedColecoesRoute: AuthenticatedColecoesRoute,
   AuthenticatedContentLeakReportRoute: AuthenticatedContentLeakReportRoute,
+  AuthenticatedCriarPerfilGratuitoRoute: AuthenticatedCriarPerfilGratuitoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmAltaRoute: AuthenticatedEmAltaRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
