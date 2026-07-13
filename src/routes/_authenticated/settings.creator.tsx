@@ -6,6 +6,7 @@ import {
   DollarSign,
   EyeOff,
   Globe,
+  Link2,
   MessageCircle,
   Contrast,
   Shield,
@@ -28,21 +29,25 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
     if (!userData.user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, account_type")
       .eq("user_id", userData.user.id)
       .maybeSingle();
     const username =
       profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
-    return { username };
+    const accountType = (profile?.account_type ?? "subscriber") as
+      | "subscriber"
+      | "creator";
+    return { username, accountType };
   },
   component: SettingsCreatorPage,
 });
 
 function SettingsCreatorPage() {
   const router = useRouter();
-  const { username } = Route.useRouteContext();
+  const { username, accountType } = Route.useRouteContext();
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+  const isSubscriber = accountType !== "creator";
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,55 +85,92 @@ function SettingsCreatorPage() {
             <p className="text-sm text-muted-foreground truncate">
               @{username}
             </p>
+            {isSubscriber && (
+              <p className="text-sm font-semibold text-orange-500 mt-0.5">
+                Perfil Grátis
+              </p>
+            )}
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </Link>
 
-        <SettingsGroup title="Perfil">
-          <SettingsRow
-            icon={<DollarSign className="h-5 w-5" />}
-            label="Assinatura"
-            to="/settings/subscription"
-          />
-          <SettingsRow
-            icon={<User className="h-5 w-5" />}
-            label="Dados Pessoais"
-            to="/settings/personal"
-          />
-        </SettingsGroup>
+        {isSubscriber ? (
+          <>
+            <SettingsGroup title="Geral">
+              <SettingsRow
+                icon={<EyeOff className="h-5 w-5" />}
+                label="Privacidade"
+                to="/settings/privacy"
+              />
+              <SettingsRow
+                icon={<Link2 className="h-5 w-5" />}
+                label="Link de indicação"
+              />
+              <SettingsRow
+                icon={<MessageCircle className="h-5 w-5" />}
+                label="Configuração do chat"
+                to="/settings/chat-settings"
+              />
+              <SettingsRow
+                icon={<UserX className="h-5 w-5" />}
+                label="Assinantes restritos"
+                to="/settings/restrictions"
+              />
+            </SettingsGroup>
 
-        <SettingsGroup title="Geral">
-          <SettingsRow
-            icon={<Shield className="h-5 w-5" />}
-            label="Segurança"
-            to="/settings/security-menu"
-          />
-          <SettingsRow
-            icon={<EyeOff className="h-5 w-5" />}
-            label="Privacidade"
-            to="/settings/privacy"
-          />
-          <SettingsRow
-            icon={<MessageCircle className="h-5 w-5" />}
-            label="Configuração do chat"
-            to="/settings/chat-settings"
-          />
-          <SettingsRow
-            icon={<UserX className="h-5 w-5" />}
-            label="Assinantes restritos"
-            to="/settings/restrictions"
-          />
-          <SettingsRow
-            icon={<Contrast className="h-5 w-5" />}
-            label="Tema"
-            to="/settings/theme"
-          />
-          <SettingsRow
-            icon={<Globe className="h-5 w-5" />}
-            label="Idioma"
-            to="/settings/language"
-          />
-        </SettingsGroup>
+            <div className="rounded-2xl bg-orange-50 border border-orange-100 px-5 py-4 text-center text-sm text-foreground">
+              Outras personalizações do menu estão disponíveis apenas no perfil pago.
+            </div>
+          </>
+        ) : (
+          <>
+            <SettingsGroup title="Perfil">
+              <SettingsRow
+                icon={<DollarSign className="h-5 w-5" />}
+                label="Assinatura"
+                to="/settings/subscription"
+              />
+              <SettingsRow
+                icon={<User className="h-5 w-5" />}
+                label="Dados Pessoais"
+                to="/settings/personal"
+              />
+            </SettingsGroup>
+
+            <SettingsGroup title="Geral">
+              <SettingsRow
+                icon={<Shield className="h-5 w-5" />}
+                label="Segurança"
+                to="/settings/security-menu"
+              />
+              <SettingsRow
+                icon={<EyeOff className="h-5 w-5" />}
+                label="Privacidade"
+                to="/settings/privacy"
+              />
+              <SettingsRow
+                icon={<MessageCircle className="h-5 w-5" />}
+                label="Configuração do chat"
+                to="/settings/chat-settings"
+              />
+              <SettingsRow
+                icon={<UserX className="h-5 w-5" />}
+                label="Assinantes restritos"
+                to="/settings/restrictions"
+              />
+              <SettingsRow
+                icon={<Contrast className="h-5 w-5" />}
+                label="Tema"
+                to="/settings/theme"
+              />
+              <SettingsRow
+                icon={<Globe className="h-5 w-5" />}
+                label="Idioma"
+                to="/settings/language"
+              />
+            </SettingsGroup>
+          </>
+        )}
       </main>
     </div>
   );
