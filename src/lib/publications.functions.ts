@@ -89,7 +89,7 @@ export const deleteDraftMedia = createServerFn({ method: "POST" })
       throw new Error("Forbidden");
     }
     const { error } = await context.supabase.storage
-      .from("criativos")
+      .from("publications")
       .remove([data.storagePath]);
     if (error) throw new Error(error.message);
     return { ok: true as const };

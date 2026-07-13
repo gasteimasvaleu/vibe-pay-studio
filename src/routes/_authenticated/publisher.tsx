@@ -77,7 +77,9 @@ export const Route = createFileRoute("/_authenticated/publisher")({
   component: PublisherPage,
 });
 
-const BUCKET = "criativos";
+const BUCKET = "publications";
+// Signed URL de longa duração (1 ano) — bucket é privado.
+const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
 const MAX_MEDIA = 10;
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
@@ -153,8 +155,10 @@ function PublisherPage() {
 
   const openPicker = () => setPickerOpen(true);
   const triggerFileInput = () => {
+    // IMPORTANTE: clicar sincronamente para preservar o user-gesture,
+    // senão navegadores bloqueiam a abertura do diálogo de arquivos.
+    fileInputRef.current?.click();
     setPickerOpen(false);
-    setTimeout(() => fileInputRef.current?.click(), 100);
   };
 
   const onFiles = async (files: FileList | null) => {
@@ -194,7 +198,7 @@ function PublisherPage() {
       void supabase.storage
         .from(BUCKET)
         .upload(path, file, { upsert: false, contentType: file.type })
-        .then(({ error }) => {
+        .then(async ({ error }) => {
           if (error) {
             setMedia((prev) =>
               prev.map((m) =>
@@ -206,9 +210,20 @@ function PublisherPage() {
             toast.error(`Falha ao enviar ${file.name}`);
             return;
           }
-          const { data: pub } = supabase.storage
+          const { data: signed, error: signErr } = await supabase.storage
             .from(BUCKET)
-            .getPublicUrl(path);
+            .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+          if (signErr || !signed) {
+            setMedia((prev) =>
+              prev.map((m) =>
+                m.id === id
+                  ? { ...m, status: "error", error: signErr?.message ?? "signed url" }
+                  : m,
+              ),
+            );
+            toast.error(`Falha ao gerar URL de ${file.name}`);
+            return;
+          }
           setMedia((prev) =>
             prev.map((m) =>
               m.id === id
@@ -216,7 +231,7 @@ function PublisherPage() {
                     ...m,
                     status: "ready",
                     storagePath: path,
-                    publicUrl: pub.publicUrl,
+                    publicUrl: signed.signedUrl,
                   }
                 : m,
             ),
