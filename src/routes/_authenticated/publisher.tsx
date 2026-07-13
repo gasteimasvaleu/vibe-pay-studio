@@ -116,6 +116,12 @@ type AudioRecording = {
 
 const MAX_AUDIO_SEC = 300;
 
+function formatAudioTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
 type Toggles = {
   paid: { enabled: boolean; priceCents: number | null };
   challenge: { enabled: boolean; priceCents: number | null };
