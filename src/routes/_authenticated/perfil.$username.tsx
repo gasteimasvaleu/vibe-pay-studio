@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
+import { TipDialog } from "@/components/payments/TipDialog";
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
   head: ({ params }) => ({
