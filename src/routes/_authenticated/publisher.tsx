@@ -230,8 +230,9 @@ function PublisherPage() {
             media.length,
         )
       : 0;
+  const audioBusy = audio.status === "recording" || audio.status === "uploading";
   const canContinue =
-    media.length > 0 && uploadingCount === 0 && errorCount === 0;
+    media.length > 0 && uploadingCount === 0 && errorCount === 0 && !audioBusy;
 
   const goBack = () => {
     if (step === 2) return setStep(1);
