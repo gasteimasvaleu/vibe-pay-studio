@@ -21,6 +21,7 @@ import {
   Mic,
   Pin,
   Plus,
+  Trash2,
   Wallet,
   X,
 } from "lucide-react";
@@ -103,6 +104,24 @@ type MediaItem = {
   error?: string;
 };
 
+type AudioRecording = {
+  status: "idle" | "recording" | "uploading" | "ready" | "error";
+  previewUrl?: string;
+  storagePath?: string;
+  publicUrl?: string;
+  elapsedSec: number;
+  uploadProgress: number;
+  error?: string;
+};
+
+const MAX_AUDIO_SEC = 300;
+
+function formatAudioTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
 type Toggles = {
   paid: { enabled: boolean; priceCents: number | null };
   challenge: { enabled: boolean; priceCents: number | null };
@@ -181,6 +200,15 @@ function PublisherPage() {
     pinnedToTop: false,
   });
   const [reorderMode, setReorderMode] = useState(false);
+  const [audio, setAudio] = useState<AudioRecording>({
+    status: "idle",
+    elapsedSec: 0,
+    uploadProgress: 0,
+  });
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [paidOpen, setPaidOpen] = useState(false);
@@ -209,8 +237,9 @@ function PublisherPage() {
             media.length,
         )
       : 0;
+  const audioBusy = audio.status === "recording" || audio.status === "uploading";
   const canContinue =
-    media.length > 0 && uploadingCount === 0 && errorCount === 0;
+    media.length > 0 && uploadingCount === 0 && errorCount === 0 && !audioBusy;
 
   const goBack = () => {
     if (step === 2) return setStep(1);
@@ -346,9 +375,175 @@ function PublisherPage() {
     if (item) URL.revokeObjectURL(item.previewUrl);
   };
 
+  const stopMediaRecorder = () => {
+    if (audioTimerRef.current !== null) {
+      window.clearInterval(audioTimerRef.current);
+      audioTimerRef.current = null;
+    }
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      try {
+        rec.stop();
+      } catch {
+        // noop
+      }
+    }
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+  };
+
+  const uploadAudioBlob = async (blob: Blob, previewUrl: string) => {
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes.data.session;
+    const userId = session?.user.id;
+    const token = session?.access_token;
+    if (!userId || !token) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      URL.revokeObjectURL(previewUrl);
+      setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+      return;
+    }
+    const id = crypto.randomUUID();
+    const path = `posts/${userId}/drafts/audio-${id}.webm`;
+    const file = new File([blob], `audio-${id}.webm`, {
+      type: blob.type || "audio/webm",
+    });
+    setAudio((a) => ({
+      ...a,
+      status: "uploading",
+      previewUrl,
+      storagePath: path,
+      uploadProgress: 0,
+    }));
+    try {
+      await uploadWithProgress({
+        file,
+        path,
+        token,
+        onProgress: (progress) =>
+          setAudio((a) => ({ ...a, uploadProgress: progress })),
+      });
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+      if (signErr || !signed) throw new Error(signErr?.message ?? "Falha ao gerar URL do áudio");
+      setAudio((a) => ({
+        ...a,
+        status: "ready",
+        previewUrl,
+        storagePath: path,
+        publicUrl: signed.signedUrl,
+        uploadProgress: 100,
+      }));
+    } catch (err) {
+      URL.revokeObjectURL(previewUrl);
+      setAudio({
+        status: "error",
+        elapsedSec: 0,
+        uploadProgress: 0,
+        error: err instanceof Error ? err.message : "Falha no upload do áudio",
+      });
+      toast.error("Falha ao enviar áudio");
+    }
+  };
+
+  const startAudioRecording = async () => {
+    if (audio.status === "recording" || audio.status === "uploading") return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "";
+      const rec = mime
+        ? new MediaRecorder(stream, { mimeType: mime })
+        : new MediaRecorder(stream);
+      mediaRecorderRef.current = rec;
+      audioChunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        const chunks = audioChunksRef.current;
+        audioChunksRef.current = [];
+        if (chunks.length === 0) {
+          setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+          return;
+        }
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        const previewUrl = URL.createObjectURL(blob);
+        void uploadAudioBlob(blob, previewUrl);
+      };
+      rec.start();
+      setAudio({ status: "recording", elapsedSec: 0, uploadProgress: 0 });
+      audioTimerRef.current = window.setInterval(() => {
+        setAudio((a) => {
+          if (a.status !== "recording") return a;
+          const next = a.elapsedSec + 1;
+          if (next >= MAX_AUDIO_SEC) {
+            // hit cap: stop and process
+            stopMediaRecorder();
+            return { ...a, elapsedSec: MAX_AUDIO_SEC };
+          }
+          return { ...a, elapsedSec: next };
+        });
+      }, 1000);
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.name === "NotAllowedError"
+          ? "Permissão de microfone negada"
+          : "Não foi possível acessar o microfone",
+      );
+    }
+  };
+
+  const cancelAudioRecording = () => {
+    // Discard the blob: swap onstop to reset only
+    const rec = mediaRecorderRef.current;
+    if (rec) {
+      rec.onstop = () => {
+        audioChunksRef.current = [];
+        setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+      };
+    }
+    stopMediaRecorder();
+    if (!rec) setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+  };
+
+  const confirmAudioRecording = () => {
+    stopMediaRecorder(); // triggers onstop → upload
+  };
+
+  const removeAudio = async () => {
+    const prev = audio;
+    if (prev.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+    setAudio({ status: "idle", elapsedSec: 0, uploadProgress: 0 });
+    if (prev.storagePath) {
+      try {
+        await deleteDraft({ data: { storagePath: prev.storagePath } });
+      } catch {
+        // silencioso
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (audioTimerRef.current !== null) {
+        window.clearInterval(audioTimerRef.current);
+      }
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (audio.previewUrl) URL.revokeObjectURL(audio.previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onPost = () => {
     const readyMedia = media.filter((m) => m.status === "ready" && m.storagePath && m.publicUrl);
     if (readyMedia.length === 0) return;
+    if (audio.status === "recording" || audio.status === "uploading") return;
     const visibility: "public" | "paid" | "challenge" = toggles.paid.enabled
       ? "paid"
       : toggles.challenge.enabled
@@ -369,6 +564,10 @@ function PublisherPage() {
           url: m.publicUrl!,
           type: m.type,
         })),
+        audio:
+          audio.status === "ready" && audio.storagePath && audio.publicUrl
+            ? { storagePath: audio.storagePath, url: audio.publicUrl }
+            : null,
       },
     });
   };
@@ -444,6 +643,11 @@ function PublisherPage() {
             setMedia={setMedia}
             reorderMode={reorderMode}
             setReorderMode={setReorderMode}
+            audio={audio}
+            onStartAudio={startAudioRecording}
+            onCancelAudio={cancelAudioRecording}
+            onConfirmAudio={confirmAudioRecording}
+            onRemoveAudio={removeAudio}
           />
         )}
       </main>
@@ -793,6 +997,11 @@ function StepCompose({
   setMedia,
   reorderMode,
   setReorderMode,
+  audio,
+  onStartAudio,
+  onCancelAudio,
+  onConfirmAudio,
+  onRemoveAudio,
 }: {
   media: MediaItem[];
   caption: string;
@@ -805,6 +1014,11 @@ function StepCompose({
   setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>;
   reorderMode: boolean;
   setReorderMode: (v: boolean) => void;
+  audio: AudioRecording;
+  onStartAudio: () => void;
+  onCancelAudio: () => void;
+  onConfirmAudio: () => void;
+  onRemoveAudio: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
@@ -871,29 +1085,97 @@ function StepCompose({
         className="min-h-32 bg-muted/60 border-border resize-none"
       />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-12 rounded-full bg-card">
-          <Mic className="h-4 w-4 mr-2" />
-          Gravar áudio
-        </Button>
-        <Button
-          variant={reorderMode ? "default" : "outline"}
-          disabled={media.length < 2}
-          onClick={() => setReorderMode(!reorderMode)}
-          className="h-12 rounded-full"
-        >
-          {reorderMode ? (
-            <>
-              <Check className="h-4 w-4 mr-2" />
-              Concluir
-            </>
-          ) : (
-            <>
-              <ArrowLeftRight className="h-4 w-4 mr-2" />
-              Reordenar
-            </>
-          )}
-        </Button>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            onClick={onStartAudio}
+            disabled={audio.status !== "idle" && audio.status !== "error"}
+            className="h-12 rounded-full bg-card"
+          >
+            <Mic className="h-4 w-4 mr-2" />
+            Gravar áudio
+          </Button>
+          <Button
+            variant={reorderMode ? "default" : "outline"}
+            disabled={media.length < 2}
+            onClick={() => setReorderMode(!reorderMode)}
+            className="h-12 rounded-full"
+          >
+            {reorderMode ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Concluir
+              </>
+            ) : (
+              <>
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                Reordenar
+              </>
+            )}
+          </Button>
+        </div>
+
+        {audio.status === "recording" && (
+          <div className="flex items-center justify-between gap-3 h-12 pl-4 pr-2 rounded-full bg-muted/60">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+              <span className="tabular-nums">{formatAudioTime(audio.elapsedSec)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Cancelar gravação"
+                onClick={onCancelAudio}
+                className="h-9 w-9 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Confirmar gravação"
+                onClick={onConfirmAudio}
+                className="h-9 w-9 rounded-full bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 flex items-center justify-center transition-colors"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {audio.status === "uploading" && (
+          <div className="space-y-1.5 px-4 py-2 rounded-2xl bg-muted/60">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Enviando áudio
+              </span>
+              <span>{audio.uploadProgress}%</span>
+            </div>
+            <Progress value={audio.uploadProgress} className="h-1.5" />
+          </div>
+        )}
+
+        {audio.status === "ready" && audio.previewUrl && (
+          <div className="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full bg-muted/60">
+            <audio src={audio.previewUrl} controls className="flex-1 h-9" />
+            <button
+              type="button"
+              aria-label="Remover áudio"
+              onClick={onRemoveAudio}
+              className="h-9 w-9 shrink-0 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {audio.status === "error" && audio.error && (
+          <p className="text-xs text-red-500 px-2">{audio.error}</p>
+        )}
       </div>
 
       <Separator />

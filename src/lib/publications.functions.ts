@@ -8,6 +8,14 @@ const mediaItemSchema = z.object({
   type: z.enum(["image", "video"]),
 });
 
+const audioSchema = z
+  .object({
+    storagePath: z.string().min(1),
+    url: z.string().url(),
+  })
+  .nullable()
+  .optional();
+
 const createPublicationSchema = z.object({
   caption: z.string().max(2000).optional().nullable(),
   visibility: z.enum(["public", "paid", "challenge"]),
@@ -18,6 +26,7 @@ const createPublicationSchema = z.object({
   commentsDisabled: z.boolean(),
   pinned: z.boolean(),
   media: z.array(mediaItemSchema).min(1).max(10),
+  audio: audioSchema,
 });
 
 export const createPublication = createServerFn({ method: "POST" })
@@ -46,6 +55,8 @@ export const createPublication = createServerFn({ method: "POST" })
         comments_disabled: data.commentsDisabled,
         pinned: data.pinned,
         published_at: publishedAt.toISOString(),
+        audio_url: data.audio?.url ?? null,
+        audio_storage_path: data.audio?.storagePath ?? null,
       })
       .select("id")
       .single();
@@ -108,6 +119,7 @@ export type FeedItem = {
   expires_at: string | null;
   published_at: string;
   locked: boolean;
+  audio_url: string | null;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
 };
 
@@ -127,7 +139,7 @@ export const getFeed = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at",
+        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url",
       )
       .lte("published_at", new Date().toISOString())
       .order("pinned", { ascending: false })
@@ -195,6 +207,7 @@ export const getFeed = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
+        audio_url: (p as { audio_url: string | null }).audio_url ?? null,
         // Se houver media retornada (autor ou usuário desbloqueado), mostra;
         // senão devolve array vazio p/ o card renderizar o estado bloqueado.
         media: isLocked && media.length === 0 ? [] : media,

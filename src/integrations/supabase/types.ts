@@ -547,6 +547,8 @@ export type Database = {
       }
       publications: {
         Row: {
+          audio_storage_path: string | null
+          audio_url: string | null
           author_id: string
           caption: string | null
           challenge_cents: number | null
@@ -564,6 +566,8 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          audio_storage_path?: string | null
+          audio_url?: string | null
           author_id: string
           caption?: string | null
           challenge_cents?: number | null
@@ -581,6 +585,8 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          audio_storage_path?: string | null
+          audio_url?: string | null
           author_id?: string
           caption?: string | null
           challenge_cents?: number | null
