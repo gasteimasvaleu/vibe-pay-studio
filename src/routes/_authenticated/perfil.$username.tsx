@@ -373,7 +373,7 @@ function ProfilePostCard({
             <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
           </IconAction>
           <IconAction label="Comentar"><MessageCircle className="h-5 w-5" /></IconAction>
-          <IconAction label="Enviar gorjeta"><DollarSign className="h-5 w-5" /></IconAction>
+          <IconAction label="Enviar gorjeta" onClick={onTip}><DollarSign className="h-5 w-5" /></IconAction>
         </div>
         <IconAction
           active={saved}
