@@ -198,7 +198,7 @@ function PublisherPage() {
       void supabase.storage
         .from(BUCKET)
         .upload(path, file, { upsert: false, contentType: file.type })
-        .then(({ error }) => {
+        .then(async ({ error }) => {
           if (error) {
             setMedia((prev) =>
               prev.map((m) =>
@@ -210,9 +210,20 @@ function PublisherPage() {
             toast.error(`Falha ao enviar ${file.name}`);
             return;
           }
-          const { data: pub } = supabase.storage
+          const { data: signed, error: signErr } = await supabase.storage
             .from(BUCKET)
-            .getPublicUrl(path);
+            .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+          if (signErr || !signed) {
+            setMedia((prev) =>
+              prev.map((m) =>
+                m.id === id
+                  ? { ...m, status: "error", error: signErr?.message ?? "signed url" }
+                  : m,
+              ),
+            );
+            toast.error(`Falha ao gerar URL de ${file.name}`);
+            return;
+          }
           setMedia((prev) =>
             prev.map((m) =>
               m.id === id
@@ -220,7 +231,7 @@ function PublisherPage() {
                     ...m,
                     status: "ready",
                     storagePath: path,
-                    publicUrl: pub.publicUrl,
+                    publicUrl: signed.signedUrl,
                   }
                 : m,
             ),
