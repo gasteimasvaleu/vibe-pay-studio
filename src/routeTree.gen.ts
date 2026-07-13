@@ -24,6 +24,7 @@ import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
 import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedEmAltaRouteImport } from './routes/_authenticated/em-alta'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
 import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
@@ -146,6 +147,11 @@ const AuthenticatedFollowRoute = AuthenticatedFollowRouteImport.update({
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEmAltaRoute = AuthenticatedEmAltaRouteImport.update({
+  id: '/em-alta',
+  path: '/em-alta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -440,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -502,6 +509,7 @@ export interface FileRoutesByTo {
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -563,6 +571,7 @@ export interface FileRoutesById {
   '/_authenticated/colecoes': typeof AuthenticatedColecoesRoute
   '/_authenticated/content-leak-report': typeof AuthenticatedContentLeakReportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/em-alta': typeof AuthenticatedEmAltaRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/follow': typeof AuthenticatedFollowRoute
   '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -628,6 +637,7 @@ export interface FileRouteTypes {
     | '/colecoes'
     | '/content-leak-report'
     | '/dashboard'
+    | '/em-alta'
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/colecoes'
     | '/content-leak-report'
     | '/dashboard'
+    | '/em-alta'
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
@@ -750,6 +761,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colecoes'
     | '/_authenticated/content-leak-report'
     | '/_authenticated/dashboard'
+    | '/_authenticated/em-alta'
     | '/_authenticated/feed'
     | '/_authenticated/follow'
     | '/_authenticated/my-monetisex-stats'
@@ -914,6 +926,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/em-alta': {
+      id: '/_authenticated/em-alta'
+      path: '/em-alta'
+      fullPath: '/em-alta'
+      preLoaderRoute: typeof AuthenticatedEmAltaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1356,6 +1375,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedColecoesRoute: typeof AuthenticatedColecoesRoute
   AuthenticatedContentLeakReportRoute: typeof AuthenticatedContentLeakReportRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEmAltaRoute: typeof AuthenticatedEmAltaRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedFollowRoute: typeof AuthenticatedFollowRoute
   AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
@@ -1401,6 +1421,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedColecoesRoute: AuthenticatedColecoesRoute,
   AuthenticatedContentLeakReportRoute: AuthenticatedContentLeakReportRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEmAltaRoute: AuthenticatedEmAltaRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedFollowRoute: AuthenticatedFollowRoute,
   AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
@@ -1462,13 +1483,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
