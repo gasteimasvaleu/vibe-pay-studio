@@ -207,6 +207,7 @@ export const getFeed = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
+        audio_url: (p as { audio_url: string | null }).audio_url ?? null,
         // Se houver media retornada (autor ou usuário desbloqueado), mostra;
         // senão devolve array vazio p/ o card renderizar o estado bloqueado.
         media: isLocked && media.length === 0 ? [] : media,
