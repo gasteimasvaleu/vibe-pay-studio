@@ -47,7 +47,7 @@ function LanguagePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="relative z-10 border-b border-border backdrop-blur-md bg-card/80">
+      <header className="relative z-10 border-b border-border bg-white">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
