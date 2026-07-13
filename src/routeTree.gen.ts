@@ -66,6 +66,7 @@ import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authe
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
+import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
 import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
@@ -396,6 +397,11 @@ const ApiPublicWebhooksVeriffDecisionRoute =
     path: '/api/public/webhooks/veriff-decision',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
+  id: '/api/public/webhooks/asaas',
+  path: '/api/public/webhooks/asaas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsTwoFactorSetupRoute =
   AuthenticatedSettingsTwoFactorSetupRouteImport.update({
     id: '/setup',
@@ -504,6 +510,7 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
@@ -565,6 +572,7 @@ export interface FileRoutesByTo {
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorIndexRoute
@@ -633,6 +641,7 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/_authenticated/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/_authenticated/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
@@ -701,6 +710,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
+    | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management/'
     | '/settings/two-factor/'
@@ -762,6 +772,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
+    | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management'
     | '/settings/two-factor'
@@ -829,6 +840,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/redes-sociais'
     | '/_authenticated/settings/device-management/removed'
     | '/_authenticated/settings/two-factor/setup'
+    | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/settings/device-management/'
     | '/_authenticated/settings/two-factor/'
@@ -844,6 +856,7 @@ export interface RootRouteChildren {
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
+  ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
 }
 
@@ -1248,6 +1261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/asaas': {
+      id: '/api/public/webhooks/asaas'
+      path: '/api/public/webhooks/asaas'
+      fullPath: '/api/public/webhooks/asaas'
+      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/two-factor/setup': {
       id: '/_authenticated/settings/two-factor/setup'
       path: '/setup'
@@ -1522,6 +1542,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
+  ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
 }
 export const routeTree = rootRouteImport
