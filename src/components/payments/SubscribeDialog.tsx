@@ -6,6 +6,9 @@ import { Loader2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/payments/PixCheckout";
+import { CardCheckout } from "@/components/payments/CardCheckout";
+import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
+import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
 
@@ -22,13 +25,15 @@ type Props = {
 
 type Checkout = {
   paymentIntentId: string;
-  pixQrCode: string;
-  pixCopyPaste: string;
+  method: PaymentMethod;
+  pixQrCode?: string | null;
+  pixCopyPaste?: string | null;
   invoiceUrl?: string | null;
 };
 
 export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
+  const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
@@ -51,6 +56,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
     if (!open) {
       setCheckout(null);
       setPlan("monthly");
+      setMethod("PIX");
     }
   }, [open]);
 
@@ -76,11 +82,17 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
     setLoading(true);
     try {
       const res = await subscribe({
-        data: { creatorId, plan, method: "PIX" },
+        data: { creatorId, plan, method },
       });
-      if (!res.pixQrCode || !res.pixCopyPaste) throw new Error("Falha ao gerar PIX");
+      if (method === "PIX" && (!res.pixQrCode || !res.pixCopyPaste)) {
+        throw new Error("Falha ao gerar PIX");
+      }
+      if (method === "CREDIT_CARD" && !res.invoiceUrl) {
+        throw new Error("Falha ao abrir checkout de cartão");
+      }
       setCheckout({
         paymentIntentId: res.paymentIntentId,
+        method,
         pixQrCode: res.pixQrCode,
         pixCopyPaste: res.pixCopyPaste,
         invoiceUrl: res.invoiceUrl,
@@ -97,27 +109,39 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
       <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
         <DialogTitle className="sr-only">Assinar criador</DialogTitle>
         <DialogDescription className="sr-only">
-          Escolha o plano de assinatura e pague via PIX
+          Escolha o plano de assinatura e a forma de pagamento
         </DialogDescription>
         {checkout ? (
-          <PixCheckout
-            paymentIntentId={checkout.paymentIntentId}
-            pixQrCode={checkout.pixQrCode}
-            pixCopyPaste={checkout.pixCopyPaste}
-            invoiceUrl={checkout.invoiceUrl}
-            onPaid={() => {
-              toast.success("Assinatura ativada!");
-              onOpenChange(false);
-            }}
-            onCancel={() => onOpenChange(false)}
-          />
+          checkout.method === "CREDIT_CARD" && checkout.invoiceUrl ? (
+            <CardCheckout
+              paymentIntentId={checkout.paymentIntentId}
+              invoiceUrl={checkout.invoiceUrl}
+              onPaid={() => {
+                toast.success("Assinatura ativada!");
+                onOpenChange(false);
+              }}
+              onCancel={() => onOpenChange(false)}
+            />
+          ) : (
+            <PixCheckout
+              paymentIntentId={checkout.paymentIntentId}
+              pixQrCode={checkout.pixQrCode ?? ""}
+              pixCopyPaste={checkout.pixCopyPaste ?? ""}
+              invoiceUrl={checkout.invoiceUrl}
+              onPaid={() => {
+                toast.success("Assinatura ativada!");
+                onOpenChange(false);
+              }}
+              onCancel={() => onOpenChange(false)}
+            />
+          )
         ) : (
           <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
             <header>
               <h3 className="text-lg font-bold text-foreground">
                 Assinar {creatorName ?? "criador"}
               </h3>
-              <p className="text-sm text-muted-foreground">Escolha um plano — pagamento via PIX</p>
+              <p className="text-sm text-muted-foreground">Escolha um plano e forma de pagamento</p>
             </header>
 
             {priceQuery.isLoading ? (
@@ -171,6 +195,13 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                   })}
                 </div>
 
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Forma de pagamento
+                  </p>
+                  <PaymentMethodPicker value={method} onChange={setMethod} />
+                </div>
+
                 <Button
                   onClick={submit}
                   disabled={loading || totals[plan].cents <= 0}
@@ -178,7 +209,8 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando PIX...
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
+                      {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
                     </>
                   ) : (
                     `Pagar ${brl.format(totals[plan].cents / 100)}`
