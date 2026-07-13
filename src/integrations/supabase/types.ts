@@ -14,11 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_message_unlocks: {
+        Row: {
+          amount_cents: number
+          buyer_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          message_id: string
+          provider: string
+          provider_ref: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          message_id: string
+          provider?: string
+          provider_ref?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          message_id?: string
+          provider?: string
+          provider_ref?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_message_unlocks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_message_unlocks_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
           created_at: string
           id: string
+          price_cents: number
           read_at: string | null
           sender_id: string
           thread_id: string
@@ -27,6 +85,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          price_cents?: number
           read_at?: string | null
           sender_id: string
           thread_id: string
@@ -35,6 +94,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          price_cents?: number
           read_at?: string | null
           sender_id?: string
           thread_id?: string
@@ -158,6 +218,9 @@ export type Database = {
           user_id: string
           username: string
           veriff_session_id: string | null
+          video_call_default_minutes: number
+          video_call_enabled: boolean
+          video_call_price_cents: number
           x_handle: string | null
         }
         Insert: {
@@ -176,6 +239,9 @@ export type Database = {
           user_id: string
           username: string
           veriff_session_id?: string | null
+          video_call_default_minutes?: number
+          video_call_enabled?: boolean
+          video_call_price_cents?: number
           x_handle?: string | null
         }
         Update: {
@@ -194,6 +260,9 @@ export type Database = {
           user_id?: string
           username?: string
           veriff_session_id?: string | null
+          video_call_default_minutes?: number
+          video_call_enabled?: boolean
+          video_call_price_cents?: number
           x_handle?: string | null
         }
         Relationships: []
@@ -619,6 +688,74 @@ export type Database = {
         }
         Relationships: []
       }
+      video_calls: {
+        Row: {
+          created_at: string
+          creator_id: string
+          duration_minutes: number
+          ended_at: string | null
+          id: string
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["transaction_status"]
+          price_cents: number
+          provider: string
+          provider_ref: string | null
+          requester_id: string
+          room_url: string | null
+          scheduled_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["video_call_status"]
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["transaction_status"]
+          price_cents: number
+          provider?: string
+          provider_ref?: string | null
+          requester_id: string
+          room_url?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["video_call_status"]
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["transaction_status"]
+          price_cents?: number
+          provider?: string
+          provider_ref?: string | null
+          requester_id?: string
+          room_url?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["video_call_status"]
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_calls_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawals: {
         Row: {
           amount_cents: number
@@ -747,6 +884,13 @@ export type Database = {
         | "failed"
         | "refunded"
         | "cancelled"
+      video_call_status:
+        | "requested"
+        | "accepted"
+        | "declined"
+        | "cancelled"
+        | "completed"
+        | "no_show"
       withdrawal_status:
         | "requested"
         | "in_review"
@@ -907,6 +1051,14 @@ export const Constants = {
         "failed",
         "refunded",
         "cancelled",
+      ],
+      video_call_status: [
+        "requested",
+        "accepted",
+        "declined",
+        "cancelled",
+        "completed",
+        "no_show",
       ],
       withdrawal_status: [
         "requested",
