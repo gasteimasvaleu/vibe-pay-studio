@@ -42,21 +42,30 @@ function FeedPage() {
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
+  const [pending, setPending] = useState<FeedItem | null>(null);
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
     queryFn: () => fetchFeed({ data: { limit: 20 } }),
   });
 
-  const handleUnlock = async (item: FeedItem) => {
+  const handleUnlock = (item: FeedItem) => {
     if (unlocking) return;
+    setPending(item);
+  };
+
+  const confirmPayment = async (method: PaymentMethod) => {
+    if (!pending) return;
+    const item = pending;
     setUnlocking(item.id);
     try {
       const res = await unlock({
-        data: { publicationId: item.id, method: "PIX" },
+        data: { publicationId: item.id, method },
       });
+      setPending(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
+        method,
         pixQrCode: res.pixQrCode,
         pixCopyPaste: res.pixCopyPaste,
         invoiceUrl: res.invoiceUrl,
