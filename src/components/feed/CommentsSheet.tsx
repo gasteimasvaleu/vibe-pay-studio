@@ -23,12 +23,14 @@ export function CommentsSheet({
   onOpenChange,
   onCountChange,
   commentsDisabled,
+  currentUserName,
 }: {
   publicationId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCountChange?: (delta: number) => void;
   commentsDisabled?: boolean;
+  currentUserName?: string;
 }) {
   const queryClient = useQueryClient();
   const list = useServerFn(listComments);
@@ -76,7 +78,7 @@ export function CommentsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="p-0 gap-0 h-[85vh] rounded-t-3xl bg-background border-border flex flex-col"
+        className="p-0 gap-0 h-[85vh] rounded-t-3xl bg-background border-border flex flex-col sm:max-w-[480px] sm:mx-auto sm:left-0 sm:right-0"
       >
         <header className="px-5 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Comentários</h2>
@@ -133,7 +135,9 @@ export function CommentsSheet({
           </div>
         ) : (
           <div className="px-4 py-3 border-t border-border flex items-center gap-2">
-            <div className="h-9 w-9 shrink-0 rounded-full bg-primary" />
+            <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
+              {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
+            </div>
             <div className="flex-1 flex items-center gap-2 rounded-full bg-muted px-4 h-11">
               <input
                 ref={inputRef}

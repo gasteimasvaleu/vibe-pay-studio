@@ -170,6 +170,7 @@ function FeedPage() {
       <CommentsSheet
         publicationId={commentsFor?.id ?? null}
         commentsDisabled={commentsFor?.comments_disabled}
+        currentUserName={username}
         open={!!commentsFor}
         onOpenChange={(v) => !v && setCommentsFor(null)}
         onCountChange={(delta) => {
