@@ -482,11 +482,38 @@ export type Database = {
           },
         ]
       }
+      publication_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publication_comments: {
         Row: {
           body: string
           created_at: string
           id: string
+          parent_id: string | null
           publication_id: string
           user_id: string
         }
@@ -494,6 +521,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          parent_id?: string | null
           publication_id: string
           user_id: string
         }
@@ -501,10 +529,18 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          parent_id?: string | null
           publication_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "publication_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_comments_publication_id_fkey"
             columns: ["publication_id"]
