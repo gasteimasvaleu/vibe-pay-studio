@@ -80,22 +80,22 @@ export function PublicationCard({
       ) : null}
 
       {!item.locked && (
-        <div className="flex items-center gap-1 px-3 pt-2">
+        <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
           <button
             type="button"
             aria-label={liked ? "Descurtir" : "Curtir"}
             onClick={() => setLiked((v) => !v)}
-            className="h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
           >
             <Heart
-              className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "text-white/90"}`}
+              className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "text-foreground/80"}`}
               strokeWidth={1.75}
             />
           </button>
           <button
             type="button"
             aria-label="Comentar"
-            className="h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/90"
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
           >
             <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
           </button>
@@ -103,10 +103,10 @@ export function PublicationCard({
             type="button"
             aria-label={saved ? "Remover dos salvos" : "Salvar"}
             onClick={() => setSaved((v) => !v)}
-            className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+            className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
           >
             <Bookmark
-              className={`h-6 w-6 ${saved ? "fill-white text-white" : "text-white/90"}`}
+              className={`h-6 w-6 ${saved ? "fill-foreground text-foreground" : "text-foreground/80"}`}
               strokeWidth={1.75}
             />
           </button>
