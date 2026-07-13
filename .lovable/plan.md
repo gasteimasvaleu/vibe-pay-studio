@@ -1,37 +1,40 @@
 ## Objetivo
-Exibir um aviso estilo banner no topo central da tela ao favoritar ou desfavoritar uma publicação, conforme o screenshot enviado (fundo verde claro, texto "Post favoritado" centralizado).
 
-## Problema atual
-O projeto já chama `toast.success(...)` do `sonner` no `PublicationCard`, mas o componente `<Toaster />` nunca foi renderizado no layout. Por isso nenhum toast aparece.
+Adicionar às mensagens do sheet de comentários as funções: curtir, responder, excluir (via menu ...) e barra de "respondendo a", conforme screenshots.
 
-## Alterações propostas
+## Mudanças
 
-### 1. Adicionar tokens semânticos de sucesso
-**Arquivo:** `src/styles.css`
-- Criar `--success` e `--success-foreground` no `:root` com tom verde claro/escuro equivalente ao do screenshot.
-- Registrar as cores no `@theme inline` para poderem ser usadas via Tailwind (`bg-success`, `text-success-foreground`).
+### 1. Backend — `src/lib/publications.functions.ts`
+- `listComments`: retornar também `like_count`, `viewer_liked` e `parent_id` para cada comentário.
+- `addComment`: aceitar `parentId?: string` opcional (para respostas) e persistir.
+- Novas server functions:
+  - `toggleCommentLike({ commentId })` — insere/remove em `publication_comment_likes` e retorna `{ liked, likeCount }`.
+  - `deleteComment({ commentId })` — apaga apenas se `author_id = userId`.
 
-### 2. Configurar o Toaster como banner no topo
-**Arquivo:** `src/components/ui/sonner.tsx`
-- Adicionar `position="top-center"`.
-- Customizar `toastOptions.classNames.toast` para ocupar a largura total do topo, sem bordas arredondadas inferiores, fundo `--success`, texto `--success-foreground`, texto centralizado e padding generoso.
-- Ajustar `duration` para ~2500 ms.
+### 2. Banco — nova migration
+- Coluna `parent_id uuid null references publication_comments(id) on delete cascade` em `publication_comments` (se ainda não existir).
+- Tabela `publication_comment_likes (comment_id uuid, user_id uuid, created_at, primary key (comment_id, user_id))` com GRANTs e RLS:
+  - SELECT: authenticated
+  - INSERT/DELETE: apenas o próprio `user_id`
 
-### 3. Renderizar o Toaster globalmente
-**Arquivo:** `src/routes/__root.tsx`
-- Importar `{ Toaster }` de `@/components/ui/sonner`.
-- Inserir `<Toaster />` dentro de `RootComponent`, junto ao `QueryClientProvider` / `ThemeInit`.
+### 3. UI — `src/components/feed/CommentsSheet.tsx`
+Para cada item da lista, seguindo o screenshot:
+- Linha superior: `@username` · tempo. À direita: botão `⋮` (menu) e botão coração com contador.
+- Corpo do comentário abaixo.
+- Botão "Responder" em texto pequeno, sob o comentário.
+- Menu `⋮`: popover com "Excluir comentário" (ícone lixeira, destaque). Só exibe a opção Excluir quando o comentário for do usuário atual.
+- Coração: alterna curtida via `toggleCommentLike` com atualização otimista; contador ao lado quando > 0.
+- Estado `replyingTo: { id, username } | null`.
+  - Ao clicar em "Responder": define replyingTo, prefixa input com `@username `, foca input.
+  - Acima do input, aparece barra "Respondendo a @username" com botão `X` para cancelar.
+  - Ao enviar, chama `addComment` com `parentId`.
 
-### 4. Ajustar textos do favoritar
-**Arquivo:** `src/components/feed/PublicationCard.tsx`
-- Manter as mensagens existentes mas garantir que:
-  - Favoritar → `"Post favoritado"`
-  - Desfavoritar → `"Post removido dos favoritos"`
-- Remover o `toast.success` redundante do `PublicationOptionsMenu` ou garantir que ambos os caminhos (botão de salvar e menu de opções) disparem o mesmo toast.
+### 4. Detalhes visuais
+- Botão coração usa `Heart` do lucide, filled quando `viewer_liked`.
+- Menu usa `Popover` (mesmo padrão de `PublicationOptionsMenu.tsx`), `align="end"`.
+- Barra "Respondendo a" com fundo `bg-muted`, botão `X` do lado direito.
+- Sem mudanças no design system global; usa tokens existentes.
 
-### 5. Verificar outros usos de toast
-**Arquivo:** `src/components/feed/PublicationOptionsMenu.tsx`
-- Manter `toast.success("Link copiado")` e `toast("Em breve")` — agora passarão a funcionar com o Toaster global.
-
-## Resultado esperado
-Ao clicar no ícone de bookmark (salvar) de qualquer publicação, um banner verde aparece no topo central da tela com a mensagem apropriada e some automaticamente após poucos segundos.
+## Fora de escopo
+- Threading visual (indentação de respostas). Respostas aparecem como comentários normais listados em ordem cronológica, mas armazenam `parent_id` para uso futuro.
+- Edição de comentário.
