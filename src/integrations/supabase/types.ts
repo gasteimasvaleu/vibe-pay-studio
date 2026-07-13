@@ -1028,6 +1028,9 @@ export type Database = {
         | "failed"
         | "refunded"
         | "cancelled"
+        | "authorized"
+        | "in_analysis"
+        | "partially_refunded"
       video_call_status:
         | "requested"
         | "accepted"
@@ -1198,6 +1201,9 @@ export const Constants = {
         "failed",
         "refunded",
         "cancelled",
+        "authorized",
+        "in_analysis",
+        "partially_refunded",
       ],
       video_call_status: [
         "requested",
