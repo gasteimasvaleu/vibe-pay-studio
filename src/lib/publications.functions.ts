@@ -327,21 +327,27 @@ export type PublicationComment = {
   created_at: string;
   user_id: string;
   author_username: string | null;
+  parent_id: string | null;
+  like_count: number;
+  viewer_liked: boolean;
 };
 
 export const listComments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => idSchema.parse(d))
   .handler(async ({ data, context }): Promise<PublicationComment[]> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: rows, error } = await supabase
       .from("publication_comments")
-      .select("id, body, created_at, user_id")
+      .select("id, body, created_at, user_id, parent_id")
       .eq("publication_id", data.publicationId)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
-    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    const list = rows ?? [];
+    const userIds = Array.from(new Set(list.map((r) => r.user_id)));
+    const commentIds = list.map((r) => r.id);
+
     let profileMap = new Map<string, string | null>();
     if (userIds.length) {
       const { data: profiles } = await supabase
@@ -352,18 +358,36 @@ export const listComments = createServerFn({ method: "POST" })
         (profiles ?? []).map((p) => [p.user_id, p.username]),
       );
     }
-    return (rows ?? []).map((r) => ({
+
+    const likeCount = new Map<string, number>();
+    const likedByMe = new Set<string>();
+    if (commentIds.length) {
+      const { data: likeRows } = await supabase
+        .from("publication_comment_likes")
+        .select("comment_id, user_id")
+        .in("comment_id", commentIds);
+      for (const l of likeRows ?? []) {
+        likeCount.set(l.comment_id, (likeCount.get(l.comment_id) ?? 0) + 1);
+        if (l.user_id === userId) likedByMe.add(l.comment_id);
+      }
+    }
+
+    return list.map((r) => ({
       id: r.id,
       body: r.body,
       created_at: r.created_at,
       user_id: r.user_id,
       author_username: profileMap.get(r.user_id) ?? null,
+      parent_id: r.parent_id ?? null,
+      like_count: likeCount.get(r.id) ?? 0,
+      viewer_liked: likedByMe.has(r.id),
     }));
   });
 
 const addCommentSchema = z.object({
   publicationId: z.string().uuid(),
   body: z.string().trim().min(1).max(2000),
+  parentId: z.string().uuid().nullable().optional(),
 });
 
 export const addComment = createServerFn({ method: "POST" })
@@ -377,8 +401,9 @@ export const addComment = createServerFn({ method: "POST" })
         publication_id: data.publicationId,
         user_id: userId,
         body: data.body,
+        parent_id: data.parentId ?? null,
       })
-      .select("id, body, created_at, user_id")
+      .select("id, body, created_at, user_id, parent_id")
       .single();
     if (error || !row) throw new Error(error?.message ?? "Falha ao comentar");
 
@@ -394,6 +419,64 @@ export const addComment = createServerFn({ method: "POST" })
       created_at: row.created_at,
       user_id: row.user_id,
       author_username: profile?.username ?? null,
+      parent_id: row.parent_id ?? null,
+      like_count: 0,
+      viewer_liked: false,
     };
   });
+
+const commentIdSchema = z.object({ commentId: z.string().uuid() });
+
+export const toggleCommentLike = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => commentIdSchema.parse(d))
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ liked: boolean; likeCount: number }> => {
+      const { supabase, userId } = context;
+      const { data: existing } = await supabase
+        .from("publication_comment_likes")
+        .select("comment_id")
+        .eq("comment_id", data.commentId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("publication_comment_likes")
+          .delete()
+          .eq("comment_id", data.commentId)
+          .eq("user_id", userId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("publication_comment_likes")
+          .insert({ comment_id: data.commentId, user_id: userId });
+        if (error) throw new Error(error.message);
+      }
+
+      const { count } = await supabase
+        .from("publication_comment_likes")
+        .select("comment_id", { count: "exact", head: true })
+        .eq("comment_id", data.commentId);
+
+      return { liked: !existing, likeCount: count ?? 0 };
+    },
+  );
+
+export const deleteComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => commentIdSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { error } = await supabase
+      .from("publication_comments")
+      .delete()
+      .eq("id", data.commentId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 
