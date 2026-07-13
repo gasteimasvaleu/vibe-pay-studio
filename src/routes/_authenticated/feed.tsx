@@ -32,19 +32,12 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const { username } = Route.useRouteContext();
-  const [signingOut, setSigningOut] = useState(false);
   const fetchFeed = useServerFn(getFeed);
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
     queryFn: () => fetchFeed({ data: { limit: 20 } }),
   });
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
