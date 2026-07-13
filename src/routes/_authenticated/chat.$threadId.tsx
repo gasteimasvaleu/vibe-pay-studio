@@ -401,6 +401,15 @@ function ChatThreadView() {
         onConfirm={(cents) => setPriceCents(cents)}
       />
 
+      <PaymentMethodDialog
+        open={!!pendingMsg}
+        onOpenChange={(v) => !v && setPendingMsg(null)}
+        title="Desbloquear mensagem"
+        amountCents={pendingMsg?.priceCents ?? 0}
+        loading={!!unlockingId}
+        onConfirm={confirmUnlockPayment}
+      />
+
       <PaymentModal
         open={modalOpen}
         onOpenChange={setModalOpen}
