@@ -94,12 +94,31 @@ async function markStatus(
     provider_ref: providerRef,
   }).eq("id", id);
 
-  // Não sobrescrever assinatura já ativa com um status intermediário tardio
-  if (table === "subscriptions" && status !== "paid") {
-    q = q.neq("status", "active");
+async function applyTransferStatus(
+  supabaseAdmin: any,
+  withdrawalId: string,
+  status: WithdrawalStatus,
+  providerRef: string,
+  failReason?: string | null,
+) {
+  const update: Record<string, unknown> = {
+    status,
+    provider_ref: providerRef,
+  };
+  if (status === "paid") update.processed_at = new Date().toISOString();
+  if (status === "failed" && failReason) update.rejection_reason = failReason;
+
+  let q = supabaseAdmin.from("withdrawals").update(update).eq("id", withdrawalId);
+
+  // Não sobrescrever um saque já finalizado com um status intermediário tardio
+  const isIntermediate =
+    status === "requested" || status === "approved" || status === "in_review";
+  if (isIntermediate) {
+    q = q.not("status", "in", "(paid,failed,rejected)");
   }
   await q;
 }
+
 
 
 async function creditWalletTopup(
