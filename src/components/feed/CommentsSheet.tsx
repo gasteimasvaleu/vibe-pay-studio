@@ -74,21 +74,11 @@ export function CommentsSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="p-0 gap-0 max-w-lg w-full sm:rounded-3xl overflow-hidden bg-background border-border max-h-[85vh] flex flex-col"
-        showCloseButton={false}
-      >
-        <header className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <DialogContent className="p-0 gap-0 max-w-lg w-full sm:rounded-3xl overflow-hidden bg-background border-border max-h-[85vh] flex flex-col">
+        <header className="px-5 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Comentários</h2>
-          <button
-            type="button"
-            aria-label="Fechar"
-            onClick={() => onOpenChange(false)}
-            className="h-8 w-8 grid place-items-center rounded-full bg-muted hover:bg-muted/80 text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </header>
+
 
         <div className="flex-1 min-h-[240px] overflow-y-auto px-5 py-6">
           {query.isLoading ? (
