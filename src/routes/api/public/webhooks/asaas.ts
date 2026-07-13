@@ -22,21 +22,59 @@ const TERMINAL_CANCELLED = new Set([
   "PAYMENT_OVERDUE",
   "PAYMENT_REFUND_DENIED",
 ]);
+const TERMINAL_AUTHORIZED = new Set(["PAYMENT_AUTHORIZED"]);
+const RISK_PENDING = new Set(["PAYMENT_AWAITING_RISK_ANALYSIS"]);
+const RISK_APPROVED = new Set(["PAYMENT_APPROVED_BY_RISK_ANALYSIS"]);
+const RISK_REPROVED = new Set(["PAYMENT_REPROVED_BY_RISK_ANALYSIS"]);
+const TERMINAL_PARTIAL_REFUND = new Set(["PAYMENT_PARTIALLY_REFUNDED"]);
+const SPLIT_EVENTS = new Set([
+  "PAYMENT_SPLIT_CANCELLED",
+  "PAYMENT_SPLIT_DIVERGENCE_BLOCK",
+  "PAYMENT_SPLIT_DIVERGENCE_BLOCK_FINISHED",
+]);
+
+type TargetStatus =
+  | "paid"
+  | "refunded"
+  | "cancelled"
+  | "authorized"
+  | "in_analysis"
+  | "partially_refunded";
 
 async function markStatus(
   supabaseAdmin: any,
   table: string,
   id: string,
-  status: "paid" | "refunded" | "cancelled",
+  status: TargetStatus,
   providerRef: string,
 ) {
   const statusColumn = table === "video_calls" ? "payment_status" : "status";
-  const update: Record<string, unknown> = {
-    [statusColumn]: table === "subscriptions" && status === "paid" ? "active" : status,
+
+  // Subscriptions só aceitam 'active' (paid) ou cancelled/refunded.
+  // Status intermediários (authorized/in_analysis/partially_refunded) não devem
+  // sobrescrever uma assinatura, então pulamos aqui.
+  if (
+    table === "subscriptions" &&
+    (status === "authorized" || status === "in_analysis" || status === "partially_refunded")
+  ) {
+    return;
+  }
+
+  const mapped =
+    table === "subscriptions" && status === "paid" ? "active" : status;
+
+  let q = supabaseAdmin.from(table).update({
+    [statusColumn]: mapped,
     provider_ref: providerRef,
-  };
-  await supabaseAdmin.from(table).update(update).eq("id", id);
+  }).eq("id", id);
+
+  // Não sobrescrever assinatura já ativa com um status intermediário tardio
+  if (table === "subscriptions" && status !== "paid") {
+    q = q.neq("status", "active");
+  }
+  await q;
 }
+
 
 async function creditWalletTopup(
   supabaseAdmin: any,
