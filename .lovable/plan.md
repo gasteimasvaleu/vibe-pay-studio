@@ -1,32 +1,24 @@
-## Alterações no cabeçalho do `PublicationCard`
+## Trocar bottom sheet por popover flutuante
 
-No canto direito do `<header>` (src/components/feed/PublicationCard.tsx, linha ~91), adicionar dois elementos ao lado do badge "fixado":
+O usuário quer um menu flutuante ancorado ao botão de três pontos (como no screenshot), não um sheet inferior.
 
-1. **Tempo relativo da publicação** (ex.: "agora", "5min", "2h", "3d", "2sem"), calculado a partir de `item.published_at`. Texto pequeno em `text-muted-foreground`.
-2. **Botão de menu com ícone `MoreVertical`** (três pontos verticais), que abre um sheet inferior com opções.
+### Mudanças
 
-## Sheet de opções
+**`src/components/feed/PublicationOptionsSheet.tsx` → renomear para `PublicationOptionsMenu.tsx`**
 
-Novo componente `PublicationOptionsSheet` em `src/components/feed/PublicationOptionsSheet.tsx`, usando o `Sheet` do shadcn com `side="bottom"`, seguindo o mesmo padrão visual do `CommentsSheet`:
+- Trocar `Sheet` + `SheetContent` por `Popover` + `PopoverTrigger` + `PopoverContent` do shadcn (`@/components/ui/popover`).
+- O trigger deixa de ser controlado externamente por estado — o `PopoverTrigger asChild` envolve o botão `MoreVertical` diretamente. Alinhamento `align="end"` e `sideOffset={8}` para posicionar abaixo/próximo ao botão, com pequena setinha caindo naturalmente da borda superior direita.
+- Largura fixa `w-[340px]`, `rounded-3xl`, `p-4`, sombra elegante (`shadow-xl`), borda sutil, fundo `bg-card`.
+- Manter o layout das opções exatamente como está hoje:
+  - Card interno arredondado com as 5 opções empilhadas (Copiar link, Favoritos, Editar legenda, Desabilitar comentários, Arquivar post) separadas por `divide-y`.
+  - Botão "Excluir post" separado embaixo, em vermelho (`bg-destructive/10`, `text-destructive`).
+- Manter os mesmos handlers (`copyLink`, `soon`, `onToggleBookmark`) e o fechamento do popover após cada ação (via estado interno `open`/`onOpenChange`).
+- Animação: o `PopoverContent` do shadcn já tem `data-[state=open]:animate-in fade-in-0 zoom-in-95` — manter, é o feel do screenshot.
 
-- Largura total no mobile, `sm:max-w-[480px] sm:mx-auto` no desktop
-- Cantos superiores arredondados (`rounded-t-3xl`)
-- Handle bar cinza no topo
-- Animação de entrada suave (slide-up + fade). O shadcn `Sheet` já anima; garantir `duration-300` e easing consistente com o `CommentsSheet`.
+**`src/components/feed/PublicationCard.tsx`**
 
-Opções listadas (conforme screenshot), cada uma como botão com ícone `lucide-react` à esquerda + label:
+- Remover o estado `optionsOpen` e o `<PublicationOptionsSheet ... />` renderizado fora do header.
+- Envolver o botão `MoreVertical` com `<PublicationOptionsMenu item={item} onToggleBookmark={...}>` que provê o trigger + conteúdo.
+- Atualizar o import.
 
-- Copiar link — copia URL do post para clipboard (`navigator.clipboard`), toast de sucesso
-- Adicionar/Remover dos favoritos — reutiliza `toggleBookmark` (rótulo dinâmico via `item.saved_by_me`)
-- Editar legenda — placeholder, toast "em breve"
-- Desabilitar/Habilitar comentários — placeholder, toast "em breve" (rótulo dinâmico via `item.comments_disabled`)
-- Arquivar post — placeholder, toast "em breve"
-- Excluir post — destacado em vermelho (bg vermelho suave, texto/ícone `text-destructive`), placeholder toast "em breve"
-
-## Detalhes técnicos
-
-- Adicionar helper `formatRelativeTime(iso: string)` inline no card (retorna "agora" / "Nm" / "Nh" / "Nd" / "Nsem").
-- Estado local `optionsOpen` no `PublicationCard` controla o sheet.
-- O sheet recebe `item`, `open`, `onOpenChange`, e callbacks (`onToggleBookmark`, `onCopyLink`, etc.).
-- Manter o badge "fixado" existente antes do tempo/menu.
-- Nenhuma mudança de lógica de negócio além do já existente (bookmark + copiar link).
+Nenhuma mudança em outros arquivos ou lógica de negócio.

@@ -21,7 +21,7 @@ import {
   toggleBookmark,
   type FeedItem,
 } from "@/lib/publications.functions";
-import { PublicationOptionsSheet } from "./PublicationOptionsSheet";
+import { PublicationOptionsMenu } from "./PublicationOptionsMenu";
 
 function formatRelativeTime(iso: string): string {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -68,7 +68,7 @@ export function PublicationCard({
     });
   };
 
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  
 
   const likeMutation = useMutation({
     mutationFn: () => likeFn({ data: { publicationId: item.id } }),
@@ -126,22 +126,20 @@ export function PublicationCard({
         <span className="text-xs text-muted-foreground shrink-0">
           {formatRelativeTime(item.published_at)}
         </span>
-        <button
-          type="button"
-          aria-label="Mais opções"
-          onClick={() => setOptionsOpen(true)}
-          className="-mr-2 h-9 w-9 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/70"
+        <PublicationOptionsMenu
+          item={item}
+          onToggleBookmark={() => bookmarkMutation.mutate()}
         >
-          <MoreVertical className="h-5 w-5" strokeWidth={1.75} />
-        </button>
+          <button
+            type="button"
+            aria-label="Mais opções"
+            className="-mr-2 h-9 w-9 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/70"
+          >
+            <MoreVertical className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        </PublicationOptionsMenu>
       </header>
 
-      <PublicationOptionsSheet
-        item={item}
-        open={optionsOpen}
-        onOpenChange={setOptionsOpen}
-        onToggleBookmark={() => bookmarkMutation.mutate()}
-      />
 
       {!item.locked && item.audio_url && (
         <div className="px-4 pb-3">
