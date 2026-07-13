@@ -155,8 +155,10 @@ function PublisherPage() {
 
   const openPicker = () => setPickerOpen(true);
   const triggerFileInput = () => {
+    // IMPORTANTE: clicar sincronamente para preservar o user-gesture,
+    // senão navegadores bloqueiam a abertura do diálogo de arquivos.
+    fileInputRef.current?.click();
     setPickerOpen(false);
-    setTimeout(() => fileInputRef.current?.click(), 100);
   };
 
   const onFiles = async (files: FileList | null) => {
