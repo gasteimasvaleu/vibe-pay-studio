@@ -75,6 +75,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<TrendingUp className="h-5 w-5" />}
             title="Em Alta"
             description="Descubra o que está bombando"
+            to="/em-alta"
           />
           <ActionCard
             icon={<Users className="h-5 w-5" />}
