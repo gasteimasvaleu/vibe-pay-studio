@@ -1,16 +1,19 @@
-## Problema
+## Ajuste da cor do botão de ação do publisher
 
-Na tela **"Criando publicação"** (Step 2) só aparece a primeira imagem porque o código renderiza apenas `media[0]` fora do modo reordenar (`publisher.tsx` linha 809/843-851).
+### Contexto
+O botão fixo no rodapé da tela `/publisher` está usando gradiente laranja/rosa. O usuário selecionou o botão "Continuar" (Step 1) e quer que o botão ativo use o roxo padrão do app em todos os steps.
 
-## Correção
+### O que será alterado
+- `src/routes/_authenticated/publisher.tsx`
 
-Substituir o preview único por uma **tira horizontal de miniaturas** com todas as mídias enviadas (mantendo a proporção 3/4 já usada), assim as 2+ imagens do Step 1 aparecem no Step 2.
+### Mudanças
+1. **Step 1 — botão "Continuar"**: trocar o gradiente laranja por um fundo roxo sólido/gradiente usando o token `--color-primary` do app (roxo/lilás padrão do tema).
+2. **Step 2 — botão "Postar"**: aplicar a mesma cor roxa padrão, mantendo o estado `disabled` e o loading "Postando...".
+3. **Manter estados**: preservar regras de `disabled`, opacidade e texto branco.
 
-- Se houver 1 mídia: mostrar o preview grande atual (comportamento inalterado).
-- Se houver 2+: renderizar um scroll horizontal (`flex gap-2 overflow-x-auto`) com cada item em `w-32 aspect-[3/4] rounded-2xl`, primeira imagem em destaque.
-- Vídeos continuam usando `<video>`, imagens usam `<img>` com `object-cover`.
-- Modo reordenar (grid 3 colunas com DnD) permanece igual.
+### Não será alterado
+- Botões dos dialogs "Avançar" e "Aplicar" (preço/agendamento) — fora do escopo "steps do publisher".
+- Lógica de upload, publicação ou estado dos steps.
 
-Arquivo alterado: `src/routes/_authenticated/publisher.tsx` (bloco do `StepCompose`, linhas ~843-852).
-
-Nenhuma mudança em upload, estado ou backend.
+### Resultado esperado
+Ambos os botões do rodapé (Continuar no step 1 e Postar no step 2) aparecerão na cor roxa padrão do app quando ativos/habilitados.
