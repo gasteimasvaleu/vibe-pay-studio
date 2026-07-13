@@ -94,6 +94,15 @@ async function markStatus(
     provider_ref: providerRef,
   }).eq("id", id);
 
+  // Não sobrescrever assinatura já ativa com um status intermediário tardio
+  if (table === "subscriptions" && status !== "paid") {
+    q = q.neq("status", "active");
+  }
+  await q;
+}
+
+
+
 async function applyTransferStatus(
   supabaseAdmin: any,
   withdrawalId: string,
