@@ -71,7 +71,7 @@ function PromotionsListPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-border bg-white">
         <div className="mx-auto max-w-2xl px-5 py-4 flex items-center gap-3">
           <button
             type="button"
