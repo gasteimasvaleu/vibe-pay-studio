@@ -89,7 +89,7 @@ function CriarPerfilGratuitoPage() {
         </h1>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 pb-32">
+      <main className="max-w-2xl mx-auto px-4 pb-44">
         {step === 1 ? (
           <section className="space-y-8">
             <div className="grid grid-cols-3 gap-2">
@@ -209,7 +209,7 @@ function CriarPerfilGratuitoPage() {
         )}
       </main>
 
-      <footer className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t border-border">
+      <footer className="fixed bottom-20 inset-x-0 bg-background/95 backdrop-blur border-t border-border">
         <div className="max-w-2xl mx-auto px-4 py-4">
           {step === 1 ? (
             <button
