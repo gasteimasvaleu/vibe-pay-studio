@@ -1,8 +1,12 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PixCheckout } from "@/components/payments/PixCheckout";
+import { CardCheckout } from "@/components/payments/CardCheckout";
+
+export type PaymentMethod = "PIX" | "CREDIT_CARD";
 
 export type CheckoutData = {
   paymentIntentId: string;
+  method?: PaymentMethod;
   pixQrCode?: string | null;
   pixCopyPaste?: string | null;
   invoiceUrl?: string | null;
@@ -23,15 +27,28 @@ export function PaymentModal({
   checkout,
   onPaid,
 }: Props) {
+  const isCard = checkout?.method === "CREDIT_CARD";
+  const hasPix = checkout?.pixQrCode && checkout?.pixCopyPaste;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        {checkout?.pixQrCode && checkout.pixCopyPaste ? (
+        {checkout && isCard && checkout.invoiceUrl ? (
+          <CardCheckout
+            paymentIntentId={checkout.paymentIntentId}
+            invoiceUrl={checkout.invoiceUrl}
+            onPaid={() => {
+              onPaid?.();
+              onOpenChange(false);
+            }}
+            onCancel={() => onOpenChange(false)}
+          />
+        ) : checkout && hasPix ? (
           <PixCheckout
             paymentIntentId={checkout.paymentIntentId}
-            pixQrCode={checkout.pixQrCode}
-            pixCopyPaste={checkout.pixCopyPaste}
+            pixQrCode={checkout.pixQrCode!}
+            pixCopyPaste={checkout.pixCopyPaste!}
             invoiceUrl={checkout.invoiceUrl ?? null}
             onPaid={() => {
               onPaid?.();

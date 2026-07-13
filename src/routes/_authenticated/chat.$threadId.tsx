@@ -16,7 +16,8 @@ import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { Textarea } from "@/components/ui/textarea";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { PriceDialog } from "@/components/chat/PriceDialog";
-import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -72,6 +73,7 @@ function ChatThreadView() {
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -193,12 +195,20 @@ function ChatThreadView() {
     sendMutation.mutate({ content, priceCents: price });
   };
 
-  const handleUnlock = async (messageId: string) => {
+  const handleUnlock = (messageId: string, priceCents: number) => {
+    setPendingMsg({ id: messageId, priceCents });
+  };
+
+  const confirmUnlockPayment = async (method: PaymentMethod) => {
+    if (!pendingMsg) return;
+    const messageId = pendingMsg.id;
     try {
       setUnlockingId(messageId);
-      const res = await unlockFn({ data: { messageId, method: "PIX" } });
+      const res = await unlockFn({ data: { messageId, method } });
+      setPendingMsg(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
+        method,
         pixQrCode: res.pixQrCode,
         pixCopyPaste: res.pixCopyPaste,
         invoiceUrl: res.invoiceUrl,
@@ -265,12 +275,12 @@ function ChatThreadView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleUnlock(m.id)}
+                    onClick={() => handleUnlock(m.id, m.priceCents!)}
                     disabled={unlockingId === m.id}
                     className="w-full h-10 rounded-full bg-gradient-primary text-primary-foreground text-sm font-semibold shadow-glow disabled:opacity-60"
                   >
                     {unlockingId === m.id
-                      ? "Gerando PIX…"
+                      ? "Processando…"
                       : `Desbloquear por ${formatBRL(m.priceCents!)}`}
                   </button>
                   <div className="text-[10px] text-right text-muted-foreground">
@@ -389,6 +399,15 @@ function ChatThreadView() {
         onOpenChange={setPriceOpen}
         initialCents={priceCents}
         onConfirm={(cents) => setPriceCents(cents)}
+      />
+
+      <PaymentMethodDialog
+        open={!!pendingMsg}
+        onOpenChange={(v) => !v && setPendingMsg(null)}
+        title="Desbloquear mensagem"
+        amountCents={pendingMsg?.priceCents ?? 0}
+        loading={!!unlockingId}
+        onConfirm={confirmUnlockPayment}
       />
 
       <PaymentModal

@@ -5,6 +5,9 @@ import { Loader2, Minus, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/payments/PixCheckout";
+import { CardCheckout } from "@/components/payments/CardCheckout";
+import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
+import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createTipPayment } from "@/lib/payments.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -20,14 +23,16 @@ type Props = {
 
 type Checkout = {
   paymentIntentId: string;
-  pixQrCode: string;
-  pixCopyPaste: string;
+  method: PaymentMethod;
+  pixQrCode?: string | null;
+  pixCopyPaste?: string | null;
   invoiceUrl?: string | null;
 };
 
 export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicationId }: Props) {
   const [amount, setAmount] = useState(20);
   const [message, setMessage] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTip = useServerFn(createTipPayment);
@@ -37,6 +42,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       setCheckout(null);
       setMessage("");
       setAmount(20);
+      setMethod("PIX");
     }
     onOpenChange(v);
   };
@@ -52,14 +58,20 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         data: {
           creatorId,
           amountCents: amount * 100,
-          method: "PIX",
+          method,
           publicationId,
           message: message.trim() || undefined,
         },
       });
-      if (!res.pixQrCode || !res.pixCopyPaste) throw new Error("Falha ao gerar PIX");
+      if (method === "PIX" && (!res.pixQrCode || !res.pixCopyPaste)) {
+        throw new Error("Falha ao gerar PIX");
+      }
+      if (method === "CREDIT_CARD" && !res.invoiceUrl) {
+        throw new Error("Falha ao abrir checkout de cartão");
+      }
       setCheckout({
         paymentIntentId: res.paymentIntentId,
+        method,
         pixQrCode: res.pixQrCode,
         pixCopyPaste: res.pixCopyPaste,
         invoiceUrl: res.invoiceUrl,
@@ -76,27 +88,39 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
         <DialogTitle className="sr-only">Enviar gorjeta</DialogTitle>
         <DialogDescription className="sr-only">
-          Envie uma gorjeta ao criador via PIX
+          Envie uma gorjeta ao criador via PIX ou cartão
         </DialogDescription>
         {checkout ? (
-          <PixCheckout
-            paymentIntentId={checkout.paymentIntentId}
-            pixQrCode={checkout.pixQrCode}
-            pixCopyPaste={checkout.pixCopyPaste}
-            invoiceUrl={checkout.invoiceUrl}
-            onPaid={() => {
-              toast.success("Gorjeta enviada!");
-              handleClose(false);
-            }}
-            onCancel={() => handleClose(false)}
-          />
+          checkout.method === "CREDIT_CARD" && checkout.invoiceUrl ? (
+            <CardCheckout
+              paymentIntentId={checkout.paymentIntentId}
+              invoiceUrl={checkout.invoiceUrl}
+              onPaid={() => {
+                toast.success("Gorjeta enviada!");
+                handleClose(false);
+              }}
+              onCancel={() => handleClose(false)}
+            />
+          ) : (
+            <PixCheckout
+              paymentIntentId={checkout.paymentIntentId}
+              pixQrCode={checkout.pixQrCode ?? ""}
+              pixCopyPaste={checkout.pixCopyPaste ?? ""}
+              invoiceUrl={checkout.invoiceUrl}
+              onPaid={() => {
+                toast.success("Gorjeta enviada!");
+                handleClose(false);
+              }}
+              onCancel={() => handleClose(false)}
+            />
+          )
         ) : (
           <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
             <header>
               <h3 className="text-lg font-bold text-foreground">
                 Gorjeta {creatorName ? `para ${creatorName}` : ""}
               </h3>
-              <p className="text-sm text-muted-foreground">Valor mínimo R$ 5,00 — via PIX</p>
+              <p className="text-sm text-muted-foreground">Valor mínimo R$ 5,00</p>
             </header>
 
             <div className="flex items-center justify-center gap-4">
@@ -146,6 +170,13 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none"
             />
 
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Forma de pagamento
+              </p>
+              <PaymentMethodPicker value={method} onChange={setMethod} />
+            </div>
+
             <Button
               onClick={submit}
               disabled={loading}
@@ -153,7 +184,8 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando PIX...
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
+                  {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
                 </>
               ) : (
                 `Enviar ${brl.format(amount)}`
