@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   AudioLines,
   Bookmark,
@@ -12,22 +15,76 @@ import {
   MessageCircle,
   Trophy,
 } from "lucide-react";
-import type { FeedItem } from "@/lib/publications.functions";
+import {
+  toggleLike,
+  toggleBookmark,
+  type FeedItem,
+} from "@/lib/publications.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
+type FeedData = { items: FeedItem[]; nextCursor: string | null };
+
 export function PublicationCard({
   item,
   onUnlock,
+  onComment,
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
+  onComment?: (item: FeedItem) => void;
 }) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const queryClient = useQueryClient();
+  const likeFn = useServerFn(toggleLike);
+  const bookmarkFn = useServerFn(toggleBookmark);
+
+  const patchItem = (patch: Partial<FeedItem>) => {
+    queryClient.setQueryData<FeedData>(["feed"], (prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((it) =>
+          it.id === item.id ? { ...it, ...patch } : it,
+        ),
+      };
+    });
+  };
+
+  const likeMutation = useMutation({
+    mutationFn: () => likeFn({ data: { publicationId: item.id } }),
+    onMutate: () => {
+      const wasLiked = item.liked_by_me;
+      patchItem({
+        liked_by_me: !wasLiked,
+        like_count: Math.max(0, item.like_count + (wasLiked ? -1 : 1)),
+      });
+    },
+    onSuccess: (res) => {
+      patchItem({ liked_by_me: res.liked, like_count: res.likeCount });
+    },
+    onError: (e: unknown) => {
+      patchItem({ liked_by_me: item.liked_by_me, like_count: item.like_count });
+      toast.error(e instanceof Error ? e.message : "Erro ao curtir");
+    },
+  });
+
+  const bookmarkMutation = useMutation({
+    mutationFn: () => bookmarkFn({ data: { publicationId: item.id } }),
+    onMutate: () => {
+      patchItem({ saved_by_me: !item.saved_by_me });
+    },
+    onSuccess: (res) => {
+      patchItem({ saved_by_me: res.saved });
+      toast.success(res.saved ? "Post favoritado" : "Removido dos favoritos");
+    },
+    onError: (e: unknown) => {
+      patchItem({ saved_by_me: item.saved_by_me });
+      toast.error(e instanceof Error ? e.message : "Erro ao favoritar");
+    },
+  });
 
   return (
     <article className="rounded-3xl overflow-hidden border border-primary/30 bg-white/[0.04] backdrop-blur-md">
@@ -80,47 +137,73 @@ export function PublicationCard({
       ) : null}
 
       {!item.locked && (
-        <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
-          <button
-            type="button"
-            aria-label={liked ? "Descurtir" : "Curtir"}
-            onClick={() => setLiked((v) => !v)}
-            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
-          >
-            <Heart
-              className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "text-foreground/80"}`}
-              strokeWidth={1.75}
-            />
-          </button>
-          <button
-            type="button"
-            aria-label="Comentar"
-            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
-          >
-            <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label={saved ? "Remover dos salvos" : "Salvar"}
-            onClick={() => setSaved((v) => !v)}
-            className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
-          >
-            <Bookmark
-              className={`h-6 w-6 ${saved ? "fill-foreground text-foreground" : "text-foreground/80"}`}
-              strokeWidth={1.75}
-            />
-          </button>
-        </div>
+        <>
+          <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
+            <button
+              type="button"
+              aria-label={item.liked_by_me ? "Descurtir" : "Curtir"}
+              onClick={() => likeMutation.mutate()}
+              disabled={likeMutation.isPending}
+              className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
+            >
+              <Heart
+                className={`h-6 w-6 ${item.liked_by_me ? "fill-red-500 text-red-500" : "text-foreground/80"}`}
+                strokeWidth={1.75}
+              />
+            </button>
+            <button
+              type="button"
+              aria-label="Comentar"
+              onClick={() => onComment?.(item)}
+              className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
+            >
+              <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              aria-label={item.saved_by_me ? "Remover dos salvos" : "Salvar"}
+              onClick={() => bookmarkMutation.mutate()}
+              disabled={bookmarkMutation.isPending}
+              className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
+            >
+              <Bookmark
+                className={`h-6 w-6 ${item.saved_by_me ? "fill-primary text-primary" : "text-foreground/80"}`}
+                strokeWidth={1.75}
+              />
+            </button>
+          </div>
+
+          {(item.like_count > 0 || item.comment_count > 0) && (
+            <div className="px-4 pb-2 text-sm text-foreground flex items-center gap-4">
+              {item.like_count > 0 && (
+                <span>
+                  <strong className="font-semibold">{item.like_count}</strong>{" "}
+                  {item.like_count === 1 ? "curtida" : "curtidas"}
+                </span>
+              )}
+              {item.comment_count > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onComment?.(item)}
+                  className="text-muted-foreground hover:underline"
+                >
+                  Ver {item.comment_count === 1 ? "1 comentário" : `${item.comment_count} comentários`}
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {item.caption && (
-        <p className="px-4 py-2 pb-3 text-sm text-white/90 whitespace-pre-wrap">
+        <p className="px-4 py-2 pb-3 text-sm text-foreground/90 whitespace-pre-wrap">
           {item.caption}
         </p>
       )}
     </article>
   );
 }
+
 
 function MediaCarousel({ media }: { media: FeedItem["media"] }) {
   const [index, setIndex] = useState(0);
