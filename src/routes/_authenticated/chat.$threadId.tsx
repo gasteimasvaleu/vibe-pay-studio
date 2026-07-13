@@ -16,7 +16,8 @@ import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { Textarea } from "@/components/ui/textarea";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { PriceDialog } from "@/components/chat/PriceDialog";
-import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
