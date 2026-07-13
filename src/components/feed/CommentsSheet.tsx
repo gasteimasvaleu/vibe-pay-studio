@@ -223,7 +223,7 @@ export function CommentsSheet({
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      {isMine && (
+                      {canDelete && (
                         <Popover>
                           <PopoverTrigger asChild>
                             <button
