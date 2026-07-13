@@ -1,24 +1,37 @@
-## Trocar bottom sheet por popover flutuante
+## Objetivo
+Exibir um aviso estilo banner no topo central da tela ao favoritar ou desfavoritar uma publicação, conforme o screenshot enviado (fundo verde claro, texto "Post favoritado" centralizado).
 
-O usuário quer um menu flutuante ancorado ao botão de três pontos (como no screenshot), não um sheet inferior.
+## Problema atual
+O projeto já chama `toast.success(...)` do `sonner` no `PublicationCard`, mas o componente `<Toaster />` nunca foi renderizado no layout. Por isso nenhum toast aparece.
 
-### Mudanças
+## Alterações propostas
 
-**`src/components/feed/PublicationOptionsSheet.tsx` → renomear para `PublicationOptionsMenu.tsx`**
+### 1. Adicionar tokens semânticos de sucesso
+**Arquivo:** `src/styles.css`
+- Criar `--success` e `--success-foreground` no `:root` com tom verde claro/escuro equivalente ao do screenshot.
+- Registrar as cores no `@theme inline` para poderem ser usadas via Tailwind (`bg-success`, `text-success-foreground`).
 
-- Trocar `Sheet` + `SheetContent` por `Popover` + `PopoverTrigger` + `PopoverContent` do shadcn (`@/components/ui/popover`).
-- O trigger deixa de ser controlado externamente por estado — o `PopoverTrigger asChild` envolve o botão `MoreVertical` diretamente. Alinhamento `align="end"` e `sideOffset={8}` para posicionar abaixo/próximo ao botão, com pequena setinha caindo naturalmente da borda superior direita.
-- Largura fixa `w-[340px]`, `rounded-3xl`, `p-4`, sombra elegante (`shadow-xl`), borda sutil, fundo `bg-card`.
-- Manter o layout das opções exatamente como está hoje:
-  - Card interno arredondado com as 5 opções empilhadas (Copiar link, Favoritos, Editar legenda, Desabilitar comentários, Arquivar post) separadas por `divide-y`.
-  - Botão "Excluir post" separado embaixo, em vermelho (`bg-destructive/10`, `text-destructive`).
-- Manter os mesmos handlers (`copyLink`, `soon`, `onToggleBookmark`) e o fechamento do popover após cada ação (via estado interno `open`/`onOpenChange`).
-- Animação: o `PopoverContent` do shadcn já tem `data-[state=open]:animate-in fade-in-0 zoom-in-95` — manter, é o feel do screenshot.
+### 2. Configurar o Toaster como banner no topo
+**Arquivo:** `src/components/ui/sonner.tsx`
+- Adicionar `position="top-center"`.
+- Customizar `toastOptions.classNames.toast` para ocupar a largura total do topo, sem bordas arredondadas inferiores, fundo `--success`, texto `--success-foreground`, texto centralizado e padding generoso.
+- Ajustar `duration` para ~2500 ms.
 
-**`src/components/feed/PublicationCard.tsx`**
+### 3. Renderizar o Toaster globalmente
+**Arquivo:** `src/routes/__root.tsx`
+- Importar `{ Toaster }` de `@/components/ui/sonner`.
+- Inserir `<Toaster />` dentro de `RootComponent`, junto ao `QueryClientProvider` / `ThemeInit`.
 
-- Remover o estado `optionsOpen` e o `<PublicationOptionsSheet ... />` renderizado fora do header.
-- Envolver o botão `MoreVertical` com `<PublicationOptionsMenu item={item} onToggleBookmark={...}>` que provê o trigger + conteúdo.
-- Atualizar o import.
+### 4. Ajustar textos do favoritar
+**Arquivo:** `src/components/feed/PublicationCard.tsx`
+- Manter as mensagens existentes mas garantir que:
+  - Favoritar → `"Post favoritado"`
+  - Desfavoritar → `"Post removido dos favoritos"`
+- Remover o `toast.success` redundante do `PublicationOptionsMenu` ou garantir que ambos os caminhos (botão de salvar e menu de opções) disparem o mesmo toast.
 
-Nenhuma mudança em outros arquivos ou lógica de negócio.
+### 5. Verificar outros usos de toast
+**Arquivo:** `src/components/feed/PublicationOptionsMenu.tsx`
+- Manter `toast.success("Link copiado")` e `toast("Em breve")` — agora passarão a funcionar com o Toaster global.
+
+## Resultado esperado
+Ao clicar no ícone de bookmark (salvar) de qualquer publicação, um banner verde aparece no topo central da tela com a mensagem apropriada e some automaticamente após poucos segundos.

@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import {
   Copy,
   Bookmark,
@@ -10,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { showTopBanner } from "@/components/ui/top-banner";
 import type { FeedItem } from "@/lib/publications.functions";
 
 export function PublicationOptionsMenu({
@@ -29,15 +29,15 @@ export function PublicationOptionsMenu({
     const url = `${window.location.origin}/publicacao/${item.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
+      showTopBanner("Link copiado");
     } catch {
-      toast.error("Não foi possível copiar o link");
+      showTopBanner("Não foi possível copiar o link");
     }
     close();
   };
 
   const soon = () => {
-    toast("Em breve");
+    showTopBanner("Em breve");
     close();
   };
 
