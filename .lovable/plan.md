@@ -1,61 +1,53 @@
-## Nova página "Em Alta" (/em-alta)
+## Página "Criar Perfil Gratuito" (/criar-perfil-gratuito)
 
-Página autenticada listando rankings de criadores em várias categorias, acessada pelo card "Em Alta" no dashboard do creator.
+Fluxo autenticado em 2 steps, acessado pelo card "Perfil Gratuito" do dashboard do creator.
 
-### Roteamento
+### Rota e navegação
 
-- Novo arquivo: `src/routes/_authenticated/em-alta.tsx`
-  - `createFileRoute("/_authenticated/em-alta")`
-  - `head()` com título "Em Alta · Monetisexy" e `robots: noindex`
-  - Layout usa `DashboardShell` (mesmo padrão das outras rotas do painel) com título "Em Alta"
-- `src/components/dashboard/CreatorDashboard.tsx`: adicionar `to="/em-alta"` no `ActionCard` "Em Alta"
+- Novo arquivo: `src/routes/_authenticated/criar-perfil-gratuito.tsx`
+  - `createFileRoute("/_authenticated/criar-perfil-gratuito")`
+  - `head()` com título "Criar perfil gratuito · Monetisexy" + `robots: noindex`
+  - Estado local `step` (1 | 2) controla qual etapa renderiza (sem sub-rota; botão voltar do step 2 volta para step 1; no step 1 volta para o dashboard)
+- `src/components/dashboard/CreatorDashboard.tsx`: adicionar `to="/criar-perfil-gratuito"` no `ActionCard` "Perfil Gratuito"
 
-### Estrutura da página
+### Layout comum
 
-Fundo claro (bege como nos screenshots — usar token existente `bg-background` do tema light dentro da shell), rolagem vertical, cada seção com título + link "ver mais" (chevron à direita) + carrossel horizontal com `overflow-x-auto snap-x`.
+Fundo claro (`bg-background`), header simples com botão voltar (chevron esquerda, `router.history.back()` no step 1 / `setStep(1)` no step 2) e título centralizado. Container `max-w-3xl mx-auto px-4 py-6 space-y-6`. Nada de `DashboardShell` (o fluxo é imersivo, sem profile header).
 
-Seções na ordem dos prints:
+### Step 1 — "Crie seu perfil gratuito"
 
-1. **Top creators** — cards altos (retrato) com número grande em marca d'água (1, 2, 3…), foto de capa, nome + `@handle` + selo verificado sobre a base.
-2. **Ofertas de assinatura** — ícone de estrela laranja no título; cards quadrados menores com foto + nome + `@handle`, alguns com badge de desconto.
-3. **Perfis gratuitos** — cards largos (paisagem) com capa, avatar circular sobreposto no canto inferior esquerdo, número de ranking (1º, 2º, 3º) no canto superior direito, faixa branca embaixo com nome + `@handle`.
-4. **As mais mimadas** — cards verticais compactos com foto, ranking (1º, 2º…) no topo direito, nome + `@handle` sobre gradient na base.
-5. **Rumo ao topo** — cards paisagem em grid 2 colunas (desktop) com avatar circular à esquerda, contadores de fotos/vídeos com ícones à direita, nome + `@handle` na faixa branca inferior.
-6. **Em alta nos posts** — cards paisagem com foto do post, avatar circular pequeno + nome + `@handle` sobre gradient, ranking no canto superior direito.
-7. **Bombando no chat** — cards horizontais brancos com avatar + ranking (1º, 2º…) + nome + "Responde em instantes" + botão outline laranja "Ver perfil".
-8. **Chamada Um a Um** — cards verticais grandes com foto, ranking, badge laranja "um a um" no canto, nome + `@handle` centralizados abaixo e botão outline "Ver perfil".
-9. **Live nas alturas** — cards verticais com foto arredondada, nome centralizado, ícone de transmissão vermelho + "X lives nos últimos 7 dias", botão outline "Ver perfil".
+- Título do header: "Crie seu perfil gratuito"
+- Colagem no topo: grade responsiva com 4 imagens (2 grandes verticais nas laterais + 1 grande vertical central destacada + 1 quadrada) usando placeholders de `picsum.photos` (sem gerar binários agora)
+- Título laranja centralizado: "Conheça seu novo perfil" (`text-primary`, fonte bold, ~2xl)
+- Subtítulo cinza: "Você começa sem custo e com todas as ferramentas de faturamento à sua disposição."
+- Lista numerada com números em laranja:
+  1. O Perfil será gratuito para seus assinantes.
+  2. Perfis gratuitos não viram pagos depois.
+  3. Use todas as ferramentas da Monetisexy para faturar.
+- Botão largo laranja "Avançar" fixo no rodapé (`w-full rounded-full bg-primary text-primary-foreground py-4`) → `setStep(2)`
+
+### Step 2 — "Personalizando perfil"
+
+- Título do header: "Personalizando perfil"
+- Avatar circular grande centralizado (`h-32 w-32 rounded-full bg-muted grid place-items-center`) exibindo as iniciais do nome de perfil digitado (ou "CA" enquanto vazio); overlay de câmera (ícone `Camera` do lucide) num badge branco circular no canto inferior direito — `<input type="file" accept="image/*">` escondido dispara upload; o arquivo fica no estado local (sem persistência agora).
+- Campo `Input` pill: placeholder "Nome de perfil" (`rounded-full bg-muted/50 border-0 h-12 px-5`)
+- Campo `Input` pill: placeholder "monetisexy.com/(seu @)" (mesmo estilo)
+- Título de seção: "Escolha uma foto de capa e sua biografia" (`text-sm font-semibold`)
+- Grade horizontal com 3 miniaturas de capa (placeholders picsum, `aspect-[4/3] rounded-xl overflow-hidden`); a miniatura selecionada mostra overlay escuro + ícone de câmera branco central. Clicar em uma seleciona (borda destacada); adicionar botão "+ Enviar sua foto" que abre input file escondido.
+- `Textarea` grande: placeholder "Biografia" (`rounded-2xl bg-muted/50 border-0 min-h-40 p-4 resize-none`)
+- Botão largo "Criar Conta" (`w-full rounded-full py-4`) desabilitado enquanto nome de perfil ou @ estiverem vazios; habilitado com `bg-primary text-primary-foreground`. Ao clicar: por enquanto apenas `toast.success("Perfil criado!")` + navega para `/dashboard` (sem chamar Supabase — persistência ficará para próxima iteração).
 
 ### Componentes
 
-Criar em `src/components/em-alta/`:
+Criar em `src/components/criar-perfil-gratuito/`:
+- `StepHeader.tsx` — header com back + título
+- `Step1Intro.tsx`
+- `Step2PersonalizarPerfil.tsx`
 
-- `EmAltaSection.tsx` — wrapper genérico: título + chevron + slot para carrossel horizontal.
-- `TopCreatorCard.tsx`
-- `OfertaCard.tsx`
-- `PerfilGratuitoCard.tsx`
-- `MimadaCard.tsx`
-- `RumoAoTopoCard.tsx`
-- `PostEmAltaCard.tsx`
-- `ChatBombandoCard.tsx`
-- `UmAUmCard.tsx`
-- `LiveCard.tsx`
-
-Cada card recebe props tipadas (nome, handle, avatarUrl, coverUrl, rank, opcionais). Usa tokens semânticos (`bg-card`, `text-foreground`, `border-border`, `text-primary` para o laranja da marca) — nada de cores hardcoded.
-
-### Dados mock
-
-Arquivo `src/lib/em-alta.mock.ts` exportando arrays tipados para cada seção (6-8 itens por seção). Usar avatares/capas placeholder via `https://i.pravatar.cc/...` e `https://picsum.photos/...` para não incluir binários no repo.
+Reutilizar `Input`, `Textarea`, `Button` de `@/components/ui/*`. Ícones `ArrowLeft`, `Camera` do lucide. Tokens semânticos apenas (`bg-primary`, `text-primary`, `bg-muted`, `text-muted-foreground`, `text-foreground`).
 
 ### Escopo
 
-- Apenas UI + rota + mock. Sem Supabase, sem lógica de negócio.
-- Sem alterar comportamento de outros cards.
-- Sem novas dependências.
-
-### Detalhes técnicos
-
-- Rolagem horizontal: `flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4` para sangrar até a borda no mobile.
-- Selo verificado: reutilizar padrão existente (BadgeCheck do lucide, `text-primary`).
-- `Link` do `@tanstack/react-router` nos "ver mais" apontando para `/em-alta` (âncora inerte por enquanto — placeholder até definirmos sub-rotas).
-- Botões "Ver perfil": `<Link to="/perfil/$username" params={{ username }}>` já que a rota existe.
+- Apenas UI + navegação de steps. Sem migrations, sem server functions, sem upload real ao Supabase Storage nesta iteração (arquivos apenas em memória via `URL.createObjectURL`).
+- Validação client-side simples: nome de perfil obrigatório, @ obrigatório (regex `^[a-z0-9_.]{3,30}$`), biografia opcional. Sem zod nesta iteração — validação inline via booleans.
+- Não altera o comportamento de outros cards ou rotas.
