@@ -30,6 +30,7 @@ export function CommentsSheet({
   onOpenChange: (open: boolean) => void;
   onCountChange?: (delta: number) => void;
   commentsDisabled?: boolean;
+  currentUserName?: string;
 }) {
   const queryClient = useQueryClient();
   const list = useServerFn(listComments);
