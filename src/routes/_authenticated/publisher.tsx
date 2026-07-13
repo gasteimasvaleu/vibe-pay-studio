@@ -181,6 +181,15 @@ function PublisherPage() {
     pinnedToTop: false,
   });
   const [reorderMode, setReorderMode] = useState(false);
+  const [audio, setAudio] = useState<AudioRecording>({
+    status: "idle",
+    elapsedSec: 0,
+    uploadProgress: 0,
+  });
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [paidOpen, setPaidOpen] = useState(false);
