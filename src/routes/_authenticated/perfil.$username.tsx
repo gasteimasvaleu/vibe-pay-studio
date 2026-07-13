@@ -272,6 +272,24 @@ function PerfilPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {!isOwner && (
+        <>
+          <SubscribeDialog
+            open={subscribeOpen}
+            onOpenChange={setSubscribeOpen}
+            creatorId={profile.userId}
+            creatorName={displayName}
+          />
+          <TipDialog
+            open={tipOpen}
+            onOpenChange={setTipOpen}
+            creatorId={profile.userId}
+            creatorName={displayName}
+            publicationId={tipPubId}
+          />
+        </>
+      )}
     </div>
   );
 }
