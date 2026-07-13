@@ -48,7 +48,7 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4">
+      <header className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-4">
         <button
           type="button"
           onClick={() => navigate({ to: "/dashboard" })}
@@ -88,7 +88,7 @@ function ProfilePage() {
         </DropdownMenu>
       </header>
 
-      <div className="px-4 space-y-4">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 space-y-4">
         {/* Profile card */}
         <section className="rounded-2xl border border-border bg-card overflow-hidden">
           {/* Cover */}
