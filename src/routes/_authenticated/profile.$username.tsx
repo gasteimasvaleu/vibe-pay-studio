@@ -48,7 +48,7 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4">
+      <header className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-4">
         <button
           type="button"
           onClick={() => navigate({ to: "/dashboard" })}
