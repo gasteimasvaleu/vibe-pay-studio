@@ -142,6 +142,15 @@ function FeedPage() {
           )}
       </main>
 
+      <PaymentMethodDialog
+        open={!!pending}
+        onOpenChange={(v) => !v && setPending(null)}
+        title="Desbloquear publicação"
+        amountCents={pending?.price_cents ?? 0}
+        loading={!!unlocking}
+        onConfirm={confirmPayment}
+      />
+
       <PaymentModal
         open={modalOpen}
         onOpenChange={setModalOpen}
