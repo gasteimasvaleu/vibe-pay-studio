@@ -73,6 +73,7 @@ function ChatThreadView() {
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
