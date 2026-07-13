@@ -38,11 +38,13 @@ export function PublicationCard({
         )}
       </header>
 
-      <div className="relative aspect-[4/5] bg-black/40">
-        {item.locked ? (
+      {item.locked ? (
+        <div className="relative aspect-[4/5] bg-black/40">
           <LockedOverlay item={item} onUnlock={onUnlock} />
-        ) : first ? (
-          first.type === "video" ? (
+        </div>
+      ) : first ? (
+        <div className="relative aspect-[4/5] bg-black/40">
+          {first.type === "video" ? (
             <video
               src={first.url}
               controls
@@ -54,13 +56,29 @@ export function PublicationCard({
               alt=""
               className="w-full h-full object-cover"
             />
-          )
-        ) : (
-          <div className="w-full h-full grid place-items-center text-white/50 text-sm">
-            Sem mídia
+          )}
+        </div>
+      ) : item.audio_url ? null : (
+        <div className="relative aspect-[4/5] bg-black/40 grid place-items-center text-white/50 text-sm">
+          Sem mídia
+        </div>
+      )}
+
+      {!item.locked && item.audio_url && (
+        <div className="px-4 pt-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-3">
+            <div className="h-10 w-10 shrink-0 rounded-full bg-primary/20 grid place-items-center text-primary">
+              <AudioLines className="h-5 w-5" />
+            </div>
+            <audio
+              src={item.audio_url}
+              controls
+              preload="metadata"
+              className="w-full h-9"
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {item.caption && (
         <p className="px-4 py-3 text-sm text-white/90 whitespace-pre-wrap">
