@@ -8,6 +8,14 @@ const mediaItemSchema = z.object({
   type: z.enum(["image", "video"]),
 });
 
+const audioSchema = z
+  .object({
+    storagePath: z.string().min(1),
+    url: z.string().url(),
+  })
+  .nullable()
+  .optional();
+
 const createPublicationSchema = z.object({
   caption: z.string().max(2000).optional().nullable(),
   visibility: z.enum(["public", "paid", "challenge"]),
@@ -18,6 +26,7 @@ const createPublicationSchema = z.object({
   commentsDisabled: z.boolean(),
   pinned: z.boolean(),
   media: z.array(mediaItemSchema).min(1).max(10),
+  audio: audioSchema,
 });
 
 export const createPublication = createServerFn({ method: "POST" })
