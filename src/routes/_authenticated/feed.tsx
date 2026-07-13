@@ -39,12 +39,15 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function FeedPage() {
   const { username } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
+  const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+
 
   const feedQuery = useQuery({
     queryKey: ["feed"],
