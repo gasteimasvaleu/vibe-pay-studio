@@ -78,7 +78,7 @@ export function CommentsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="p-0 gap-0 h-[85vh] rounded-t-3xl bg-background border-border flex flex-col sm:max-w-[480px] sm:mx-auto sm:left-0 sm:right-0"
+        className="p-0 gap-0 h-[85vh] rounded-t-3xl bg-background border-border flex flex-col sm:max-w-[650px] sm:mx-auto sm:left-0 sm:right-0"
       >
         <header className="px-5 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Comentários</h2>
