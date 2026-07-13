@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      asaas_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -237,31 +264,49 @@ export type Database = {
       }
       payment_intents: {
         Row: {
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
           created_at: string
           event_id: string
           event_type: string | null
           id: string
+          metadata: Json
+          method: string | null
           payload: Json
+          pix_copy_paste: string | null
+          pix_qr_code: string | null
           processed_at: string | null
           provider: string
           transaction_id: string | null
         }
         Insert: {
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
           created_at?: string
           event_id: string
           event_type?: string | null
           id?: string
+          metadata?: Json
+          method?: string | null
           payload?: Json
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
           processed_at?: string | null
           provider: string
           transaction_id?: string | null
         }
         Update: {
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
           created_at?: string
           event_id?: string
           event_type?: string | null
           id?: string
+          metadata?: Json
+          method?: string | null
           payload?: Json
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
           processed_at?: string | null
           provider?: string
           transaction_id?: string | null
@@ -279,6 +324,10 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          asaas_account_id: string | null
+          asaas_account_status: string | null
+          asaas_customer_id: string | null
+          asaas_wallet_id: string | null
           created_at: string
           discount_quarterly: number
           discount_semiannual: number
@@ -301,6 +350,10 @@ export type Database = {
         }
         Insert: {
           account_type?: string
+          asaas_account_id?: string | null
+          asaas_account_status?: string | null
+          asaas_customer_id?: string | null
+          asaas_wallet_id?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
@@ -323,6 +376,10 @@ export type Database = {
         }
         Update: {
           account_type?: string
+          asaas_account_id?: string | null
+          asaas_account_status?: string | null
+          asaas_customer_id?: string | null
+          asaas_wallet_id?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
