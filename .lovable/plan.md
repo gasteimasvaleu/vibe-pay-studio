@@ -1,22 +1,16 @@
-Adicionar uma navbar superior global em todas as páginas autenticadas.
+## O que será feito
 
-## Novo componente `src/components/site/TopNav.tsx`
-Barra fixa no topo, `sticky top-0 z-40`, fundo `bg-card/80 backdrop-blur` com border-bottom. Container `max-w-3xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between`.
+Substituir a imagem do logo no `TopNav` pela nova URL fornecida e aumentar o tamanho visual do logo, mantendo a altura total da navbar inalterada.
 
-- **Esquerda**: `<Link to="/feed">` com `<img>` da logo Monetisexy:
-  `https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy2..png` (altura ~28px, `alt="Monetisexy"`).
-- **Direita**: `<Link to="/dashboard">` com avatar circular 36px (inicial do username em fallback com `bg-gradient-primary`, `text-primary-foreground`). Buscar username via `supabase.auth.getUser()` no `useEffect` do componente, com estado local; enquanto carrega, mostra o círculo sem letra.
+## Mudanças
 
-## Integração
-Editar `src/routes/_authenticated/route.tsx` para renderizar `<TopNav />` acima do `<Outlet />`:
-```tsx
-<div className="pb-24">
-  <TopNav />
-  <Outlet />
-  <BottomNav />
-</div>
-```
+1. **Atualizar URL do logo** em `src/components/site/TopNav.tsx`:
+   - Trocar `monetisexy2..png` por `https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy3..png`
 
-## Não altero
-- Headers internos existentes das páginas (com botão voltar/título) permanecem — a `TopNav` fica acima deles. Ajuste de duplicidade não faz parte deste pedido.
-- Páginas públicas (fora de `_authenticated`) não recebem a navbar.
+2. **Aumentar o logo e preservar a altura da navbar**:
+   - Aumentar a altura do logo de `h-7` (28px) para `h-9` (36px), igualando-o ao avatar do lado direito.
+   - Reduzir o padding vertical de `py-3` (12px em cada lado) para `py-2` (8px em cada lado), mantendo a altura total da navbar em ~52px.
+
+## Resultado esperado
+
+A navbar continua com a mesma altura externa, mas o logo fica visivelmente maior e alinhado com o avatar circular do dashboard.

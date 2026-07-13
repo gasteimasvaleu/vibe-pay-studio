@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
 const LOGO_URL =
-  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy2..png";
+  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy3..png";
 
 export function TopNav() {
   const [initial, setInitial] = useState<string>("");
@@ -25,9 +25,9 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md">
-      <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+      <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-2">
         <Link to="/feed" aria-label="Monetisexy" className="flex items-center">
-          <img src={LOGO_URL} alt="Monetisexy" className="h-7 w-auto" />
+          <img src={LOGO_URL} alt="Monetisexy" className="h-9 w-auto" />
         </Link>
         <Link
           to="/dashboard"
