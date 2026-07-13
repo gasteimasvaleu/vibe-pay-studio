@@ -55,6 +55,8 @@ export const createPublication = createServerFn({ method: "POST" })
         comments_disabled: data.commentsDisabled,
         pinned: data.pinned,
         published_at: publishedAt.toISOString(),
+        audio_url: data.audio?.url ?? null,
+        audio_storage_path: data.audio?.storagePath ?? null,
       })
       .select("id")
       .single();
