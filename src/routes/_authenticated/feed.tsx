@@ -166,6 +166,32 @@ function FeedPage() {
           feedQuery.refetch();
         }}
       />
+
+      <CommentsSheet
+        publicationId={commentsFor?.id ?? null}
+        commentsDisabled={commentsFor?.comments_disabled}
+        open={!!commentsFor}
+        onOpenChange={(v) => !v && setCommentsFor(null)}
+        onCountChange={(delta) => {
+          const id = commentsFor?.id;
+          if (!id) return;
+          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+            ["feed"],
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    items: prev.items.map((it) =>
+                      it.id === id
+                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                        : it,
+                    ),
+                  }
+                : prev,
+          );
+        }}
+      />
+
     </div>
   );
 }
