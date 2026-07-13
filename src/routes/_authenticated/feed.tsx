@@ -131,6 +131,17 @@ function FeedPage() {
             </motion.section>
           )}
       </main>
+
+      <PaymentModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Desbloquear publicação"
+        checkout={checkout}
+        onPaid={() => {
+          toast.success("Pagamento confirmado! Recarregando feed...");
+          feedQuery.refetch();
+        }}
+      />
     </div>
   );
 }
