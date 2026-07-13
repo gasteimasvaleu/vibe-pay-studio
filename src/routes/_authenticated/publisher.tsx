@@ -21,6 +21,7 @@ import {
   Mic,
   Pin,
   Plus,
+  Trash2,
   Wallet,
   X,
 } from "lucide-react";
