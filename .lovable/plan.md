@@ -1,64 +1,55 @@
 ## Objetivo
 
-Habilitar **mensagens pagas** no chat: o criador define um valor no composer, envia a mensagem bloqueada, e o assinante desbloqueia via PIX (Asaas, split 85/15) para ler o conteúdo.
+Ampliar o webhook `src/routes/api/public/webhooks/asaas.ts` para tratar corretamente os novos eventos da aba Cobrança que você marcou (autorização de cartão, análise de risco, estorno parcial e eventos de split), mantendo idempotência e o modelo 85/15.
 
-## O que muda
+## Mudanças no handler
 
-### 1. Composer com botão de preço (repurpose do "Tag")
+### 1. Novos conjuntos de eventos
 
-Em `src/routes/_authenticated/chat.$threadId.tsx`, o composer hoje é só textarea + botão enviar. Adicionar linha de `ComposerIcon`s abaixo da textarea, reutilizando o padrão de `chat-agendamento.tsx`, e trocar o ícone `Tag` por `DollarSign` com o label **"Definir valor da mensagem"**.
+Adicionar, ao lado dos conjuntos existentes:
 
-- Clicar no botão abre um `PriceDialog` (novo componente):
-  - Slider/stepper de R$ 1 a R$ 500, presets R$ 5 / R$ 20 / R$ 50 / R$ 100.
-  - Opção "Sem preço (grátis)" limpa.
-  - Ao confirmar, o valor fica no state local do composer.
-- Quando um preço estiver definido, o ícone $ fica **ativo** (variação `active` do `ComposerIcon`) e aparece um chip discreto ao lado da textarea: `R$ X,XX · remover`.
-- Somente criadores veem esse botão (checar `account_type` do viewer no `beforeLoad`); assinantes conversando com criadores continuam vendo só textarea.
+- `TERMINAL_AUTHORIZED` = `{ PAYMENT_AUTHORIZED }` → status intermediário `authorized` (cartão pré-autorizado, ainda não capturado). Não credita wallet do criador.
+- `RISK_PENDING` = `{ PAYMENT_AWAITING_RISK_ANALYSIS }` → status `in_analysis`.
+- `RISK_APPROVED` = `{ PAYMENT_APPROVED_BY_RISK_ANALYSIS }` → trata como `paid` (mesmo caminho de `PAYMENT_RECEIVED`).
+- `RISK_REPROVED` = `{ PAYMENT_REPROVED_BY_RISK_ANALYSIS }` → trata como `cancelled`.
+- `TERMINAL_PARTIAL_REFUND` = `{ PAYMENT_PARTIALLY_REFUNDED }` → novo status `partially_refunded`.
+- `SPLIT_EVENTS` = `{ PAYMENT_SPLIT_CANCELLED, PAYMENT_SPLIT_DIVERGENCE_BLOCK, PAYMENT_SPLIT_DIVERGENCE_BLOCK_FINISHED }` → registrados em `asaas_events` mas **não** alteram status da referência; apenas logam + marcam `processed_at`, para auditoria (afetam a carteira do criador direto no Asaas).
 
-### 2. Envio da mensagem com preço
+### 2. Ampliar `markStatus`
 
-Extender `sendMessage` em `src/lib/chat.functions.ts`:
-- Novo campo opcional `priceCents` (int, 0–50000) no validator.
-- Insere `price_cents` em `chat_messages` quando > 0.
-- Retorna `priceCents` no `ChatMessage`.
+Aceitar os novos valores no union type: `"paid" | "refunded" | "cancelled" | "authorized" | "in_analysis" | "partially_refunded"`.
 
-Extender o tipo `ChatMessage` com:
-- `priceCents: number | null`
-- `unlocked: boolean` (true se `price_cents` for null/0, se sou o autor, ou se existe `chat_message_unlocks` com `status='paid'` para meu user_id).
+Ajustes finos:
+- Para `subscriptions`, apenas `paid` continua virando `active`; os demais status intermediários (`authorized`, `in_analysis`) não sobrescrevem uma assinatura já ativa (guardar via `.neq('status','active')` no update).
+- Para `video_calls` continua usando `payment_status`.
 
-Em `getThreadWithPartner`:
-- Após buscar mensagens, se houver mensagens do parceiro com `price_cents > 0`, buscar em `chat_message_unlocks` os desbloqueios pagos do viewer para esses `message_id`s.
-- Preencher `unlocked` corretamente por mensagem.
+### 3. Ordem de decisão no POST
 
-### 3. Renderização das mensagens pagas
+Substituir o if/else atual por:
 
-No mapa de mensagens:
+```
+if (PAID.has(t) || RISK_APPROVED.has(t))       target = 'paid'
+else if (PARTIAL_REFUND.has(t))                target = 'partially_refunded'
+else if (REFUNDED.has(t))                      target = 'refunded'
+else if (CANCELLED.has(t) || RISK_REPROVED)    target = 'cancelled'
+else if (AUTHORIZED.has(t))                    target = 'authorized'
+else if (RISK_PENDING.has(t))                  target = 'in_analysis'
+else if (SPLIT_EVENTS.has(t))                  target = null  // só audita
+```
 
-- **Minha mensagem paga** (criador): balão normal + badge no rodapé `R$ X,XX · Pago` (verde) ou `R$ X,XX · Aguardando` (âmbar), conforme o parceiro já desbloqueou.
-- **Mensagem paga do parceiro ainda bloqueada** (assinante): balão substituído por um card com blur do conteúdo, ícone de cadeado, texto "Mensagem exclusiva · R$ X,XX" e botão **"Desbloquear"** que chama `createChatUnlockPayment` (via `useServerFn`) e abre o `PaymentModal` já existente com QR PIX.
-- **Mensagem paga já desbloqueada**: balão normal com pequeno badge `Desbloqueado`.
+Wallet topup só credita quando `target === 'paid'` (comportamento atual, sem mudança).
 
-No `onPaid` do modal, refazer `queryClient.invalidateQueries(["chat","messages", threadId])` para atualizar o estado `unlocked`.
+### 4. Persistência de metadados de split
 
-### 4. Realtime
-
-O canal `postgres_changes` de `chat_messages` já existe; incluir `priceCents` no payload mapeado e `unlocked = mine` (partner messages novas começam bloqueadas se `price_cents > 0`).
-
-Opcional (não bloqueante): assinar também `chat_message_unlocks` filtrado por `buyer_id=viewer` para invalidar a query quando o webhook confirma pagamento, cobrindo o caso do usuário pagar em outra aba.
-
-## Escopo técnico
-
-- Novos arquivos:
-  - `src/components/chat/PriceDialog.tsx` — dialog de valor da mensagem.
-  - `src/components/chat/LockedMessageBubble.tsx` — card de mensagem bloqueada com CTA de desbloqueio.
-- Alterações:
-  - `src/lib/chat.functions.ts` — `sendMessage` aceita `priceCents`; `getThreadWithPartner` popula `unlocked`; tipo `ChatMessage` ganha `priceCents` e `unlocked`.
-  - `src/routes/_authenticated/chat.$threadId.tsx` — composer com `ComposerIcon`s, estado de preço, renderização condicional, integração do `PaymentModal` + `createChatUnlockPayment`, `beforeLoad` passa `viewerAccountType`.
-- Reuso: `PaymentModal` e `PixCheckout` já existentes; `createChatUnlockPayment` já pronto e wallet do criador já vem de `profiles.asaas_wallet_id`.
-- Pré-condição já garantida no server fn: o criador precisa ter `asaas_wallet_id` (falha explícita com "criador ainda não configurou o recebimento").
+Nos eventos `PAYMENT_SPLIT_*`, além de gravar em `asaas_events`, incluir um `console.warn` estruturado com `paymentId` + `event_type` para facilitar rastreio, já que representam problemas potenciais no repasse ao criador.
 
 ## Fora de escopo
 
-- Anexar mídia paga (só texto por enquanto).
-- Cobrança em cartão dentro do chat (só PIX, coerente com o resto do app hoje).
-- Auto-refresh via realtime da tabela `chat_message_unlocks` para casos multi-aba (fica como melhoria opcional).
+- Novos valores enum no banco: os status novos (`authorized`, `in_analysis`, `partially_refunded`) hoje só existem no update do webhook; se alguma coluna tiver enum estrito no Postgres, teremos que evoluir schema. Vou **verificar via `supabase--read_query`** antes de implementar; se houver enum, incluo migração adicionando os valores. Se as colunas forem `text`, não precisa migration.
+- Eventos de assinatura (`SUBSCRIPTION_*`) e transferência (`TRANSFER_*`): ficam para o próximo turno quando você mandar os checks da aba Assinaturas.
+- UI: nenhuma tela nova; só o webhook. Status intermediários já aparecem em telas que leem `status` cru.
+
+## Arquivos afetados
+
+- `src/routes/api/public/webhooks/asaas.ts` — nova lógica de eventos.
+- (condicional) `supabase/migrations/*.sql` via `supabase--migration` se algum enum precisar de novos valores.
