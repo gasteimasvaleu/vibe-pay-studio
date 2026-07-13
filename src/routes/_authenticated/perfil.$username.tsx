@@ -246,6 +246,10 @@ function PerfilPage() {
                 username={profile.username}
                 displayName={displayName}
                 delay={i * 0.05}
+                onTip={() => {
+                  setTipPubId(undefined);
+                  setTipOpen(true);
+                }}
               />
             ))}
           </TabsContent>
