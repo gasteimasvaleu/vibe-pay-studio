@@ -1,55 +1,43 @@
 ## Objetivo
 
-Ampliar o webhook `src/routes/api/public/webhooks/asaas.ts` para tratar corretamente os novos eventos da aba Cobrança que você marcou (autorização de cartão, análise de risco, estorno parcial e eventos de split), mantendo idempotência e o modelo 85/15.
+Ampliar o webhook `src/routes/api/public/webhooks/asaas.ts` para tratar os eventos da aba **Transferências** e atualizar a tabela `withdrawals` conforme o Asaas processa cada saque do criador.
+
+## Mapeamento evento → status
+
+O enum `withdrawal_status` já tem os valores necessários (`requested`, `in_review`, `approved`, `paid`, `rejected`, `failed`) — nenhuma migration é preciso.
+
+| Evento Asaas | Novo `withdrawals.status` |
+|---|---|
+| `TRANSFER_CREATED` | `requested` (só se ainda não estiver mais avançado) |
+| `TRANSFER_PENDING` | `approved` |
+| `TRANSFER_IN_BANK_PROCESSING` | `approved` |
+| `TRANSFER_BLOCKED` | `in_review` |
+| `TRANSFER_DONE` | `paid` + `processed_at = now()` |
+| `TRANSFER_FAILED` | `failed` + `rejection_reason` (se vier no payload) |
+| `TRANSFER_CANCELLED` | `rejected` |
 
 ## Mudanças no handler
 
-### 1. Novos conjuntos de eventos
-
-Adicionar, ao lado dos conjuntos existentes:
-
-- `TERMINAL_AUTHORIZED` = `{ PAYMENT_AUTHORIZED }` → status intermediário `authorized` (cartão pré-autorizado, ainda não capturado). Não credita wallet do criador.
-- `RISK_PENDING` = `{ PAYMENT_AWAITING_RISK_ANALYSIS }` → status `in_analysis`.
-- `RISK_APPROVED` = `{ PAYMENT_APPROVED_BY_RISK_ANALYSIS }` → trata como `paid` (mesmo caminho de `PAYMENT_RECEIVED`).
-- `RISK_REPROVED` = `{ PAYMENT_REPROVED_BY_RISK_ANALYSIS }` → trata como `cancelled`.
-- `TERMINAL_PARTIAL_REFUND` = `{ PAYMENT_PARTIALLY_REFUNDED }` → novo status `partially_refunded`.
-- `SPLIT_EVENTS` = `{ PAYMENT_SPLIT_CANCELLED, PAYMENT_SPLIT_DIVERGENCE_BLOCK, PAYMENT_SPLIT_DIVERGENCE_BLOCK_FINISHED }` → registrados em `asaas_events` mas **não** alteram status da referência; apenas logam + marcam `processed_at`, para auditoria (afetam a carteira do criador direto no Asaas).
-
-### 2. Ampliar `markStatus`
-
-Aceitar os novos valores no union type: `"paid" | "refunded" | "cancelled" | "authorized" | "in_analysis" | "partially_refunded"`.
-
-Ajustes finos:
-- Para `subscriptions`, apenas `paid` continua virando `active`; os demais status intermediários (`authorized`, `in_analysis`) não sobrescrevem uma assinatura já ativa (guardar via `.neq('status','active')` no update).
-- Para `video_calls` continua usando `payment_status`.
-
-### 3. Ordem de decisão no POST
-
-Substituir o if/else atual por:
-
-```
-if (PAID.has(t) || RISK_APPROVED.has(t))       target = 'paid'
-else if (PARTIAL_REFUND.has(t))                target = 'partially_refunded'
-else if (REFUNDED.has(t))                      target = 'refunded'
-else if (CANCELLED.has(t) || RISK_REPROVED)    target = 'cancelled'
-else if (AUTHORIZED.has(t))                    target = 'authorized'
-else if (RISK_PENDING.has(t))                  target = 'in_analysis'
-else if (SPLIT_EVENTS.has(t))                  target = null  // só audita
-```
-
-Wallet topup só credita quando `target === 'paid'` (comportamento atual, sem mudança).
-
-### 4. Persistência de metadados de split
-
-Nos eventos `PAYMENT_SPLIT_*`, além de gravar em `asaas_events`, incluir um `console.warn` estruturado com `paymentId` + `event_type` para facilitar rastreio, já que representam problemas potenciais no repasse ao criador.
+1. Ler `payload.transfer` (id + status + externalReference) além de `payload.payment`. Nos eventos `TRANSFER_*` a fonte de verdade é `transfer.id`.
+2. Idempotência continua funcionando via `asaas_events` (event_id já inclui o transfer id no fallback).
+3. Localizar o saque: primeiro por `withdrawals.provider_ref = transfer.id`; se não achar, usar `externalReference` (que hoje devemos gravar como `withdrawals.id` quando disparamos a transferência — este handler apenas prepara o suporte).
+4. Novo helper `applyTransferStatus(supabaseAdmin, withdrawalId, status, providerRef, extra?)`:
+   - Update com `status`, `provider_ref`, `updated_at` (via trigger existente).
+   - Para `paid`: também seta `processed_at`.
+   - Para `failed`: grava `rejection_reason` se `transfer.failReason` estiver presente.
+   - Nunca sobrescreve um saque já `paid` ou `failed` com um status intermediário chegando fora de ordem (guarda com `.not("status","in",("paid","failed","rejected"))` quando o novo status for `requested`/`approved`/`in_review`).
+5. Se nenhum saque for encontrado, apenas loga `console.warn` e marca `asaas_events.processed_at` — não retorna erro (evita retries desnecessários).
+6. Estrutura de decisão no POST fica:
+   - Se `payload.payment` presente → fluxo atual de cobranças (já implementado).
+   - Se `payload.transfer` presente → novo fluxo de transferências.
+   - Caso contrário → apenas registra evento.
 
 ## Fora de escopo
 
-- Novos valores enum no banco: os status novos (`authorized`, `in_analysis`, `partially_refunded`) hoje só existem no update do webhook; se alguma coluna tiver enum estrito no Postgres, teremos que evoluir schema. Vou **verificar via `supabase--read_query`** antes de implementar; se houver enum, incluo migração adicionando os valores. Se as colunas forem `text`, não precisa migration.
-- Eventos de assinatura (`SUBSCRIPTION_*`) e transferência (`TRANSFER_*`): ficam para o próximo turno quando você mandar os checks da aba Assinaturas.
-- UI: nenhuma tela nova; só o webhook. Status intermediários já aparecem em telas que leem `status` cru.
+- Criar de fato a chamada de transferência no Asaas (`POST /transfers`) e gravar `provider_ref` inicial: será um passo futuro em `payouts.functions.ts`. Este PR só prepara o webhook.
+- Assinaturas (`SUBSCRIPTION_*`): próximo turno.
+- UI de status de saque: sem mudança visual; as telas já mostram `status` cru.
 
 ## Arquivos afetados
 
-- `src/routes/api/public/webhooks/asaas.ts` — nova lógica de eventos.
-- (condicional) `supabase/migrations/*.sql` via `supabase--migration` se algum enum precisar de novos valores.
+- `src/routes/api/public/webhooks/asaas.ts` — novo bloco de eventos `TRANSFER_*` + helper `applyTransferStatus`.
