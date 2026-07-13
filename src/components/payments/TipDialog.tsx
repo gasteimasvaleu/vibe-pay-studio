@@ -1,0 +1,167 @@
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Loader2, Minus, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { PixCheckout } from "@/components/payments/PixCheckout";
+import { createTipPayment } from "@/lib/payments.functions";
+
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const PRESETS = [10, 20, 50, 100];
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  creatorId: string;
+  creatorName?: string;
+  publicationId?: string;
+};
+
+type Checkout = {
+  paymentIntentId: string;
+  pixQrCode: string;
+  pixCopyPaste: string;
+  invoiceUrl?: string | null;
+};
+
+export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicationId }: Props) {
+  const [amount, setAmount] = useState(20);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [checkout, setCheckout] = useState<Checkout | null>(null);
+  const createTip = useServerFn(createTipPayment);
+
+  const handleClose = (v: boolean) => {
+    if (!v) {
+      setCheckout(null);
+      setMessage("");
+      setAmount(20);
+    }
+    onOpenChange(v);
+  };
+
+  const submit = async () => {
+    if (amount < 5) {
+      toast.error("Valor mínimo é R$ 5,00");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await createTip({
+        data: {
+          creatorId,
+          amountCents: amount * 100,
+          method: "PIX",
+          publicationId,
+          message: message.trim() || undefined,
+        },
+      });
+      if (!res.pixQrCode || !res.pixCopyPaste) throw new Error("Falha ao gerar PIX");
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao criar tip");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
+        <DialogTitle className="sr-only">Enviar gorjeta</DialogTitle>
+        <DialogDescription className="sr-only">
+          Envie uma gorjeta ao criador via PIX
+        </DialogDescription>
+        {checkout ? (
+          <PixCheckout
+            paymentIntentId={checkout.paymentIntentId}
+            pixQrCode={checkout.pixQrCode}
+            pixCopyPaste={checkout.pixCopyPaste}
+            invoiceUrl={checkout.invoiceUrl}
+            onPaid={() => {
+              toast.success("Gorjeta enviada!");
+              handleClose(false);
+            }}
+            onCancel={() => handleClose(false)}
+          />
+        ) : (
+          <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
+            <header>
+              <h3 className="text-lg font-bold text-foreground">
+                Gorjeta {creatorName ? `para ${creatorName}` : ""}
+              </h3>
+              <p className="text-sm text-muted-foreground">Valor mínimo R$ 5,00 — via PIX</p>
+            </header>
+
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => setAmount((a) => Math.max(5, a - 5))}
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center"
+                aria-label="Diminuir"
+              >
+                <Minus className="h-5 w-5" />
+              </button>
+              <span className="text-4xl font-extrabold tabular-nums text-foreground">
+                {brl.format(amount)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setAmount((a) => a + 5)}
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center"
+                aria-label="Aumentar"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-2">
+              {PRESETS.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setAmount(v)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                    amount === v
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary text-secondary-foreground border-border"
+                  }`}
+                >
+                  {brl.format(v)}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, 300))}
+              placeholder="Mensagem (opcional)"
+              rows={3}
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none"
+            />
+
+            <Button
+              onClick={submit}
+              disabled={loading}
+              className="w-full h-11 rounded-full bg-gradient-primary text-primary-foreground"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Gerando PIX...
+                </>
+              ) : (
+                `Enviar ${brl.format(amount)}`
+              )}
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
