@@ -169,10 +169,14 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           return new Response("bad json", { status: 400 });
         }
 
-        const eventId = payload.id ?? `${payload.event}:${payload.payment?.id ?? "unknown"}`;
+        const transferId = payload.transfer?.id;
+        const eventId =
+          payload.id ??
+          `${payload.event}:${payload.payment?.id ?? transferId ?? "unknown"}`;
         const eventType = payload.event ?? "UNKNOWN";
         const paymentId = payload.payment?.id;
-        const externalRef = payload.payment?.externalReference ?? null;
+        const externalRef =
+          payload.payment?.externalReference ?? payload.transfer?.externalReference ?? null;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -189,6 +193,53 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           return new Response("ok", { status: 200 });
         }
 
+        // ---- Fluxo de Transferências (saques) ----
+        if (transferId && TRANSFER_STATUS_MAP[eventType]) {
+          const targetWithdrawalStatus = TRANSFER_STATUS_MAP[eventType];
+          try {
+            // localizar saque: primeiro por provider_ref, depois por externalReference (=withdrawal.id)
+            let { data: withdrawal } = await supabaseAdmin
+              .from("withdrawals")
+              .select("id, status")
+              .eq("provider_ref", transferId)
+              .maybeSingle();
+
+            if (!withdrawal && externalRef) {
+              const res = await supabaseAdmin
+                .from("withdrawals")
+                .select("id, status")
+                .eq("id", externalRef)
+                .maybeSingle();
+              withdrawal = res.data;
+            }
+
+            if (withdrawal) {
+              await applyTransferStatus(
+                supabaseAdmin,
+                withdrawal.id,
+                targetWithdrawalStatus,
+                transferId,
+                payload.transfer?.failReason ?? null,
+              );
+            } else {
+              console.warn("[asaas webhook] transfer sem saque correspondente", {
+                eventType,
+                transferId,
+                externalRef,
+              });
+            }
+          } catch (e) {
+            console.error("[asaas webhook] transfer processing error", e);
+            return new Response("error", { status: 500 });
+          }
+
+          await supabaseAdmin
+            .from("asaas_events")
+            .update({ processed_at: new Date().toISOString() })
+            .eq("event_id", eventId);
+          return new Response("ok", { status: 200 });
+        }
+
         if (!paymentId) {
           await supabaseAdmin
             .from("asaas_events")
@@ -196,6 +247,7 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
             .eq("event_id", eventId);
           return new Response("ok", { status: 200 });
         }
+
 
         // localiza intent
         const { data: intent } = await supabaseAdmin
