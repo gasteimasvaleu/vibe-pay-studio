@@ -1,32 +1,16 @@
-## Objetivo
-Tornar o background do campo de busca na página `/subscriptions` branco, conforme padronização visual do app.
+## Criar conta de assinante
 
-## Contexto
-O usuário selecionou o input de busca no preview da rota `/subscriptions`. Atualmente o componente `Input` usa `bg-muted`, que renderiza um cinza. O padrão adotado nas páginas recentes é background branco (`bg-white`).
+Vou criar a conta diretamente no Supabase (sem enviar email de confirmação) usando a Admin API via uma migração SQL que:
 
-## Alteração proposta
-No arquivo `src/routes/_authenticated/subscriptions.tsx`, na classe do componente `<Input />` de busca (linha 80), substituir `bg-muted` por `bg-white`.
+1. Insere o usuário em `auth.users` já com `email_confirmed_at = now()` (email pré-confirmado).
+2. Define os metadados (`raw_user_meta_data`) com `username: sexandoapp` e `account_type: subscriber`, para que o trigger `handle_new_user` crie o perfil correto na tabela `public.profiles`.
+3. Senha criptografada com `crypt('Caiaco15', gen_salt('bf'))`.
 
-### Trecho atual
-```tsx
-<Input
-  value={query}
-  onChange={(e) => setQuery(e.target.value)}
-  placeholder="Pesquisar"
-  className="h-12 rounded-2xl border-transparent bg-muted pl-11 text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/40"
-/>
-```
+### Dados
+- Username: `sexandoapp`
+- Email: `sexandoapp@hotmail.com`
+- Senha: `Caiaco15`
+- Tipo: `subscriber`
+- Email confirmado: sim (sem envio)
 
-### Trecho esperado
-```tsx
-<Input
-  value={query}
-  onChange={(e) => setQuery(e.target.value)}
-  placeholder="Pesquisar"
-  className="h-12 rounded-2xl border-transparent bg-white pl-11 text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/40"
-/>
-```
-
-## Validação
-- Verificar visualmente no preview se o input de busca na página Assinaturas ficou com background branco.
-- Confirmar que o build/typecheck continua passando.
+Após aplicar, você poderá logar imediatamente com email + senha.
