@@ -1,5 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { AudioLines, Lock, Trophy } from "lucide-react";
+import { useState, useRef } from "react";
+import {
+  AudioLines,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  Layers,
+  Lock,
+  Trophy,
+} from "lucide-react";
 import type { FeedItem } from "@/lib/publications.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", {
@@ -14,8 +23,6 @@ export function PublicationCard({
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
 }) {
-  const first = item.media[0];
-
   return (
     <article className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.04] backdrop-blur-md">
       <header className="flex items-center gap-3 px-4 py-3">
@@ -38,34 +45,8 @@ export function PublicationCard({
         )}
       </header>
 
-      {item.locked ? (
-        <div className="relative aspect-[4/5] bg-black/40">
-          <LockedOverlay item={item} onUnlock={onUnlock} />
-        </div>
-      ) : first ? (
-        <div className="relative aspect-[4/5] bg-black/40">
-          {first.type === "video" ? (
-            <video
-              src={first.url}
-              controls
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src={first.url}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          )}
-        </div>
-      ) : item.audio_url ? null : (
-        <div className="relative aspect-[4/5] bg-black/40 grid place-items-center text-white/50 text-sm">
-          Sem mídia
-        </div>
-      )}
-
       {!item.locked && item.audio_url && (
-        <div className="px-4 pt-4">
+        <div className="px-4 pb-3">
           <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-3">
             <div className="h-10 w-10 shrink-0 rounded-full bg-primary/20 grid place-items-center text-primary">
               <AudioLines className="h-5 w-5" />
@@ -80,12 +61,113 @@ export function PublicationCard({
         </div>
       )}
 
+      {item.locked ? (
+        <div className="relative aspect-[4/5] bg-black/40">
+          <LockedOverlay item={item} onUnlock={onUnlock} />
+        </div>
+      ) : item.media.length > 0 ? (
+        <MediaCarousel media={item.media} />
+      ) : !item.audio_url ? (
+        <div className="relative aspect-[4/5] bg-black/40 grid place-items-center text-white/50 text-sm">
+          Sem mídia
+        </div>
+      ) : null}
+
       {item.caption && (
         <p className="px-4 py-3 text-sm text-white/90 whitespace-pre-wrap">
           {item.caption}
         </p>
       )}
     </article>
+  );
+}
+
+function MediaCarousel({ media }: { media: FeedItem["media"] }) {
+  const [index, setIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const total = media.length;
+  const current = media[index]!;
+
+  const go = (dir: -1 | 1) => {
+    setIndex((i) => Math.min(Math.max(i + dir, 0), total - 1));
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+    touchStartX.current = null;
+  };
+
+  return (
+    <div
+      className="relative aspect-[4/5] bg-black overflow-hidden select-none"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* blurred backdrop matching the image */}
+      {current.type === "image" && (
+        <img
+          src={current.url}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60"
+        />
+      )}
+
+      {current.type === "video" ? (
+        <video
+          key={current.id}
+          src={current.url}
+          controls
+          className="relative w-full h-full object-contain"
+        />
+      ) : (
+        <img
+          key={current.id}
+          src={current.url}
+          alt=""
+          className="relative w-full h-full object-contain"
+        />
+      )}
+
+      {total > 1 && (
+        <>
+          {index > 0 && (
+            <button
+              type="button"
+              aria-label="Anterior"
+              onClick={() => go(-1)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          )}
+          {index < total - 1 && (
+            <button
+              type="button"
+              aria-label="Próximo"
+              onClick={() => go(1)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          )}
+
+          <div className="absolute top-3 right-3 text-white/90 drop-shadow">
+            <Layers className="h-5 w-5" />
+          </div>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+            <Images className="h-3.5 w-3.5" />
+            {index + 1}/{total}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
