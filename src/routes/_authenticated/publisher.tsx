@@ -990,6 +990,11 @@ function StepCompose({
   setMedia,
   reorderMode,
   setReorderMode,
+  audio,
+  onStartAudio,
+  onCancelAudio,
+  onConfirmAudio,
+  onRemoveAudio,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1002,6 +1007,11 @@ function StepCompose({
   setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>;
   reorderMode: boolean;
   setReorderMode: (v: boolean) => void;
+  audio: AudioRecording;
+  onStartAudio: () => void;
+  onCancelAudio: () => void;
+  onConfirmAudio: () => void;
+  onRemoveAudio: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
