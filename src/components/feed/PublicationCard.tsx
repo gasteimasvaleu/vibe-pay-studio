@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Lock, Trophy } from "lucide-react";
+import { AudioLines, Lock, Trophy } from "lucide-react";
 import type { FeedItem } from "@/lib/publications.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", {
