@@ -1,24 +1,30 @@
-## Problema
+## Causa raiz
 
-A postagem foi criada com sucesso (só áudio, sem imagem/vídeo), mas o `PublicationCard` não conhece o campo `audio_url` — por isso mostra o bloco cinza "Sem mídia" que aparece no screenshot.
+A RLS de `publication_media` chama `public.can_see_publication(uuid)`, mas essa função não tem `GRANT EXECUTE` para os roles `anon` / `authenticated`. Resultado: qualquer SELECT em `publication_media` (feito pelo `getFeed` como usuário autenticado ou pelo browser) falha com:
+
+```
+42501: permission denied for function can_see_publication
+```
+
+Por isso o `getFeed` devolve `media: []` — o card então renderiza só o áudio (a imagem existe no banco, mas nunca chega ao cliente).
 
 ## Plano
 
-Editar `src/components/feed/PublicationCard.tsx` para renderizar o áudio quando `item.audio_url` existir:
+Migration única:
 
-1. **Quando não houver mídia (`first` indefinido) mas houver `audio_url`:** substituir o bloco "Sem mídia" por um card de áudio compacto com:
-   - fundo escuro roxo/gradient sutil coerente com o tema
-   - ícone de onda sonora (lucide `AudioLines` ou `Mic`)
-   - `<audio controls src={item.audio_url} />` ocupando a largura, com `preload="metadata"`
-   - altura reduzida (sem manter o `aspect-[4/5]` do container de imagem) para não deixar espaço cinza gigante
+```sql
+GRANT EXECUTE ON FUNCTION public.can_see_publication(uuid) TO anon, authenticated;
+```
 
-2. **Quando houver mídia E áudio:** manter a imagem/vídeo no topo e adicionar o player de áudio logo abaixo (antes do caption).
+Também garantir `has_role` (usada dentro) para os mesmos roles, por segurança:
 
-3. **Quando o post estiver bloqueado (`locked`):** manter apenas o `LockedOverlay` (não expor o áudio).
+```sql
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO anon, authenticated;
+```
 
-Nenhuma mudança no backend — `audio_url` já vem do `getFeed`.
+Nenhuma alteração no frontend é necessária — assim que a RLS parar de estourar, `media` volta populado e o `PublicationCard` já renderiza a imagem (o código de imagem+áudio juntos já foi implementado no turno anterior).
 
 ## Fora do escopo
 
-- Waveform / visualização custom (usar o player nativo do browser).
-- Autoplay.
+- Refatorar a lógica de `can_see_publication`.
+- Alterar policies existentes.
