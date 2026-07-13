@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
-import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
