@@ -1079,29 +1079,97 @@ function StepCompose({
         className="min-h-32 bg-muted/60 border-border resize-none"
       />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-12 rounded-full bg-card">
-          <Mic className="h-4 w-4 mr-2" />
-          Gravar áudio
-        </Button>
-        <Button
-          variant={reorderMode ? "default" : "outline"}
-          disabled={media.length < 2}
-          onClick={() => setReorderMode(!reorderMode)}
-          className="h-12 rounded-full"
-        >
-          {reorderMode ? (
-            <>
-              <Check className="h-4 w-4 mr-2" />
-              Concluir
-            </>
-          ) : (
-            <>
-              <ArrowLeftRight className="h-4 w-4 mr-2" />
-              Reordenar
-            </>
-          )}
-        </Button>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            onClick={onStartAudio}
+            disabled={audio.status !== "idle" && audio.status !== "error"}
+            className="h-12 rounded-full bg-card"
+          >
+            <Mic className="h-4 w-4 mr-2" />
+            Gravar áudio
+          </Button>
+          <Button
+            variant={reorderMode ? "default" : "outline"}
+            disabled={media.length < 2}
+            onClick={() => setReorderMode(!reorderMode)}
+            className="h-12 rounded-full"
+          >
+            {reorderMode ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Concluir
+              </>
+            ) : (
+              <>
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                Reordenar
+              </>
+            )}
+          </Button>
+        </div>
+
+        {audio.status === "recording" && (
+          <div className="flex items-center justify-between gap-3 h-12 pl-4 pr-2 rounded-full bg-muted/60">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+              <span className="tabular-nums">{formatAudioTime(audio.elapsedSec)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Cancelar gravação"
+                onClick={onCancelAudio}
+                className="h-9 w-9 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Confirmar gravação"
+                onClick={onConfirmAudio}
+                className="h-9 w-9 rounded-full bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 flex items-center justify-center transition-colors"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {audio.status === "uploading" && (
+          <div className="space-y-1.5 px-4 py-2 rounded-2xl bg-muted/60">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Enviando áudio
+              </span>
+              <span>{audio.uploadProgress}%</span>
+            </div>
+            <Progress value={audio.uploadProgress} className="h-1.5" />
+          </div>
+        )}
+
+        {audio.status === "ready" && audio.previewUrl && (
+          <div className="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full bg-muted/60">
+            <audio src={audio.previewUrl} controls className="flex-1 h-9" />
+            <button
+              type="button"
+              aria-label="Remover áudio"
+              onClick={onRemoveAudio}
+              className="h-9 w-9 shrink-0 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {audio.status === "error" && audio.error && (
+          <p className="text-xs text-red-500 px-2">{audio.error}</p>
+        )}
       </div>
 
       <Separator />
