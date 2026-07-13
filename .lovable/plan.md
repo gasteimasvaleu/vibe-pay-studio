@@ -1,35 +1,29 @@
-## Objetivo
+# Restringir página de perfil ao modo creator
 
-1. O botão "Editar perfil" (em `src/routes/_authenticated/perfil.$username.tsx`, linha ~181) deve navegar para `/settings/creator`.
-2. A página `/settings/creator` deve detectar o `account_type` do usuário. No modo **assinante**, mostra uma versão restrita (conforme o screenshot); no modo **creator**, mantém o layout atual.
+## Contexto
 
-## Alterações
+Hoje, `account_type` no `profiles` é a única fonte que distingue "assinante puro" de "creator". Não existe (ainda) troca de modo em runtime — um creator alternando para modo assinante continua com `account_type = 'creator'` no banco. Portanto:
 
-### 1. `src/routes/_authenticated/perfil.$username.tsx`
-Trocar o `<button>` da linha 181 por um `<Link to="/settings/creator">` mantendo as mesmas classes visuais.
+- **Assinante puro** = `profiles.account_type === 'subscriber'`
+- **Creator (mesmo quando visualizando como assinante)** = `profiles.account_type === 'creator'`
 
-### 2. `src/routes/_authenticated/settings.creator.tsx`
+A `BottomNav` já lê `account_type` e mostra a versão de 5 colunas (com botão central "Postar") para creators e a versão de 4 colunas para assinantes. Nenhuma mudança necessária lá — o requisito "quando o modo assinante for criado via conta creator, mostrar a navbar do creator" já é atendido, porque a conta continua sendo creator.
 
-**No `beforeLoad`:** adicionar `account_type` ao select do perfil e retorná-lo no contexto junto com `username`.
+## Mudança
 
-**No componente:** ler `accountType` do contexto. Se `accountType !== "creator"`, renderizar a versão restrita; caso contrário, manter o layout atual.
+### `src/routes/_authenticated/perfil.$username.tsx`
 
-**Versão restrita (assinante) — segue o screenshot:**
+No `beforeLoad`, após obter o usuário logado, buscar também o `account_type` do próprio viewer (`profiles` do `userData.user.id`). Se for `subscriber`, `throw redirect({ to: "/dashboard" })` antes de qualquer outra consulta.
 
-- Header idêntico (botão voltar + título "Configurações de Perfil").
-- Card de perfil (Avatar + nome + `@username`) reutilizando o link atual para `/settings/myprofile`, com um badge/label extra **"Perfil Grátis"** em laranja (`text-orange-500`) abaixo do `@username`.
-- Um único grupo **"Geral"** contendo apenas:
-  - Privacidade (`EyeOff`) → `/settings/privacy`
-  - Link de indicação (`Link2`) → placeholder `toast.info("Em breve")` (rota ainda não existe)
-  - Configuração do chat (`MessageCircle`) → `/settings/chat-settings`
-  - Assinantes restritos (`UserX`) → `/settings/restrictions`
-- Banner informativo no rodapé (fundo `bg-orange-50`, texto centralizado):
-  > "Outras personalizações do menu estão disponíveis apenas no perfil pago."
+Fluxo final do `beforeLoad`:
 
-Os componentes internos `SettingsGroup` e `SettingsRow` já existentes serão reutilizados.
+1. `supabase.auth.getUser()` → sem user, redireciona pra `/entrar` (já existe).
+2. Buscar `account_type` do viewer. Se `'subscriber'` → `redirect('/dashboard')`.
+3. Continuar com a busca do perfil de `params.username` (código atual inalterado).
 
-## Detalhes técnicos
+Nenhum outro arquivo precisa mudar. `BottomNav` e `dashboard.tsx` continuam iguais.
 
-- Nenhuma nova rota é criada; "Link de indicação" fica como placeholder até que a rota exista.
-- `account_type` é lido do `profiles` (mesmo padrão de `dashboard.tsx`).
-- Sem mudanças em lógica de negócio: apenas navegação e apresentação condicional.
+## Fora de escopo
+
+- Implementar troca de modo (creator ↔ assinante) em runtime — não solicitado.
+- Novos campos no banco (ex.: `created_from_creator`) — desnecessário com o critério escolhido.
