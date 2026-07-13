@@ -1,11 +1,15 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getFeed } from "@/lib/publications.functions";
+import { getFeed, type FeedItem } from "@/lib/publications.functions";
+import { createUnlockPayment } from "@/lib/payments.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
+import { PaymentModal, type CheckoutData } from "@/components/payments/PaymentModal";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
