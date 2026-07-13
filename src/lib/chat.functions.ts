@@ -19,7 +19,10 @@ export type ChatMessage = {
   content: string;
   readAt: string | null;
   createdAt: string;
+  priceCents: number | null;
+  unlocked: boolean;
 };
+
 
 export type PartnerProfile = {
   userId: string;
