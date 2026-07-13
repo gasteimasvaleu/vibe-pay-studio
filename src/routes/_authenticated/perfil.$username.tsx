@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, account_type")
+      .select("user_id, username, account_type, price_monthly")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -59,6 +59,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         userId: profile.user_id,
         username: profile.username,
         accountType: profile.account_type,
+        priceMonthly: profile.price_monthly ?? 0,
       },
     };
   },
