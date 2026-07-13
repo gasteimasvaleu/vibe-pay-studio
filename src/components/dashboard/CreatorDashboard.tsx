@@ -41,6 +41,7 @@ export function CreatorDashboard({ username }: { username: string }) {
             icon={<User className="h-5 w-5" />}
             title="Meu Perfil"
             description="Acesse e visualize seu perfil"
+            to={`/profile/${username}`}
           />
           <ActionCard
             icon={<BadgePercent className="h-5 w-5" />}
