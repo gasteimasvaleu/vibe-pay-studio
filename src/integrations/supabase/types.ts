@@ -456,6 +456,90 @@ export type Database = {
         }
         Relationships: []
       }
+      publication_bookmarks: {
+        Row: {
+          created_at: string
+          publication_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          publication_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          publication_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_bookmarks_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publication_comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          publication_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          publication_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          publication_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_comments_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publication_likes: {
+        Row: {
+          created_at: string
+          publication_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          publication_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          publication_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_likes_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publication_media: {
         Row: {
           created_at: string

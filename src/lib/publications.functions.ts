@@ -121,6 +121,10 @@ export type FeedItem = {
   locked: boolean;
   audio_url: string | null;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
+  like_count: number;
+  comment_count: number;
+  liked_by_me: boolean;
+  saved_by_me: boolean;
 };
 
 const getFeedSchema = z.object({
@@ -152,7 +156,6 @@ export const getFeed = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const rows = pubs ?? [];
 
-    // Filtra expirados no server (RLS já filtra, mas defensivo).
     const nowMs = Date.now();
     const visible = rows.filter(
       (p) => !p.expires_at || new Date(p.expires_at).getTime() > nowMs,
@@ -167,7 +170,14 @@ export const getFeed = createServerFn({ method: "POST" })
     const ids = page.map((p) => p.id);
     const authorIds = Array.from(new Set(page.map((p) => p.author_id)));
 
-    const [{ data: mediaRows }, { data: profileRows }] = await Promise.all([
+    const [
+      { data: mediaRows },
+      { data: profileRows },
+      { data: likeRows },
+      { data: myLikeRows },
+      { data: mySavedRows },
+      { data: commentRows },
+    ] = await Promise.all([
       client
         .from("publication_media")
         .select("id, publication_id, url, type, position")
@@ -177,11 +187,39 @@ export const getFeed = createServerFn({ method: "POST" })
         .from("profiles")
         .select("user_id, username")
         .in("user_id", authorIds),
+      client
+        .from("publication_likes")
+        .select("publication_id")
+        .in("publication_id", ids),
+      client
+        .from("publication_likes")
+        .select("publication_id")
+        .in("publication_id", ids)
+        .eq("user_id", currentUserId),
+      client
+        .from("publication_bookmarks")
+        .select("publication_id")
+        .in("publication_id", ids)
+        .eq("user_id", currentUserId),
+      client
+        .from("publication_comments")
+        .select("publication_id")
+        .in("publication_id", ids),
     ]);
 
     const profileMap = new Map(
       (profileRows ?? []).map((r) => [r.user_id, r.username]),
     );
+    const likeCounts = new Map<string, number>();
+    (likeRows ?? []).forEach((r) => {
+      likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
+    });
+    const commentCounts = new Map<string, number>();
+    (commentRows ?? []).forEach((r) => {
+      commentCounts.set(r.publication_id, (commentCounts.get(r.publication_id) ?? 0) + 1);
+    });
+    const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
+    const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
@@ -208,11 +246,154 @@ export const getFeed = createServerFn({ method: "POST" })
         published_at: p.published_at!,
         locked: isLocked,
         audio_url: (p as { audio_url: string | null }).audio_url ?? null,
-        // Se houver media retornada (autor ou usuário desbloqueado), mostra;
-        // senão devolve array vazio p/ o card renderizar o estado bloqueado.
         media: isLocked && media.length === 0 ? [] : media,
+        like_count: likeCounts.get(p.id) ?? 0,
+        comment_count: commentCounts.get(p.id) ?? 0,
+        liked_by_me: likedSet.has(p.id),
+        saved_by_me: savedSet.has(p.id),
       };
     });
 
     return { items, nextCursor };
   });
+
+const idSchema = z.object({ publicationId: z.string().uuid() });
+
+export const toggleLike = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ liked: boolean; likeCount: number }> => {
+    const { supabase, userId } = context;
+    const { data: existing } = await supabase
+      .from("publication_likes")
+      .select("user_id")
+      .eq("publication_id", data.publicationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("publication_likes")
+        .delete()
+        .eq("publication_id", data.publicationId)
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("publication_likes")
+        .insert({ publication_id: data.publicationId, user_id: userId });
+      if (error) throw new Error(error.message);
+    }
+
+    const { count } = await supabase
+      .from("publication_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("publication_id", data.publicationId);
+
+    return { liked: !existing, likeCount: count ?? 0 };
+  });
+
+export const toggleBookmark = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ saved: boolean }> => {
+    const { supabase, userId } = context;
+    const { data: existing } = await supabase
+      .from("publication_bookmarks")
+      .select("user_id")
+      .eq("publication_id", data.publicationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("publication_bookmarks")
+        .delete()
+        .eq("publication_id", data.publicationId)
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+      return { saved: false };
+    }
+    const { error } = await supabase
+      .from("publication_bookmarks")
+      .insert({ publication_id: data.publicationId, user_id: userId });
+    if (error) throw new Error(error.message);
+    return { saved: true };
+  });
+
+export type PublicationComment = {
+  id: string;
+  body: string;
+  created_at: string;
+  user_id: string;
+  author_username: string | null;
+};
+
+export const listComments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }): Promise<PublicationComment[]> => {
+    const { supabase } = context;
+    const { data: rows, error } = await supabase
+      .from("publication_comments")
+      .select("id, body, created_at, user_id")
+      .eq("publication_id", data.publicationId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    let profileMap = new Map<string, string | null>();
+    if (userIds.length) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, username")
+        .in("user_id", userIds);
+      profileMap = new Map(
+        (profiles ?? []).map((p) => [p.user_id, p.username]),
+      );
+    }
+    return (rows ?? []).map((r) => ({
+      id: r.id,
+      body: r.body,
+      created_at: r.created_at,
+      user_id: r.user_id,
+      author_username: profileMap.get(r.user_id) ?? null,
+    }));
+  });
+
+const addCommentSchema = z.object({
+  publicationId: z.string().uuid(),
+  body: z.string().trim().min(1).max(2000),
+});
+
+export const addComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => addCommentSchema.parse(d))
+  .handler(async ({ data, context }): Promise<PublicationComment> => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("publication_comments")
+      .insert({
+        publication_id: data.publicationId,
+        user_id: userId,
+        body: data.body,
+      })
+      .select("id, body, created_at, user_id")
+      .single();
+    if (error || !row) throw new Error(error?.message ?? "Falha ao comentar");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    return {
+      id: row.id,
+      body: row.body,
+      created_at: row.created_at,
+      user_id: row.user_id,
+      author_username: profile?.username ?? null,
+    };
+  });
+
