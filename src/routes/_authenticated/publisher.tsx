@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { flushSync } from "react-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -52,6 +53,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +80,11 @@ export const Route = createFileRoute("/_authenticated/publisher")({
 });
 
 const BUCKET = "publications";
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ?? "https://zyoxtptkmhugxmdzmptd.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5b3h0cHRrbWh1Z3htZHptcHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTU5NjgsImV4cCI6MjA5OTA5MTk2OH0.JCvkcYD89lRDfvNB5_G03xUqt0K50fFFutHKBvlS_lM";
 // Signed URL de longa duração (1 ano) — bucket é privado.
 const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
 const MAX_MEDIA = 10;
@@ -92,6 +99,7 @@ type MediaItem = {
   status: MediaStatus;
   storagePath?: string;
   publicUrl?: string;
+  uploadProgress: number;
   error?: string;
 };
 
@@ -108,6 +116,55 @@ const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
+
+function getStorageUploadUrl(path: string) {
+  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+  return `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodedPath}`;
+}
+
+function uploadWithProgress({
+  file,
+  path,
+  token,
+  onProgress,
+}: {
+  file: File;
+  path: string;
+  token: string;
+  onProgress: (progress: number) => void;
+}) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", getStorageUploadUrl(path));
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.setRequestHeader("apikey", SUPABASE_PUBLISHABLE_KEY);
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.setRequestHeader("content-type", file.type || "application/octet-stream");
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    };
+
+    xhr.onerror = () => reject(new Error("Falha de conexão no upload"));
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+        resolve();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(xhr.responseText) as { message?: string; error?: string };
+        reject(new Error(parsed.message ?? parsed.error ?? "Falha no upload"));
+      } catch {
+        reject(new Error(xhr.responseText || "Falha no upload"));
+      }
+    };
+
+    xhr.send(file);
+  });
+}
 
 function PublisherPage() {
   const router = useRouter();
@@ -145,6 +202,13 @@ function PublisherPage() {
 
   const uploadingCount = media.filter((m) => m.status === "uploading").length;
   const errorCount = media.filter((m) => m.status === "error").length;
+  const uploadProgress =
+    media.length > 0
+      ? Math.round(
+          media.reduce((total, item) => total + item.uploadProgress, 0) /
+            media.length,
+        )
+      : 0;
   const canContinue =
     media.length > 0 && uploadingCount === 0 && errorCount === 0;
 
@@ -157,24 +221,29 @@ function PublisherPage() {
   const triggerFileInput = () => {
     // IMPORTANTE: clicar sincronamente para preservar o user-gesture,
     // senão navegadores bloqueiam a abertura do diálogo de arquivos.
+    flushSync(() => setPickerOpen(false));
     fileInputRef.current?.click();
-    setPickerOpen(false);
   };
 
   const onFiles = async (files: FileList | null) => {
     if (!files) return;
-    const userRes = await supabase.auth.getUser();
-    const userId = userRes.data.user?.id;
-    if (!userId) {
+    const selectedFiles = Array.from(files);
+    if (selectedFiles.length === 0) return;
+
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes.data.session;
+    const userId = session?.user.id;
+    const token = session?.access_token;
+    if (!userId || !token) {
       toast.error("Sessão expirada. Faça login novamente.");
       return;
     }
 
     const remaining = MAX_MEDIA - media.length;
-    const slice = Array.from(files).slice(0, remaining);
+    const slice = selectedFiles.slice(0, remaining);
 
-    const newItems: MediaItem[] = [];
-    for (const file of slice) {
+    const uploadJobs: Array<{ id: string; file: File; path: string }> = [];
+    const newItems: MediaItem[] = slice.flatMap((file) => {
       const isVideo = file.type.startsWith("video");
       const type: "image" | "video" = isVideo ? "video" : "image";
       const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
@@ -182,34 +251,36 @@ function PublisherPage() {
         toast.error(
           `${file.name} excede o limite de ${isVideo ? "200MB" : "15MB"}`,
         );
-        continue;
+        return [];
       }
       const id = crypto.randomUUID();
-      newItems.push({
+      const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+      const path = `posts/${userId}/drafts/${id}.${ext}`;
+      uploadJobs.push({ id, file, path });
+      return [{
         id,
         previewUrl: URL.createObjectURL(file),
         type,
         status: "uploading",
-      });
-      const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
-      const path = `posts/${userId}/drafts/${id}.${ext}`;
+        uploadProgress: 0,
+      } satisfies MediaItem];
+    });
 
-      // Upload async
-      void supabase.storage
-        .from(BUCKET)
-        .upload(path, file, { upsert: false, contentType: file.type })
-        .then(async ({ error }) => {
-          if (error) {
-            setMedia((prev) =>
-              prev.map((m) =>
-                m.id === id
-                  ? { ...m, status: "error", error: error.message }
-                  : m,
-              ),
-            );
-            toast.error(`Falha ao enviar ${file.name}`);
-            return;
-          }
+    if (newItems.length === 0) return;
+    setMedia((m) => [...m, ...newItems]);
+
+    for (const { id, file, path } of uploadJobs) {
+      void uploadWithProgress({
+        file,
+        path,
+        token,
+        onProgress: (progress) => {
+          setMedia((prev) =>
+            prev.map((m) => (m.id === id ? { ...m, uploadProgress: progress } : m)),
+          );
+        },
+      })
+        .then(async () => {
           const { data: signed, error: signErr } = await supabase.storage
             .from(BUCKET)
             .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
@@ -217,11 +288,16 @@ function PublisherPage() {
             setMedia((prev) =>
               prev.map((m) =>
                 m.id === id
-                  ? { ...m, status: "error", error: signErr?.message ?? "signed url" }
+                  ? {
+                      ...m,
+                      status: "error",
+                      uploadProgress: 100,
+                      error: signErr?.message ?? "Falha ao gerar URL assinada",
+                    }
                   : m,
               ),
             );
-            toast.error(`Falha ao gerar URL de ${file.name}`);
+            toast.error(`Falha ao preparar ${file.name}`);
             return;
           }
           setMedia((prev) =>
@@ -232,13 +308,28 @@ function PublisherPage() {
                     status: "ready",
                     storagePath: path,
                     publicUrl: signed.signedUrl,
+                    uploadProgress: 100,
                   }
                 : m,
             ),
           );
+        })
+        .catch((error: unknown) => {
+          setMedia((prev) =>
+            prev.map((m) =>
+              m.id === id
+                ? {
+                    ...m,
+                    status: "error",
+                    uploadProgress: 100,
+                    error: error instanceof Error ? error.message : "Falha no upload",
+                  }
+                : m,
+            ),
+          );
+          toast.error(`Falha ao enviar ${file.name}`);
         });
     }
-    setMedia((m) => [...m, ...newItems]);
   };
 
   const removeMedia = async (id: string) => {
@@ -321,7 +412,8 @@ function PublisherPage() {
         type="file"
         accept="image/*,video/*"
         multiple
-        hidden
+        className="sr-only"
+        tabIndex={-1}
         onChange={(e) => {
           void onFiles(e.target.files);
           e.target.value = "";
@@ -358,15 +450,26 @@ function PublisherPage() {
       <footer className="fixed bottom-16 inset-x-0 z-30 bg-background/95 backdrop-blur border-t border-border pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-3xl mx-auto px-4 py-3">
           {step === 1 ? (
-            <Button
-              className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold disabled:opacity-40 disabled:bg-muted disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
-              disabled={!canContinue}
-              onClick={() => setStep(2)}
-            >
-              {uploadingCount > 0
-                ? `Enviando (${uploadingCount})...`
-                : "Continuar"}
-            </Button>
+            <div className="space-y-3">
+              {uploadingCount > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                    <span>Enviando mídia</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-1.5" />
+                </div>
+              )}
+              <Button
+                className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold disabled:opacity-40 disabled:bg-muted disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+                disabled={!canContinue}
+                onClick={() => setStep(2)}
+              >
+                {uploadingCount > 0
+                  ? `Enviando (${uploadingCount})...`
+                  : "Continuar"}
+              </Button>
+            </div>
           ) : (
             <Button
               className="w-full h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold disabled:opacity-50"
@@ -645,13 +748,19 @@ function SortableMedia({
       )}
 
       {item.status === "uploading" && (
-        <div className="absolute inset-0 grid place-items-center bg-black/50 text-white">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/70 px-4 text-foreground backdrop-blur-sm">
           <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="w-full space-y-1.5">
+            <Progress value={item.uploadProgress} className="h-1.5 bg-background/60" />
+            <p className="text-center text-xs font-semibold">
+              {item.uploadProgress}%
+            </p>
+          </div>
         </div>
       )}
       {item.status === "error" && (
-        <div className="absolute inset-0 grid place-items-center bg-red-900/70 text-white text-xs px-2 text-center">
-          Falha no upload
+        <div className="absolute inset-0 grid place-items-center bg-destructive/80 text-destructive-foreground text-xs px-2 text-center">
+          {item.error || "Falha no upload"}
         </div>
       )}
 
