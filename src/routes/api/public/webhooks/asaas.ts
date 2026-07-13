@@ -8,7 +8,33 @@ type AsaasWebhookPayload = {
     status: string;
     externalReference?: string | null;
   };
+  transfer?: {
+    id: string;
+    status?: string;
+    externalReference?: string | null;
+    failReason?: string | null;
+    description?: string | null;
+  };
 };
+
+type WithdrawalStatus =
+  | "requested"
+  | "in_review"
+  | "approved"
+  | "paid"
+  | "rejected"
+  | "failed";
+
+const TRANSFER_STATUS_MAP: Record<string, WithdrawalStatus> = {
+  TRANSFER_CREATED: "requested",
+  TRANSFER_PENDING: "approved",
+  TRANSFER_IN_BANK_PROCESSING: "approved",
+  TRANSFER_BLOCKED: "in_review",
+  TRANSFER_DONE: "paid",
+  TRANSFER_FAILED: "failed",
+  TRANSFER_CANCELLED: "rejected",
+};
+
 
 const TERMINAL_PAID = new Set(["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"]);
 const TERMINAL_REFUNDED = new Set([
