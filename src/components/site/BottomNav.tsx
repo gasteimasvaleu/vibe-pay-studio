@@ -1,16 +1,39 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageCircle, Plus, Smartphone, TrendingUp, Wallet } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { MessageCircle, Plus, Search, Smartphone, TrendingUp, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const { data: accountType } = useQuery({
+    queryKey: ["bottom-nav-account-type"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return "subscriber" as const;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      return (profile?.account_type ?? "subscriber") as "subscriber" | "creator";
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isSubscriber = accountType === "subscriber";
 
   return (
     <nav
       aria-label="Navegação principal"
       className="fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-black/70 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="max-w-3xl mx-auto px-4 h-16 grid grid-cols-5 items-center">
+      <div
+        className={`max-w-3xl mx-auto px-4 h-16 grid items-center ${
+          isSubscriber ? "grid-cols-4" : "grid-cols-5"
+        }`}
+      >
         <NavItem
           to="/feed"
           active={pathname === "/feed"}
@@ -21,17 +44,24 @@ export function BottomNav() {
           icon={<TrendingUp className="h-5 w-5" />}
           label="Em alta"
         />
-        <CenterPost />
+        {!isSubscriber && <CenterPost />}
         <NavItem
           to="/chat"
           active={pathname.startsWith("/chat")}
           icon={<MessageCircle className="h-5 w-5" />}
           label="Chat"
         />
-        <NavItem
-          icon={<Wallet className="h-5 w-5" />}
-          label="Minha carteira"
-        />
+        {isSubscriber ? (
+          <NavItem
+            icon={<Search className="h-5 w-5" />}
+            label="Busca"
+          />
+        ) : (
+          <NavItem
+            icon={<Wallet className="h-5 w-5" />}
+            label="Minha carteira"
+          />
+        )}
       </div>
     </nav>
   );
