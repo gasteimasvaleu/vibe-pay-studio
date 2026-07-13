@@ -313,11 +313,13 @@ function ProfilePostCard({
   username,
   displayName,
   delay,
+  onTip,
 }: {
   post: ProfilePost;
   username: string;
   displayName: string;
   delay: number;
+  onTip?: () => void;
 }) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
