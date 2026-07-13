@@ -100,7 +100,7 @@ function VaultPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/80 backdrop-blur-md">
+      <header className="border-b border-border bg-white">
         <div className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
           {/* Left header */}
           <div
