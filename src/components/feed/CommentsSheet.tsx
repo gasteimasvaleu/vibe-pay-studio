@@ -1,10 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Heart, MoreVertical, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { listComments, addComment } from "@/lib/publications.functions";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  listComments,
+  addComment,
+  toggleCommentLike,
+  deleteComment,
+  type PublicationComment,
+} from "@/lib/publications.functions";
+import { cn } from "@/lib/utils";
 
 function timeAgo(iso: string): string {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -35,24 +44,41 @@ export function CommentsSheet({
   const queryClient = useQueryClient();
   const list = useServerFn(listComments);
   const create = useServerFn(addComment);
+  const toggleLike = useServerFn(toggleCommentLike);
+  const removeComment = useServerFn(deleteComment);
+
   const [text, setText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
+  const queryKey = ["publication-comments", publicationId] as const;
+
   const query = useQuery({
-    queryKey: ["publication-comments", publicationId],
+    queryKey,
     queryFn: () => list({ data: { publicationId: publicationId! } }),
     enabled: !!publicationId && open,
   });
 
   const mutation = useMutation({
     mutationFn: (body: string) =>
-      create({ data: { publicationId: publicationId!, body } }),
+      create({
+        data: {
+          publicationId: publicationId!,
+          body,
+          parentId: replyingTo?.id ?? null,
+        },
+      }),
     onSuccess: (created) => {
-      queryClient.setQueryData<typeof query.data>(
-        ["publication-comments", publicationId],
-        (prev) => (prev ? [...prev, created] : [created]),
+      queryClient.setQueryData<PublicationComment[]>(queryKey, (prev) =>
+        prev ? [...prev, created] : [created],
       );
       setText("");
+      setReplyingTo(null);
       onCountChange?.(1);
       setTimeout(() => inputRef.current?.focus(), 0);
     },
@@ -62,9 +88,69 @@ export function CommentsSheet({
     },
   });
 
+  const likeMutation = useMutation({
+    mutationFn: (commentId: string) => toggleLike({ data: { commentId } }),
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey });
+      const prev = queryClient.getQueryData<PublicationComment[]>(queryKey);
+      queryClient.setQueryData<PublicationComment[]>(queryKey, (curr) =>
+        curr?.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                viewer_liked: !c.viewer_liked,
+                like_count: c.like_count + (c.viewer_liked ? -1 : 1),
+              }
+            : c,
+        ),
+      );
+      return { prev };
+    },
+    onError: (_e, _id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev);
+      toast.error("Erro ao curtir");
+    },
+    onSuccess: (res, commentId) => {
+      queryClient.setQueryData<PublicationComment[]>(queryKey, (curr) =>
+        curr?.map((c) =>
+          c.id === commentId
+            ? { ...c, viewer_liked: res.liked, like_count: res.likeCount }
+            : c,
+        ),
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (commentId: string) => removeComment({ data: { commentId } }),
+    onSuccess: (_res, commentId) => {
+      queryClient.setQueryData<PublicationComment[]>(queryKey, (curr) =>
+        curr?.filter((c) => c.id !== commentId),
+      );
+      onCountChange?.(-1);
+      toast.success("Comentário excluído");
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Erro ao excluir";
+      toast.error(msg);
+    },
+  });
+
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
+
+  const startReply = (c: PublicationComment) => {
+    const uname = c.author_username ?? "usuario";
+    setReplyingTo({ id: c.id, username: uname });
+    setText((t) => (t.startsWith(`@${uname} `) ? t : `@${uname} `));
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    setText("");
+  };
 
   const send = () => {
     const trimmed = text.trim();
@@ -84,8 +170,6 @@ export function CommentsSheet({
           <h2 className="text-lg font-semibold text-foreground">Comentários</h2>
         </header>
 
-
-
         <div className="flex-1 min-h-[240px] overflow-y-auto px-5 py-6">
           {query.isLoading ? (
             <p className="text-center text-sm text-muted-foreground">Carregando...</p>
@@ -104,27 +188,89 @@ export function CommentsSheet({
               </div>
             </div>
           ) : (
-            <ul className="space-y-4">
-              {comments.map((c) => (
-                <li key={c.id} className="flex items-start gap-3">
-                  <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
-                    {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        @{c.author_username ?? "usuario"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {timeAgo(c.created_at)}
-                      </span>
+            <ul className="space-y-5">
+              {comments.map((c) => {
+                const isMine = currentUserId === c.user_id;
+                return (
+                  <li key={c.id} className="flex items-start gap-3">
+                    <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
+                      {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
                     </div>
-                    <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words">
-                      {c.body}
-                    </p>
-                  </div>
-                </li>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">
+                          {c.author_username ?? "usuario"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {timeAgo(c.created_at)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-foreground/90 whitespace-pre-wrap break-words">
+                        {c.body}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => startReply(c)}
+                        className="mt-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Responder
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isMine && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Opções"
+                              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="end"
+                            sideOffset={4}
+                            className="w-auto p-1 rounded-2xl bg-card border border-border shadow-xl"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => deleteMutation.mutate(c.id)}
+                              disabled={deleteMutation.isPending}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Excluir comentário
+                            </button>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+
+                      <button
+                        type="button"
+                        aria-label={c.viewer_liked ? "Descurtir" : "Curtir"}
+                        onClick={() => likeMutation.mutate(c.id)}
+                        className="flex flex-col items-center gap-0.5 px-1 group"
+                      >
+                        <Heart
+                          className={cn(
+                            "h-5 w-5 transition-colors",
+                            c.viewer_liked
+                              ? "fill-red-500 text-red-500"
+                              : "text-muted-foreground group-hover:text-foreground",
+                          )}
+                        />
+                        {c.like_count > 0 && (
+                          <span className="text-[10px] font-medium text-muted-foreground leading-none">
+                            {c.like_count}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -134,38 +280,61 @@ export function CommentsSheet({
             Comentários desativados nesta publicação.
           </div>
         ) : (
-          <div className="px-4 py-3 border-t border-border flex items-center gap-2">
-            <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
-              {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
-            </div>
-            <div className="flex-1 flex items-center gap-2 rounded-full bg-muted px-4 h-11">
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
+          <div className="border-t border-border">
+            {replyingTo && (
+              <div className="flex items-center justify-between px-5 py-2.5 bg-muted/60 text-sm text-muted-foreground">
+                <span>
+                  Respondendo a{" "}
+                  <span className="font-semibold text-foreground">
+                    {replyingTo.username}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  aria-label="Cancelar resposta"
+                  onClick={cancelReply}
+                  className="h-7 w-7 grid place-items-center rounded-full hover:bg-muted transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <div className="px-4 py-3 flex items-center gap-2">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
+                {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="flex-1 flex items-center gap-2 rounded-full bg-muted px-4 h-11">
+                <input
+                  ref={inputRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  placeholder={
+                    replyingTo
+                      ? `Responder a ${replyingTo.username}...`
+                      : "Adicione um comentário..."
                   }
-                }}
-                placeholder="Adicione um comentário..."
-                className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
-              />
+                  className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <button
+                type="button"
+                aria-label="Enviar"
+                onClick={send}
+                disabled={!text.trim() || mutation.isPending}
+                className="h-11 w-11 grid place-items-center rounded-full bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              type="button"
-              aria-label="Enviar"
-              onClick={send}
-              disabled={!text.trim() || mutation.isPending}
-              className="h-11 w-11 grid place-items-center rounded-full bg-muted hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <Send className="h-4 w-4" />
-            </button>
           </div>
         )}
       </SheetContent>
     </Sheet>
-
   );
 }
