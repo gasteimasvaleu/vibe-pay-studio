@@ -275,12 +275,12 @@ function ChatThreadView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleUnlock(m.id)}
+                    onClick={() => handleUnlock(m.id, m.priceCents!)}
                     disabled={unlockingId === m.id}
                     className="w-full h-10 rounded-full bg-gradient-primary text-primary-foreground text-sm font-semibold shadow-glow disabled:opacity-60"
                   >
                     {unlockingId === m.id
-                      ? "Gerando PIX…"
+                      ? "Processando…"
                       : `Desbloquear por ${formatBRL(m.priceCents!)}`}
                   </button>
                   <div className="text-[10px] text-right text-muted-foreground">
