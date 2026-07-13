@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
+  ArrowRight,
   BadgeCheck,
   Bookmark,
   HelpCircle,
   LogOut,
   MessageCircle,
   Settings,
-  User,
   UserPlus,
   Wallet,
 } from "lucide-react";
@@ -24,11 +25,20 @@ export function SubscriberDashboard({
   creatorOnboardingStarted: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const navigate = useNavigate();
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
     window.location.href = "/";
   };
+
+  const creatorTitle = creatorOnboardingStarted
+    ? "Continuar cadastro de creator"
+    : "Virar creator";
+  const creatorDesc = creatorOnboardingStarted
+    ? "Retome o onboarding de onde parou"
+    : "Monetize seu conteúdo e receba assinantes";
 
   return (
     <DashboardShell username={username} isCreator={false}>
@@ -37,25 +47,28 @@ export function SubscriberDashboard({
           Área do Assinante
         </h3>
 
+        <button
+          type="button"
+          onClick={() => navigate({ to: creatorNextStep as never })}
+          className="group w-full text-left rounded-2xl p-5 shadow-card bg-gradient-primary text-primary-foreground transition-all hover:brightness-110 flex items-center gap-4"
+        >
+          <div className="h-12 w-12 rounded-xl bg-white/20 border border-white/30 grid place-items-center shrink-0">
+            <BadgeCheck className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base md:text-lg font-bold">{creatorTitle}</p>
+            <p className="text-sm text-primary-foreground/80 mt-0.5">
+              {creatorDesc}
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
+        </button>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ActionCard
-            icon={<BadgeCheck className="h-5 w-5" />}
-            title={
-              creatorOnboardingStarted
-                ? "Continuar cadastro de creator"
-                : "Virar creator"
-            }
-            description={
-              creatorOnboardingStarted
-                ? "Retome o onboarding de onde parou"
-                : "Monetize seu conteúdo e receba assinantes"
-            }
-            to={creatorNextStep}
-          />
           <ActionCard
             icon={<MessageCircle className="h-5 w-5" />}
             title="Chat"
-            description="Converse com creators e assinantes"
+            description="Converse com creators agora"
             to="/chat"
           />
           <ActionCard
@@ -67,28 +80,26 @@ export function SubscriberDashboard({
           <ActionCard
             icon={<Wallet className="h-5 w-5" />}
             title="Carteira"
-            description="Métodos de pagamento e histórico"
+            description="Escolha como paga e veja seus gastos"
+            to="/mywallet"
           />
           <ActionCard
             icon={<Bookmark className="h-5 w-5" />}
             title="Atividades"
-            description="Mídias favoritas e salvas"
+            description="Acesse suas mídias favoritas salvas"
             to="/colecoes"
-          />
-          <ActionCard
-            icon={<User className="h-5 w-5" />}
-            title="Perfil"
-            description="Editar suas informações públicas"
           />
           <ActionCard
             icon={<Settings className="h-5 w-5" />}
             title="Definições"
             description="Personalize sua experiência"
+            to="/settings/creator"
           />
           <ActionCard
             icon={<HelpCircle className="h-5 w-5" />}
             title="Ajuda"
-            description="Suporte e perguntas frequentes"
+            description="Precisa de suporte ou tem dúvidas?"
+            to="/bugreport"
           />
           <ActionCard
             icon={<LogOut className="h-5 w-5" />}

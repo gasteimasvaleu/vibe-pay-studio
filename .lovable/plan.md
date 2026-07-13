@@ -1,16 +1,26 @@
-## Criar conta de assinante
+## Dashboard do Assinante — simplificar botões
 
-Vou criar a conta diretamente no Supabase (sem enviar email de confirmação) usando a Admin API via uma migração SQL que:
+Ajustar apenas `src/components/dashboard/SubscriberDashboard.tsx` (sem alterar lógica de dados no route loader).
 
-1. Insere o usuário em `auth.users` já com `email_confirmed_at = now()` (email pré-confirmado).
-2. Define os metadados (`raw_user_meta_data`) com `username: sexandoapp` e `account_type: subscriber`, para que o trigger `handle_new_user` crie o perfil correto na tabela `public.profiles`.
-3. Senha criptografada com `crypt('Caiaco15', gen_salt('bf'))`.
+### Layout
 
-### Dados
-- Username: `sexandoapp`
-- Email: `sexandoapp@hotmail.com`
-- Senha: `Caiaco15`
-- Tipo: `subscriber`
-- Email confirmado: sim (sem envio)
+1. **Faixa em destaque "Virar creator"** — ocupa a linha inteira acima da grade, com fundo em gradiente (usando `bg-gradient-primary` já existente), ícone `BadgeCheck`, título grande e CTA visual de seta. Mantém o comportamento atual: se `creatorOnboardingStarted` for true, texto vira "Continuar cadastro de creator" e navega para `creatorNextStep`; caso contrário "Virar creator" → mesmo `creatorNextStep`.
 
-Após aplicar, você poderá logar imediatamente com email + senha.
+2. **Grade 2 colunas** com apenas estes cards, nesta ordem e com estes textos/rotas:
+
+   | Card | Ícone | Descrição | Rota |
+   |---|---|---|---|
+   | Chat | MessageCircle | Converse com creators agora | `/chat` |
+   | Assinaturas | UserPlus | Veja os creators que você assina | `/subscriptions` |
+   | Carteira | Wallet | Escolha como paga e veja seus gastos | `/mywallet` |
+   | Atividades | Bookmark | Acesse suas mídias favoritas salvas | `/colecoes` |
+   | Definições | Settings | Personalize sua experiência | `/settings/creator` |
+   | Ajuda | HelpCircle | Precisa de suporte ou tem dúvidas? | `/bugreport` |
+   | Sair | LogOut | Sair da plataforma | ação signOut (tone danger) |
+
+### Removidos
+- Card "Perfil" (não estava no screenshot).
+- Card "Virar creator" da grade (promovido para faixa destacada).
+
+### Nota técnica
+`ActionCard` já aceita `to`; preciso adicionar `to` para Carteira (`/mywallet`) — antes não tinha. Nenhuma outra alteração de componente é necessária.
