@@ -257,13 +257,14 @@ function PublisherPage() {
       const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
       const path = `posts/${userId}/drafts/${id}.${ext}`;
       uploadJobs.push({ id, file, path });
-      return [{
+      const item: MediaItem = {
         id,
         previewUrl: URL.createObjectURL(file),
         type,
         status: "uploading",
         uploadProgress: 0,
-      } satisfies MediaItem];
+      };
+      return [item];
     });
 
     if (newItems.length === 0) return;
