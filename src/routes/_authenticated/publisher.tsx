@@ -77,7 +77,9 @@ export const Route = createFileRoute("/_authenticated/publisher")({
   component: PublisherPage,
 });
 
-const BUCKET = "criativos";
+const BUCKET = "publications";
+// Signed URL de longa duração (1 ano) — bucket é privado.
+const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
 const MAX_MEDIA = 10;
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
