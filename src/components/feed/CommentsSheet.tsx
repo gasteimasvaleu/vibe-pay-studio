@@ -23,6 +23,7 @@ export function CommentsSheet({
   onOpenChange,
   onCountChange,
   commentsDisabled,
+  currentUserName,
 }: {
   publicationId: string | null;
   open: boolean;
