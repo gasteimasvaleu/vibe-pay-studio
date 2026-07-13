@@ -160,7 +160,8 @@ export function CommentsSheet({
             </button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
+
   );
 }
