@@ -72,7 +72,7 @@ function MyMonetisexyStatsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold">Meu Monetisexy</h1>
+          <h1 className="text-base font-semibold text-foreground truncate">Meu Monetisexy</h1>
           <div className="w-9" />
         </div>
       </header>

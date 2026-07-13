@@ -18,19 +18,19 @@ export function PromotionShell({
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto max-w-2xl px-5 py-4 flex items-center gap-3">
+      <header className="sticky top-0 z-20 border-b border-border bg-white">
+        <div className="mx-auto max-w-2xl px-5 py-3 flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
             aria-label="Voltar"
-            className="h-9 w-9 grid place-items-center rounded-full text-foreground hover:bg-muted transition"
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <p className="flex-1 text-center text-sm font-medium text-foreground">
+          <h1 className="flex-1 text-center text-base font-semibold text-foreground truncate">
             Criando oferta
-          </p>
+          </h1>
           <span className="h-9 w-9" />
         </div>
       </header>

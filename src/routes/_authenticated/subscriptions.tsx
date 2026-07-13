@@ -63,11 +63,11 @@ function SubscriptionsPage() {
             type="button"
             aria-label="Voltar"
             onClick={() => router.history.back()}
-            className="absolute left-0 grid h-10 w-10 place-items-center rounded-full hover:bg-accent"
+            className="absolute left-0 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold">Assinaturas</h1>
+          <h1 className="text-base font-semibold text-foreground truncate">Assinaturas</h1>
         </div>
 
         {/* Busca */}
