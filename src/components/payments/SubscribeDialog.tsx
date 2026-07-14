@@ -220,7 +220,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Forma de pagamento
                   </p>
-                  <PaymentMethodPicker value={method} onChange={setMethod} />
+                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} />
                 </div>
 
                 <Button
