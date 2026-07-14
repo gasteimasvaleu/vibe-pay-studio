@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PixCheckout } from "@/components/payments/PixCheckout";
 import { CardCheckout } from "@/components/payments/CardCheckout";
 
-export type PaymentMethod = "PIX" | "CREDIT_CARD";
+export type PaymentMethod = "PIX" | "CREDIT_CARD" | "WALLET";
 
 export type CheckoutData = {
   paymentIntentId: string;
