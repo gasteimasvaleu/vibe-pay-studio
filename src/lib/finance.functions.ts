@@ -54,24 +54,30 @@ export const getCreatorBancoOverview = createServerFn({ method: "GET" })
     if (walletRes.error) throw new Error(walletRes.error.message);
     if (txRes.error) throw new Error(txRes.error.message);
 
-    let releasedNational = 0;
-    let releasedIntl = 0;
+    let releasedNationalHist = 0;
+    let releasedIntlHist = 0;
     let pendingNational = 0;
     let pendingIntl = 0;
     for (const t of txRes.data ?? []) {
       const net = t.net_cents ?? 0;
       const isIntl = !!t.is_international;
       const released = !!t.wallet_released_at;
-      if (released && isIntl) releasedIntl += net;
-      else if (released) releasedNational += net;
+      if (released && isIntl) releasedIntlHist += net;
+      else if (released) releasedNationalHist += net;
       else if (isIntl) pendingIntl += net;
       else pendingNational += net;
     }
 
-    // Fallback: se a soma derivada de released for zero mas a wallet tem saldo,
-    // atribui tudo ao Nacional (comportamento seguro).
+    // Fonte da verdade do saldo liberado atual é a wallet (debitada em saques).
+    // O split nacional × internacional vem da proporção histórica das transações.
     const walletReleased = walletRes.data?.released_cents ?? 0;
-    if (releasedNational + releasedIntl === 0 && walletReleased > 0) {
+    const histTotal = releasedNationalHist + releasedIntlHist;
+    let releasedNational = 0;
+    let releasedIntl = 0;
+    if (histTotal > 0 && walletReleased > 0) {
+      releasedIntl = Math.round((walletReleased * releasedIntlHist) / histTotal);
+      releasedNational = Math.max(walletReleased - releasedIntl, 0);
+    } else {
       releasedNational = walletReleased;
     }
 
@@ -85,6 +91,7 @@ export const getCreatorBancoOverview = createServerFn({ method: "GET" })
       updatedAt: walletRes.data?.updated_at ?? null,
     };
   });
+
 
 /**
  * Saldo pré-pago (wallet) do assinante.
