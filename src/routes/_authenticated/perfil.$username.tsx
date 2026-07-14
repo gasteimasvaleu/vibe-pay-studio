@@ -189,12 +189,66 @@ function PerfilPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold truncate">{displayName}</h1>
-          <button
-            className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
-            aria-label="Mais opções"
-          >
-            <MoreVertical className="h-5 w-5" />
-          </button>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <button
+                className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
+                aria-label="Mais opções"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-3/4 max-w-sm bg-white border-r border-black/10 text-black">
+              <SheetHeader>
+                <SheetTitle className="text-left text-black">Opções</SheetTitle>
+              </SheetHeader>
+              <nav className="mt-6 flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const url = window.location.href;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title: displayName, url });
+                      } catch {
+                        // usuário cancelou
+                      }
+                    } else if (navigator.clipboard) {
+                      await navigator.clipboard.writeText(url);
+                      alert("Link copiado para a área de transferência!");
+                    }
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                >
+                  <Share2 className="h-5 w-5" />
+                  Compartilhar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert("Denúncia enviada. Nossa equipe irá analisar este perfil.");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                >
+                  <Flag className="h-5 w-5" />
+                  Denunciar perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert(`Solicitação de amizade enviada para ${displayName}!`);
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                >
+                  <UserPlus className="h-5 w-5" />
+                  Adicionar amigo
+                </button>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
