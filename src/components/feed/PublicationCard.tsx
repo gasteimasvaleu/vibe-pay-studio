@@ -60,13 +60,16 @@ export function PublicationCard({
   const bookmarkFn = useServerFn(toggleBookmark);
 
   const patchItem = (patch: Partial<FeedItem>) => {
-    queryClient.setQueryData<FeedData>(["feed"], (prev) => {
+    queryClient.setQueryData<InfiniteData<FeedData>>(["feed"], (prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        items: prev.items.map((it) =>
-          it.id === item.id ? { ...it, ...patch } : it,
-        ),
+        pages: prev.pages.map((page) => ({
+          ...page,
+          items: page.items.map((it) =>
+            it.id === item.id ? { ...it, ...patch } : it,
+          ),
+        })),
       };
     });
   };
