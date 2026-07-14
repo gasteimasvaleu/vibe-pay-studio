@@ -44,6 +44,10 @@ function LoginCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    if (!email.trim() || !password) {
+      setErrorMsg("Informe seu e-mail e senha.");
+      return;
+    }
     setIsLoading(true);
     try {
       await signInWithEmail(email, password);

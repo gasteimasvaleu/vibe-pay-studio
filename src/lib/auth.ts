@@ -31,8 +31,20 @@ export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
 export function getAuthErrorMessage(message: string) {
   const normalized = message.toLowerCase();
 
+  if (
+    normalized.includes("missing email") ||
+    normalized.includes("missing phone") ||
+    normalized.includes("email or phone")
+  ) {
+    return "Informe seu e-mail e senha.";
+  }
+
   if (normalized.includes("invalid login credentials")) {
     return "E-mail ou senha inválidos.";
+  }
+
+  if (normalized.includes("email") && normalized.includes("invalid")) {
+    return "E-mail inválido.";
   }
 
   if (normalized.includes("user already registered") || normalized.includes("already registered")) {
@@ -43,7 +55,7 @@ export function getAuthErrorMessage(message: string) {
     return "A senha não atende aos requisitos de segurança.";
   }
 
-  return message || "Não foi possível concluir a autenticação.";
+  return "Não foi possível concluir a autenticação.";
 }
 
 export async function signInWithGoogle(preferred?: {
