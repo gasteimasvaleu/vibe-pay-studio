@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Bookmark,
+  ChevronDown,
   Clapperboard,
   DollarSign,
   Film,
@@ -19,6 +20,7 @@ import {
   Smartphone,
   Twitter,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
@@ -38,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, account_type, price_monthly")
+      .select("user_id, username, account_type, price_monthly, discount_quarterly, discount_semiannual")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -50,10 +52,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         userId: profile.user_id,
         username: profile.username,
         accountType: profile.account_type,
-        priceMonthly: profile.price_monthly ?? 0,
+        priceMonthly: Number(profile.price_monthly ?? 0),
+        discountQuarterly: profile.discount_quarterly ?? 0,
+        discountSemiannual: profile.discount_semiannual ?? 0,
       },
     };
   },
+
   component: PerfilPage,
   errorComponent: ({ error }) => (
     <div className="min-h-screen bg-background text-white grid place-items-center p-6">
@@ -102,9 +107,13 @@ function PerfilPage() {
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const location = "São Paulo - BRA";
   const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-  const subscriptionPrice = profile.priceMonthly > 0
-    ? `${brl.format(profile.priceMonthly / 100)}`
-    : null;
+  const monthlyPrice = profile.priceMonthly > 0 ? profile.priceMonthly : 0;
+  const quarterlyPrice = monthlyPrice * 3 * (1 - (profile.discountQuarterly ?? 0) / 100);
+  const semiannualPrice = monthlyPrice * 6 * (1 - (profile.discountSemiannual ?? 0) / 100);
+  const hasPromotions =
+    monthlyPrice > 0 &&
+    ((profile.discountQuarterly ?? 0) > 0 || (profile.discountSemiannual ?? 0) > 0);
+
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
@@ -198,17 +207,18 @@ function PerfilPage() {
           )}
         </div>
 
-        {/* CTA */}
-        <div>
-          {!isOwner && subscriptionPrice && (
-            <button
-              onClick={() => setSubscribeOpen(true)}
-              className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-bold shadow-lg shadow-purple-900/40 hover:brightness-110 transition"
-            >
-              Assinar por {subscriptionPrice}/mês
-            </button>
-          )}
-        </div>
+        {/* Assinaturas */}
+        {!isOwner && monthlyPrice > 0 && (
+          <SubscriptionPlansCard
+            monthly={monthlyPrice}
+            quarterly={quarterlyPrice}
+            semiannual={semiannualPrice}
+            hasPromotions={hasPromotions}
+            onSelect={() => setSubscribeOpen(true)}
+            format={(v) => brl.format(v)}
+          />
+        )}
+
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="w-full">
@@ -284,6 +294,75 @@ function PerfilPage() {
     </div>
   );
 }
+
+function SubscriptionPlansCard({
+  monthly,
+  quarterly,
+  semiannual,
+  hasPromotions,
+  onSelect,
+  format,
+}: {
+  monthly: number;
+  quarterly: number;
+  semiannual: number;
+  hasPromotions: boolean;
+  onSelect: () => void;
+  format: (v: number) => string;
+}) {
+  const [promoOpen, setPromoOpen] = useState(true);
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-bold text-foreground mb-2">Assinaturas</h3>
+        <PlanPill label="1 mês" price={format(monthly)} onClick={onSelect} />
+      </div>
+
+      {hasPromotions && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setPromoOpen((v) => !v)}
+            className="w-full flex items-center justify-between mb-2"
+          >
+            <h3 className="text-base font-bold text-foreground">Promoções</h3>
+            <ChevronDown
+              className={`h-5 w-5 text-foreground transition-transform ${promoOpen ? "" : "-rotate-90"}`}
+            />
+          </button>
+          {promoOpen && (
+            <div className="space-y-2">
+              <PlanPill label="3 meses" price={format(quarterly)} onClick={onSelect} />
+              <PlanPill label="6 meses" price={format(semiannual)} onClick={onSelect} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanPill({
+  label,
+  price,
+  onClick,
+}: {
+  label: string;
+  price: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full h-12 px-5 rounded-full flex items-center justify-between bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 text-black font-semibold shadow-md hover:brightness-105 transition"
+    >
+      <span>{label}</span>
+      <span>{price}</span>
+    </button>
+  );
+}
+
 
 function Stat({
   icon,
