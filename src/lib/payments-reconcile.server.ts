@@ -10,8 +10,9 @@ type SupabaseAdminLike = any;
 export type PaidIntent = {
   id: string;
   processed_at: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: unknown;
 };
+
 
 type ReferenceTable =
   | "publication_unlocks"
