@@ -12,6 +12,7 @@ import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
