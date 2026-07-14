@@ -58,6 +58,21 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
     }
     setLoading(true);
     try {
+      if (method === "WALLET") {
+        await walletPay({
+          data: {
+            kind: "tip",
+            creatorId,
+            publicationId,
+            amountCents: amount * 100,
+            message: message.trim() || undefined,
+          },
+        });
+        toast.success("Gorjeta enviada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        handleClose(false);
+        return;
+      }
       const res = await createTip({
         data: {
           creatorId,
@@ -81,6 +96,10 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error(e?.message ?? "Erro ao criar tip");
     } finally {
       setLoading(false);
