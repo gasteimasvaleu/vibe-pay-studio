@@ -1,10 +1,12 @@
 import { createFileRoute, Link, notFound, redirect, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   BadgeCheck,
-  Bookmark,
   ChevronDown,
   Clapperboard,
   DollarSign,
@@ -15,7 +17,6 @@ import {
   Instagram,
   Lock,
   MapPin,
-  MessageCircle,
   MoreVertical,
   Music2,
   Share2,
@@ -29,6 +30,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
+import { PublicationCard } from "@/components/feed/PublicationCard";
+import { CommentsSheet } from "@/components/feed/CommentsSheet";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
+import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
+import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
+import { createUnlockPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
+
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
   head: ({ params }) => ({
@@ -191,20 +201,6 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-type ProfilePost = {
-  id: string;
-  time: string;
-  photos: number;
-  videos: number;
-  likes: number;
-  gradient: string;
-};
-
-const MOCK_POSTS: ProfilePost[] = [
-  { id: "1", time: "há 2 h", photos: 12, videos: 3, likes: 421, gradient: "from-fuchsia-500 via-purple-500 to-indigo-600" },
-  { id: "2", time: "há 1 d", photos: 8, videos: 1, likes: 289, gradient: "from-amber-400 via-pink-500 to-fuchsia-600" },
-  { id: "3", time: "há 3 d", photos: 20, videos: 5, likes: 1204, gradient: "from-cyan-400 via-purple-500 to-fuchsia-600" },
-];
 
 function PerfilPage() {
   const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
@@ -215,6 +211,78 @@ function PerfilPage() {
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+  const fetchUserPubs = useServerFn(getUserPublications);
+  const unlockFn = useServerFn(createUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+  const [pending, setPending] = useState<FeedItem | null>(null);
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState<string | null>(null);
+  const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+
+  const pubsQueryKey = ["user-publications", profile.userId] as const;
+  const pubsQuery = useQuery({
+    queryKey: pubsQueryKey,
+    queryFn: () => fetchUserPubs({ data: { userId: profile.userId, limit: 20 } }),
+  });
+
+  const handleUnlock = (item: FeedItem) => {
+    if (unlocking) return;
+    setPending(item);
+  };
+
+  const confirmPayment = async (method: PaymentMethod) => {
+    if (!pending) return;
+    const item = pending;
+    setUnlocking(item.id);
+    try {
+      if (method === "WALLET") {
+        await walletPay({
+          data: { kind: "publication_unlock", publicationId: item.id },
+        });
+        setPending(null);
+        toast.success("Publicação desbloqueada!");
+        void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        return;
+      }
+      const res = await unlockFn({
+        data: { publicationId: item.id, method },
+      });
+      setPending(null);
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        method,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (e: any) {
+      if (e?.message === "cpf_required") {
+        setCpfPromptFor(method);
+        return;
+      }
+      if (e?.message === "publicação já desbloqueada" || e?.message === "already_unlocked") {
+        setPending(null);
+        await queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        toast.success("Publicação já desbloqueada");
+        return;
+      }
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
+      toast.error(e?.message ?? "Erro ao gerar pagamento");
+    } finally {
+      setUnlocking(null);
+    }
+  };
+
 
   const formatCompact = (n: number) =>
     new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
@@ -417,38 +485,35 @@ function PerfilPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="posts" className="mt-6 space-y-5">
-            {MOCK_POSTS.map((post, i) => (
-              <ProfilePostCard
-                key={post.id}
-                post={post}
-                username={profile.username}
-                displayName={displayName}
-                delay={i * 0.05}
-                onTip={() => {
-                  setTipPubId(undefined);
-                  setTipOpen(true);
-                }}
-              />
-            ))}
+          <TabsContent value="posts" className="mt-6 space-y-4">
+            {pubsQuery.isLoading ? (
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                Carregando publicações...
+              </div>
+            ) : pubsQuery.data && pubsQuery.data.items.length > 0 ? (
+              pubsQuery.data.items.map((item) => (
+                <PublicationCard
+                  key={item.id}
+                  item={item}
+                  onUnlock={handleUnlock}
+                  onComment={setCommentsFor}
+                />
+              ))
+            ) : (
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                {isOwner
+                  ? "Você ainda não publicou nada."
+                  : "Este creator ainda não publicou nada."}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="midias" className="mt-6">
-            <div className="grid grid-cols-3 gap-2">
-              {MOCK_POSTS.flatMap((p) =>
-                Array.from({ length: 3 }).map((_, idx) => (
-                  <div
-                    key={`${p.id}-${idx}`}
-                    className={`aspect-square rounded-xl bg-gradient-to-br ${p.gradient} relative overflow-hidden border border-white/10`}
-                  >
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-md grid place-items-center">
-                      <Lock className="h-6 w-6 text-white/80" />
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+              Em breve.
             </div>
           </TabsContent>
+
         </Tabs>
       </main>
 
@@ -469,6 +534,66 @@ function PerfilPage() {
           />
         </>
       )}
+
+      <PaymentMethodDialog
+        open={!!pending}
+        onOpenChange={(v) => !v && setPending(null)}
+        title="Desbloquear publicação"
+        amountCents={pending?.price_cents ?? 0}
+        loading={!!unlocking}
+        onConfirm={confirmPayment}
+      />
+
+      <PaymentModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Desbloquear publicação"
+        checkout={checkout}
+        onPaid={() => {
+          toast.success("Pagamento confirmado!");
+          setModalOpen(false);
+          setCheckout(null);
+          void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        }}
+      />
+
+      <CommentsSheet
+        publicationId={commentsFor?.id ?? null}
+        publicationAuthorId={commentsFor?.author_id}
+        commentsDisabled={commentsFor?.comments_disabled}
+        currentUserName={profile.username}
+        open={!!commentsFor}
+        onOpenChange={(v) => !v && setCommentsFor(null)}
+        onCountChange={(delta) => {
+          const id = commentsFor?.id;
+          if (!id) return;
+          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+            pubsQueryKey,
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    items: prev.items.map((it) =>
+                      it.id === id
+                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                        : it,
+                    ),
+                  }
+                : prev,
+          );
+        }}
+      />
+
+      <CpfPromptDialog
+        open={!!cpfPromptFor}
+        onOpenChange={(v) => !v && setCpfPromptFor(null)}
+        onSaved={() => {
+          const method = cpfPromptFor;
+          setCpfPromptFor(null);
+          if (method) void confirmPayment(method);
+        }}
+      />
+
     </div>
   );
 }
@@ -568,109 +693,6 @@ function SocialButton({ children, label }: { children: React.ReactNode; label: s
     <button
       aria-label={label}
       className="h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ProfilePostCard({
-  post,
-  username,
-  displayName,
-  delay,
-  onTip,
-}: {
-  post: ProfilePost;
-  username: string;
-  displayName: string;
-  delay: number;
-  onTip?: () => void;
-}) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="rounded-2xl border border-border bg-card backdrop-blur-md overflow-hidden text-foreground"
-    >
-      <div className="p-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center font-bold shrink-0 text-white">
-          {username.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-semibold truncate">{displayName}</p>
-            <BadgeCheck className="h-4 w-4 text-primary" />
-          </div>
-          <p className="text-xs text-muted-foreground truncate">@{username} · {post.time}</p>
-        </div>
-        <button className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Mais">
-          <MoreVertical className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className={`aspect-[16/10] w-full relative bg-gradient-to-br ${post.gradient}`}>
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-16 w-16 rounded-2xl bg-white/10 border border-white/20 grid place-items-center">
-              <Lock className="h-7 w-7 text-white" />
-            </div>
-            <div className="flex items-center gap-4 text-xs text-white">
-              <Stat icon={<ImageIcon className="h-4 w-4" />} value={post.photos} />
-              <Stat icon={<Film className="h-4 w-4" />} value={post.videos} />
-              <Stat icon={<Heart className="h-4 w-4" />} value={post.likes} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-3 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <IconAction
-            active={liked}
-            onClick={() => setLiked((v) => !v)}
-            label="Curtir"
-          >
-            <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
-          </IconAction>
-          <IconAction label="Comentar"><MessageCircle className="h-5 w-5" /></IconAction>
-          <IconAction label="Enviar gorjeta" onClick={onTip}><DollarSign className="h-5 w-5" /></IconAction>
-        </div>
-        <IconAction
-          active={saved}
-          onClick={() => setSaved((v) => !v)}
-          label="Salvar"
-        >
-          <Bookmark className={`h-5 w-5 ${saved ? "fill-current" : ""}`} />
-        </IconAction>
-      </div>
-    </motion.article>
-  );
-}
-
-function IconAction({
-  children,
-  active,
-  onClick,
-  label,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-  onClick?: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      aria-label={label}
-      onClick={onClick}
-      className={`h-9 w-9 grid place-items-center rounded-full transition-colors ${
-        active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-      }`}
     >
       {children}
     </button>
