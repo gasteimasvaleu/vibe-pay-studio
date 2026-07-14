@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, notFound } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, notFound, Link } from "@tanstack/react-router";
+import { useSuspenseQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   MoreVertical,
@@ -11,6 +12,9 @@ import {
   Archive,
   Settings,
   BadgeCheck,
+  Layers,
+  AudioLines,
+  Loader2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,6 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
+import {
+  getUserPostsGrid,
+  getUserMediasGrid,
+  type GridPostItem,
+  type GridMediaItem,
+} from "@/lib/publications.functions";
 
 type ProfileData = {
   userId: string;
