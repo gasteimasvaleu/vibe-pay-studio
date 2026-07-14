@@ -19,6 +19,7 @@ import {
   Lock,
   Minus,
   Mic,
+  Pencil,
   Pin,
   Plus,
   Trash2,
