@@ -117,6 +117,7 @@ export function SacarDialog({
       toast.success(statusMsg, {
         description: `${formatBRL(amountCents)} enviado via PIX.`,
       });
+      onOpenChange(false);
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["bancoOverview"] }),
         qc.invalidateQueries({ queryKey: ["bancoTransactions"] }),
@@ -128,7 +129,6 @@ export function SacarDialog({
           origem,
         }),
       ]);
-      onOpenChange(false);
     },
     onError: (err: any) => {
       toast.error("Não foi possível sacar", {
