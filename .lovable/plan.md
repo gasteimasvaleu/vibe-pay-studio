@@ -1,39 +1,19 @@
-## Problema
+## Objetivo
+Alterar o background do header da página de perfil (`/src/routes/_authenticated/perfil.$username.tsx`) para `#FFFFFF` e deixar o texto e elementos internos (título, ícones de voltar e menu) na cor preta.
 
-`profiles.price_monthly` é **numeric em reais** (ex.: `29.00` = R$ 29,00), mas o modal de assinatura e o server function de cobrança tratam esse valor como **centavos**. Resultado: quando o criador cadastra R$ 29, o modal mostra R$ 0,29 e a cobrança na Asaas também sai como R$ 0,29.
+## Elemento alvo
+- Arquivo: `src/routes/_authenticated/perfil.$username.tsx`
+- Linha aproximada: 177
+- Elemento: `<header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/20">`
 
-A página do perfil já trata o valor corretamente como reais, por isso mostra R$ 29 no card lateral e R$ 0,29 no modal.
+## Alterações propostas
+1. Substituir `bg-black/20` por `bg-white` no header.
+2. Substituir `border-white/10` por `border-black/10` para manter a separação sutil com a nova cor de fundo.
+3. Aplicar `text-black` no container interno (`<div className="max-w-3xl ...">`) para herdar cor preta nos elementos filhos.
+4. Atualizar as classes dos botões de navegação para refletir o tema claro:
+   - Trocar `text-white/80` por `text-black/80`.
+   - Trocar `hover:bg-white/10` por `hover:bg-black/10`.
+5. Manter o `backdrop-blur-md` se desejado (pode ser removido caso o fundo sólido branco seja o objetivo).
 
-## Correção
-
-Converter `price_monthly` (reais) para centavos multiplicando por 100 nos dois lugares que produzem `amountCents`.
-
-### 1. `src/components/payments/SubscribeDialog.tsx`
-No cálculo de `totals`, multiplicar `monthly` por 100 ao gerar `cents`:
-
-```ts
-monthly:   { months: 1, cents: Math.round(monthly * 100), discount: 0 },
-quarterly: { months: 3, cents: Math.round(monthly * 100 * 3 * (1 - discountQ / 100)), discount: discountQ },
-semiannual:{ months: 6, cents: Math.round(monthly * 100 * 6 * (1 - discountS / 100)), discount: discountS },
-```
-
-Nenhuma outra mudança no componente — o resto do fluxo já usa `t.cents / 100` para exibir e envia apenas `{ creatorId, plan, method }` para o servidor.
-
-### 2. `src/lib/payments.functions.ts` — `createSubscriptionPayment`
-Trocar:
-```ts
-const gross = creator.price_monthly * months;
-const amountCents = Math.round(gross * (1 - (discount ?? 0) / 100));
-```
-por:
-```ts
-const grossCents = Number(creator.price_monthly) * 100 * months;
-const amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
-```
-
-Isso garante que Asaas seja chamada com o valor correto em centavos e que `subscriptions.price_cents_paid` também fique correto.
-
-## Fora de escopo
-
-- Não alterar o schema (`price_monthly` permanece `numeric` em reais).
-- Não mexer em outros checkouts (tips, unlocks, video calls) — o problema é específico da assinatura.
+## Resultado esperado
+Header com fundo branco sólido, texto e ícones pretos, mantendo o layout e comportamentos existentes (voltar, menu, título centralizado).
