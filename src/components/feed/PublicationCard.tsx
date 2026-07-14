@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   AudioLines,
