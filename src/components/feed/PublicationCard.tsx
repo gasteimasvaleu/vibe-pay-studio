@@ -7,6 +7,7 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
+  Gift,
   Heart,
   Images,
   Layers,
@@ -47,10 +48,12 @@ export function PublicationCard({
   item,
   onUnlock,
   onComment,
+  onTip,
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
   onComment?: (item: FeedItem) => void;
+  onTip?: (item: FeedItem) => void;
 }) {
   const queryClient = useQueryClient();
   const likeFn = useServerFn(toggleLike);
