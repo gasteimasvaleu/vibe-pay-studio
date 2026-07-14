@@ -1,24 +1,27 @@
 ## Problema
 
-Toast: `duplicate key value violates unique constraint "publication_unlocks_publication_id_buyer_id_key"`.
+Asaas 400 `invalid_action`: "Não é permitido split para sua própria carteira."
 
-Não tem a ver com o CPF do criador. A tabela `publication_unlocks` tem UNIQUE `(publication_id, buyer_id)`. Na tentativa anterior (a que falhou com "CPF obrigatório") o INSERT já havia sido feito com `status='pending'` **antes** da chamada ao Asaas. Como o Asaas falhou depois, ficou uma linha "pending" órfã. Agora, na nova tentativa, o INSERT bate no UNIQUE.
+O `creatorWalletId` enviado no `split` é o mesmo wallet da API key da plataforma (`ASAAS_API_KEY`). Isso acontece quando o creator cadastrou como Wallet ID a própria wallet da conta principal (típico em ambiente sandbox / auto-teste) — Asaas proíbe splitar para si mesmo.
 
-## Correção em `createUnlockPayment` (`src/lib/payments.functions.ts`)
+## Correção
 
-Antes do INSERT:
+Detectar essa condição e omitir o split.
 
-1. `SELECT id, status FROM publication_unlocks WHERE publication_id = pub.id AND buyer_id = userId`.
-2. Se existe e `status = 'paid'` → `throw new Error("publicação já desbloqueada")`.
-3. Se existe e `status IN ('pending','failed','cancelled')` → **reaproveitar**: atualizar `amount_cents`, `provider='asaas'`, `status='pending'`, `provider_ref=null` e usar o `id` existente para o restante do fluxo.
-4. Se não existe → INSERT como hoje.
+### 1. `src/lib/asaas.server.ts`
 
-O restante da função (chamada Asaas, `update provider_ref`, `recordIntent`) permanece igual, apenas usando o `unlock.id` recuperado/inserido.
+- Adicionar `getPlatformWalletId()` que chama `getWalletForApiKey(process.env.ASAAS_API_KEY!)` e memoiza o resultado em uma variável de módulo (`let cached: string | null = null`). Usar sem apiKey adicional (usa a padrão).
+- Em `createPayment`, antes de montar `body.split`:
+  - `const platformWalletId = await getPlatformWalletId().catch(() => null);`
+  - Se `input.creatorWalletId && platformWalletId && input.creatorWalletId === platformWalletId` → **não** adicionar `body.split` (100% vai para a conta principal; o crédito ao creator já é registrado localmente via trigger `transactions_apply_wallet_effects` na tabela `creator_wallets`).
+  - Caso contrário, comportamento atual.
 
-Isso resolve o erro atual e evita a mesma armadilha em qualquer futura falha entre INSERT e o Asaas.
+### 2. Nada muda no fluxo do banco / trigger
+
+A tabela `transactions` continua sendo alimentada normalmente (net_cents vai para `creator_wallets` do author), então o creator ainda vê o saldo. A diferença é só que no Asaas o dinheiro não é dividido — fica todo na conta principal — o que é o comportamento correto quando "creator" e "plataforma" são a mesma wallet Asaas.
 
 ## Arquivos alterados
 
-- `src/lib/payments.functions.ts` — bloco de INSERT em `createUnlockPayment` vira "get-or-reuse-or-insert".
+- `src/lib/asaas.server.ts` — nova `getPlatformWalletId()` + guard em `createPayment`.
 
-Nenhuma migration é necessária; o UNIQUE continua válido.
+Sem migration.

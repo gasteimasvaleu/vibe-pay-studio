@@ -203,6 +203,20 @@ export async function getWalletForApiKey(
   return { walletId };
 }
 
+let cachedPlatformWalletId: string | null = null;
+export async function getPlatformWalletId(): Promise<string | null> {
+  if (cachedPlatformWalletId) return cachedPlatformWalletId;
+  try {
+    const apiKey = process.env.ASAAS_API_KEY;
+    if (!apiKey) return null;
+    const { walletId } = await getWalletForApiKey(apiKey);
+    cachedPlatformWalletId = walletId;
+    return walletId;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- Payments (with split) ----------
 
 export type AsaasBillingType = "PIX" | "CREDIT_CARD" | "BOLETO";
