@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -114,17 +114,82 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       <p className="text-sm text-white/70">Não foi possível carregar o perfil: {error.message}</p>
     </div>
   ),
-  notFoundComponent: () => (
-    <div className="min-h-screen bg-background text-white grid place-items-center p-6 text-center">
-      <div>
-        <p className="text-lg font-semibold">Perfil não encontrado</p>
-        <Link to="/feed" className="mt-3 inline-block text-sm text-fuchsia-300 hover:text-fuchsia-200">
-          Voltar ao feed
-        </Link>
-      </div>
-    </div>
-  ),
+  notFoundComponent: () => <CreatorGatedNotFound />,
 });
+
+function CreatorGatedNotFound() {
+  const router = useRouter();
+  return (
+    <div className="relative min-h-screen text-white overflow-hidden">
+      <div className="absolute inset-0 bg-background" />
+      <div className="absolute inset-0 opacity-70" style={{ background: "var(--gradient-radial)" }} />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
+
+      <header className="relative z-10 border-b border-black/10 bg-white">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 text-black">
+          <button
+            onClick={() => router.history.back()}
+            className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold truncate">Perfil</h1>
+          <span className="w-9" />
+        </div>
+      </header>
+
+      <main className="relative z-10 max-w-xl mx-auto px-4 md:px-6 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl border border-primary/30 bg-card shadow-card p-6 md:p-8 text-center"
+        >
+          <div className="mx-auto h-16 w-16 rounded-2xl grid place-items-center bg-gradient-to-br from-fuchsia-500 to-purple-700 shadow-lg shadow-fuchsia-500/30">
+            <Lock className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="mt-5 text-xl md:text-2xl font-black text-foreground">
+            Perfil disponível apenas para creators
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            A página individual de perfil é exclusiva de contas creator. Ao virar creator,
+            você também ganha sua página pública e passa a monetizar seu conteúdo.
+          </p>
+
+          <ul className="mt-6 space-y-3 text-left">
+            <BenefitItem icon={<DollarSign className="h-4 w-4" />} text="Monetize seu conteúdo com assinaturas e desbloqueios" />
+            <BenefitItem icon={<Heart className="h-4 w-4" />} text="Receba gorjetas e interaja com fãs" />
+            <BenefitItem icon={<BadgeCheck className="h-4 w-4" />} text="Tenha uma página de perfil pública e verificável" />
+          </ul>
+
+          <Link
+            to="/creator/onboarding/assinatura"
+            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
+          >
+            Criar perfil de creator
+          </Link>
+          <Link
+            to="/feed"
+            className="mt-3 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Voltar ao feed
+          </Link>
+        </motion.div>
+      </main>
+    </div>
+  );
+}
+
+function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <li className="flex items-start gap-3 rounded-2xl border border-border bg-background/40 px-4 py-3">
+      <span className="h-8 w-8 shrink-0 rounded-full grid place-items-center bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span className="text-sm text-foreground">{text}</span>
+    </li>
+  );
+}
 
 type ProfilePost = {
   id: string;
