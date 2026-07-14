@@ -761,6 +761,31 @@ function PublisherPage() {
         }}
       />
 
+      <input
+        ref={previewInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onPreviewFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <input
+        ref={previewCameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onPreviewFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-40">
         {step === 1 ? (
           <StepMedia
