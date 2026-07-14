@@ -92,11 +92,14 @@ function ChatThreadView() {
         .select("account_type")
         .eq("user_id", userData.user.id)
         .maybeSingle();
-      return (profile?.account_type ?? "subscriber") as "subscriber" | "creator";
+      return (profile?.account_type ?? "subscriber") as
+        | "subscriber"
+        | "creator"
+        | "free_creator";
     },
     staleTime: 5 * 60 * 1000,
   });
-  const isCreator = accountType === "creator";
+  const isCreator = accountType === "creator" || accountType === "free_creator";
 
   const { data, isLoading } = useQuery<ThreadData>({
     queryKey: ["chat", "messages", threadId],
