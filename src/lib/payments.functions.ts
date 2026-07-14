@@ -574,24 +574,6 @@ type PayoutSetupInput = {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function mapPixKeyTypeToAsaas(
-  type: PayoutSetupInput["pixKeyType"],
-): "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP" {
-  switch (type) {
-    case "cpf":
-      return "CPF";
-    case "cnpj":
-      return "CNPJ";
-    case "email":
-      return "EMAIL";
-    case "telefone":
-      return "PHONE";
-    case "aleatoria":
-    default:
-      return "EVP";
-  }
-}
-
 export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: PayoutSetupInput) => {
