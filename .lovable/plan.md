@@ -1,46 +1,36 @@
+## Ajustes na UI do fluxo de publicação paga
 
-## Objetivo
+Todos os ajustes ficam em `src/routes/_authenticated/publisher.tsx`. Sem mudanças de dados ou lógica de upload.
 
-Quando o usuário confirma o preço no `PriceDialog` (botão **Avançar**) do fluxo de conteúdo pago, abrir um bottom sheet **"Adicionar prévia"** (modelo do screenshot) e permitir escolher/enviar a mídia de prévia de verdade — biblioteca do dispositivo, acervo do app e câmera.
+### 1. Mostrar a prévia junto às mídias, com selo e borda roxa
 
-## Escopo
+- Renderizar a prévia como um card extra **no início da grade de mídias** (mesmo tamanho/aspecto dos thumbs existentes), antes do `media.map(...)` em `StepCompose`.
+- Estilo do card da prévia:
+  - Borda destacada: `ring-2 ring-primary` + `border-2 border-primary` no wrapper `rounded-2xl`.
+  - Selo no canto inferior-esquerdo: pílula `bg-primary text-primary-foreground` com ícone `ImageIcon` + texto "Prévia".
+  - Estados: `uploading` (spinner + progresso), `ready` (thumb da imagem/vídeo), `error` (mensagem).
+  - Clique no card abre o `PreviewPickerSheet` (mesmo `onEditPreview`).
+- O card só aparece quando `toggles.paid.enabled` for true. Se ainda não houver prévia, mostra um placeholder clicável com o mesmo selo e borda tracejada roxa.
 
-Alterações em `src/routes/_authenticated/publisher.tsx`, `src/lib/publications.functions.ts` e uma migração Supabase para persistir a prévia.
+### 2. Linha "Publicação paga" no formato do screenshot 2
 
-## UX
+Substituir o bloco atual (thumb 64x64 + texto "Prévia adicionada" + link "Editar prévia" abaixo do toggle) por:
 
-1. Novo estado `previewSheetOpen` em `PublisherPage`.
-2. Ao clicar **Avançar** no `PriceDialog` (paid):
-   - fecha o dialog atual;
-   - marca `toggles.paid = { enabled: true, priceCents }`;
-   - abre `previewSheetOpen`.
-3. `PreviewPickerSheet` (novo componente, mesmo padrão visual do `pickerOpen` existente — `Sheet` inferior, `rounded-t-2xl`, `sm:max-w-[420px]`, header "Adicionar prévia" + copy "Para publicar **conteúdo pago**, é necessário definir uma **mídia de prévia**."):
-   - `PickerOption` **Biblioteca do dispositivo** → abre `<input type="file" accept="image/*,video/*">` (novo `previewInputRef`, mesmo padrão do `fileInputRef` com `flushSync` para preservar user-gesture).
-   - `PickerOption` **Acervo na Privacy** → placeholder por enquanto (`toast.info("Em breve")`) — não existe feature de acervo salvo no app hoje.
-   - `PickerOption` **Câmera** → segundo input com `capture="environment"`.
-4. Após escolher o arquivo, faz upload no bucket `publications` em `posts/{userId}/drafts/preview-{uuid}.{ext}` reusando `uploadWithProgress` + `createSignedUrl` (mesmo fluxo do `onFiles`). Estado local `preview: { status, previewUrl, storagePath, publicUrl, uploadProgress, type }`.
-5. Na etapa 2 (composer), quando `toggles.paid.enabled`, exibir o card "Prévia" com thumbnail (a partir de `preview.previewUrl`) e botão **Editar prévia** que reabre `previewSheetOpen`. Se `preview` estiver ausente e `paid.enabled=true`, `canContinue` fica falso (bloqueia postar).
-6. Se o usuário desabilitar o toggle "Conteúdo pago", limpar `preview` e remover o arquivo via `deleteDraftMedia`.
+- Mantém a `ToggleRow` de "Publicação paga" no topo (com o switch).
+- Quando `toggles.paid.enabled`, renderiza **abaixo** uma linha com **dois botões lado a lado** (`grid grid-cols-2 gap-3`), estilo pílula branca com sombra sutil:
+  - Botão esquerdo: ícone lápis + valor formatado (ex.: `R$ 14,90`). Clique abre o `PriceDialog`.
+  - Botão direito: ícone lápis + "Editar prévia". Clique abre o `PreviewPickerSheet`.
+- Remover o thumbnail/texto de status daqui (a prévia agora vive na grade de mídias no topo).
 
-## Backend
+### 3. Trocar laranja por roxo (token `primary`) no fluxo do publisher
 
-- Migração `add_publication_preview.sql`:
-  - `ALTER TABLE public.publications ADD COLUMN preview_url text, ADD COLUMN preview_storage_path text;`
-  - Sem novas policies (já herdam as existentes de `publications`).
-- `createPublication` (`src/lib/publications.functions.ts`):
-  - Adicionar ao schema `preview: z.object({ storagePath, url, type: z.enum(["image","video"]) }).nullable().optional()`.
-  - No insert, gravar `preview_url` / `preview_storage_path` quando `visibility === "paid"`.
-  - Regenerar `src/integrations/supabase/types.ts` manualmente (adicionar os campos em `publications`).
-- Client envia `preview` no payload do `mutation.mutate` quando existir.
+Substituir as classes hardcoded `orange-*` / `pink-*` restantes por tokens semânticos:
+- `text-orange-500` → `text-primary` (linhas 1052, 1503).
+- Abas ativas (linhas 1651, 1657): `data-[state=active]:border-orange-500 data-[state=active]:text-orange-500` → `...border-primary ...text-primary`.
+- Input do preço (1678): `border-orange-500` → `border-primary`.
+- Botão gradiente (1685): `bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400` → `bg-primary hover:bg-primary/90` (mantendo classe pill/altura).
 
-## Fora de escopo
+### Fora do escopo
 
-- Feed / detalhe da publicação exibindo a mídia de prévia bloqueada (o pedido é só o sheet + upload real). Fica para uma próxima iteração.
-- Implementação do "Acervo na Privacy" — vira placeholder com `toast.info`.
-
-## Arquivos
-
-- `src/routes/_authenticated/publisher.tsx` — novo sheet, estado `preview`, handlers, thumbnail na etapa 2.
-- `src/lib/publications.functions.ts` — schema + insert.
-- `src/integrations/supabase/types.ts` — novos campos.
-- `supabase/migrations/<timestamp>_add_publication_preview.sql`.
+- Nenhuma alteração no schema, migrations, `publications.functions.ts`, ou lógica de upload/estado da prévia.
+- Nenhuma alteração nas páginas de feed/detalhe.
