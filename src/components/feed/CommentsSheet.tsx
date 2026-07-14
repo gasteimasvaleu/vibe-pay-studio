@@ -191,11 +191,6 @@ export function CommentsSheet({
     return { roots: rootList, repliesByParent: map };
   }, [comments]);
 
-  const rootIdFor = (commentId: string): string => {
-    const c = comments.find((x) => x.id === commentId);
-    if (!c) return commentId;
-    return c.parent_id ?? c.id;
-  };
 
   const mutation = useMutation({
     mutationFn: (body: string) =>
