@@ -189,18 +189,7 @@ export const rejectWithdrawal = createServerFn({ method: "POST" })
       .eq("id", w.id);
     if (error) throw new Error(error.message);
 
-    // Devolve o valor ao saldo liberado
-    const { data: wallet } = await supabase
-      .from("creator_wallets")
-      .select("released_cents")
-      .eq("user_id", w.creator_id)
-      .single();
-    if (wallet) {
-      await supabase
-        .from("creator_wallets")
-        .update({ released_cents: wallet.released_cents + w.amount_cents })
-        .eq("user_id", w.creator_id);
-    }
+    // Status rejeitado remove o saque do cálculo de saldo disponível.
     await logAudit(supabase, userId, "withdrawal.rejected", "withdrawals", w.id, {
       reason: data.reason,
     });
