@@ -816,6 +816,7 @@ function PublisherPage() {
             onRemoveAudio={removeAudio}
             preview={preview}
             onEditPreview={openPreviewSheet}
+            onEditPrice={() => setPaidOpen(true)}
           />
         )}
       </main>
