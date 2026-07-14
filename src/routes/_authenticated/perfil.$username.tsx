@@ -46,6 +46,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     if (!profile) throw notFound();
 
+    const [{ count: postsCount }, { count: mediaCount }] = await Promise.all([
+      supabase
+        .from("publications")
+        .select("id", { count: "exact", head: true })
+        .eq("author_id", profile.user_id),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id),
+    ]);
+
     return {
       viewerId: userData.user.id,
       profile: {
@@ -56,6 +67,8 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
+      postsCount: postsCount ?? 0,
+      mediaCount: mediaCount ?? 0,
     };
   },
 
