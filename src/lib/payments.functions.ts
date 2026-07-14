@@ -255,7 +255,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       billingType: data.method,
       amountCents: pub.price_cents,
       description: `Desbloqueio publicação ${pub.id.slice(0, 8)}`,
-      externalReference: `publication_unlock:${unlock.id}`,
+      externalReference: `publication_unlock:${unlockId}`,
       creatorWalletId: walletId,
       ...buildCardArgs(data.card),
     });
