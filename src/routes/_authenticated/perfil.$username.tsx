@@ -485,38 +485,35 @@ function PerfilPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="posts" className="mt-6 space-y-5">
-            {MOCK_POSTS.map((post, i) => (
-              <ProfilePostCard
-                key={post.id}
-                post={post}
-                username={profile.username}
-                displayName={displayName}
-                delay={i * 0.05}
-                onTip={() => {
-                  setTipPubId(undefined);
-                  setTipOpen(true);
-                }}
-              />
-            ))}
+          <TabsContent value="posts" className="mt-6 space-y-4">
+            {pubsQuery.isLoading ? (
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                Carregando publicações...
+              </div>
+            ) : pubsQuery.data && pubsQuery.data.items.length > 0 ? (
+              pubsQuery.data.items.map((item) => (
+                <PublicationCard
+                  key={item.id}
+                  item={item}
+                  onUnlock={handleUnlock}
+                  onComment={setCommentsFor}
+                />
+              ))
+            ) : (
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                {isOwner
+                  ? "Você ainda não publicou nada."
+                  : "Este creator ainda não publicou nada."}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="midias" className="mt-6">
-            <div className="grid grid-cols-3 gap-2">
-              {MOCK_POSTS.flatMap((p) =>
-                Array.from({ length: 3 }).map((_, idx) => (
-                  <div
-                    key={`${p.id}-${idx}`}
-                    className={`aspect-square rounded-xl bg-gradient-to-br ${p.gradient} relative overflow-hidden border border-white/10`}
-                  >
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-md grid place-items-center">
-                      <Lock className="h-6 w-6 text-white/80" />
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+              Em breve.
             </div>
           </TabsContent>
+
         </Tabs>
       </main>
 
