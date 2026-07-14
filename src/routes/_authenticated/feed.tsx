@@ -53,6 +53,7 @@ function FeedPage() {
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+  const [tipFor, setTipFor] = useState<FeedItem | null>(null);
 
 
   const feedQuery = useQuery({
