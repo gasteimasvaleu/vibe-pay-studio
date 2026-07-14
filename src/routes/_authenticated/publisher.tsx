@@ -879,6 +879,7 @@ function PublisherPage() {
             challenge: { enabled: false, priceCents: null },
           }));
           setPaidOpen(false);
+          setPreviewSheetOpen(true);
         }}
       />
 
