@@ -107,9 +107,13 @@ function PerfilPage() {
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const location = "São Paulo - BRA";
   const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-  const subscriptionPrice = profile.priceMonthly > 0
-    ? `${brl.format(profile.priceMonthly / 100)}`
-    : null;
+  const monthlyPrice = profile.priceMonthly > 0 ? profile.priceMonthly : 0;
+  const quarterlyPrice = monthlyPrice * 3 * (1 - (profile.discountQuarterly ?? 0) / 100);
+  const semiannualPrice = monthlyPrice * 6 * (1 - (profile.discountSemiannual ?? 0) / 100);
+  const hasPromotions =
+    monthlyPrice > 0 &&
+    ((profile.discountQuarterly ?? 0) > 0 || (profile.discountSemiannual ?? 0) > 0);
+
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
