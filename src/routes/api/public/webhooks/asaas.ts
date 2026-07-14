@@ -142,26 +142,6 @@ async function applyTransferStatus(
 
 
 
-async function creditWalletTopup(
-  supabaseAdmin: any,
-  buyerId: string,
-  amountCents: number,
-  providerRef: string,
-) {
-  // Cria uma transaction wallet_topup paga; trigger existente credita subscriber_wallets
-  await supabaseAdmin.from("transactions").insert({
-    kind: "wallet_topup",
-    status: "paid",
-    buyer_id: buyerId,
-    amount_cents_gross: amountCents,
-    platform_fee_cents: 0,
-    net_cents: amountCents,
-    commission_pct_applied: 0,
-    payment_method: "pix",
-    provider: "asaas",
-    provider_ref: providerRef,
-  });
-}
 
 export const Route = createFileRoute("/api/public/webhooks/asaas")({
   server: {
@@ -337,7 +317,7 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
         // localiza intent
         const { data: intent } = await supabaseAdmin
           .from("payment_intents")
-          .select("id, metadata")
+          .select("id, processed_at, metadata")
           .eq("asaas_payment_id", paymentId)
           .maybeSingle();
 
@@ -371,17 +351,12 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
 
 
         try {
-          if (targetStatus && meta.referenceTable) {
-            if (meta.referenceTable === "wallet_topups") {
-              if (targetStatus === "paid" && meta.buyerId && meta.amountCents) {
-                await creditWalletTopup(
-                  supabaseAdmin,
-                  meta.buyerId,
-                  meta.amountCents,
-                  paymentId,
-                );
-              }
-            } else if (meta.referenceId) {
+          if (targetStatus === "paid" && intent) {
+            // delegated to shared reconcile helper (also used by the poller)
+            const { applyPaidIntent } = await import("@/lib/payments-reconcile.server");
+            await applyPaidIntent(supabaseAdmin, intent, paymentId, eventType);
+          } else if (targetStatus && meta.referenceTable) {
+            if (meta.referenceTable !== "wallet_topups" && meta.referenceId) {
               await markStatus(
                 supabaseAdmin,
                 meta.referenceTable,
@@ -390,9 +365,16 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
                 paymentId,
               );
             }
-          }
-
-          if (intent) {
+            if (intent) {
+              await supabaseAdmin
+                .from("payment_intents")
+                .update({
+                  processed_at: new Date().toISOString(),
+                  event_type: eventType,
+                })
+                .eq("id", intent.id);
+            }
+          } else if (intent) {
             await supabaseAdmin
               .from("payment_intents")
               .update({
@@ -401,6 +383,7 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
               })
               .eq("id", intent.id);
           }
+
           await supabaseAdmin
             .from("asaas_events")
             .update({ processed_at: new Date().toISOString() })
@@ -409,6 +392,7 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           console.error("[asaas webhook] processing error", e);
           return new Response("error", { status: 500 });
         }
+
 
         return new Response("ok", { status: 200 });
       },
