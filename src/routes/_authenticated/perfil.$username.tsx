@@ -9,6 +9,7 @@ import {
   Clapperboard,
   DollarSign,
   Film,
+  Flag,
   Heart,
   Image as ImageIcon,
   Instagram,
@@ -17,12 +18,15 @@ import {
   MessageCircle,
   MoreVertical,
   Music2,
+  Share2,
   Smartphone,
   Twitter,
+  UserPlus,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 
