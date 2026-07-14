@@ -61,14 +61,17 @@ function FeedPage() {
     setPending(item);
   };
 
+  const cpfGuard = useCpfGuard();
+
   const confirmPayment = async (method: PaymentMethod) => {
     if (!pending) return;
     const item = pending;
     setUnlocking(item.id);
     try {
-      const res = await unlock({
-        data: { publicationId: item.id, method },
-      });
+      const res = await cpfGuard.run(() =>
+        unlock({ data: { publicationId: item.id, method } }),
+      );
+      if (!res) return; // aguardando CPF
       setPending(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
@@ -84,6 +87,7 @@ function FeedPage() {
       setUnlocking(null);
     }
   };
+
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
