@@ -39,12 +39,12 @@ export const payWithWallet = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: result, error } = await supabase.rpc("pay_with_wallet", {
       _kind: data.kind,
-      _publication_id: data.publicationId ?? null,
-      _message_id: data.messageId ?? null,
-      _creator_id: data.creatorId ?? null,
-      _plan: data.plan ?? null,
-      _amount_cents: data.amountCents ?? null,
-      _message: data.message ?? null,
+      _publication_id: data.publicationId ?? undefined,
+      _message_id: data.messageId ?? undefined,
+      _creator_id: data.creatorId ?? undefined,
+      _plan: data.plan ?? undefined,
+      _amount_cents: data.amountCents ?? undefined,
+      _message: data.message ?? undefined,
     });
 
     if (error) {
