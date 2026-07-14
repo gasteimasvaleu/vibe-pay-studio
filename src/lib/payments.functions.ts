@@ -217,6 +217,10 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, pub.author_id);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(pub.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: existing } = await supabase
       .from("publication_unlocks")
       .select("id, status")
@@ -233,7 +237,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
         .from("publication_unlocks")
         .update({
           amount_cents: pub.price_cents,
-          provider: "asaas",
+          provider: providerTag,
           status: "pending",
           provider_ref: null,
         })
@@ -247,7 +251,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
           publication_id: pub.id,
           buyer_id: userId,
           amount_cents: pub.price_cents,
-          provider: "asaas",
+          provider: providerTag,
           status: "pending",
         })
         .select("id")
@@ -257,7 +261,6 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     }
 
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -265,6 +268,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       description: `Desbloqueio publicação ${pub.id.slice(0, 8)}`,
       externalReference: `publication_unlock:${unlockId}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
