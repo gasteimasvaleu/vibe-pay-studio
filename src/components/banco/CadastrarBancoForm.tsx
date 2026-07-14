@@ -4,16 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
-  Calendar,
   CreditCard,
   Diamond,
+  Eye,
+  EyeOff,
   Hash,
-  Home,
   Landmark,
-  MapPin,
-  Phone,
   QrCode,
-  User,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -52,6 +50,8 @@ const PIX_PLACEHOLDERS: Record<string, string> = {
 interface CadastrarBancoFormProps {
   onClose: () => void;
   kycVerified: boolean;
+  walletId?: string;
+  hasApiKey?: boolean;
   initial?: {
     bankName?: string;
     accountType?: string;
@@ -65,17 +65,14 @@ interface CadastrarBancoFormProps {
 export function CadastrarBancoForm({
   onClose,
   kycVerified,
+  walletId: initialWalletId = "",
+  hasApiKey: initialHasApiKey = false,
   initial,
 }: CadastrarBancoFormProps) {
-  // Titular (subconta Asaas)
-  const [fullName, setFullName] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [mobilePhone, setMobilePhone] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [address, setAddress] = useState("");
-  const [addressNumber, setAddressNumber] = useState("");
-  const [province, setProvince] = useState("");
+  // Conta Asaas
+  const [walletId, setWalletId] = useState(initialWalletId);
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   // Banco / PIX
   const [banco, setBanco] = useState(initial?.bankName ?? "");
@@ -99,14 +96,8 @@ export function CadastrarBancoForm({
     try {
       await savePayout({
         data: {
-          fullName,
-          cpfCnpj,
-          birthDate: birthDate || undefined,
-          mobilePhone,
-          postalCode,
-          address,
-          addressNumber,
-          province,
+          walletId,
+          apiKey: apiKey || undefined,
           bankName: banco,
           accountType: tipoConta as "corrente" | "poupanca",
           agency: agencia,
@@ -143,83 +134,55 @@ export function CadastrarBancoForm({
         </div>
       )}
 
-      {/* Dados do titular */}
+      {/* Conta Asaas */}
       <section className="space-y-4">
-        <h3 className="text-sm font-bold text-foreground">
-          Dados do titular
-        </h3>
+        <h3 className="text-sm font-bold text-foreground">Conta Asaas</h3>
 
         <IconField
-          icon={<User className="h-4 w-4" />}
-          label="Nome completo"
-          value={fullName}
-          onChange={setFullName}
-          placeholder="Como consta no documento"
+          icon={<Wallet className="h-4 w-4" />}
+          label="Wallet ID Asaas"
+          value={walletId}
+          onChange={setWalletId}
+          placeholder="00000000-0000-0000-0000-000000000000"
         />
 
-        <IconField
-          icon={<Hash className="h-4 w-4" />}
-          label="CPF/CNPJ"
-          value={cpfCnpj}
-          onChange={setCpfCnpj}
-          placeholder="Somente números"
-          inputMode="numeric"
-        />
-
-        <IconField
-          icon={<Calendar className="h-4 w-4" />}
-          label="Data de nascimento"
-          value={birthDate}
-          onChange={setBirthDate}
-          type="date"
-          placeholder=""
-        />
-
-        <IconField
-          icon={<Phone className="h-4 w-4" />}
-          label="Telefone (celular)"
-          value={mobilePhone}
-          onChange={setMobilePhone}
-          placeholder="(11) 90000-0000"
-          inputMode="tel"
-        />
-
-        <IconField
-          icon={<MapPin className="h-4 w-4" />}
-          label="CEP"
-          value={postalCode}
-          onChange={setPostalCode}
-          placeholder="00000-000"
-          inputMode="numeric"
-        />
-
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <IconField
-              icon={<Home className="h-4 w-4" />}
-              label="Endereço"
-              value={address}
-              onChange={setAddress}
-              placeholder="Rua/Avenida"
+        <div className="space-y-2">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            API key Asaas (opcional)
+          </Label>
+          <div className="relative">
+            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+            <Input
+              type={showApiKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Sua chave de API Asaas"
+              className="pl-9 pr-10 h-12 rounded-full"
             />
+            <button
+              type="button"
+              onClick={() => setShowApiKey((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showApiKey ? "Ocultar API key" : "Mostrar API key"}
+            >
+              {showApiKey ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
           </div>
-          <IconField
-            icon={<Hash className="h-4 w-4" />}
-            label="Número"
-            value={addressNumber}
-            onChange={setAddressNumber}
-            placeholder="123"
-            inputMode="numeric"
-          />
+          <p className="text-xs text-muted-foreground">
+            A API key é necessária apenas se você quiser que o app faça saques
+            Pix automaticamente. Você encontra em Minha Conta → Integrações/API
+            no painel Asaas.
+          </p>
+          {initialHasApiKey && !apiKey && (
+            <p className="text-xs text-emerald-600">
+              API key já cadastrada. Deixe em branco para manter a atual.
+            </p>
+          )}
         </div>
-
-        <IconField
-          icon={<MapPin className="h-4 w-4" />}
-          label="Bairro"
-          value={province}
-          onChange={setProvince}
-          placeholder="Bairro"
-        />
       </section>
 
       {/* Conta bancária */}

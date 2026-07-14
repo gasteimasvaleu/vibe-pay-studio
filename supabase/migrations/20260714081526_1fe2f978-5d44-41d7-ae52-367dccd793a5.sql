@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS asaas_api_key_encrypted TEXT;
+COMMENT ON COLUMN public.profiles.asaas_api_key_encrypted IS 'API key Asaas do criador criptografada com AES-256-GCM';

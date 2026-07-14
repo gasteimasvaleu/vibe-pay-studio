@@ -1,6 +1,13 @@
 // Server-only Asaas client. Never import from client code or top-level of .functions.ts files.
 // Load inside handlers: const { asaas } = await import("@/lib/asaas.server");
 
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from "node:crypto";
+
 const ASAAS_BASE = "https://api.asaas.com/v3";
 const PLATFORM_COMMISSION_PCT = 15;
 export const CREATOR_SPLIT_PCT = 100 - PLATFORM_COMMISSION_PCT; // 85
@@ -11,15 +18,46 @@ function getApiKey(): string {
   return key;
 }
 
+function getEncryptionKey(): Buffer {
+  const key = process.env.ASAAS_KEYS_ENCRYPTION_KEY;
+  if (!key) throw new Error("ASAAS_KEYS_ENCRYPTION_KEY não configurada");
+  return createHash("sha256").update(key).digest();
+}
+
+export function encryptApiKey(plain: string): string {
+  const iv = randomBytes(16);
+  const cipher = createCipheriv("aes-256-gcm", getEncryptionKey(), iv);
+  const encrypted = Buffer.concat([
+    cipher.update(plain, "utf8"),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag();
+  return `${iv.toString("base64")}:${authTag.toString("base64")}:${encrypted.toString("base64")}`;
+}
+
+export function decryptApiKey(encrypted: string): string {
+  const parts = encrypted.split(":");
+  if (parts.length !== 3) throw new Error("formato de chave criptografada inválido");
+  const [ivB64, authTagB64, dataB64] = parts;
+  const iv = Buffer.from(ivB64, "base64");
+  const authTag = Buffer.from(authTagB64, "base64");
+  const data = Buffer.from(dataB64, "base64");
+  const decipher = createDecipheriv("aes-256-gcm", getEncryptionKey(), iv);
+  decipher.setAuthTag(authTag);
+  const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+  return decrypted.toString("utf8");
+}
+
 async function asaasFetch<T = any>(
   path: string,
   init: RequestInit = {},
+  apiKey?: string,
 ): Promise<T> {
   const res = await fetch(`${ASAAS_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      access_token: getApiKey(),
+      access_token: apiKey ?? getApiKey(),
       accept: "application/json",
       ...(init.headers ?? {}),
     },
@@ -126,6 +164,24 @@ export async function getSubaccount(id: string): Promise<AsaasSubaccount> {
   return asaasFetch<AsaasSubaccount>(`/accounts/${id}`);
 }
 
+// ---------- Account info (using creator API key) ----------
+
+export async function getWalletForApiKey(
+  apiKey: string,
+): Promise<{ walletId: string }> {
+  const body = await asaasFetch<Record<string, unknown>>("/wallets/", {}, apiKey);
+  const walletId =
+    (typeof body === "object" && body && "walletId" in body
+      ? body.walletId
+      : typeof body === "object" && body && "id" in body
+        ? body.id
+        : null) ?? null;
+  if (!walletId || typeof walletId !== "string") {
+    throw new Error("não foi possível recuperar o Wallet ID com essa API key");
+  }
+  return { walletId };
+}
+
 // ---------- Payments (with split) ----------
 
 export type AsaasBillingType = "PIX" | "CREDIT_CARD" | "BOLETO";
@@ -228,4 +284,52 @@ export async function refundPayment(paymentId: string): Promise<AsaasPayment> {
   return asaasFetch<AsaasPayment>(`/payments/${paymentId}/refund`, {
     method: "POST",
   });
+}
+
+// ---------- Transfers (using creator API key) ----------
+
+export type AsaasPixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP";
+
+export type AsaasTransfer = {
+  id: string;
+  status: "PENDING" | "DONE" | "CANCELLED" | string;
+  value: number;
+  netValue?: number;
+  pixAddressKey?: string;
+  failReason?: string | null;
+  externalReference?: string | null;
+};
+
+export async function createPixTransfer(
+  apiKey: string,
+  input: {
+    value: number;
+    pixAddressKey: string;
+    pixAddressKeyType: AsaasPixKeyType;
+    externalReference?: string;
+    description?: string;
+  },
+): Promise<AsaasTransfer> {
+  return asaasFetch<AsaasTransfer>(
+    "/transfers",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        value: input.value,
+        operationType: "PIX",
+        pixAddressKey: input.pixAddressKey,
+        pixAddressKeyType: input.pixAddressKeyType,
+        externalReference: input.externalReference,
+        description: input.description,
+      }),
+    },
+    apiKey,
+  );
+}
+
+export async function getTransfer(
+  apiKey: string,
+  transferId: string,
+): Promise<AsaasTransfer> {
+  return asaasFetch<AsaasTransfer>(`/transfers/${transferId}`, {}, apiKey);
 }
