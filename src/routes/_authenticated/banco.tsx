@@ -343,6 +343,105 @@ function BancoPage() {
           )}
         </section>
 
+        {/* Saques */}
+        {(withdrawalsQuery.data ?? []).length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
+              Saques
+            </h2>
+            <ul className="space-y-2">
+              {(withdrawalsQuery.data ?? []).map((w) => {
+                const statusLabel =
+                  w.status === "paid"
+                    ? "Concluído"
+                    : w.status === "requested"
+                      ? "Solicitado"
+                      : w.status === "rejected"
+                        ? "Rejeitado"
+                        : w.status === "failed"
+                          ? "Falhou"
+                          : (w.status as string);
+                const statusColor =
+                  w.status === "paid"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : w.status === "requested"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-red-100 text-red-800";
+                const when = w.requested_at
+                  ? dateFmt.format(new Date(w.requested_at))
+                  : "";
+                return (
+                  <li
+                    key={w.id}
+                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                  >
+                    <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
+                      <Banknote className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground text-sm">
+                          Saque PIX
+                        </p>
+                        <span
+                          className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${statusColor}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {when}
+                        {w.pix_key ? ` · ${w.pix_key}` : ""}
+                      </p>
+                      {w.rejection_reason ? (
+                        <p className="text-xs text-red-700 mt-0.5">
+                          {w.rejection_reason}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <p className="font-bold text-foreground text-sm">
+                        {formatBRL(w.amount_cents ?? 0)}
+                      </p>
+                      {w.status === "requested" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Cancelar este saque e devolver o valor ao saldo liberado?",
+                              )
+                            ) {
+                              cancelMutation.mutate(w.id);
+                            }
+                          }}
+                          disabled={cancelMutation.isPending}
+                          className="text-xs font-semibold text-primary hover:underline disabled:opacity-60"
+                        >
+                          Cancelar
+                        </button>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
+
+        <SacarDialog
+          open={!!sacarOrigin}
+          onOpenChange={(o) => !o && setSacarOrigin(null)}
+          origem={sacarOrigin ?? "Nacional"}
+          saldoLiberadoCents={
+            sacarOrigin === "Internacional" ? intlReleased : nationalReleased
+          }
+          pixKey={pixKey}
+          pixKeyType={pixKeyType}
+        />
+
+
+
 
         {/* Integração com Asaas (explicativo) */}
         <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
