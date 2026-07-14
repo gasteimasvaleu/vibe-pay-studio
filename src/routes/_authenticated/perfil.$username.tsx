@@ -46,7 +46,14 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     if (!profile) throw notFound();
 
-    const [{ count: postsCount }, { count: mediaCount }] = await Promise.all([
+    const [
+      { count: postsCount },
+      { count: mediaCount },
+      { count: photosCount },
+      { count: videosCount },
+      { count: lockedCount },
+      { count: likesCount },
+    ] = await Promise.all([
       supabase
         .from("publications")
         .select("id", { count: "exact", head: true })
@@ -54,6 +61,25 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       supabase
         .from("publication_media")
         .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id)
+        .eq("type", "image"),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id)
+        .eq("type", "video"),
+      supabase
+        .from("publications")
+        .select("id", { count: "exact", head: true })
+        .eq("author_id", profile.user_id)
+        .neq("visibility", "public"),
+      supabase
+        .from("publication_likes")
+        .select("publication_id, publications!inner(author_id)", { count: "exact", head: true })
         .eq("publications.author_id", profile.user_id),
     ]);
 
@@ -69,8 +95,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       },
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
+      photosCount: photosCount ?? 0,
+      videosCount: videosCount ?? 0,
+      lockedCount: lockedCount ?? 0,
+      likesCount: likesCount ?? 0,
     };
   },
+
 
   component: PerfilPage,
   errorComponent: ({ error }) => (
@@ -106,15 +137,23 @@ const MOCK_POSTS: ProfilePost[] = [
 ];
 
 function PerfilPage() {
-  const { viewerId, profile, postsCount, mediaCount } = Route.useRouteContext();
+  const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+    Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
 
-  // Dados mock — plugar em tabelas reais em pedido futuro
-  const stats = { fotos: 292, videos: 119, locked: 32, likes: "7.4K" };
+  const formatCompact = (n: number) =>
+    new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  const stats = {
+    fotos: photosCount,
+    videos: videosCount,
+    locked: lockedCount,
+    likes: formatCompact(likesCount),
+  };
+
   const displayName = profile.username
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
