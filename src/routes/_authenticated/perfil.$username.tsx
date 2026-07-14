@@ -237,6 +237,9 @@ function PerfilPage() {
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const followFreeFn = useServerFn(followCreatorFree);
+  const unfollowFn = useServerFn(unfollowCreator);
+
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
