@@ -133,3 +133,24 @@ export const listCreatorWithdrawals = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+/**
+ * Últimas transações do assinante (comprador).
+ */
+export const listSubscriberTransactions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { limit?: number } | undefined) => ({
+    limit: Math.min(Math.max(data?.limit ?? 10, 1), 50),
+  }))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("transactions")
+      .select("id, kind, status, amount_cents_gross, payment_method, provider, created_at")
+      .eq("buyer_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
