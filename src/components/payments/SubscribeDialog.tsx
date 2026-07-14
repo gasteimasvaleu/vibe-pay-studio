@@ -231,7 +231,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
-                      {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
+                      {method === "WALLET" ? "Debitando saldo..." : method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
                     </>
                   ) : (
                     `Pagar ${brl.format(totals[plan].cents / 100)}`
