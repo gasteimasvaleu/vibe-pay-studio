@@ -1204,6 +1204,8 @@ function StepCompose({
   onCancelAudio,
   onConfirmAudio,
   onRemoveAudio,
+  preview,
+  onEditPreview,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1221,6 +1223,8 @@ function StepCompose({
   onCancelAudio: () => void;
   onConfirmAudio: () => void;
   onRemoveAudio: () => void;
+  preview: PreviewMedia | null;
+  onEditPreview: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
