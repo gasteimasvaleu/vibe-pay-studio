@@ -52,9 +52,22 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
     onOpenChange(v);
   };
 
+  const amountCents = amount * 100;
+  const methodMinCents =
+    method === "PIX" || method === "CREDIT_CARD"
+      ? PAYMENT_MIN_GROSS_CENTS[method]
+      : 0;
+  const belowMethodMin = methodMinCents > 0 && amountCents < methodMinCents;
+  const belowBaseMin = amount < 5;
+  const disableSubmit = loading || belowBaseMin || belowMethodMin;
+
   const submit = async () => {
-    if (amount < 5) {
+    if (belowBaseMin) {
       toast.error("Valor mínimo é R$ 5,00");
+      return;
+    }
+    if (belowMethodMin && (method === "PIX" || method === "CREDIT_CARD")) {
+      toast.error(`Valor mínimo para ${method === "PIX" ? "PIX" : "cartão"} é ${formatMinimum(method)}.`);
       return;
     }
     setLoading(true);
@@ -65,7 +78,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
             kind: "tip",
             creatorId,
             publicationId,
-            amountCents: amount * 100,
+            amountCents,
             message: message.trim() || undefined,
           },
         });
@@ -77,7 +90,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       const res = await createTip({
         data: {
           creatorId,
-          amountCents: amount * 100,
+          amountCents,
           method,
           publicationId,
           message: message.trim() || undefined,
@@ -97,11 +110,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao criar tip");
+      toast.error(translatePaymentError(e, "Erro ao criar tip"));
     } finally {
       setLoading(false);
     }
