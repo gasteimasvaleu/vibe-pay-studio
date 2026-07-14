@@ -13,7 +13,7 @@ import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
-import { useCpfGuard } from "@/hooks/useCpfGuard";
+
 
 
 export const Route = createFileRoute("/_authenticated/feed")({
