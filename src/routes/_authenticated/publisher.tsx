@@ -670,6 +670,11 @@ function PublisherPage() {
       : toggles.challenge.enabled
         ? "challenge"
         : "public";
+    if (visibility === "paid" && (!preview || preview.status !== "ready")) {
+      toast.error("Adicione uma mídia de prévia");
+      setPreviewSheetOpen(true);
+      return;
+    }
     mutation.mutate({
       data: {
         caption: caption.trim() || null,
@@ -689,6 +694,18 @@ function PublisherPage() {
           audio.status === "ready" && audio.storagePath && audio.publicUrl
             ? { storagePath: audio.storagePath, url: audio.publicUrl }
             : null,
+        preview:
+          visibility === "paid" &&
+          preview &&
+          preview.status === "ready" &&
+          preview.storagePath &&
+          preview.publicUrl
+            ? {
+                storagePath: preview.storagePath,
+                url: preview.publicUrl,
+                type: preview.type,
+              }
+            : null,
       },
     });
   };
@@ -696,7 +713,10 @@ function PublisherPage() {
   // Handlers for switches
   const onPaidChange = (v: boolean) => {
     if (v) setPaidOpen(true);
-    else setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
+    else {
+      setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
+      void clearPreview();
+    }
   };
   const onChallengeChange = (v: boolean) => {
     if (v) setChallengeOpen(true);
