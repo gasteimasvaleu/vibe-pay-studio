@@ -236,11 +236,7 @@ function ChatThreadView() {
         toast.success("Mensagem já desbloqueada");
         return;
       }
-      if (err?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error((err as Error).message ?? "Erro ao gerar pagamento");
+      toast.error(translatePaymentError(err, "Erro ao gerar pagamento"));
     } finally {
       setUnlockingId(null);
     }
