@@ -628,11 +628,23 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
     if (!intent.asaas_payment_id) return { status: "pending" };
     const asaas = await loadAsaas();
     const payment = await asaas.getPayment(intent.asaas_payment_id);
+
+    const PAID = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
+    if (PAID.has(payment.status) && !intent.processed_at) {
+      try {
+        const { applyPaidIntent } = await import("@/lib/payments-reconcile.server");
+        await applyPaidIntent(supabaseAdmin, intent, intent.asaas_payment_id);
+      } catch (e) {
+        console.error("[poller] reconcile failed", e);
+      }
+    }
+
     return {
       status: payment.status,
       processedAt: intent.processed_at,
     };
   });
+
 
 
 // ---------------- Payout setup (conta Asaas própria + dados bancários) ----------------
