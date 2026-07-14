@@ -26,7 +26,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 
