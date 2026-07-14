@@ -39,13 +39,15 @@ export function ProfileHeaderCard({
           <div className="h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
             {username.slice(0, 1).toUpperCase()}
           </div>
-          <Link
-            to="/perfil/$username"
-            params={{ username }}
-            className="mt-12 inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-          >
-            Ver perfil <span aria-hidden>→</span>
-          </Link>
+          {showProfileLink && (
+            <Link
+              to="/perfil/$username"
+              params={{ username }}
+              className="mt-12 inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              Ver perfil <span aria-hidden>→</span>
+            </Link>
+          )}
         </div>
 
         <div className="mt-3">
