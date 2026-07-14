@@ -9,9 +9,13 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Film,
+  Gift,
   Info,
+  MessageCircle,
   Pencil,
   Plus,
+  Repeat,
   ShieldAlert,
   Wallet,
 } from "lucide-react";
@@ -36,6 +40,48 @@ import {
 } from "@/components/ui/sheet";
 import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 import { getCreatorPayoutStatus } from "@/lib/payments.functions";
+import {
+  getCreatorBancoOverview,
+  listCreatorTransactions,
+} from "@/lib/finance.functions";
+
+const BRL = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const formatBRL = (cents: number) => BRL.format((cents ?? 0) / 100);
+
+const KIND_META: Record<
+  string,
+  { label: string; Icon: typeof Banknote }
+> = {
+  subscription: { label: "Assinatura", Icon: Repeat },
+  tip: { label: "Gorjeta", Icon: Gift },
+  publication_unlock: { label: "Desbloqueio de publicação", Icon: Wallet },
+  chat_unlock: { label: "Desbloqueio no chat", Icon: MessageCircle },
+  video_call: { label: "Chamada de vídeo", Icon: Film },
+  withdrawal: { label: "Saque", Icon: Banknote },
+  refund: { label: "Estorno", Icon: AlertCircle },
+  wallet_topup: { label: "Recarga", Icon: Wallet },
+  wallet_bonus: { label: "Bônus", Icon: Gift },
+};
+const kindMeta = (kind: string) =>
+  KIND_META[kind] ?? { label: kind, Icon: Banknote };
+
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: "PIX",
+  credit_card: "Cartão",
+  boleto: "Boleto",
+  wallet: "Carteira",
+  manual: "Manual",
+};
+
+const dateFmt = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
@@ -52,14 +98,35 @@ function BancoPage() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const fetchStatus = useServerFn(getCreatorPayoutStatus);
+  const fetchOverview = useServerFn(getCreatorBancoOverview);
+  const fetchTransactions = useServerFn(listCreatorTransactions);
+
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
     queryFn: () => fetchStatus(),
   });
+  const overviewQuery = useQuery({
+    queryKey: ["bancoOverview"],
+    queryFn: () => fetchOverview(),
+  });
+  const txQuery = useQuery({
+    queryKey: ["bancoTransactions"],
+    queryFn: () => fetchTransactions({ data: { limit: 20 } }),
+  });
+
   const status = statusQuery.data;
   const kycVerified = status?.kycStatus === "verified";
   const walletActive = !!status?.walletId;
   const payoutAccount = status?.payoutAccount ?? null;
+
+  const overview = overviewQuery.data;
+  const nationalReleased = overview?.national.releasedCents ?? 0;
+  const nationalPending = overview?.national.pendingCents ?? 0;
+  const intlReleased = overview?.international.releasedCents ?? 0;
+  const intlPending = overview?.international.pendingCents ?? 0;
+  const intlEmpty = intlReleased === 0 && intlPending === 0;
+
+
 
 
   return (
@@ -92,27 +159,69 @@ function BancoPage() {
         {/* Cards de saldo */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label: "Nacional" },
-            { label: "Internacional" },
-          ].map((c) => (
-            <div
-              key={c.label}
-              className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]"
-            >
-              <p className="text-sm font-semibold text-muted-foreground">
-                {c.label}
-              </p>
-              <p className="mt-4 text-sm text-foreground">Liberado para saque</p>
-              <p className="text-3xl font-bold tracking-tight text-foreground">
-                R$ -
-              </p>
-              <p className="mt-3 text-sm text-foreground">Saldo a liberar</p>
-              <p className="text-lg font-semibold text-foreground">R$ -</p>
-              <Button className="mt-4 w-full rounded-full" disabled>
-                Sacar
-              </Button>
-            </div>
-          ))}
+            {
+              label: "Nacional",
+              released: nationalReleased,
+              pending: nationalPending,
+              muted: false,
+            },
+            {
+              label: "Internacional",
+              released: intlReleased,
+              pending: intlPending,
+              muted: intlEmpty,
+            },
+          ].map((c) => {
+            const canWithdraw = walletActive && c.released > 0;
+            return (
+              <div
+                key={c.label}
+                className={`rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] ${
+                  c.muted ? "opacity-70" : ""
+                }`}
+              >
+                <p className="text-sm font-semibold text-muted-foreground">
+                  {c.label}
+                </p>
+                <p className="mt-4 text-sm text-foreground">
+                  Liberado para saque
+                </p>
+                {overviewQuery.isLoading ? (
+                  <div className="mt-1 h-8 w-32 rounded bg-muted animate-pulse" />
+                ) : (
+                  <p className="text-3xl font-bold tracking-tight text-foreground">
+                    {formatBRL(c.released)}
+                  </p>
+                )}
+                <p className="mt-3 text-sm text-foreground">Saldo a liberar</p>
+                {overviewQuery.isLoading ? (
+                  <div className="mt-1 h-6 w-24 rounded bg-muted animate-pulse" />
+                ) : (
+                  <p className="text-lg font-semibold text-foreground">
+                    {formatBRL(c.pending)}
+                  </p>
+                )}
+                <Button
+                  className="mt-4 w-full rounded-full"
+                  disabled={!canWithdraw}
+                  title={
+                    !walletActive
+                      ? "Configure seu recebimento para poder sacar"
+                      : c.released <= 0
+                        ? "Sem saldo liberado para saque"
+                        : "Saques em breve"
+                  }
+                >
+                  Sacar
+                </Button>
+                {c.muted && !overviewQuery.isLoading ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Sem movimentações internacionais
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
         </section>
 
         {/* Extrato */}
@@ -120,13 +229,80 @@ function BancoPage() {
           <h2 className="text-lg font-bold tracking-tight text-foreground">
             Extrato
           </h2>
-          <div className="rounded-2xl border border-border bg-accent/40 p-4 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-primary shrink-0" />
-            <p className="text-sm text-foreground">
-              Aqui você verá as movimentações da sua conta
-            </p>
-          </div>
+          {txQuery.isLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-border bg-card p-4 h-16 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (txQuery.data ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-border bg-accent/40 p-4 flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-primary shrink-0" />
+              <p className="text-sm text-foreground">
+                Aqui você verá as movimentações da sua conta
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {(txQuery.data ?? []).map((t) => {
+                const meta = kindMeta(t.kind as string);
+                const Icon = meta.Icon;
+                const created = t.created_at
+                  ? dateFmt.format(new Date(t.created_at))
+                  : "";
+                const method = t.payment_method
+                  ? PAYMENT_LABEL[t.payment_method] ?? t.payment_method
+                  : null;
+                const isPaid = t.status === "paid";
+                return (
+                  <li
+                    key={t.id}
+                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                  >
+                    <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground text-sm">
+                          {meta.label}
+                        </p>
+                        {method ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-accent text-muted-foreground rounded-full px-2 py-0.5">
+                            {method}
+                          </span>
+                        ) : null}
+                        {t.is_international ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
+                            Internacional
+                          </span>
+                        ) : null}
+                        {!isPaid ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">
+                            {t.status}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {created}
+                        {t.net_cents != null
+                          ? ` · Líquido ${formatBRL(t.net_cents)}`
+                          : ""}
+                      </p>
+                    </div>
+                    <p className="font-bold text-foreground text-sm shrink-0">
+                      {formatBRL(t.amount_cents_gross ?? 0)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
+
 
         {/* Integração com Asaas (explicativo) */}
         <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
