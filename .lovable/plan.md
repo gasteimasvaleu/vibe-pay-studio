@@ -1,69 +1,63 @@
 ## Objetivo
-Substituir os placeholders (`R$ -`, "Aqui você verá as movimentações") de `/banco` por dados reais do creator: saldos por origem (Nacional / Internacional) e extrato paginado.
+Ativar o botão **Sacar** dos cards de saldo em `/banco`. Ao confirmar, dispara uma transferência PIX real via Asaas para a chave PIX cadastrada em "Dados bancários". Também mostrar histórico de saques logo abaixo do Extrato.
 
-## Dados disponíveis
-Já existem no backend:
-- `getCreatorWallet` → `releasedCents`, `pendingNationalCents`, `pendingInternationalCents`.
-- `listCreatorTransactions` → linhas de `transactions` com `kind`, `amount_cents_gross`, `net_cents`, `payment_method`, `is_international`, `buyer_id`, `status`, `created_at`, `released_at`.
-- `listCreatorWithdrawals` → histórico de saques (para futuras iterações; não bloqueia esta entrega).
+## Backend
+Nada novo. Já existe:
+- `requestWithdrawal({ amountCents, pixKey, pixKeyType })` em `src/lib/payouts.functions.ts` — valida mínimo (R$50,00), confere `released_cents`, debita a wallet, cria linha em `withdrawals`, chama Asaas `createPixTransfer` e faz poll do status; em caso de erro, reverte saldo e marca `failed`.
+- `cancelWithdrawal({ withdrawalId })` — cancela um saque ainda `requested` e devolve o valor ao saldo.
+- `listCreatorWithdrawals` — lista os saques do creator.
+- `getCreatorPayoutStatus` já retorna `payoutAccount.pixKey` e `payoutAccount.pixKeyType`.
 
-Gap: `creator_wallets.released_cents` é um pool único (não separa nacional/internacional). Para preencher "Liberado" em cada card, o novo server fn abaixo deriva o split a partir das próprias `transactions`.
+Pré-requisitos que o backend já cobre (apenas superficiar na UI):
+- Wallet Asaas configurada (`status.walletId`).
+- API key Asaas do creator cadastrada (`status.hasApiKey`) — sem ela, o server responde com mensagem pedindo para cadastrar; o botão só habilita quando existir.
+- Saldo liberado ≥ R$ 50,00 (mínimo hoje no server).
 
-## Novo server fn
-`getCreatorBancoOverview` em `src/lib/finance.functions.ts` (usa `requireSupabaseAuth`), retorna:
-```ts
-{
-  national:      { releasedCents, pendingCents },
-  international: { releasedCents, pendingCents },
-  totals:        { releasedCents, pendingCents },
-  updatedAt: string | null,
-}
-```
-Implementação: uma única `select` em `transactions` filtrando `creator_id = userId`, `status = 'paid'`, `net_cents > 0`, `kind NOT IN ('withdrawal','refund','wallet_topup','wallet_bonus')`, projetando `net_cents, is_international, wallet_released_at`. Soma no server:
-- Já liberado nacional: `wallet_released_at IS NOT NULL AND is_international = false`
-- A liberar nacional: `wallet_released_at IS NULL AND is_international = false`
-- Idem para internacional.
-Sanity-check contra `getCreatorWallet` (usar o `released_cents` total do wallet como fallback quando a soma derivada for zero).
+## Novo componente
+`src/components/banco/SacarDialog.tsx` — dialog controlado, recebe:
+- `open`, `onOpenChange`
+- `origem`: `"Nacional" | "Internacional"` (só label; o backend não separa)
+- `saldoLiberadoCents`
+- `pixKey`, `pixKeyType`
+- `onSuccess()`
+
+Comportamento:
+- Campo "Valor" em BRL (input mascarado, default = saldo total liberado do card).
+- Validações locais: > 0, ≤ saldo liberado, ≥ R$ 50,00 (mín. do server); mensagens inline.
+- Mostra a chave PIX de destino (readonly) — link "Alterar dados bancários" que redireciona para `/banco/cadastrar`.
+- Botão "Confirmar saque" → chama `requestWithdrawal` via `useMutation`.
+- Sucesso: toast "Saque solicitado" com status retornado, `invalidateQueries` de `bancoOverview`, `bancoTransactions`, `bancoWithdrawals`, `payoutStatus`, fecha dialog.
+- Erro: toast com a mensagem do server (já em pt-BR).
 
 ## Mudanças em `src/routes/_authenticated/banco.tsx`
 
-### 1. Cards de saldo (linhas ~86-109)
-- Substituir o array literal por dois cards renderizados a partir de `overviewQuery.data.national` e `.international`.
-- "Liberado para saque": `formatBRL(releasedCents)`.
-- "Saldo a liberar": `formatBRL(pendingCents)`.
-- Skeleton simples enquanto `overviewQuery.isLoading`.
-- Botão **Sacar**:
-  - Habilitado apenas quando `walletActive && releasedCents > 0`.
-  - Ao clicar, hoje a rota `/banco/sacar` não existe → abrir o `Sheet` de "em breve" (toast: "Solicitação de saque em breve") **ou** apenas manter `disabled` com tooltip. Preferir manter desabilitado com hint contextual ("Saques em breve" quando não houver rota), para não prometer ação que não existe. Reavaliar quando `/banco/sacar` for criado (fora do escopo).
-- Card Internacional fica desabilitado quando ambos os valores são 0 (mostra "Sem movimentações internacionais").
+### 1. Estado do dialog e handlers
+- `const [sacarOrigin, setSacarOrigin] = useState<null | "Nacional" | "Internacional">(null)`.
+- Botão "Sacar" de cada card: onClick abre o dialog com o `label` correspondente.
 
-### 2. Extrato (linhas ~112-122)
-Substituir o placeholder por uma lista real:
-- `useQuery` com `listCreatorTransactions({ limit: 20 })`.
-- Estados: loading (skeleton), vazio (mantém a mensagem atual "Aqui você verá as movimentações"), preenchido.
-- Cada item mostra:
-  - Ícone por `kind` (assinatura, gorjeta, desbloqueio, chamada) — usar `Banknote`/`Wallet` já importados + `MessageCircle`/`Film`.
-  - Título humanizado (`kindLabel(kind)`) + método de pagamento em badge pequeno.
-  - Data relativa (`Intl.DateTimeFormat pt-BR`, curto).
-  - Valor bruto e, em uma linha secundária menor, `Líquido: R$ …` (net_cents).
-  - Bandeira "Internacional" quando `is_international`.
-  - Status pendente (badge amarelo) quando `status !== 'paid'` (para o futuro; hoje o fetch já filtra em `.eq status paid` — remover esse filtro para poder mostrar pagamentos abertos também).
-- Ordenação já vem `created_at desc` do server.
-- Rodapé com link "Ver tudo" (placeholder desabilitado por enquanto ou removido — não há rota dedicada). Ficar apenas com os 20 mais recentes.
+### 2. Habilitação do botão
+Trocar o `disabled` atual para considerar todos os pré-requisitos:
+- `walletActive` (já existe)
+- `status?.hasApiKey`
+- `payoutAccount?.pixKey`
+- `c.released >= 5000` (mín. saque)
+Título/tooltip dinâmico explicando o motivo quando desabilitado (KYC, wallet, API key, PIX ausente, saldo abaixo do mínimo).
 
-### 3. Hooks e helpers no topo do arquivo
-- Adicionar `useQuery` para `getCreatorBancoOverview` e `listCreatorTransactions`.
-- Adicionar util `formatBRL(cents)` e `kindLabel(kind)` locais.
-- Adicionar ícones novos importados de `lucide-react` (`Gift`, `Film`, `MessageCircle`, `Repeat`).
+### 3. Nova seção "Saques"
+Abaixo do Extrato, antes de "Integração com Asaas":
+- `useQuery(["bancoWithdrawals"], listCreatorWithdrawals)`.
+- Vazio → não renderiza a seção (para não poluir quem nunca sacou).
+- Item: valor, status humanizado (Solicitado / Concluído / Rejeitado / Falhou), data `requested_at`, chave PIX ofuscada, motivo de rejeição quando houver.
+- Se `status === "requested"` → botão "Cancelar" que chama `cancelWithdrawal` com confirmação (`window.confirm`), invalida as mesmas queries.
 
 ## Fora de escopo
-- Fluxo de "Sacar" (formulário/confirmação/PIX) — a rota `/banco/sacar` não existe ainda; botão fica desabilitado com hint até ser construído.
-- Extrato paginado com filtros / infinite scroll — hoje entrega apenas as 20 últimas.
-- Histórico de saques — dados existem em `listCreatorWithdrawals`, mas nenhuma seção nova nesta iteração.
-- Card de "Integração com Asaas" e "Recebimento ativo" — permanecem como estão.
+- Fluxo internacional real: hoje o backend faz tudo via Asaas/PIX nacional. Se o creator clicar em "Sacar" no card Internacional, a transferência ainda vai pela mesma chave PIX (a UI mostra um aviso no dialog). Suporte real a transfer internacional fica para outra iteração.
+- Escolher entre múltiplas chaves PIX — hoje só existe uma no `payout_accounts`.
+- Fila/histórico paginado de saques — mostra todos (a lista costuma ser curta).
+- Ajustar mínimo de saque no server (R$ 50,00 continua).
 
 ## Como testar
-1. Creator sem vendas: os dois cards mostram R$ 0,00 e o extrato mostra a mensagem atual.
-2. Creator com uma venda PIX nacional já liberada: card Nacional mostra o net em "Liberado" e extrato mostra a linha correspondente.
-3. Creator com uma venda de cartão nacional recente (não liberada): valor aparece em "Saldo a liberar" e uma linha "libera em …" (opcional) no item do extrato.
-4. Botão Sacar fica desabilitado enquanto `releasedCents = 0` ou wallet não estiver ativo.
+1. Creator com KYC + wallet + API key + saldo ≥ R$ 50 → botão habilita, dialog abre, saque cai em `withdrawals` com `provider_ref` do Asaas e `released_cents` diminui.
+2. Creator sem API key → botão desabilitado com tooltip "Cadastre sua API Key Asaas".
+3. Creator com saldo < R$ 50 → tooltip "Saldo mínimo para saque: R$ 50,00".
+4. Cancelar saque `requested` → status vira `rejected` e saldo liberado volta.
