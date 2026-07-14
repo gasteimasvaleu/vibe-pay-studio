@@ -1,25 +1,29 @@
 ## Problema
 
-Ao salvar o cadastro em `/banco/cadastrar` com uma API key, aparece o toast **"não foi possível recuperar o Wallet ID com essa API key"**.
+Ao clicar em **Pagar R$ 14,90**, a API do Asaas responde 400 com:
 
-Causa: em `src/lib/asaas.server.ts`, `getWalletForApiKey` chama `GET /v3/wallets/` esperando um objeto único com `walletId`/`id`. Mas o endpoint do Asaas retorna uma **lista paginada**:
-
-```json
-{ "object": "list", "hasMore": false, "totalCount": 1, "data": [ { "id": "<wallet-uuid>", "name": "...", ... } ] }
+```
+{"code":"user_agent_not_informed","description":"É obrigatório preencher User-Agent no cabeçalho da requisição"}
 ```
 
-Como o código lê `body.walletId` / `body.id` no root, nunca encontra o ID e sempre lança o erro — mesmo quando a API key é válida.
+O Asaas passou a exigir o header `User-Agent` em toda requisição. O helper `asaasFetch` em `src/lib/asaas.server.ts` não envia esse header, então **todas** as chamadas Asaas (criação de pagamento PIX, cartão, transferências, wallets, subaccounts) estão sujeitas ao mesmo erro.
 
 ## Correção
 
-Ajustar `getWalletForApiKey` em `src/lib/asaas.server.ts` para:
+Em `src/lib/asaas.server.ts`, dentro de `asaasFetch`, adicionar um `User-Agent` padrão identificando a plataforma (permitindo override via `init.headers`):
 
-1. Ler `body.data` como array e extrair o `id` do primeiro item (a wallet principal do Asaas é sempre a primeira). Também aceitar `walletId` como fallback caso o Asaas mude a resposta.
-2. Se o array vier vazio ou sem `id` string, aí sim lançar o erro atual em português.
-3. Manter o retorno `{ walletId }`.
+```ts
+headers: {
+  "Content-Type": "application/json",
+  "User-Agent": "VibePayStudio/1.0 (+https://vibe-pay-studio.lovable.app)",
+  access_token: apiKey ?? getApiKey(),
+  accept: "application/json",
+  ...(init.headers ?? {}),
+},
+```
 
-Nenhuma outra alteração é necessária — a validação em `saveCreatorPayoutSetup` (comparar `recovered.walletId` com o Wallet ID digitado) continua funcionando, e a mensagem específica "Wallet ID não corresponde à API key informada" só aparece quando de fato divergirem.
+Uma única alteração de ~1 linha cobre todos os endpoints (`/payments`, `/transfers`, `/wallets`, `/accounts`, etc.).
 
 ## Arquivos alterados
 
-- `src/lib/asaas.server.ts` — só a função `getWalletForApiKey` (~10 linhas).
+- `src/lib/asaas.server.ts` — adicionar `User-Agent` em `asaasFetch`.
