@@ -509,10 +509,72 @@ function PerfilPage() {
           </TabsContent>
 
           <TabsContent value="midias" className="mt-6">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
-              Em breve.
-            </div>
+            {(() => {
+              const items = pubsQuery.data?.items ?? [];
+              const tiles = items.flatMap((it) =>
+                it.media.map((m) => ({ ...m, pub: it })),
+              );
+              if (pubsQuery.isLoading) {
+                return (
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                    Carregando mídias...
+                  </div>
+                );
+              }
+              if (tiles.length === 0) {
+                return (
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                    Nenhuma mídia disponível ainda.
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-3 gap-2">
+                  {tiles.map((tile) => {
+                    const locked = tile.pub.locked;
+                    return (
+                      <button
+                        key={`${tile.pub.id}-${tile.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (locked) handleUnlock(tile.pub);
+                        }}
+                        className="relative aspect-square rounded-xl overflow-hidden border border-white/10 bg-black/40 group"
+                      >
+                        {tile.type === "image" ? (
+                          <img
+                            src={tile.url}
+                            alt=""
+                            className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${
+                              locked ? "blur-xl scale-110" : ""
+                            }`}
+                          />
+                        ) : (
+                          <video
+                            src={tile.url}
+                            className={`w-full h-full object-cover ${locked ? "blur-xl scale-110" : ""}`}
+                            muted
+                            playsInline
+                          />
+                        )}
+                        {locked && (
+                          <div className="absolute inset-0 bg-black/40 grid place-items-center">
+                            <Lock className="h-6 w-6 text-white/90" />
+                          </div>
+                        )}
+                        {tile.type === "video" && !locked && (
+                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 grid place-items-center">
+                            <Film className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </TabsContent>
+
 
         </Tabs>
       </main>
