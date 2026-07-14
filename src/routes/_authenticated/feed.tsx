@@ -84,6 +84,12 @@ function FeedPage() {
         setCpfPromptFor(method);
         return;
       }
+      if (e?.message === "publicação já desbloqueada") {
+        setPending(null);
+        await queryClient.invalidateQueries({ queryKey: ["feed"] });
+        toast.success("Publicação já desbloqueada");
+        return;
+      }
       toast.error(e?.message ?? "Erro ao gerar pagamento");
     } finally {
       setUnlocking(null);
@@ -172,7 +178,9 @@ function FeedPage() {
         checkout={checkout}
         onPaid={() => {
           toast.success("Pagamento confirmado! Recarregando feed...");
-          feedQuery.refetch();
+          setModalOpen(false);
+          setCheckout(null);
+          void queryClient.invalidateQueries({ queryKey: ["feed"] });
         }}
       />
 
