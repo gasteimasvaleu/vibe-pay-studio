@@ -160,7 +160,10 @@ function BancoPage() {
       }),
   });
 
-  async function refreshAfterWithdrawal(args: { amountCents: number }) {
+  async function refreshAfterWithdrawal(args: {
+    amountCents: number;
+    origem: "Nacional" | "Internacional";
+  }) {
     const previousTotalReleased = overviewQuery.data?.totals.releasedCents ?? 0;
     const expectedTotalReleased = Math.max(
       previousTotalReleased - args.amountCents,
@@ -168,6 +171,28 @@ function BancoPage() {
     );
 
     setIsRefreshingAfterWithdrawal(true);
+    qc.setQueryData(["bancoOverview"], (old: any) => {
+      if (!old) return old;
+      const bucket = args.origem === "Internacional" ? "international" : "national";
+      const nextBucketReleased = Math.max(
+        (old[bucket]?.releasedCents ?? 0) - args.amountCents,
+        0,
+      );
+      return {
+        ...old,
+        [bucket]: {
+          ...old[bucket],
+          releasedCents: nextBucketReleased,
+        },
+        totals: {
+          ...old.totals,
+          releasedCents: Math.max(
+            (old.totals?.releasedCents ?? 0) - args.amountCents,
+            0,
+          ),
+        },
+      };
+    });
     try {
       for (let attempt = 0; attempt < 6; attempt += 1) {
         const overview = await qc.fetchQuery({
