@@ -218,14 +218,18 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
     Route.useRouteContext();
   const router = useRouter();
+  const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [followBusy, setFollowBusy] = useState(false);
+
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
