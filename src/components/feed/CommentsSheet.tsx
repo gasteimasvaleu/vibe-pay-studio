@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, MessageCircle, Heart, MoreVertical, Trash2, X } from "lucide-react";
@@ -26,6 +26,108 @@ function timeAgo(iso: string): string {
   return `${d}d`;
 }
 
+function CommentRow({
+  c,
+  isReply,
+  canDelete,
+  onReply,
+  onToggleLike,
+  onDelete,
+  deleting,
+}: {
+  c: PublicationComment;
+  isReply: boolean;
+  canDelete: boolean;
+  onReply: (c: PublicationComment) => void;
+  onToggleLike: (id: string) => void;
+  onDelete: (id: string) => void;
+  deleting: boolean;
+}) {
+  const avatarSize = isReply ? "h-8 w-8" : "h-9 w-9";
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className={cn(
+          "shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white",
+          avatarSize,
+        )}
+      >
+        {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">
+            {c.author_username ?? "usuario"}
+          </span>
+          <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
+        </div>
+        <p className="mt-0.5 text-sm text-foreground/90 whitespace-pre-wrap break-words">
+          {c.body}
+        </p>
+        <button
+          type="button"
+          onClick={() => onReply(c)}
+          className="mt-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Responder
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1 shrink-0">
+        {canDelete && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Opções"
+                className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={4}
+              className="w-auto p-1 rounded-2xl bg-card border border-border shadow-xl"
+            >
+              <button
+                type="button"
+                onClick={() => onDelete(c.id)}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir comentário
+              </button>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        <button
+          type="button"
+          aria-label={c.viewer_liked ? "Descurtir" : "Curtir"}
+          onClick={() => onToggleLike(c.id)}
+          className="flex flex-col items-center gap-0.5 px-1 group"
+        >
+          <Heart
+            className={cn(
+              "h-5 w-5 transition-colors",
+              c.viewer_liked
+                ? "fill-red-500 text-red-500"
+                : "text-muted-foreground group-hover:text-foreground",
+            )}
+          />
+          {c.like_count > 0 && (
+            <span className="text-[10px] font-medium text-muted-foreground leading-none">
+              {c.like_count}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function CommentsSheet({
   publicationId,
   publicationAuthorId,
@@ -50,8 +152,13 @@ export function CommentsSheet({
   const removeComment = useServerFn(deleteComment);
 
   const [text, setText] = useState("");
-  const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    username: string;
+    rootId: string;
+  } | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -66,19 +173,45 @@ export function CommentsSheet({
     enabled: !!publicationId && open,
   });
 
+  const comments = query.data ?? [];
+
+  const { roots, repliesByParent } = useMemo(() => {
+    const sorted = [...comments].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+    const rootList: PublicationComment[] = [];
+    const map: Record<string, PublicationComment[]> = {};
+    for (const c of sorted) {
+      if (c.parent_id) {
+        (map[c.parent_id] ??= []).push(c);
+      } else {
+        rootList.push(c);
+      }
+    }
+    return { roots: rootList, repliesByParent: map };
+  }, [comments]);
+
+
   const mutation = useMutation({
     mutationFn: (body: string) =>
       create({
         data: {
           publicationId: publicationId!,
           body,
-          parentId: replyingTo?.id ?? null,
+          parentId: replyingTo?.rootId ?? null,
         },
       }),
     onSuccess: (created) => {
       queryClient.setQueryData<PublicationComment[]>(queryKey, (prev) =>
         prev ? [...prev, created] : [created],
       );
+      if (created.parent_id) {
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          next.add(created.parent_id!);
+          return next;
+        });
+      }
       setText("");
       setReplyingTo(null);
       onCountChange?.(1);
@@ -126,9 +259,15 @@ export function CommentsSheet({
   const deleteMutation = useMutation({
     mutationFn: (commentId: string) => removeComment({ data: { commentId } }),
     onSuccess: (_res, commentId) => {
-      queryClient.setQueryData<PublicationComment[]>(queryKey, (curr) =>
-        curr?.filter((c) => c.id !== commentId),
-      );
+      queryClient.setQueryData<PublicationComment[]>(queryKey, (curr) => {
+        if (!curr) return curr;
+        // If deleting a root, also drop its replies from local state.
+        const target = curr.find((c) => c.id === commentId);
+        if (target && !target.parent_id) {
+          return curr.filter((c) => c.id !== commentId && c.parent_id !== commentId);
+        }
+        return curr.filter((c) => c.id !== commentId);
+      });
       onCountChange?.(-1);
       toast.success("Comentário excluído");
     },
@@ -144,7 +283,8 @@ export function CommentsSheet({
 
   const startReply = (c: PublicationComment) => {
     const uname = c.author_username ?? "usuario";
-    setReplyingTo({ id: c.id, username: uname });
+    const rootId = c.parent_id ?? c.id;
+    setReplyingTo({ id: c.id, username: uname, rootId });
     setText((t) => (t.startsWith(`@${uname} `) ? t : `@${uname} `));
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -154,13 +294,24 @@ export function CommentsSheet({
     setText("");
   };
 
+  const toggleThread = (rootId: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(rootId)) next.delete(rootId);
+      else next.add(rootId);
+      return next;
+    });
+  };
+
   const send = () => {
     const trimmed = text.trim();
     if (!trimmed || mutation.isPending) return;
     mutation.mutate(trimmed);
   };
 
-  const comments = query.data ?? [];
+  const canDeleteFor = (c: PublicationComment) =>
+    !!currentUserId &&
+    (currentUserId === c.user_id || currentUserId === publicationAuthorId);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -175,7 +326,7 @@ export function CommentsSheet({
         <div className="flex-1 min-h-[240px] overflow-y-auto px-5 py-6">
           {query.isLoading ? (
             <p className="text-center text-sm text-muted-foreground">Carregando...</p>
-          ) : comments.length === 0 ? (
+          ) : roots.length === 0 ? (
             <div className="h-full grid place-items-center text-center">
               <div>
                 <div className="mx-auto h-12 w-12 rounded-full bg-muted grid place-items-center text-muted-foreground mb-4">
@@ -191,88 +342,53 @@ export function CommentsSheet({
             </div>
           ) : (
             <ul className="space-y-5">
-              {comments.map((c) => {
-                const canDelete =
-                  !!currentUserId &&
-                  (currentUserId === c.user_id ||
-                    currentUserId === publicationAuthorId);
+              {roots.map((c) => {
+                const replies = repliesByParent[c.id] ?? [];
+                const isOpen = expanded.has(c.id);
                 return (
-                  <li key={c.id} className="flex items-start gap-3">
-                    <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
-                      {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-foreground">
-                          {c.author_username ?? "usuario"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {timeAgo(c.created_at)}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-sm text-foreground/90 whitespace-pre-wrap break-words">
-                        {c.body}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => startReply(c)}
-                        className="mt-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Responder
-                      </button>
-                    </div>
+                  <li key={c.id}>
+                    <CommentRow
+                      c={c}
+                      isReply={false}
+                      canDelete={canDeleteFor(c)}
+                      onReply={startReply}
+                      onToggleLike={(id) => likeMutation.mutate(id)}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      deleting={deleteMutation.isPending}
+                    />
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      {canDelete && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              aria-label="Opções"
-                              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            align="end"
-                            sideOffset={4}
-                            className="w-auto p-1 rounded-2xl bg-card border border-border shadow-xl"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => deleteMutation.mutate(c.id)}
-                              disabled={deleteMutation.isPending}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Excluir comentário
-                            </button>
-                          </PopoverContent>
-                        </Popover>
-                      )}
+                    {replies.length > 0 && (
+                      <div className="mt-3 pl-12">
+                        <button
+                          type="button"
+                          onClick={() => toggleThread(c.id)}
+                          className="flex items-center gap-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="h-px w-6 bg-border" />
+                          {isOpen
+                            ? "Ocultar respostas"
+                            : `Ver ${replies.length} ${replies.length === 1 ? "resposta" : "respostas"}`}
+                        </button>
 
-                      <button
-                        type="button"
-                        aria-label={c.viewer_liked ? "Descurtir" : "Curtir"}
-                        onClick={() => likeMutation.mutate(c.id)}
-                        className="flex flex-col items-center gap-0.5 px-1 group"
-                      >
-                        <Heart
-                          className={cn(
-                            "h-5 w-5 transition-colors",
-                            c.viewer_liked
-                              ? "fill-red-500 text-red-500"
-                              : "text-muted-foreground group-hover:text-foreground",
-                          )}
-                        />
-                        {c.like_count > 0 && (
-                          <span className="text-[10px] font-medium text-muted-foreground leading-none">
-                            {c.like_count}
-                          </span>
+                        {isOpen && (
+                          <ul className="mt-4 space-y-4">
+                            {replies.map((r) => (
+                              <li key={r.id}>
+                                <CommentRow
+                                  c={r}
+                                  isReply
+                                  canDelete={canDeleteFor(r)}
+                                  onReply={startReply}
+                                  onToggleLike={(id) => likeMutation.mutate(id)}
+                                  onDelete={(id) => deleteMutation.mutate(id)}
+                                  deleting={deleteMutation.isPending}
+                                />
+                              </li>
+                            ))}
+                          </ul>
                         )}
-                      </button>
-                    </div>
+                      </div>
+                    )}
                   </li>
                 );
               })}
