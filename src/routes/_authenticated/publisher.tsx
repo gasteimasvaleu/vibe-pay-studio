@@ -220,10 +220,14 @@ function PublisherPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewInputRef = useRef<HTMLInputElement | null>(null);
+  const previewCameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const [paidOpen, setPaidOpen] = useState(false);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
+  const [preview, setPreview] = useState<PreviewMedia | null>(null);
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
