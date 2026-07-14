@@ -204,3 +204,64 @@ export const unlockPublication = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: unlock.id };
   });
+
+/**
+ * Seguir grátis um creator sem preço mensal (price_monthly = 0/null).
+ * Cria assinatura ativa com valor zero.
+ */
+export const followCreatorFree = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { creatorId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (userId === data.creatorId) {
+      throw new Error("Você não pode assinar seu próprio perfil.");
+    }
+
+    const { data: creator, error: creatorError } = await supabase
+      .from("profiles")
+      .select("price_monthly")
+      .eq("user_id", data.creatorId)
+      .maybeSingle();
+    if (creatorError) throw new Error(creatorError.message);
+    if (creator?.price_monthly && Number(creator.price_monthly) > 0) {
+      throw new Error("Este creator possui assinatura paga.");
+    }
+
+    const periodEnd = new Date();
+    periodEnd.setFullYear(periodEnd.getFullYear() + 10);
+
+    const { error } = await supabase
+      .from("subscriptions")
+      .insert({
+        subscriber_id: userId,
+        creator_id: data.creatorId,
+        plan: "monthly",
+        price_cents_paid: 0,
+        status: "active",
+        current_period_end: periodEnd.toISOString(),
+        started_at: new Date().toISOString(),
+        provider: "manual",
+      });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Deixar de seguir/assinar um creator. Cancela assinaturas ativas do viewer.
+ */
+export const unfollowCreator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { creatorId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("subscriptions")
+      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), auto_renew: false })
+      .eq("subscriber_id", userId)
+      .eq("creator_id", data.creatorId)
+      .eq("status", "active");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
