@@ -19,6 +19,7 @@ import {
   Lock,
   Minus,
   Mic,
+  Pencil,
   Pin,
   Plus,
   Trash2,
@@ -816,6 +817,7 @@ function PublisherPage() {
             onRemoveAudio={removeAudio}
             preview={preview}
             onEditPreview={openPreviewSheet}
+            onEditPrice={() => setPaidOpen(true)}
           />
         )}
       </main>
@@ -1049,7 +1051,7 @@ function StepMedia({
           {media.length} de {MAX_MEDIA} - Você pode enviar até {MAX_MEDIA} mídias
         </p>
         {reorderMode && (
-          <p className="text-xs text-orange-500 mt-1">
+          <p className="text-xs text-primary mt-1">
             Arraste as miniaturas para reordenar
           </p>
         )}
@@ -1206,6 +1208,7 @@ function StepCompose({
   onRemoveAudio,
   preview,
   onEditPreview,
+  onEditPrice,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1225,6 +1228,7 @@ function StepCompose({
   onRemoveAudio: () => void;
   preview: PreviewMedia | null;
   onEditPreview: () => void;
+  onEditPrice: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
@@ -1259,28 +1263,62 @@ function StepCompose({
             </div>
           </SortableContext>
         </DndContext>
-      ) : media.length === 1 && first ? (
-        <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
-          {first.type === "video" ? (
-            <video src={first.previewUrl} className="w-full h-full object-cover" />
-          ) : (
-            <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
-          )}
-        </div>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-          {media.map((m) => (
-            <div
-              key={m.id}
-              className="shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+          {toggles.paid.enabled && (
+            <button
+              type="button"
+              onClick={onEditPreview}
+              className={`relative shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted ring-2 ring-primary ${
+                preview?.status === "ready" ? "" : "border-2 border-dashed border-primary"
+              }`}
+              aria-label={preview ? "Editar prévia" : "Adicionar prévia"}
             >
-              {m.type === "video" ? (
-                <video src={m.previewUrl} className="w-full h-full object-cover" />
+              {preview?.status === "ready" ? (
+                preview.type === "video" ? (
+                  <video src={preview.previewUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={preview.previewUrl} alt="Prévia" className="w-full h-full object-cover" />
+                )
+              ) : preview?.status === "uploading" ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/70 backdrop-blur-sm px-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <Progress value={preview.uploadProgress} className="h-1.5 w-full" />
+                  <span className="text-[10px] font-semibold">{preview.uploadProgress}%</span>
+                </div>
               ) : (
-                <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 grid place-items-center text-primary">
+                  <Plus className="h-8 w-8" />
+                </div>
+              )}
+              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold px-2 py-1 shadow-md">
+                <ImageIcon className="h-3 w-3" />
+                Prévia
+              </span>
+            </button>
+          )}
+          {media.length === 1 && first && !toggles.paid.enabled ? (
+            <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
+              {first.type === "video" ? (
+                <video src={first.previewUrl} className="w-full h-full object-cover" />
+              ) : (
+                <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
               )}
             </div>
-          ))}
+          ) : (
+            media.map((m) => (
+              <div
+                key={m.id}
+                className="shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+              >
+                {m.type === "video" ? (
+                  <video src={m.previewUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 
@@ -1386,51 +1424,35 @@ function StepCompose({
 
       <Separator />
 
-      <div className="grid gap-1">
+      <div className="grid gap-2">
         <ToggleRow
           icon={<Lock className="h-5 w-5" />}
           label="Publicação paga"
-          hint={
-            toggles.paid.enabled && toggles.paid.priceCents != null
-              ? brl.format(toggles.paid.priceCents / 100)
-              : undefined
-          }
           checked={toggles.paid.enabled}
           onChange={onPaidChange}
         />
         {toggles.paid.enabled && (
-          <div className="flex items-center gap-3 pb-3 pl-8">
-            <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted grid place-items-center shrink-0">
-              {preview?.status === "ready" ? (
-                preview.type === "video" ? (
-                  <video src={preview.previewUrl} className="w-full h-full object-cover" />
-                ) : (
-                  <img src={preview.previewUrl} alt="Prévia" className="w-full h-full object-cover" />
-                )
-              ) : preview?.status === "uploading" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              ) : (
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {preview?.status === "ready"
-                  ? "Prévia adicionada"
-                  : preview?.status === "uploading"
-                    ? `Enviando prévia... ${preview.uploadProgress}%`
-                    : preview?.status === "error"
-                      ? preview.error ?? "Falha ao enviar prévia"
-                      : "Nenhuma prévia definida"}
-              </p>
-              <button
-                type="button"
-                onClick={onEditPreview}
-                className="text-xs font-semibold text-primary hover:underline mt-0.5"
-              >
-                {preview ? "Editar prévia" : "Adicionar prévia"}
-              </button>
-            </div>
+          <div className="grid grid-cols-2 gap-3 pb-2">
+            <button
+              type="button"
+              onClick={onEditPrice}
+              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+              {toggles.paid.priceCents != null
+                ? brl.format(toggles.paid.priceCents / 100)
+                : "Definir preço"}
+            </button>
+            <button
+              type="button"
+              onClick={onEditPreview}
+              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+              {preview?.status === "uploading"
+                ? `Enviando ${preview.uploadProgress}%`
+                : "Editar prévia"}
+            </button>
           </div>
         )}
         <ToggleRow
@@ -1500,7 +1522,7 @@ function ToggleRow({
       <span className="flex-1 font-medium">
         {label}
         {hint && (
-          <span className="ml-2 text-xs text-orange-500 font-semibold">{hint}</span>
+          <span className="ml-2 text-xs text-primary font-semibold">{hint}</span>
         )}
       </span>
       <Switch checked={checked} onCheckedChange={onChange} />
@@ -1648,13 +1670,13 @@ function ScheduleDialog({
           <TabsList className="grid grid-cols-2 w-full bg-transparent border-b border-border rounded-none h-auto p-0">
             <TabsTrigger
               value="date"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold text-base py-3"
             >
               {format(date, "MMM dd, EEE.", { locale: ptBR })}
             </TabsTrigger>
             <TabsTrigger
               value="time"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold text-base py-3"
             >
               {time}
             </TabsTrigger>
@@ -1675,14 +1697,14 @@ function ScheduleDialog({
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="text-4xl font-bold bg-transparent border-b-2 border-orange-500 text-center outline-none py-4"
+                className="text-4xl font-bold bg-transparent border-b-2 border-primary text-center outline-none py-4"
               />
             </div>
           </TabsContent>
         </Tabs>
         <Button
           onClick={handleApply}
-          className="w-full h-12 mt-4 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+          className="w-full h-12 mt-4 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Aplicar
         </Button>
