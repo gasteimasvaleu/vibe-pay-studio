@@ -41,9 +41,10 @@ export const Route = createFileRoute("/_authenticated/em-alta")({
       .select("username, account_type")
       .eq("user_id", data.user.id)
       .maybeSingle();
+    const acct = profile?.account_type ?? "subscriber";
     return {
       username: profile?.username ?? data.user.email?.split("@")[0] ?? "voce",
-      isCreator: (profile?.account_type ?? "subscriber") === "creator",
+      isCreator: acct === "creator" || acct === "free_creator",
     };
   },
   component: EmAltaPage,
