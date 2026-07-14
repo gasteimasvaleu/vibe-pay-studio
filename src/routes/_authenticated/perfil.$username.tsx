@@ -347,6 +347,9 @@ function PerfilPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold truncate">{displayName}</h1>
+          {isOwner ? (
+            <span className="w-9" />
+          ) : (
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <PopoverTrigger asChild>
               <button
@@ -362,6 +365,59 @@ function PerfilPage() {
               className="w-64 rounded-3xl p-3 bg-card border border-border shadow-xl"
             >
               <nav className="flex flex-col gap-1">
+                {(() => {
+                  const isFree = profile.priceMonthly === 0;
+                  const topLabel = isFree
+                    ? "Assinatura gratuita"
+                    : isFollowing
+                      ? "Seguir"
+                      : "Assinar";
+                  const topDisabled = isFollowing || followBusy;
+                  const onTop = async () => {
+                    if (isFollowing) return;
+                    if (isFree) {
+                      setFollowBusy(true);
+                      try {
+                        await followFreeFn({ data: { creatorId: profile.userId } });
+                        setIsFollowing(true);
+                        toast.success("Você agora segue este perfil.");
+                        router.invalidate();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                      } finally {
+                        setFollowBusy(false);
+                        setMenuOpen(false);
+                      }
+                    } else {
+                      setMenuOpen(false);
+                      setSubscribeOpen(true);
+                    }
+                  };
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onTop}
+                        disabled={topDisabled}
+                        className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {topLabel}
+                      </button>
+                      <div className="my-1 h-px bg-border" />
+                    </>
+                  );
+                })()}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate({ to: "/chat" });
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <MessageCircle className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  Chat
+                </button>
                 <button
                   type="button"
                   onClick={async () => {
@@ -374,7 +430,7 @@ function PerfilPage() {
                       }
                     } else if (navigator.clipboard) {
                       await navigator.clipboard.writeText(url);
-                      alert("Link copiado para a área de transferência!");
+                      toast.success("Link copiado para a área de transferência!");
                     }
                     setMenuOpen(false);
                   }}
@@ -383,21 +439,57 @@ function PerfilPage() {
                   <Share2 className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Compartilhar
                 </button>
+                {isFollowing && (
+                  <button
+                    type="button"
+                    disabled={followBusy}
+                    onClick={async () => {
+                      if (!confirm(`Deixar de seguir ${displayName}?`)) return;
+                      setFollowBusy(true);
+                      try {
+                        await unfollowFn({ data: { creatorId: profile.userId } });
+                        setIsFollowing(false);
+                        toast.success("Você deixou de seguir este perfil.");
+                        router.invalidate();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Erro ao deixar de seguir.");
+                      } finally {
+                        setFollowBusy(false);
+                        setMenuOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60"
+                  >
+                    <HeartOff className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                    Deixar de seguir
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
-                    alert("Denúncia enviada. Nossa equipe irá analisar este perfil.");
+                    toast.success("Denúncia enviada. Nossa equipe irá analisar este perfil.");
                     setMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
                 >
-                  <Flag className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  <AlertCircle className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Denunciar perfil
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    alert(`Solicitação de amizade enviada para ${displayName}!`);
+                    toast.success("Perfil silenciado.");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  Silenciar perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.success(`Solicitação de amizade enviada para ${displayName}!`);
                     setMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
@@ -408,6 +500,8 @@ function PerfilPage() {
               </nav>
             </PopoverContent>
           </Popover>
+          )}
+
         </div>
       </header>
 
