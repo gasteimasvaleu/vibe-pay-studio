@@ -49,6 +49,8 @@ function CadastrarBancoPage() {
         <CadastrarBancoForm
           onClose={close}
           kycVerified={kycVerified}
+          walletId={statusQuery.data?.walletId ?? ""}
+          hasApiKey={statusQuery.data?.hasApiKey ?? false}
           initial={
             statusQuery.data?.payoutAccount
               ? {
