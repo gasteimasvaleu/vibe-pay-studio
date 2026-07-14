@@ -666,3 +666,106 @@ export const deleteComment = createServerFn({ method: "POST" })
   });
 
 
+
+const publicationIdSchema = z.object({ id: z.string().uuid() });
+
+async function assertPublicationOwner(
+  supabase: ReturnType<typeof (undefined as unknown as { supabase: never })["supabase"]> extends never
+    ? any
+    : any,
+  publicationId: string,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("publications")
+    .select("id, author_id")
+    .eq("id", publicationId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Publicação não encontrada");
+  if (data.author_id !== userId) throw new Error("Sem permissão");
+}
+
+export const updatePublicationCaption = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    publicationIdSchema
+      .extend({ caption: z.string().max(2000).nullable() })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ caption: data.caption })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setPublicationCommentsDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    publicationIdSchema.extend({ disabled: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ comments_disabled: data.disabled })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, disabled: data.disabled };
+  });
+
+export const setPublicationArchived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    publicationIdSchema.extend({ archived: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ archived_at: data.archived ? new Date().toISOString() : null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, archived: data.archived };
+  });
+
+export const deletePublication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => publicationIdSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+
+    const [{ data: mediaRows }, { data: pubRow }] = await Promise.all([
+      context.supabase
+        .from("publication_media")
+        .select("storage_path")
+        .eq("publication_id", data.id),
+      context.supabase
+        .from("publications")
+        .select("audio_storage_path, preview_storage_path")
+        .eq("id", data.id)
+        .maybeSingle(),
+    ]);
+
+    const paths = [
+      ...(mediaRows ?? []).map((m) => m.storage_path).filter(Boolean),
+      pubRow?.audio_storage_path,
+      pubRow?.preview_storage_path,
+    ].filter((p): p is string => typeof p === "string" && p.length > 0);
+
+    if (paths.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.storage.from("publications").remove(paths);
+    }
+
+    const { error } = await context.supabase
+      .from("publications")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
