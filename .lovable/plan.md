@@ -1,15 +1,39 @@
-## Objetivo
-Substituir os valores fixos "212 Postagens" e "411 Mídias" nos tabs do perfil por contagens reais do banco.
+## Problema
 
-## Mudanças em `src/routes/_authenticated/perfil.$username.tsx`
+`profiles.price_monthly` é **numeric em reais** (ex.: `29.00` = R$ 29,00), mas o modal de assinatura e o server function de cobrança tratam esse valor como **centavos**. Resultado: quando o criador cadastra R$ 29, o modal mostra R$ 0,29 e a cobrança na Asaas também sai como R$ 0,29.
 
-1. No `beforeLoad`, após carregar o `profile`, buscar as contagens em paralelo:
-   - `postsCount`: `supabase.from("publications").select("id", { count: "exact", head: true }).eq("author_id", profile.user_id)`
-   - `mediaCount`: `supabase.from("publication_media").select("id, publications!inner(author_id)", { count: "exact", head: true }).eq("publications.author_id", profile.user_id)`
-   - Retornar `postsCount` e `mediaCount` (default 0) no contexto da rota.
+A página do perfil já trata o valor corretamente como reais, por isso mostra R$ 29 no card lateral e R$ 0,29 no modal.
 
-2. No componente `PerfilPage`, ler `postsCount` e `mediaCount` do contexto e usar nos `TabsTrigger`:
-   - `{postsCount} Postagens`
-   - `{mediaCount} Mídias`
+## Correção
 
-Sem outras alterações (mocks de posts/mídias permanecem — não foi pedido).
+Converter `price_monthly` (reais) para centavos multiplicando por 100 nos dois lugares que produzem `amountCents`.
+
+### 1. `src/components/payments/SubscribeDialog.tsx`
+No cálculo de `totals`, multiplicar `monthly` por 100 ao gerar `cents`:
+
+```ts
+monthly:   { months: 1, cents: Math.round(monthly * 100), discount: 0 },
+quarterly: { months: 3, cents: Math.round(monthly * 100 * 3 * (1 - discountQ / 100)), discount: discountQ },
+semiannual:{ months: 6, cents: Math.round(monthly * 100 * 6 * (1 - discountS / 100)), discount: discountS },
+```
+
+Nenhuma outra mudança no componente — o resto do fluxo já usa `t.cents / 100` para exibir e envia apenas `{ creatorId, plan, method }` para o servidor.
+
+### 2. `src/lib/payments.functions.ts` — `createSubscriptionPayment`
+Trocar:
+```ts
+const gross = creator.price_monthly * months;
+const amountCents = Math.round(gross * (1 - (discount ?? 0) / 100));
+```
+por:
+```ts
+const grossCents = Number(creator.price_monthly) * 100 * months;
+const amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
+```
+
+Isso garante que Asaas seja chamada com o valor correto em centavos e que `subscriptions.price_cents_paid` também fique correto.
+
+## Fora de escopo
+
+- Não alterar o schema (`price_monthly` permanece `numeric` em reais).
+- Não mexer em outros checkouts (tips, unlocks, video calls) — o problema é específico da assinatura.

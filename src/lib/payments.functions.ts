@@ -391,14 +391,15 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     if (!creator.asaas_wallet_id) throw new Error("criador ainda não configurou recebimento");
 
     const months = PLAN_MONTHS[data.plan];
-    const gross = creator.price_monthly * months;
+    const grossCents = Number(creator.price_monthly) * 100 * months;
     const discount =
       data.plan === "quarterly"
         ? creator.discount_quarterly
         : data.plan === "semiannual"
           ? creator.discount_semiannual
           : 0;
-    const amountCents = Math.round(gross * (1 - (discount ?? 0) / 100));
+    const amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
+
 
     const customerId = await ensureCustomerId(supabase, userId);
     const periodEnd = new Date(Date.now() + months * 30 * 86400_000).toISOString();
