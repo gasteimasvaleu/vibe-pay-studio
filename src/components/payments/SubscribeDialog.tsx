@@ -38,6 +38,8 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const queryClient = useQueryClient();
 
   const priceQuery = useQuery({
     queryKey: ["creator-price", creatorId],
