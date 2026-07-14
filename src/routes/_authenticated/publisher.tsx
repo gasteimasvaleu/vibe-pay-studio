@@ -1423,51 +1423,35 @@ function StepCompose({
 
       <Separator />
 
-      <div className="grid gap-1">
+      <div className="grid gap-2">
         <ToggleRow
           icon={<Lock className="h-5 w-5" />}
           label="Publicação paga"
-          hint={
-            toggles.paid.enabled && toggles.paid.priceCents != null
-              ? brl.format(toggles.paid.priceCents / 100)
-              : undefined
-          }
           checked={toggles.paid.enabled}
           onChange={onPaidChange}
         />
         {toggles.paid.enabled && (
-          <div className="flex items-center gap-3 pb-3 pl-8">
-            <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted grid place-items-center shrink-0">
-              {preview?.status === "ready" ? (
-                preview.type === "video" ? (
-                  <video src={preview.previewUrl} className="w-full h-full object-cover" />
-                ) : (
-                  <img src={preview.previewUrl} alt="Prévia" className="w-full h-full object-cover" />
-                )
-              ) : preview?.status === "uploading" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              ) : (
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {preview?.status === "ready"
-                  ? "Prévia adicionada"
-                  : preview?.status === "uploading"
-                    ? `Enviando prévia... ${preview.uploadProgress}%`
-                    : preview?.status === "error"
-                      ? preview.error ?? "Falha ao enviar prévia"
-                      : "Nenhuma prévia definida"}
-              </p>
-              <button
-                type="button"
-                onClick={onEditPreview}
-                className="text-xs font-semibold text-primary hover:underline mt-0.5"
-              >
-                {preview ? "Editar prévia" : "Adicionar prévia"}
-              </button>
-            </div>
+          <div className="grid grid-cols-2 gap-3 pb-2">
+            <button
+              type="button"
+              onClick={onEditPrice}
+              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+              {toggles.paid.priceCents != null
+                ? brl.format(toggles.paid.priceCents / 100)
+                : "Definir preço"}
+            </button>
+            <button
+              type="button"
+              onClick={onEditPreview}
+              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+              {preview?.status === "uploading"
+                ? `Enviando ${preview.uploadProgress}%`
+                : "Editar prévia"}
+            </button>
           </div>
         )}
         <ToggleRow
