@@ -8,7 +8,7 @@ export function RouteTransitionOverlay() {
 
   useEffect(() => {
     if (status === "pending") {
-      const t = setTimeout(() => setVisible(true), 150);
+      const t = setTimeout(() => setVisible(true), 400);
       return () => clearTimeout(t);
     }
     setVisible(false);
