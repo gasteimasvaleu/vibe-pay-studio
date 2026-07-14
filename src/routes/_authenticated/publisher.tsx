@@ -881,6 +881,39 @@ function PublisherPage() {
         </SheetContent>
       </Sheet>
 
+      <Sheet open={previewSheetOpen} onOpenChange={setPreviewSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+        >
+          <SheetHeader>
+            <SheetTitle>Adicionar prévia</SheetTitle>
+          </SheetHeader>
+          <p className="text-sm text-muted-foreground pt-1">
+            Para publicar <strong className="text-foreground">conteúdo pago</strong>, é necessário definir uma <strong className="text-foreground">mídia de prévia</strong>.
+          </p>
+          <div className="grid gap-3 py-4">
+            <PickerOption
+              icon={<ImageIcon className="h-5 w-5" />}
+              label="Biblioteca do dispositivo"
+              onClick={triggerPreviewLibrary}
+            />
+            <PickerOption
+              icon={<FolderPlus className="h-5 w-5" />}
+              label="Acervo no Monetisexy"
+              onClick={() => toast.info("Em breve")}
+            />
+            <PickerOption
+              icon={<Camera className="h-5 w-5" />}
+              label="Câmera"
+              onClick={triggerPreviewCamera}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+
+
       <PriceDialog
         open={paidOpen}
         onOpenChange={(v) => {
