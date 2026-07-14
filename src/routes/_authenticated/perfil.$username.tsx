@@ -207,17 +207,18 @@ function PerfilPage() {
           )}
         </div>
 
-        {/* CTA */}
-        <div>
-          {!isOwner && subscriptionPrice && (
-            <button
-              onClick={() => setSubscribeOpen(true)}
-              className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-bold shadow-lg shadow-purple-900/40 hover:brightness-110 transition"
-            >
-              Assinar por {subscriptionPrice}/mês
-            </button>
-          )}
-        </div>
+        {/* Assinaturas */}
+        {!isOwner && monthlyPrice > 0 && (
+          <SubscriptionPlansCard
+            monthly={monthlyPrice}
+            quarterly={quarterlyPrice}
+            semiannual={semiannualPrice}
+            hasPromotions={hasPromotions}
+            onSelect={() => setSubscribeOpen(true)}
+            format={(v) => brl.format(v)}
+          />
+        )}
+
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="w-full">
