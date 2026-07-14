@@ -230,7 +230,7 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
     Route.useRouteContext();
   const router = useRouter();
   const navigate = useNavigate();
@@ -240,15 +240,19 @@ function PerfilPage() {
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [isSubscribed, setIsSubscribed] = useState(initialSubscribed);
   const [followBusy, setFollowBusy] = useState(false);
+  const [subscribeBusy, setSubscribeBusy] = useState(false);
 
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
-  const followFreeFn = useServerFn(followCreatorFree);
+  const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
+  const subscribeFreeFn = useServerFn(subscribeFree);
+
 
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
