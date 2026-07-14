@@ -139,18 +139,44 @@ export const listCreatorWithdrawals = createServerFn({ method: "GET" })
  */
 export const listSubscriberTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { limit?: number } | undefined) => ({
-    limit: Math.min(Math.max(data?.limit ?? 10, 1), 50),
-  }))
+  .inputValidator(
+    (
+      data:
+        | {
+            limit?: number;
+            kinds?: string[];
+            paymentMethods?: string[];
+            statuses?: string[];
+            from?: string;
+            to?: string;
+          }
+        | undefined,
+    ) => ({
+      limit: Math.min(Math.max(data?.limit ?? 50, 1), 200),
+      kinds: data?.kinds?.filter(Boolean) ?? [],
+      paymentMethods: data?.paymentMethods?.filter(Boolean) ?? [],
+      statuses: data?.statuses?.filter(Boolean) ?? [],
+      from: data?.from ?? null,
+      to: data?.to ?? null,
+    }),
+  )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const { data: rows, error } = await supabase
+    let q = supabase
       .from("transactions")
       .select("id, kind, status, amount_cents_gross, payment_method, provider, created_at")
       .eq("buyer_id", userId)
       .order("created_at", { ascending: false })
       .limit(data.limit);
 
+    if (data.kinds.length > 0) q = q.in("kind", data.kinds as any);
+    if (data.paymentMethods.length > 0)
+      q = q.in("payment_method", data.paymentMethods as any);
+    if (data.statuses.length > 0) q = q.in("status", data.statuses as any);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
