@@ -418,6 +418,10 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
     const periodEnd = new Date(Date.now() + months * 30 * 86400_000).toISOString();
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: sub, error: sErr } = await supabase
       .from("subscriptions")
       .insert({
@@ -426,14 +430,13 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
         plan: data.plan,
         price_cents_paid: amountCents,
         current_period_end: periodEnd,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (sErr) throw new Error(sErr.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -441,6 +444,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       description: `Assinatura ${data.plan}`,
       externalReference: `subscription:${sub.id}`,
       creatorWalletId: creator.asaas_wallet_id,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
