@@ -200,6 +200,18 @@ function FeedPage() {
         }}
       />
 
+      <CpfPromptDialog
+        open={cpfGuard.needsCpf}
+        onOpenChange={cpfGuard.close}
+        onSaved={() => {
+          if (pending) {
+            void confirmPayment("PIX" as any);
+          }
+          void cpfGuard.retry();
+        }}
+      />
+
     </div>
   );
 }
+
