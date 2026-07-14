@@ -343,6 +343,8 @@ function BancoPage() {
             <CadastrarBancoForm
               onClose={() => setCadastroOpen(false)}
               kycVerified={kycVerified}
+              walletId={status?.walletId ?? ""}
+              hasApiKey={status?.hasApiKey ?? false}
               initial={payoutAccount ? mapPayout(payoutAccount) : null}
             />
 
