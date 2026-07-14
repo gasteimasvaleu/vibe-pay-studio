@@ -1,36 +1,50 @@
-## Ajustes na UI do fluxo de publicação paga
+## Ligar a tela "Meu Banco" ao Asaas (destravar o toast "criador não configurou recebimento")
 
-Todos os ajustes ficam em `src/routes/_authenticated/publisher.tsx`. Sem mudanças de dados ou lógica de upload.
+Hoje `/banco` → sheet `CadastrarBancoForm` só mostra `toast("Em breve…")`. O toast do pagamento aparece porque `profiles.asaas_wallet_id` é `null`. Nenhuma UI chama `createCreatorSubaccount`.
 
-### 1. Mostrar a prévia junto às mídias, com selo e borda roxa
+Esta é também a resposta à pergunta original: **é aqui que o criador deveria configurar o recebimento**, então vamos fazer essa tela realmente configurar.
 
-- Renderizar a prévia como um card extra **no início da grade de mídias** (mesmo tamanho/aspecto dos thumbs existentes), antes do `media.map(...)` em `StepCompose`.
-- Estilo do card da prévia:
-  - Borda destacada: `ring-2 ring-primary` + `border-2 border-primary` no wrapper `rounded-2xl`.
-  - Selo no canto inferior-esquerdo: pílula `bg-primary text-primary-foreground` com ícone `ImageIcon` + texto "Prévia".
-  - Estados: `uploading` (spinner + progresso), `ready` (thumb da imagem/vídeo), `error` (mensagem).
-  - Clique no card abre o `PreviewPickerSheet` (mesmo `onEditPreview`).
-- O card só aparece quando `toggles.paid.enabled` for true. Se ainda não houver prévia, mostra um placeholder clicável com o mesmo selo e borda tracejada roxa.
+### 1. Migração: tabela `payout_accounts`
 
-### 2. Linha "Publicação paga" no formato do screenshot 2
+Guardar a conta bancária/PIX cadastrada (Asaas usa essa info para transferências de saque, mas hoje não temos onde salvar).
 
-Substituir o bloco atual (thumb 64x64 + texto "Prévia adicionada" + link "Editar prévia" abaixo do toggle) por:
+Colunas de domínio: `user_id` (FK auth.users, unique), `bank_name`, `account_type` ('corrente'|'poupanca'), `agency`, `account_number`, `pix_key_type` ('cpf'|'cnpj'|'email'|'telefone'|'aleatoria'), `pix_key`.
 
-- Mantém a `ToggleRow` de "Publicação paga" no topo (com o switch).
-- Quando `toggles.paid.enabled`, renderiza **abaixo** uma linha com **dois botões lado a lado** (`grid grid-cols-2 gap-3`), estilo pílula branca com sombra sutil:
-  - Botão esquerdo: ícone lápis + valor formatado (ex.: `R$ 14,90`). Clique abre o `PriceDialog`.
-  - Botão direito: ícone lápis + "Editar prévia". Clique abre o `PreviewPickerSheet`.
-- Remover o thumbnail/texto de status daqui (a prévia agora vive na grade de mídias no topo).
+RLS: dono lê/insere/atualiza; `service_role` acessa tudo (para transferências server-side). GRANTs para `authenticated` e `service_role`.
 
-### 3. Trocar laranja por roxo (token `primary`) no fluxo do publisher
+### 2. Server function `saveCreatorPayoutSetup` (`src/lib/payments.functions.ts`)
 
-Substituir as classes hardcoded `orange-*` / `pink-*` restantes por tokens semânticos:
-- `text-orange-500` → `text-primary` (linhas 1052, 1503).
-- Abas ativas (linhas 1651, 1657): `data-[state=active]:border-orange-500 data-[state=active]:text-orange-500` → `...border-primary ...text-primary`.
-- Input do preço (1678): `border-orange-500` → `border-primary`.
-- Botão gradiente (1685): `bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400` → `bg-primary hover:bg-primary/90` (mantendo classe pill/altura).
+Uma única chamada faz tudo, protegida por `requireSupabaseAuth`:
 
-### Fora do escopo
+1. Valida com Zod: dados de subconta Asaas (`fullName`, `cpfCnpj`, `birthDate`, `mobilePhone`, `postalCode`, `address`, `addressNumber`, `province`) + dados bancários/PIX do form.
+2. Confere `profiles.kyc_status === 'verified'` — se não, erro claro "Verifique sua identidade antes de configurar recebimento" com o passo do onboarding.
+3. Se `asaas_wallet_id` já existe, pula a criação; senão chama `asaas.createSubaccount(...)` e grava `asaas_account_id`/`asaas_wallet_id`/`asaas_account_status` em `profiles` (reaproveita a lógica que já existe em `createCreatorSubaccount`).
+4. Faz `upsert` em `payout_accounts` (por `user_id`).
+5. Retorna `{ walletId, accountStatus, payoutAccount }`.
 
-- Nenhuma alteração no schema, migrations, `publications.functions.ts`, ou lógica de upload/estado da prévia.
-- Nenhuma alteração nas páginas de feed/detalhe.
+`createCreatorSubaccount` fica como está (compat), a UI passa a usar a nova.
+
+### 3. UI — `CadastrarBancoForm.tsx`
+
+Adicionar seção "Dados do titular (obrigatórios pelo Asaas)" antes da parte bancária, com: nome completo, CPF/CNPJ, data de nascimento, telefone, CEP, endereço, número, bairro. Máscaras simples (CPF, telefone, CEP). Pré-preenche o que já der (username, email) e mostra alerta caso `kyc_status !== 'verified'` com link para `/creator/onboarding/documentos`.
+
+`handleSubmit` passa a chamar `saveCreatorPayoutSetup` via `useServerFn`, exibe erros do servidor (`toast.error(e.message)`), e no sucesso: `toast.success("Recebimento configurado")` + `onClose()` + invalida a query do profile.
+
+### 4. UI — `/banco` (`banco.tsx`)
+
+- Carregar `profiles` (`kyc_status`, `asaas_wallet_id`, `asaas_account_status`) e a `payout_accounts` do usuário via `useQuery` no componente.
+- Card de status no topo:
+  - KYC não verificado → alerta amarelo "Finalize a verificação de identidade" + botão para o onboarding.
+  - KYC ok e sem `asaas_wallet_id` → alerta roxo "Configure seu recebimento para começar a receber" + botão que abre o sheet.
+  - Wallet criada → chip verde "Recebimento ativo" com últimos 4 dígitos da conta.
+- Se `payout_accounts` já existe, o card "Adicionar novo banco" vira card do banco atual com opção "Editar" (reabre o mesmo sheet pré-preenchido). Escopo: 1 conta por usuário nesta iteração.
+
+### 5. Fora do escopo
+
+- Fluxo de saque em si (`asaas.transfer`), extrato real, múltiplas contas bancárias por usuário, edição da subconta Asaas depois de criada, tela dedicada em Configurações. Foco só em destravar o `asaas_wallet_id` a partir da tela que já existe.
+
+### Notas técnicas
+
+- `asaas.createSubaccount` já existe em `src/lib/asaas.server.ts` (usado por `createCreatorSubaccount`).
+- Reutilizar `loadAsaas()` e o mapeamento de `accountStatus` de `payments.functions.ts:185-188`.
+- Sem alteração no fluxo de pagamento/webhook: assim que `asaas_wallet_id` for gravado, `getCreatorWallet` deixa de lançar erro e `createUnlockPayment` funciona.
