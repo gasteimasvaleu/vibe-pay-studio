@@ -137,15 +137,23 @@ const MOCK_POSTS: ProfilePost[] = [
 ];
 
 function PerfilPage() {
-  const { viewerId, profile, postsCount, mediaCount } = Route.useRouteContext();
+  const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+    Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
 
-  // Dados mock — plugar em tabelas reais em pedido futuro
-  const stats = { fotos: 292, videos: 119, locked: 32, likes: "7.4K" };
+  const formatCompact = (n: number) =>
+    new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  const stats = {
+    fotos: photosCount,
+    videos: videosCount,
+    locked: lockedCount,
+    likes: formatCompact(likesCount),
+  };
+
   const displayName = profile.username
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
