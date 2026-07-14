@@ -684,17 +684,40 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
       if (!email) throw new Error("e-mail do usuário indisponível");
 
       const asaas = await loadAsaas();
-      const sub = await asaas.createSubaccount({
-        name: data.fullName.trim(),
-        email,
-        cpfCnpj: data.cpfCnpj.replace(/\D/g, ""),
-        birthDate: data.birthDate,
-        mobilePhone: data.mobilePhone.replace(/\D/g, ""),
-        address: data.address,
-        addressNumber: data.addressNumber,
-        province: data.province,
-        postalCode: data.postalCode.replace(/\D/g, ""),
-      });
+      const cleanCpf = data.cpfCnpj.replace(/\D/g, "");
+
+      // Reuse existing Asaas subaccount if this email/cpf was already registered
+      let sub = await asaas.findSubaccount({ email, cpfCnpj: cleanCpf });
+
+      if (!sub) {
+        try {
+          sub = await asaas.createSubaccount({
+            name: data.fullName.trim(),
+            email,
+            cpfCnpj: cleanCpf,
+            birthDate: data.birthDate,
+            mobilePhone: data.mobilePhone.replace(/\D/g, ""),
+            address: data.address,
+            addressNumber: data.addressNumber,
+            province: data.province,
+            postalCode: data.postalCode.replace(/\D/g, ""),
+          });
+        } catch (err: any) {
+          const msg = String(err?.message ?? "");
+          if (/já está em uso|already in use/i.test(msg)) {
+            // Race or previous partial create — try lookup one more time
+            sub = await asaas.findSubaccount({ email, cpfCnpj: cleanCpf });
+            if (!sub) {
+              throw new Error(
+                "Já existe uma conta Asaas com esse e-mail ou CPF/CNPJ que não pertence a este perfil. Fale com o suporte.",
+              );
+            }
+          } else {
+            throw err;
+          }
+        }
+      }
+
       accountStatus =
         typeof sub.accountStatus === "string"
           ? sub.accountStatus
