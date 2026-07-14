@@ -209,18 +209,45 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, pub.author_id);
     const customerId = await ensureCustomerId(supabase, userId);
 
-    const { data: unlock, error: uErr } = await supabase
+    const { data: existing } = await supabase
       .from("publication_unlocks")
-      .insert({
-        publication_id: pub.id,
-        buyer_id: userId,
-        amount_cents: pub.price_cents,
-        provider: "asaas",
-        status: "pending",
-      })
-      .select("id")
-      .single();
-    if (uErr) throw new Error(uErr.message);
+      .select("id, status")
+      .eq("publication_id", pub.id)
+      .eq("buyer_id", userId)
+      .maybeSingle();
+
+    let unlockId: string;
+    if (existing) {
+      if (existing.status === "paid") {
+        throw new Error("publicação já desbloqueada");
+      }
+      const { error: updErr } = await supabase
+        .from("publication_unlocks")
+        .update({
+          amount_cents: pub.price_cents,
+          provider: "asaas",
+          status: "pending",
+          provider_ref: null,
+        })
+        .eq("id", existing.id);
+      if (updErr) throw new Error(updErr.message);
+      unlockId = existing.id;
+    } else {
+      const { data: inserted, error: uErr } = await supabase
+        .from("publication_unlocks")
+        .insert({
+          publication_id: pub.id,
+          buyer_id: userId,
+          amount_cents: pub.price_cents,
+          provider: "asaas",
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (uErr) throw new Error(uErr.message);
+      unlockId = inserted.id;
+    }
+
 
     const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
