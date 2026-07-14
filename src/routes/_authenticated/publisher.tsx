@@ -396,7 +396,104 @@ function PublisherPage() {
     if (item) URL.revokeObjectURL(item.previewUrl);
   };
 
-  const stopMediaRecorder = () => {
+  const clearPreview = async () => {
+    const prev = preview;
+    setPreview(null);
+    if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+    if (prev?.storagePath) {
+      try {
+        await deleteDraft({ data: { storagePath: prev.storagePath } });
+      } catch {
+        // silencioso
+      }
+    }
+  };
+
+  const openPreviewSheet = () => setPreviewSheetOpen(true);
+
+  const triggerPreviewLibrary = () => {
+    flushSync(() => setPreviewSheetOpen(false));
+    previewInputRef.current?.click();
+  };
+  const triggerPreviewCamera = () => {
+    flushSync(() => setPreviewSheetOpen(false));
+    previewCameraInputRef.current?.click();
+  };
+
+  const onPreviewFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes.data.session;
+    const userId = session?.user.id;
+    const token = session?.access_token;
+    if (!userId || !token) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return;
+    }
+    const isVideo = file.type.startsWith("video");
+    const type: "image" | "video" = isVideo ? "video" : "image";
+    const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (file.size > limit) {
+      toast.error(
+        `${file.name} excede o limite de ${isVideo ? "200MB" : "15MB"}`,
+      );
+      return;
+    }
+
+    // Cleanup previous preview file
+    const previous = preview;
+    if (previous?.previewUrl) URL.revokeObjectURL(previous.previewUrl);
+    if (previous?.storagePath) {
+      void deleteDraft({ data: { storagePath: previous.storagePath } }).catch(
+        () => {},
+      );
+    }
+
+    const id = crypto.randomUUID();
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+    const path = `posts/${userId}/drafts/preview-${id}.${ext}`;
+    const previewUrl = URL.createObjectURL(file);
+    setPreview({
+      status: "uploading",
+      type,
+      previewUrl,
+      uploadProgress: 0,
+    });
+    try {
+      await uploadWithProgress({
+        file,
+        path,
+        token,
+        onProgress: (progress) =>
+          setPreview((p) => (p ? { ...p, uploadProgress: progress } : p)),
+      });
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+      if (signErr || !signed) {
+        throw new Error(signErr?.message ?? "Falha ao gerar URL da prévia");
+      }
+      setPreview({
+        status: "ready",
+        type,
+        previewUrl,
+        storagePath: path,
+        publicUrl: signed.signedUrl,
+        uploadProgress: 100,
+      });
+    } catch (err) {
+      URL.revokeObjectURL(previewUrl);
+      setPreview({
+        status: "error",
+        type,
+        previewUrl,
+        uploadProgress: 0,
+        error: err instanceof Error ? err.message : "Falha no upload",
+      });
+      toast.error("Falha ao enviar prévia");
+    }
+  };
+
     if (audioTimerRef.current !== null) {
       window.clearInterval(audioTimerRef.current);
       audioTimerRef.current = null;
