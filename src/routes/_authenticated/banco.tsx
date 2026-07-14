@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
   Banknote,
+  CheckCircle2,
   Clock,
   Info,
+  Pencil,
   Plus,
+  ShieldAlert,
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +28,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
+import { getCreatorPayoutStatus } from "@/lib/payments.functions";
 
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
@@ -38,6 +44,16 @@ function BancoPage() {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
+  const fetchStatus = useServerFn(getCreatorPayoutStatus);
+  const statusQuery = useQuery({
+    queryKey: ["payoutStatus"],
+    queryFn: () => fetchStatus(),
+  });
+  const status = statusQuery.data;
+  const kycVerified = status?.kycStatus === "verified";
+  const walletActive = !!status?.walletId;
+  const payoutAccount = status?.payoutAccount ?? null;
+
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
