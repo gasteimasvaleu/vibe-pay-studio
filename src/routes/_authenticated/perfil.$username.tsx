@@ -46,6 +46,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     if (!profile) throw notFound();
 
+    const [{ count: postsCount }, { count: mediaCount }] = await Promise.all([
+      supabase
+        .from("publications")
+        .select("id", { count: "exact", head: true })
+        .eq("author_id", profile.user_id),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id),
+    ]);
+
     return {
       viewerId: userData.user.id,
       profile: {
@@ -56,6 +67,8 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
+      postsCount: postsCount ?? 0,
+      mediaCount: mediaCount ?? 0,
     };
   },
 
@@ -93,7 +106,7 @@ const MOCK_POSTS: ProfilePost[] = [
 ];
 
 function PerfilPage() {
-  const { viewerId, profile } = Route.useRouteContext();
+  const { viewerId, profile, postsCount, mediaCount } = Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
@@ -228,14 +241,14 @@ function PerfilPage() {
               className="flex-1 h-full gap-2 rounded-none bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
               <Smartphone className="h-4 w-4" />
-              212 Postagens
+              {postsCount} Postagens
             </TabsTrigger>
             <TabsTrigger
               value="midias"
               className="flex-1 h-full gap-2 rounded-none border-l border-border bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
               <Clapperboard className="h-4 w-4" />
-              411 Mídias
+              {mediaCount} Mídias
             </TabsTrigger>
           </TabsList>
 
