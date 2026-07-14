@@ -560,6 +560,9 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(call.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -567,11 +570,12 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
       description: `Videochamada ${call.duration_minutes}min`,
       externalReference: `video_call:${call.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
     await supabase
       .from("video_calls")
-      .update({ provider: "asaas", provider_ref: payment.id })
+      .update({ provider: providerTag, provider_ref: payment.id })
       .eq("id", call.id);
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
