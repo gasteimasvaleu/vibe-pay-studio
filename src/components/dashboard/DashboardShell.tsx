@@ -6,10 +6,12 @@ import { ProfileHeaderCard } from "./ProfileHeaderCard";
 export function DashboardShell({
   username,
   isCreator,
+  showProfileLink,
   children,
 }: {
   username: string;
   isCreator: boolean;
+  showProfileLink?: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -41,7 +43,11 @@ export function DashboardShell({
       </header>
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
-        <ProfileHeaderCard username={username} isCreator={isCreator} />
+        <ProfileHeaderCard
+          username={username}
+          isCreator={isCreator}
+          showProfileLink={showProfileLink}
+        />
         {children}
       </main>
     </div>

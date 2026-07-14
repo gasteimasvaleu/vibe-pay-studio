@@ -41,7 +41,11 @@ export function SubscriberDashboard({
     : "Monetize seu conteúdo e receba assinantes";
 
   return (
-    <DashboardShell username={username} isCreator={false}>
+    <DashboardShell
+      username={username}
+      isCreator={false}
+      showProfileLink={creatorOnboardingStarted}
+    >
       <section className="space-y-4">
         <h3 className="text-lg font-bold tracking-tight text-white/90">
           Área do Assinante
