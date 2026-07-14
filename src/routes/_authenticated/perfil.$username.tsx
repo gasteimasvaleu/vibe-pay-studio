@@ -597,6 +597,35 @@ function PerfilPage() {
             <SocialButton label="TikTok"><Music2 className="h-4 w-4" /></SocialButton>
           </div>
 
+          {!isOwner && (
+            <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setTipPubId(undefined);
+                  setTipOpen(true);
+                }}
+                className="h-14 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+              >
+                <span className="h-8 w-8 rounded-full border border-border grid place-items-center">
+                  <DollarSign className="h-4 w-4" strokeWidth={1.75} />
+                </span>
+                Mimo
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/chat" })}
+                className="h-14 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+              >
+                <span className="h-8 w-8 rounded-full border border-border grid place-items-center">
+                  <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+                </span>
+                Chat
+              </button>
+            </div>
+          )}
+
+
           {isOwner && (
             <div className="pr-4 md:pr-6">
               <Link
