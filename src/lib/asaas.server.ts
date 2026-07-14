@@ -110,6 +110,16 @@ export async function createCustomer(input: {
   });
 }
 
+export async function updateCustomer(
+  id: string,
+  patch: { name?: string; email?: string | null; cpfCnpj?: string | null; mobilePhone?: string | null },
+): Promise<AsaasCustomer> {
+  return asaasFetch<AsaasCustomer>(`/customers/${id}`, {
+    method: "POST",
+    body: JSON.stringify(patch),
+  });
+}
+
 // ---------- Subaccounts (criadores) ----------
 
 export type AsaasSubaccount = {

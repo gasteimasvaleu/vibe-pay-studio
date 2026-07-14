@@ -368,6 +368,7 @@ export type Database = {
           asaas_api_key_encrypted: string | null
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
+          cpf: string | null
           created_at: string
           discount_quarterly: number
           discount_semiannual: number
@@ -395,6 +396,7 @@ export type Database = {
           asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
@@ -422,6 +424,7 @@ export type Database = {
           asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number

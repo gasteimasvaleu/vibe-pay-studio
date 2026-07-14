@@ -40,18 +40,26 @@ async function ensureCustomerId(
 ): Promise<string> {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("asaas_customer_id, username")
+    .select("asaas_customer_id, username, cpf")
     .eq("user_id", userId)
     .single();
   if (error || !profile) throw new Error("perfil não encontrado");
-  if (profile.asaas_customer_id) return profile.asaas_customer_id as string;
+
+  const cpf = (profile.cpf ?? "").replace(/\D/g, "");
+  if (!cpf) throw new Error("cpf_required");
+
+  const asaas = await loadAsaas();
+
+  if (profile.asaas_customer_id) {
+    return profile.asaas_customer_id as string;
+  }
 
   const { data: userRes } = await supabase.auth.getUser();
   const email = userRes?.user?.email ?? null;
-  const asaas = await loadAsaas();
   const customer = await asaas.createCustomer({
     name: profile.username,
     email,
+    cpfCnpj: cpf,
     externalReference: userId,
   });
   await supabase
@@ -60,6 +68,43 @@ async function ensureCustomerId(
     .eq("user_id", userId);
   return customer.id;
 }
+
+export const saveBuyerCpf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { cpf: string }) => {
+    const clean = (input?.cpf ?? "").replace(/\D/g, "");
+    if (clean.length !== 11) {
+      throw new Error("CPF inválido. Informe 11 dígitos.");
+    }
+    return { cpf: clean };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("asaas_customer_id, username")
+      .eq("user_id", userId)
+      .single();
+
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .update({ cpf: data.cpf })
+      .eq("user_id", userId);
+    if (upErr) throw new Error(upErr.message);
+
+    if (profile?.asaas_customer_id) {
+      try {
+        const asaas = await loadAsaas();
+        await asaas.updateCustomer(profile.asaas_customer_id, { cpfCnpj: data.cpf });
+      } catch (e) {
+        // não bloqueia: próxima cobrança usará o cliente atualizado ou recriado
+        console.warn("[saveBuyerCpf] updateCustomer falhou", e);
+      }
+    }
+
+    return { ok: true };
+  });
+
 
 async function getCreatorWallet(
   supabase: any,

@@ -12,6 +12,8 @@ import { PublicationCard } from "@/components/feed/PublicationCard";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
+import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
+
 
 
 export const Route = createFileRoute("/_authenticated/feed")({
@@ -47,6 +49,7 @@ function FeedPage() {
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+  const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
 
 
   const feedQuery = useQuery({
@@ -77,11 +80,17 @@ function FeedPage() {
       });
       setModalOpen(true);
     } catch (e: any) {
+      if (e?.message === "cpf_required") {
+        setCpfPromptFor(method);
+        return;
+      }
       toast.error(e?.message ?? "Erro ao gerar pagamento");
     } finally {
       setUnlocking(null);
     }
   };
+
+
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
@@ -194,6 +203,18 @@ function FeedPage() {
         }}
       />
 
+      <CpfPromptDialog
+        open={!!cpfPromptFor}
+        onOpenChange={(v) => !v && setCpfPromptFor(null)}
+        onSaved={() => {
+          const method = cpfPromptFor;
+          setCpfPromptFor(null);
+          if (method) void confirmPayment(method);
+        }}
+      />
+
+
     </div>
   );
 }
+
