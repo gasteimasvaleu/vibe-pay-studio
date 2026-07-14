@@ -2,8 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorDashboard } from "@/components/dashboard/CreatorDashboard";
 import { SubscriberDashboard } from "@/components/dashboard/SubscriberDashboard";
-
-type AccountType = "subscriber" | "creator";
+import { isCreatorLike, type AccountType } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -28,7 +27,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const username =
       profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
 
-    // Creator meio-cadastrado: manda pro próximo passo do onboarding.
+    // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
+    // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
     if (accountType === "creator" && !profile?.onboarding_completed_at) {
       const hasPrice = profile?.price_monthly != null;
       const kyc = profile?.kyc_status ?? "not_started";
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       }
     }
 
-    // Próximo passo do onboarding para assinantes que já iniciaram.
+    // Próximo passo do onboarding para assinantes puros que já iniciaram.
     const hasSocials =
       !!profile?.instagram_handle ||
       !!profile?.tiktok_handle ||
@@ -86,8 +86,13 @@ function DashboardPage() {
   const { username, accountType, creatorNextStep, creatorOnboardingStarted } =
     Route.useRouteContext();
 
-  if (accountType === "creator") {
-    return <CreatorDashboard username={username} />;
+  if (isCreatorLike(accountType)) {
+    return (
+      <CreatorDashboard
+        username={username}
+        variant={accountType === "free_creator" ? "free_creator" : "creator"}
+      />
+    );
   }
 
   return (

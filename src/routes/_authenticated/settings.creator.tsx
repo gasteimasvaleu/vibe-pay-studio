@@ -36,7 +36,8 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
       profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
     const accountType = (profile?.account_type ?? "subscriber") as
       | "subscriber"
-      | "creator";
+      | "creator"
+      | "free_creator";
     return { username, accountType };
   },
   component: SettingsCreatorPage,
@@ -47,7 +48,7 @@ function SettingsCreatorPage() {
   const { username, accountType } = Route.useRouteContext();
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
-  const isSubscriber = accountType !== "creator";
+  const isSubscriber = accountType === "subscriber";
 
   return (
     <div className="min-h-screen bg-background">

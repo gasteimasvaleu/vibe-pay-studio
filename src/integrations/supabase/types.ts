@@ -386,10 +386,14 @@ export type Database = {
           asaas_api_key_encrypted: string | null
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
+          avatar_url: string | null
+          bio: string | null
+          cover_url: string | null
           cpf: string | null
           created_at: string
           discount_quarterly: number
           discount_semiannual: number
+          display_name: string | null
           id: string
           instagram_handle: string | null
           kyc_rejection_reason: string | null
@@ -414,10 +418,14 @@ export type Database = {
           asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
           cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
+          display_name?: string | null
           id?: string
           instagram_handle?: string | null
           kyc_rejection_reason?: string | null
@@ -442,10 +450,14 @@ export type Database = {
           asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
           cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
+          display_name?: string | null
           id?: string
           instagram_handle?: string | null
           kyc_rejection_reason?: string | null

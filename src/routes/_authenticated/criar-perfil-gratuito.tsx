@@ -1,10 +1,12 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ArrowLeft, Camera } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createFreeCreatorProfile } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/_authenticated/criar-perfil-gratuito")({
   head: () => ({
@@ -35,7 +37,9 @@ const HERO_IMAGES = [
 
 function CriarPerfilGratuitoPage() {
   const navigate = useNavigate();
+  const createProfile = useServerFn(createFreeCreatorProfile);
   const [step, setStep] = useState<1 | 2>(1);
+  const [submitting, setSubmitting] = useState(false);
 
   // Step 2 state
   const [displayName, setDisplayName] = useState("");
@@ -47,7 +51,7 @@ function CriarPerfilGratuitoPage() {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
-  const canSubmit = displayName.trim().length > 0 && handleValid;
+  const canSubmit = displayName.trim().length > 0 && handleValid && !submitting;
 
   const initials = (displayName.trim() || "CA")
     .split(/\s+/)
@@ -67,10 +71,33 @@ function CriarPerfilGratuitoPage() {
     setSelectedCover(URL.createObjectURL(file));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    toast.success("Perfil criado!");
-    navigate({ to: "/dashboard" });
+    setSubmitting(true);
+    try {
+      // Só persistimos URLs http(s); previews locais (blob:) ficam pra edição posterior.
+      const coverUrl =
+        selectedCover && /^https?:\/\//i.test(selectedCover) ? selectedCover : null;
+      await createProfile({
+        data: {
+          handle: handle.trim().toLowerCase(),
+          displayName: displayName.trim(),
+          bio: bio.trim() || null,
+          avatarUrl: null,
+          coverUrl,
+        },
+      });
+      toast.success("Perfil criado!");
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao criar perfil";
+      if (msg === "handle_taken") toast.error("Este @ já está em uso.");
+      else if (msg === "already_creator")
+        toast.error("Sua conta já é creator pago.");
+      else toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -224,9 +251,10 @@ function CriarPerfilGratuitoPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full rounded-full bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition"
+              className="w-full rounded-full bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center justify-center gap-2"
             >
-              Criar Conta
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {submitting ? "Criando..." : "Criar Conta"}
             </button>
           )}
         </div>

@@ -23,13 +23,20 @@ import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
 import { EarningsSummary } from "./EarningsSummary";
 
-export function CreatorDashboard({ username }: { username: string }) {
+export function CreatorDashboard({
+  username,
+  variant = "creator",
+}: {
+  username: string;
+  variant?: "creator" | "free_creator";
+}) {
   const [signingOut, setSigningOut] = useState(false);
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
     window.location.href = "/";
   };
+  void variant; // reservado p/ futuras diferenças entre creator pago e free_creator
 
   return (
     <DashboardShell username={username} isCreator>

@@ -258,3 +258,65 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============================================================
+// Perfil Gratuito ("free_creator") — persistência do fluxo
+// /criar-perfil-gratuito
+// ============================================================
+
+const freeCreatorSchema = z.object({
+  handle: z
+    .string()
+    .trim()
+    .min(3)
+    .max(30)
+    .regex(/^[a-z0-9_.]+$/),
+  displayName: z.string().trim().min(1).max(60),
+  bio: z.string().trim().max(500).optional().nullable(),
+  avatarUrl: z.string().url().max(2048).optional().nullable(),
+  coverUrl: z.string().url().max(2048).optional().nullable(),
+});
+
+export const createFreeCreatorProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => freeCreatorSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Bloqueia downgrade: creator pago não pode virar free_creator.
+    const { data: current, error: readErr } = await supabase
+      .from("profiles")
+      .select("account_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (current?.account_type === "creator") {
+      throw new Error("already_creator");
+    }
+
+    // Handle único: rejeita se já em uso por outro usuário.
+    const { data: taken, error: takenErr } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("username", data.handle)
+      .neq("user_id", userId)
+      .maybeSingle();
+    if (takenErr) throw new Error(takenErr.message);
+    if (taken) throw new Error("handle_taken");
+
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .update({
+        username: data.handle,
+        account_type: "free_creator",
+        display_name: data.displayName,
+        bio: data.bio ?? null,
+        avatar_url: data.avatarUrl ?? null,
+        cover_url: data.coverUrl ?? null,
+        onboarding_completed_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+    if (upErr) throw new Error(upErr.message);
+
+    return { ok: true, username: data.handle };
+  });
