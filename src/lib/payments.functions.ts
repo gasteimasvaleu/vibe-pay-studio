@@ -34,6 +34,12 @@ async function loadAsaas() {
   return await import("@/lib/asaas.server");
 }
 
+// provider persistido nas tabelas (subs, tips, unlocks...) para o trigger
+// derivar o payment_method correto e calcular a taxa do gateway.
+function providerForMethod(method: Method): "asaas_pix" | "asaas_card" {
+  return method === "PIX" ? "asaas_pix" : "asaas_card";
+}
+
 async function ensureCustomerId(
   supabase: any,
   userId: string,
