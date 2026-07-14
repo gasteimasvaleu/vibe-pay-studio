@@ -335,7 +335,7 @@ function BancoPage() {
             <CadastrarBancoForm
               onClose={() => setCadastroOpen(false)}
               kycVerified={kycVerified}
-              initial={payoutAccount as any}
+              initial={payoutAccount ? mapPayout(payoutAccount) : null}
             />
 
           </div>
