@@ -46,7 +46,14 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     if (!profile) throw notFound();
 
-    const [{ count: postsCount }, { count: mediaCount }] = await Promise.all([
+    const [
+      { count: postsCount },
+      { count: mediaCount },
+      { count: photosCount },
+      { count: videosCount },
+      { count: lockedCount },
+      { count: likesCount },
+    ] = await Promise.all([
       supabase
         .from("publications")
         .select("id", { count: "exact", head: true })
@@ -54,6 +61,25 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       supabase
         .from("publication_media")
         .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id)
+        .eq("type", "image"),
+      supabase
+        .from("publication_media")
+        .select("id, publications!inner(author_id)", { count: "exact", head: true })
+        .eq("publications.author_id", profile.user_id)
+        .eq("type", "video"),
+      supabase
+        .from("publications")
+        .select("id", { count: "exact", head: true })
+        .eq("author_id", profile.user_id)
+        .neq("visibility", "public"),
+      supabase
+        .from("publication_likes")
+        .select("publication_id, publications!inner(author_id)", { count: "exact", head: true })
         .eq("publications.author_id", profile.user_id),
     ]);
 
@@ -69,8 +95,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       },
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
+      photosCount: photosCount ?? 0,
+      videosCount: videosCount ?? 0,
+      lockedCount: lockedCount ?? 0,
+      likesCount: likesCount ?? 0,
     };
   },
+
 
   component: PerfilPage,
   errorComponent: ({ error }) => (
