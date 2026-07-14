@@ -71,10 +71,10 @@ function RedesSociaisPage() {
   return (
     <OnboardingShell title="Redes Sociais" step={1} backTo="/dashboard">
       <div className="max-w-xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-neutral-900">
           Conecte suas redes sociais
         </h2>
-        <p className="mt-2 text-sm text-white/60">
+        <p className="mt-2 text-sm text-neutral-600">
           Opcional. Você pode adicionar depois nas suas configurações.
         </p>
 
@@ -102,7 +102,7 @@ function RedesSociaisPage() {
           />
 
           {error && (
-            <p role="alert" className="text-sm text-red-400">
+            <p role="alert" className="text-sm text-red-600">
               {error}
             </p>
           )}
@@ -110,7 +110,7 @@ function RedesSociaisPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
           >
             {saving ? "Salvando..." : "Avançar"}
           </button>
@@ -118,7 +118,7 @@ function RedesSociaisPage() {
             type="button"
             disabled={saving}
             onClick={() => void handleAdvance(true)}
-            className="w-full py-3 text-sm text-white/60 hover:text-white transition"
+            className="w-full py-3 text-sm text-neutral-600 hover:text-neutral-900 transition"
           >
             Pular por enquanto
           </button>
@@ -143,19 +143,19 @@ function SocialField({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-full border bg-white/5 backdrop-blur-md px-4 py-3 transition-colors ${
-        invalid ? "border-red-500/60" : "border-white/10 focus-within:border-fuchsia-400/60"
+      className={`flex items-center gap-2 rounded-full border bg-white px-4 py-3 transition-colors ${
+        invalid ? "border-red-500" : "border-neutral-200 focus-within:border-fuchsia-500"
       }`}
     >
-      <span className="text-white/50">{icon}</span>
-      <span className="text-sm text-white/40 shrink-0">{prefix}</span>
+      <span className="text-neutral-500">{icon}</span>
+      <span className="text-sm text-neutral-500 shrink-0">{prefix}</span>
       <input
         type="text"
         placeholder="seu @"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={31}
-        className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/30"
+        className="flex-1 bg-transparent outline-none text-sm text-neutral-900 placeholder:text-neutral-400"
       />
     </div>
   );

@@ -28,10 +28,10 @@ function VerificandoPending() {
       <div className="mx-auto max-w-2xl text-center">
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
           <GooeyLoader className="h-28 w-56 text-[14px]" />
-          <p className="mt-8 text-lg font-semibold text-white/90">
+          <p className="mt-8 text-lg font-semibold text-neutral-900">
             Verificação de identidade em andamento
           </p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/60">
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-neutral-600">
             Isso pode demorar alguns minutos. Você será redirecionado
             automaticamente assim que for concluído.
           </p>
@@ -86,20 +86,20 @@ function VerificandoPage() {
   const banner = (() => {
     if (status === "verified") {
       return {
-        color: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200",
+        color: "border-emerald-300 bg-emerald-50 text-emerald-700",
         icon: <CheckCircle2 className="w-5 h-5" />,
         text: "Sua identidade foi verificada. Bem-vindo(a) à Monetisexy!",
       };
     }
     if (status === "requires_input") {
       return {
-        color: "border-amber-500/40 bg-amber-500/10 text-amber-200",
+        color: "border-amber-300 bg-amber-50 text-amber-700",
         icon: <AlertTriangle className="w-5 h-5" />,
         text: "Precisamos de mais informações. Você pode reenviar seus documentos.",
       };
     }
     return {
-      color: "border-red-500/40 bg-red-500/10 text-red-200",
+      color: "border-red-300 bg-red-50 text-red-700",
       icon: <AlertTriangle className="w-5 h-5" />,
       text: "Verificação cancelada. Tente novamente quando quiser.",
     };
@@ -113,21 +113,21 @@ function VerificandoPage() {
         {isProcessing ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center">
             <GooeyLoader className="h-28 w-56 text-[14px]" />
-            <p className="mt-8 text-lg font-semibold text-white/90">
+            <p className="mt-8 text-lg font-semibold text-neutral-900">
               Verificação de identidade em andamento
             </p>
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/60">
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-neutral-600">
               Isso pode demorar alguns minutos. Você será redirecionado
               automaticamente assim que for concluído.
             </p>
           </div>
         ) : (
           <>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight text-neutral-900">
               Tudo pronto! Agora só esperar enquanto cuidamos do resto.
             </h2>
 
-            <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-white/10 shadow-glow">
+            <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-neutral-200 shadow-glow">
               <img
                 src={mosaicImg}
                 alt="Creators da Monetisexy"
@@ -145,7 +145,7 @@ function VerificandoPage() {
               <p className="flex-1">{banner.text}</p>
             </div>
 
-            <p className="mt-6 text-sm text-white/60 max-w-lg mx-auto">
+            <p className="mt-6 text-sm text-neutral-600 max-w-lg mx-auto">
               Estamos validando os dados informados. Avisaremos nos próximos minutos
               o resultado — enquanto isso, aproveite para explorar a Monetisexy.
             </p>
@@ -154,7 +154,7 @@ function VerificandoPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/dashboard" })}
-                className="px-8 py-3 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
+                className="px-8 py-3 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
               >
                 Ir para o painel
               </button>
@@ -162,7 +162,7 @@ function VerificandoPage() {
                 <button
                   type="button"
                   onClick={() => navigate({ to: "/creator/onboarding/documentos" })}
-                  className="px-8 py-3 rounded-full border border-white/15 text-sm font-medium hover:bg-white/5 transition"
+                  className="px-8 py-3 rounded-full border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition"
                 >
                   Tentar novamente
                 </button>

@@ -56,10 +56,10 @@ function DocumentosPage() {
       backTo="/creator/onboarding/assinatura"
     >
       <div className="max-w-xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-neutral-900">
           Verificação de documentos
         </h2>
-        <p className="mt-3 text-white/70 leading-relaxed">
+        <p className="mt-3 text-neutral-700 leading-relaxed">
           Faltam poucos passos para você se tornar um(a) creator Monetisexy.
           Precisamos apenas validar alguns documentos — o processo é rápido,
           seguro e sigiloso, feito em parceria com a Veriff.
@@ -78,7 +78,7 @@ function DocumentosPage() {
         </div>
 
         {error && (
-          <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+          <div className="mt-6 rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -87,12 +87,12 @@ function DocumentosPage() {
           type="button"
           onClick={handleStart}
           disabled={loading}
-          className="mt-10 w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
+          className="mt-10 w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
         >
           {loading ? "Preparando..." : "Iniciar verificação"}
         </button>
 
-        <p className="mt-4 text-center text-xs text-white/40">
+        <p className="mt-4 text-center text-xs text-neutral-500">
           Você será redirecionado para o ambiente seguro da Veriff.
         </p>
       </div>
@@ -102,11 +102,11 @@ function DocumentosPage() {
 
 function Bullet({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4">
-      <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300">
+    <div className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+      <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-600">
         {icon}
       </span>
-      <p className="text-sm text-white/80 leading-relaxed">{children}</p>
+      <p className="text-sm text-neutral-700 leading-relaxed">{children}</p>
     </div>
   );
 }

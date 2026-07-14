@@ -75,10 +75,10 @@ function AssinaturaPage() {
   return (
     <OnboardingShell title="Assinatura" step={2} backTo="/creator/onboarding/redes-sociais">
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-neutral-900">
           Defina o valor de assinatura dos seus conteúdos
         </h2>
-        <p className="mt-2 text-sm text-white/60">
+        <p className="mt-2 text-sm text-neutral-600">
           Não se preocupe, você pode alterar o valor da assinatura mais tarde.
         </p>
 
@@ -90,7 +90,7 @@ function AssinaturaPage() {
             invalid={monthlyRaw !== "" && !valid}
             autoFocus
           />
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-neutral-500">
             Mínimo: R$ {formatBRL(MIN)} — Máximo: R$ {formatBRL(MAX)}
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -98,7 +98,7 @@ function AssinaturaPage() {
             <PercentField label="Desconto Semestral" value={ds} onChange={setDs} />
           </div>
 
-          <h3 className="pt-4 mb-3 text-sm font-semibold text-white/80">
+          <h3 className="pt-4 mb-3 text-sm font-semibold text-neutral-800">
             Como ficam seus planos
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -111,32 +111,32 @@ function AssinaturaPage() {
             <button
               type="button"
               onClick={() => setShowSim((s) => !s)}
-              className="text-sm font-medium text-fuchsia-300 hover:text-fuchsia-200 underline underline-offset-4"
+              className="text-sm font-medium text-fuchsia-600 hover:text-fuchsia-700 underline underline-offset-4"
             >
               Simular ganhos com assinatura
             </button>
             {showSim && (
-              <div className="mt-4 mx-auto max-w-md text-left rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 text-sm text-white/80">
-                <p className="font-semibold text-white">Estimativa (mock)</p>
-                <p className="mt-2 text-white/60">
-                  Com <b className="text-white">100 assinantes/mês</b> no plano mensal:
+              <div className="mt-4 mx-auto max-w-md text-left rounded-2xl border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-700">
+                <p className="font-semibold text-neutral-900">Estimativa (mock)</p>
+                <p className="mt-2 text-neutral-600">
+                  Com <b className="text-neutral-900">100 assinantes/mês</b> no plano mensal:
                 </p>
-                <p className="mt-1 text-xl font-black text-fuchsia-300">
+                <p className="mt-1 text-xl font-black text-fuchsia-600">
                   R$ {formatBRL(prices.monthly * 100 * 0.8)}
-                  <span className="text-xs font-normal text-white/50"> /mês líquido (20% taxa)</span>
+                  <span className="text-xs font-normal text-neutral-500"> /mês líquido (20% taxa)</span>
                 </p>
               </div>
             )}
           </div>
 
           {error && (
-            <p role="alert" className="text-sm text-red-400">
+            <p role="alert" className="text-sm text-red-600">
               {error}
             </p>
           )}
 
           {!valid && monthlyRaw !== "" && (
-            <p className="text-xs text-white/60 text-center">
+            <p className="text-xs text-neutral-600 text-center">
               Digite um valor entre R$ {formatBRL(MIN)} e R$ {formatBRL(MAX)} para continuar.
             </p>
           )}
@@ -144,7 +144,7 @@ function AssinaturaPage() {
           <button
             type="submit"
             disabled={!valid || saving}
-            className="w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "Salvando..." : "Avançar"}
           </button>
@@ -167,13 +167,13 @@ function PriceCard({
     <div
       className={`rounded-2xl border p-5 text-center transition-colors ${
         highlight
-          ? "border-fuchsia-500/40 bg-fuchsia-500/10"
-          : "border-white/10 bg-white/5"
-      } backdrop-blur-md`}
+          ? "border-fuchsia-400 bg-fuchsia-50"
+          : "border-neutral-200 bg-neutral-50"
+      }`}
     >
-      <p className="text-sm font-semibold text-white/80">{label}</p>
-      <p className="mt-2 text-2xl md:text-3xl font-black tracking-tight">
-        <span className="text-sm font-semibold align-top text-white/60 mr-1">R$</span>
+      <p className="text-sm font-semibold text-neutral-700">{label}</p>
+      <p className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-neutral-900">
+        <span className="text-sm font-semibold align-top text-neutral-500 mr-1">R$</span>
         {formatBRL(value)}
       </p>
     </div>
@@ -195,13 +195,13 @@ function MoneyField({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white/5 backdrop-blur-md px-5 py-3 transition-colors ${
-        invalid ? "border-red-500/60" : "border-white/10 focus-within:border-fuchsia-400/60"
+      className={`rounded-2xl border bg-white px-5 py-3 transition-colors ${
+        invalid ? "border-red-500" : "border-neutral-200 focus-within:border-fuchsia-500"
       }`}
     >
-      <label className="block text-xs text-white/60">{label}</label>
+      <label className="block text-xs text-neutral-500">{label}</label>
       <div className="flex items-baseline gap-2">
-        <span className="text-lg font-semibold text-white/70">R$</span>
+        <span className="text-lg font-semibold text-neutral-500">R$</span>
         <input
           type="text"
           inputMode="decimal"
@@ -209,7 +209,7 @@ function MoneyField({
           value={value}
           autoFocus={autoFocus}
           onChange={(e) => onChange(e.target.value.replace(/[^\d,.]/g, ""))}
-          className="flex-1 bg-transparent outline-none text-lg font-semibold placeholder:text-white/30"
+          className="flex-1 bg-transparent outline-none text-lg font-semibold text-neutral-900 placeholder:text-neutral-400"
         />
       </div>
     </div>
@@ -226,8 +226,8 @@ function PercentField({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-4 py-3 focus-within:border-fuchsia-400/60 transition-colors">
-      <label className="block text-xs text-white/60">{label}</label>
+    <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
+      <label className="block text-xs text-neutral-500">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -235,9 +235,9 @@ function PercentField({
           max={90}
           value={value}
           onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
-          className="flex-1 bg-transparent outline-none text-base font-semibold"
+          className="flex-1 bg-transparent outline-none text-base font-semibold text-neutral-900"
         />
-        <span className="text-sm text-white/60">%</span>
+        <span className="text-sm text-neutral-500">%</span>
       </div>
     </div>
   );
