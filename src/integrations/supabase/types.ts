@@ -776,6 +776,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_cards: {
+        Row: {
+          asaas_card_token: string
+          asaas_customer_id: string
+          brand: string | null
+          created_at: string
+          exp_month: string
+          exp_year: string
+          holder_name: string
+          id: string
+          last4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_card_token: string
+          asaas_customer_id: string
+          brand?: string | null
+          created_at?: string
+          exp_month: string
+          exp_year: string
+          holder_name: string
+          id?: string
+          last4: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_card_token?: string
+          asaas_customer_id?: string
+          brand?: string | null
+          created_at?: string
+          exp_month?: string
+          exp_year?: string
+          holder_name?: string
+          id?: string
+          last4?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriber_wallets: {
         Row: {
           balance_cents: number
