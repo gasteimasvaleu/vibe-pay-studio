@@ -106,7 +106,7 @@ const MOCK_POSTS: ProfilePost[] = [
 ];
 
 function PerfilPage() {
-  const { viewerId, profile } = Route.useRouteContext();
+  const { viewerId, profile, postsCount, mediaCount } = Route.useRouteContext();
   const router = useRouter();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
