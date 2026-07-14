@@ -86,6 +86,13 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   const submit = async () => {
     setLoading(true);
     try {
+      if (method === "WALLET") {
+        await walletPay({ data: { kind: "subscription", creatorId, plan } });
+        toast.success("Assinatura ativada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onOpenChange(false);
+        return;
+      }
       const res = await subscribe({
         data: { creatorId, plan, method },
       });
@@ -103,6 +110,15 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
+      if (e?.message === "already_subscribed") {
+        toast.info("Você já assina este criador");
+        onOpenChange(false);
+        return;
+      }
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error(e?.message ?? "Erro ao assinar");
     } finally {
       setLoading(false);
