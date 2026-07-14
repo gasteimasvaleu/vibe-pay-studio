@@ -443,6 +443,158 @@ export const getUserPublications = createServerFn({ method: "POST" })
   });
 
 
+// ============================================================================
+// Grid do perfil: postagens (capa) e mídias individuais, com paginação cursor.
+// ============================================================================
+
+export type GridPostItem = {
+  id: string;
+  cover_url: string | null;
+  cover_type: "image" | "video" | null;
+  media_count: number;
+  has_audio: boolean;
+  published_at: string;
+};
+
+export type GridMediaItem = {
+  id: string;
+  publication_id: string;
+  url: string;
+  type: "image" | "video";
+  position: number;
+  published_at: string;
+};
+
+const gridSchema = z.object({
+  userId: z.string().uuid(),
+  limit: z.number().int().min(1).max(60).optional(),
+  cursor: z.string().optional(),
+});
+
+export const getUserPostsGrid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => gridSchema.parse(d))
+  .handler(
+    async ({ data, context }): Promise<{ items: GridPostItem[]; nextCursor: string | null }> => {
+      const limit = data.limit ?? 24;
+      const client = context.supabase;
+
+      let query = client
+        .from("publications")
+        .select("id, published_at, audio_url")
+        .eq("author_id", data.userId)
+        .is("archived_at", null)
+        .lte("published_at", new Date().toISOString())
+        .order("published_at", { ascending: false })
+        .limit(limit + 1);
+
+      if (data.userId !== context.userId) {
+        // já filtrado archived_at, nada extra
+      }
+      if (data.cursor) query = query.lt("published_at", data.cursor);
+
+      const { data: pubs, error } = await query;
+      if (error) throw new Error(error.message);
+      const rows = pubs ?? [];
+      const page = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? page[page.length - 1]!.published_at! : null;
+      if (page.length === 0) return { items: [], nextCursor: null };
+
+      const ids = page.map((p) => p.id);
+      const { data: mediaRows, error: mErr } = await client
+        .from("publication_media")
+        .select("publication_id, url, type, position")
+        .in("publication_id", ids)
+        .order("position", { ascending: true });
+      if (mErr) throw new Error(mErr.message);
+
+      const byPub = new Map<string, Array<{ url: string; type: "image" | "video"; position: number }>>();
+      (mediaRows ?? []).forEach((m) => {
+        const arr = byPub.get(m.publication_id) ?? [];
+        arr.push({ url: m.url, type: m.type as "image" | "video", position: m.position });
+        byPub.set(m.publication_id, arr);
+      });
+
+      const items: GridPostItem[] = page.map((p) => {
+        const media = byPub.get(p.id) ?? [];
+        const cover = media[0] ?? null;
+        return {
+          id: p.id,
+          cover_url: cover?.url ?? null,
+          cover_type: cover ? cover.type : null,
+          media_count: media.length,
+          has_audio: !!(p as { audio_url: string | null }).audio_url,
+          published_at: p.published_at!,
+        };
+      });
+
+      return { items, nextCursor };
+    },
+  );
+
+export const getUserMediasGrid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => gridSchema.parse(d))
+  .handler(
+    async ({ data, context }): Promise<{ items: GridMediaItem[]; nextCursor: string | null }> => {
+      const limit = data.limit ?? 24;
+      const client = context.supabase;
+
+      // Busca as publicações do autor em ordem, e vai puxando mídias até completar o limite.
+      // Para paginação usamos o cursor = published_at da última publicação lida (não da mídia).
+      let pubQuery = client
+        .from("publications")
+        .select("id, published_at")
+        .eq("author_id", data.userId)
+        .is("archived_at", null)
+        .lte("published_at", new Date().toISOString())
+        .order("published_at", { ascending: false })
+        .limit(limit + 1);
+
+      if (data.cursor) pubQuery = pubQuery.lt("published_at", data.cursor);
+
+      const { data: pubs, error } = await pubQuery;
+      if (error) throw new Error(error.message);
+      const pubRows = pubs ?? [];
+      if (pubRows.length === 0) return { items: [], nextCursor: null };
+
+      const ids = pubRows.map((p) => p.id);
+      const { data: mediaRows, error: mErr } = await client
+        .from("publication_media")
+        .select("id, publication_id, url, type, position")
+        .in("publication_id", ids);
+      if (mErr) throw new Error(mErr.message);
+
+      const pubOrder = new Map(pubRows.map((p, i) => [p.id, i]));
+      const pubDate = new Map(pubRows.map((p) => [p.id, p.published_at!]));
+      const sorted = (mediaRows ?? []).slice().sort((a, b) => {
+        const oa = pubOrder.get(a.publication_id) ?? 0;
+        const ob = pubOrder.get(b.publication_id) ?? 0;
+        if (oa !== ob) return oa - ob;
+        return a.position - b.position;
+      });
+
+      const page = sorted.slice(0, limit);
+      const items: GridMediaItem[] = page.map((m) => ({
+        id: m.id,
+        publication_id: m.publication_id,
+        url: m.url,
+        type: m.type as "image" | "video",
+        position: m.position,
+        published_at: pubDate.get(m.publication_id)!,
+      }));
+
+      // Se lemos mais publicações do que o limit, ainda há mais páginas.
+      const nextCursor =
+        pubRows.length > limit || sorted.length > page.length
+          ? pubRows[Math.min(pubRows.length, limit) - 1]!.published_at!
+          : null;
+
+      return { items, nextCursor };
+    },
+  );
+
+
 const idSchema = z.object({ publicationId: z.string().uuid() });
 
 export const toggleLike = createServerFn({ method: "POST" })
