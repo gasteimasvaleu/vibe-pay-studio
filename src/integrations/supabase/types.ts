@@ -238,6 +238,39 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_streak_days: {
+        Row: {
+          chat_replies: number
+          created_at: string
+          creator_id: string
+          day: string
+          live_minutes: number
+          publications_count: number
+          revenue_cents: number
+          updated_at: string
+        }
+        Insert: {
+          chat_replies?: number
+          created_at?: string
+          creator_id: string
+          day: string
+          live_minutes?: number
+          publications_count?: number
+          revenue_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          chat_replies?: number
+          created_at?: string
+          creator_id?: string
+          day?: string
+          live_minutes?: number
+          publications_count?: number
+          revenue_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       creator_wallets: {
         Row: {
           pending_international_cents: number
@@ -277,6 +310,51 @@ export type Database = {
           created_at?: string
           followee_id?: string
           follower_id?: string
+        }
+        Relationships: []
+      }
+      live_sessions: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          creator_id: string
+          ended_at: string | null
+          gross_cents: number
+          id: string
+          started_at: string
+          tips_cents: number
+          title: string | null
+          total_views: number
+          updated_at: string
+          viewers_peak: number
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          creator_id: string
+          ended_at?: string | null
+          gross_cents?: number
+          id?: string
+          started_at?: string
+          tips_cents?: number
+          title?: string | null
+          total_views?: number
+          updated_at?: string
+          viewers_peak?: number
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          creator_id?: string
+          ended_at?: string | null
+          gross_cents?: number
+          id?: string
+          started_at?: string
+          tips_cents?: number
+          title?: string | null
+          total_views?: number
+          updated_at?: string
+          viewers_peak?: number
         }
         Relationships: []
       }
@@ -375,6 +453,27 @@ export type Database = {
           pix_key_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profile_views: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          viewer_id?: string | null
         }
         Relationships: []
       }
@@ -736,6 +835,35 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publication_views: {
+        Row: {
+          created_at: string
+          id: string
+          publication_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          publication_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          publication_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_views_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
             referencedColumns: ["id"]
           },
         ]
