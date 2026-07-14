@@ -213,7 +213,8 @@ function BancoPage() {
               muted: intlEmpty,
             },
           ].map((c) => {
-            const canWithdraw = walletActive && c.released > 0;
+            const disabledReason = withdrawDisabledReason(c.released);
+            const canWithdraw = !disabledReason;
             return (
               <div
                 key={c.label}
@@ -245,16 +246,14 @@ function BancoPage() {
                 <Button
                   className="mt-4 w-full rounded-full"
                   disabled={!canWithdraw}
-                  title={
-                    !walletActive
-                      ? "Configure seu recebimento para poder sacar"
-                      : c.released <= 0
-                        ? "Sem saldo liberado para saque"
-                        : "Saques em breve"
+                  title={disabledReason ?? "Solicitar saque via PIX"}
+                  onClick={() =>
+                    setSacarOrigin(c.label as "Nacional" | "Internacional")
                   }
                 >
                   Sacar
                 </Button>
+
                 {c.muted && !overviewQuery.isLoading ? (
                   <p className="mt-2 text-xs text-muted-foreground">
                     Sem movimentações internacionais
