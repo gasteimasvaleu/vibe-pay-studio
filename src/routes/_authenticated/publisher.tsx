@@ -1324,7 +1324,7 @@ function PriceDialog({
             <button
               type="button"
               onClick={() => setCents((c) => clamp(c + stepCents))}
-              className="h-11 w-11 grid place-items-center rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="h-11 w-11 grid place-items-center rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               aria-label="Aumentar"
             >
               <Plus className="h-5 w-5" />
