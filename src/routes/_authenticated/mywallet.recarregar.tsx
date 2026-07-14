@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PixCheckout } from "@/components/payments/PixCheckout";
 import { createWalletTopupPayment } from "@/lib/payments.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 export const Route = createFileRoute("/_authenticated/mywallet/recarregar")({
   head: () => ({
@@ -59,7 +60,7 @@ function RecarregarPage() {
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao criar cobrança");
+      toast.error(translatePaymentError(e, "Erro ao criar cobrança"));
     } finally {
       setLoading(false);
     }

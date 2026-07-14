@@ -12,6 +12,7 @@ import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -115,11 +116,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
         onOpenChange(false);
         return;
       }
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao assinar");
+      toast.error(translatePaymentError(e, "Erro ao assinar"));
     } finally {
       setLoading(false);
     }

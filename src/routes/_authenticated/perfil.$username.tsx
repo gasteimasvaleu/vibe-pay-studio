@@ -41,6 +41,7 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 
@@ -312,11 +313,7 @@ function PerfilPage() {
         toast.success("Publicação já desbloqueada");
         return;
       }
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao gerar pagamento");
+      toast.error(translatePaymentError(e, "Erro ao gerar pagamento"));
     } finally {
       setUnlocking(null);
     }

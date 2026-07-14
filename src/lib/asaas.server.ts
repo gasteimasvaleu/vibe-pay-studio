@@ -14,7 +14,9 @@ export const CREATOR_SPLIT_PCT = 100 - PLATFORM_COMMISSION_PCT; // 85
 
 // Tarifas cobradas pelo Asaas (valores padrão, sem promocional).
 // Descontadas 100% do valor líquido do creator via split fixedValue.
-export type AsaasBillingMethod = "PIX" | "CREDIT_CARD" | "BOLETO";
+import { PAYMENT_MIN_GROSS_CENTS, type AsaasPaymentMethod } from "@/lib/payment-limits";
+
+export type AsaasBillingMethod = AsaasPaymentMethod;
 
 export function computeGatewayFeeCents(
   grossCents: number,
@@ -35,15 +37,31 @@ export function computeGatewayFeeCents(
 }
 
 /**
+ * Valida o mínimo por método. Lança `amount_below_minimum:METHOD:CENTS`
+ * (parseável pela UI via `translatePaymentError`) quando o valor bruto
+ * está abaixo do mínimo aceito.
+ */
+export function assertMeetsMinimum(
+  grossCents: number,
+  method: AsaasBillingMethod,
+): void {
+  const min = PAYMENT_MIN_GROSS_CENTS[method];
+  if (grossCents < min) {
+    throw new Error(`amount_below_minimum:${method}:${min}`);
+  }
+}
+
+/**
  * Calcula o valor líquido que deve chegar ao creator após:
  *  - comissão da plataforma (15%)
  *  - taxa do meio de pagamento cobrada pelo Asaas (integralmente descontada do creator)
- * Lança erro se a operação não cobre as taxas.
+ * Lança erro se a operação não cobre as taxas ou está abaixo do mínimo do método.
  */
 export function computeCreatorNetCents(
   grossCents: number,
   method: AsaasBillingMethod,
 ): { platformFeeCents: number; gatewayFeeCents: number; netCreatorCents: number } {
+  assertMeetsMinimum(grossCents, method);
   const platformFeeCents = Math.floor((grossCents * PLATFORM_COMMISSION_PCT) / 100);
   const gatewayFeeCents = computeGatewayFeeCents(grossCents, method);
   const netCreatorCents = grossCents - platformFeeCents - gatewayFeeCents;

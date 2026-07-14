@@ -1,54 +1,56 @@
-# Descontar taxas do Asaas do creator (100%)
+## Objetivo
+Impedir que checkouts caiam no erro `amount_too_low_for_fees` do Asaas expondo mínimos por método já na UI, e — quando ainda assim escaparem — mostrar uma mensagem clara em português no lugar da string técnica.
 
-Hoje o split envia 85% ao creator via Asaas e a plataforma retém 15% brutos — mas todas as taxas de gateway são debitadas da conta principal, o que pode gerar prejuízo em transações pequenas. Vamos passar essas taxas 100% para o creator.
+## Escopo
+Métodos em uso hoje: **PIX** e **CREDIT_CARD à vista**. Boleto e débito não estão ativos no checkout (não há UI que os selecione), então ficam de fora — se forem ativados no futuro, o mesmo helper cobre.
 
-## Tarifas cadastradas (valores padrão, sem promocional)
+## Mínimos por método
+Cálculo do menor bruto em que o líquido do creator (`bruto − 15% − taxa Asaas`) ainda é positivo, arredondado para valores "de UI" que deixem uma sobra razoável ao creator:
 
-| Método       | Taxa                     |
-| ------------ | ------------------------ |
-| PIX          | R$ 1,99 por cobrança     |
-| Boleto       | R$ 1,99 por boleto pago  |
-| Crédito à vista (1x) | 2,99% + R$ 0,49  |
+| Método       | Taxa Asaas         | Mínimo técnico | Mínimo aplicado na UI |
+|--------------|--------------------|----------------|-----------------------|
+| PIX          | R$ 1,99            | ~R$ 2,35       | **R$ 3,00**           |
+| CREDIT_CARD  | 2,99% + R$ 0,49    | ~R$ 0,60       | **R$ 2,00**           |
 
-Débito e parcelado ficam de fora por não estarem em uso hoje.
+Os valores ficam em uma única fonte de verdade em `src/lib/asaas.server.ts` para casar server e UI.
 
-## O que muda
+## Mudanças
 
-1. **Cálculo do líquido do creator**
-   `platform_commission = round(gross * 15%)`
-   `gateway_fee = tabela do método`
-   `net_creator = gross − platform_commission − gateway_fee`
-   `platform_net = platform_commission` (fica exatamente com os 15% cheios)
-   Se `net_creator ≤ 0` a compra é bloqueada com mensagem clara ("valor muito baixo para cobrir taxas").
+### 1. `src/lib/asaas.server.ts`
+- Exportar `MIN_GROSS_CENTS_BY_METHOD: Record<AsaasBillingMethod, number>` com os valores acima.
+- Exportar `getMinGrossCents(method)` e `assertMeetsMinimum(grossCents, method)` que lança um erro tipado `amount_below_minimum:<method>:<minCents>`.
+- Em `computeCreatorNetCents`, chamar `assertMeetsMinimum` antes do cálculo — passa a lançar `amount_below_minimum` em vez de `amount_too_low_for_fees` quando o input é muito baixo.
 
-2. **Split no Asaas**
-   Deixa de ser percentual fixo (85%) e passa a ser `fixedValue = net_creator` (em BRL). Assim o Asaas debita a taxa da parcela do creator e a plataforma recebe o valor cheio da comissão.
+### 2. `src/lib/payments.functions.ts` (client-safe wrapper)
+- Exportar uma constante espelho `PAYMENT_MIN_GROSS_CENTS` (objeto literal com os mesmos valores) para uso na UI sem importar código server.
+- Exportar um helper puro `getPaymentMethodMinimum(method)` na mesma constante para reuso.
 
-3. **Registro contábil**
-   Nova coluna `gateway_fee_cents` em `transactions`. O trigger passa a persistir `platform_fee_cents` (15%) + `gateway_fee_cents` (taxa Asaas) e `net_cents` já descontando ambos. Wallet do creator credita esse `net_cents` novo (menor).
+Observação: os checkouts server já chamam `computeCreatorNetCents`, então herdam automaticamente a nova validação.
 
-4. **Pagamentos por carteira interna (`pay_with_wallet`)**
-   Não há taxa Asaas envolvida — mantém só os 15% da plataforma.
+### 3. UI de checkout
+Aplicar a mesma pattern em cada componente/rota que abre um pagamento:
 
-5. **UI de estatísticas do creator**
-   `my-monetisex-stats` exibe as taxas de gateway destacadas ("Taxa do meio de pagamento") junto da comissão da plataforma, para o creator entender o líquido.
+- `src/components/payments/TipDialog.tsx` — validar o input de valor da gorjeta contra o mínimo do método selecionado; desabilitar o botão "Enviar" quando abaixo; mostrar helper text (`"Mínimo para PIX: R$ 3,00"`).
+- `src/routes/_authenticated/mywallet.recarregar.tsx` — mesmo tratamento no valor de recarga.
+- `src/components/payments/SubscribeDialog.tsx`, `src/routes/_authenticated/feed.tsx` (unlock), `src/routes/_authenticated/chat.$threadId.tsx` (chat unlock), `src/routes/_authenticated/perfil.$username.tsx` (video call/unlock) — o valor vem do preço da publicação/assinatura, então:
+  - Se `price_cents < mínimo do método`, desabilitar o botão desse método no seletor e mostrar tooltip `"Indisponível para este valor (mínimo R$ X,XX no PIX)"`.
+  - Se todos os métodos forem inválidos (raro), mostrar aviso "Valor abaixo do mínimo aceito pelo meio de pagamento".
 
-## Detalhes técnicos
+### 4. Tradução de erro no toast
+Em um util compartilhado (novo `src/lib/payment-errors.ts`) mapear:
+- `amount_below_minimum:PIX:300` → `"Mínimo para PIX é R$ 3,00."`
+- `amount_below_minimum:CREDIT_CARD:200` → `"Mínimo para cartão é R$ 2,00."`
+- `amount_too_low_for_fees` (fallback legado) → `"Valor muito baixo para cobrir as taxas do meio de pagamento."`
 
-- Migration:
-  - `ALTER TABLE transactions ADD COLUMN gateway_fee_cents BIGINT NOT NULL DEFAULT 0;`
-  - Nova função `public.calc_gateway_fee_cents(_gross_cents bigint, _method payment_method) RETURNS bigint` com a tabela acima (PIX/boleto = 199; credit_card = ceil(gross*0.0299)+49; wallet/manual = 0).
-  - `public.apply_transaction_split` ganha parâmetro opcional `_method` e passa a retornar também `gateway_fee_cents`; `net_cents = gross − platform_fee − gateway_fee`.
-  - Todos os triggers `*_sync_transaction` passam `_method` ao chamar `apply_transaction_split` e gravam `gateway_fee_cents`.
-- `src/lib/asaas.server.ts` `createPayment`:
-  - Recebe `netCreatorCents` além de `creatorWalletId`.
-  - Envia `split: [{ walletId, fixedValue: centsToBrl(netCreatorCents) }]` em vez de `percentualValue`.
-- `src/lib/payments.functions.ts`: computa `gateway_fee` + `net_creator` antes de chamar `createPayment`, valida `net_creator > 0` e persiste o valor no `payment_intents` para reconciliação.
-- `src/lib/payments-reconcile.server.ts`: quando materializa a transação a partir do webhook, usa o `gateway_fee` calculado no momento da intenção (não recalcula sobre `netValue` do Asaas para evitar divergência de arredondamento).
-- Frontend: `src/routes/_authenticated/my-monetisex-stats.tsx` soma `gateway_fee_cents` como linha separada na tabela.
+Cada callsite que hoje faz `toast.error(err.message)` passa a usar `toast.error(translatePaymentError(err))`.
 
 ## Fora de escopo
+- Boleto / débito / crédito parcelado (não estão em uso).
+- Ajuste de preços mínimos de publicação/assinatura no cadastro do creator (pode virar tarefa separada; hoje só bloqueia o checkout).
+- Preços promocionais Asaas (continuam ignorados, conforme decisão anterior).
 
-- Precificação promocional automática (usaremos só o padrão, conforme sua escolha).
-- Cadastro de débito, cartão parcelado e antecipação.
-- Rateio proporcional de taxa (100% cai no creator).
+## Como testar
+1. Tentar gorjeta de R$ 2,00 via PIX → botão desabilitado + helper "Mínimo R$ 3,00".
+2. Tentar recarga de R$ 1,00 via PIX → mesmo bloqueio.
+3. Publicação com `price_cents = 250` (R$ 2,50) → PIX aparece desabilitado, cartão habilitado.
+4. Forçar chamada direta ao server fn com valor abaixo do mínimo → server responde `amount_below_minimum:...` e a UI mostra o toast traduzido.

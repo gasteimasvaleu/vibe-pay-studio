@@ -14,6 +14,7 @@ import {
 } from "@/lib/chat.functions";
 import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 import { Textarea } from "@/components/ui/textarea";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { PriceDialog } from "@/components/chat/PriceDialog";
@@ -235,11 +236,7 @@ function ChatThreadView() {
         toast.success("Mensagem já desbloqueada");
         return;
       }
-      if (err?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error((err as Error).message ?? "Erro ao gerar pagamento");
+      toast.error(translatePaymentError(err, "Erro ao gerar pagamento"));
     } finally {
       setUnlockingId(null);
     }

@@ -11,6 +11,7 @@ import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createTipPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { PAYMENT_MIN_GROSS_CENTS, formatMinimum, translatePaymentError } from "@/lib/payment-limits";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const PRESETS = [10, 20, 50, 100];
@@ -51,9 +52,22 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
     onOpenChange(v);
   };
 
+  const amountCents = amount * 100;
+  const methodMinCents =
+    method === "PIX" || method === "CREDIT_CARD"
+      ? PAYMENT_MIN_GROSS_CENTS[method]
+      : 0;
+  const belowMethodMin = methodMinCents > 0 && amountCents < methodMinCents;
+  const belowBaseMin = amount < 5;
+  const disableSubmit = loading || belowBaseMin || belowMethodMin;
+
   const submit = async () => {
-    if (amount < 5) {
+    if (belowBaseMin) {
       toast.error("Valor mínimo é R$ 5,00");
+      return;
+    }
+    if (belowMethodMin && (method === "PIX" || method === "CREDIT_CARD")) {
+      toast.error(`Valor mínimo para ${method === "PIX" ? "PIX" : "cartão"} é ${formatMinimum(method)}.`);
       return;
     }
     setLoading(true);
@@ -64,7 +78,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
             kind: "tip",
             creatorId,
             publicationId,
-            amountCents: amount * 100,
+            amountCents,
             message: message.trim() || undefined,
           },
         });
@@ -76,7 +90,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       const res = await createTip({
         data: {
           creatorId,
-          amountCents: amount * 100,
+          amountCents,
           method,
           publicationId,
           message: message.trim() || undefined,
@@ -96,11 +110,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao criar tip");
+      toast.error(translatePaymentError(e, "Erro ao criar tip"));
     } finally {
       setLoading(false);
     }
@@ -197,12 +207,17 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amount * 100} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} />
+              {belowMethodMin && (method === "PIX" || method === "CREDIT_CARD") && (
+                <p className="text-[11px] text-destructive">
+                  Valor mínimo para {method === "PIX" ? "PIX" : "cartão"}: {formatMinimum(method)}
+                </p>
+              )}
             </div>
 
             <Button
               onClick={submit}
-              disabled={loading}
+              disabled={disableSubmit}
               className="w-full h-11 rounded-full bg-gradient-primary text-primary-foreground"
             >
               {loading ? (
