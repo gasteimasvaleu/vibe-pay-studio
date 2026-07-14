@@ -206,10 +206,48 @@ export const unlockPublication = createServerFn({ method: "POST" })
   });
 
 /**
- * Seguir grátis um creator sem preço mensal (price_monthly = 0/null).
+ * Seguir um creator (grátis, independente de assinatura).
+ */
+export const followCreator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { creatorId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (userId === data.creatorId) {
+      throw new Error("Você não pode seguir a si mesmo.");
+    }
+    const { error } = await supabase
+      .from("follows")
+      .upsert(
+        { follower_id: userId, followee_id: data.creatorId },
+        { onConflict: "follower_id,followee_id", ignoreDuplicates: true },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Deixar de seguir um creator. Não afeta assinaturas.
+ */
+export const unfollowCreator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { creatorId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("follows")
+      .delete()
+      .eq("follower_id", userId)
+      .eq("followee_id", data.creatorId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Assinatura gratuita para creators com price_monthly = 0/null.
  * Cria assinatura ativa com valor zero.
  */
-export const followCreatorFree = createServerFn({ method: "POST" })
+export const subscribeFree = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { creatorId: string }) => data)
   .handler(async ({ data, context }) => {
@@ -247,21 +285,4 @@ export const followCreatorFree = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/**
- * Deixar de seguir/assinar um creator. Cancela assinaturas ativas do viewer.
- */
-export const unfollowCreator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), auto_renew: false })
-      .eq("subscriber_id", userId)
-      .eq("creator_id", data.creatorId)
-      .eq("status", "active");
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
 
