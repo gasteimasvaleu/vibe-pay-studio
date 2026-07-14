@@ -299,7 +299,7 @@ function BancoPage() {
                 <p className="mt-4 text-sm text-foreground">
                   Liberado para saque
                 </p>
-                {overviewQuery.isLoading || isRefreshingAfterWithdrawal ? (
+                {overviewQuery.isLoading ? (
                   <div className="mt-1 h-8 w-32 rounded bg-muted animate-pulse" />
                 ) : (
                   <p className="text-3xl font-bold tracking-tight text-foreground">
@@ -307,7 +307,7 @@ function BancoPage() {
                   </p>
                 )}
                 <p className="mt-3 text-sm text-foreground">Saldo a liberar</p>
-                {overviewQuery.isLoading || isRefreshingAfterWithdrawal ? (
+                {overviewQuery.isLoading ? (
                   <div className="mt-1 h-6 w-24 rounded bg-muted animate-pulse" />
                 ) : (
                   <p className="text-lg font-semibold text-foreground">
@@ -316,8 +316,12 @@ function BancoPage() {
                 )}
                 <Button
                   className="mt-4 w-full rounded-full"
-                  disabled={!canWithdraw}
-                  title={disabledReason ?? "Solicitar saque via PIX"}
+                  disabled={!canWithdraw || isRefreshingAfterWithdrawal}
+                  title={
+                    isRefreshingAfterWithdrawal
+                      ? "Atualizando saldo"
+                      : disabledReason ?? "Solicitar saque via PIX"
+                  }
                   onClick={() =>
                     setSacarOrigin(c.label as "Nacional" | "Internacional")
                   }
