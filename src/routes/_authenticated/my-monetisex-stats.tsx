@@ -204,7 +204,7 @@ function computePreset(key: (typeof PRESETS)[number]["key"]) {
     const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     return { from: from.toISOString(), to: end.toISOString() };
   }
-  const preset = PRESETS.find(p => p.key === key);
+  const preset = PRESETS.find(p => p.key === key) as { days?: number } | undefined;
   const from = new Date(now); from.setDate(from.getDate() - (preset?.days ?? 29)); from.setHours(0, 0, 0, 0);
   return { from: from.toISOString(), to: to.toISOString() };
 }
