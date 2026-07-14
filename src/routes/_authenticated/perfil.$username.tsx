@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       .maybeSingle();
 
     if (!profile) throw notFound();
+    if (profile.account_type !== "creator") throw notFound();
 
     const [
       { count: postsCount },
