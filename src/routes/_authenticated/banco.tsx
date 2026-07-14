@@ -8,12 +8,19 @@ import {
   Banknote,
   CheckCircle2,
   Clock,
+  ExternalLink,
   Info,
   Pencil,
   Plus,
   ShieldAlert,
   Wallet,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
