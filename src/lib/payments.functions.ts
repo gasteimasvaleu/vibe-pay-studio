@@ -274,7 +274,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       asaasPayment: payment,
       method: data.method,
       referenceTable: "publication_unlocks",
-      referenceId: unlock.id,
+      referenceId: unlockId,
       pixQr,
     });
 
