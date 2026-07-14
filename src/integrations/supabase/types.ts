@@ -1008,6 +1008,7 @@ export type Database = {
           released_at: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           updated_at: string
+          wallet_released_at: string | null
         }
         Insert: {
           access_until?: string | null
@@ -1031,6 +1032,7 @@ export type Database = {
           released_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           updated_at?: string
+          wallet_released_at?: string | null
         }
         Update: {
           access_until?: string | null
@@ -1054,6 +1056,7 @@ export type Database = {
           released_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           updated_at?: string
+          wallet_released_at?: string | null
         }
         Relationships: []
       }
@@ -1259,6 +1262,7 @@ export type Database = {
         }
         Returns: Json
       }
+      release_matured_earnings: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
