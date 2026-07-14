@@ -158,11 +158,20 @@ function FeedPage() {
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
               Carregando publicações...
             </div>
-          ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
+          ) : feedItems.length > 0 ? (
             <div className="space-y-4">
-              {feedQuery.data.items.map((item) => (
+              {feedItems.map((item) => (
                 <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
               ))}
+              <div ref={sentinelRef} className="h-8" />
+              {feedQuery.isFetchingNextPage && (
+                <div className="flex justify-center py-4 text-white/60">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+              )}
+              {!feedQuery.hasNextPage && (
+                <p className="text-center text-xs text-white/40 py-4">Você chegou ao fim do feed.</p>
+              )}
             </div>
           ) : (
             <motion.section
