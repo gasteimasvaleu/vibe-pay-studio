@@ -252,8 +252,15 @@ function PublisherPage() {
         )
       : 0;
   const audioBusy = audio.status === "recording" || audio.status === "uploading";
+  const previewBusy = preview?.status === "uploading";
+  const previewMissing = toggles.paid.enabled && (!preview || preview.status !== "ready");
   const canContinue =
-    media.length > 0 && uploadingCount === 0 && errorCount === 0 && !audioBusy;
+    media.length > 0 &&
+    uploadingCount === 0 &&
+    errorCount === 0 &&
+    !audioBusy &&
+    !previewBusy &&
+    !previewMissing;
 
   const goBack = () => {
     if (step === 2) return setStep(1);
