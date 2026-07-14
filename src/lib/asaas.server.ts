@@ -302,6 +302,7 @@ export async function createPayment(input: {
   externalReference?: string;
   dueDate?: string; // yyyy-MM-dd
   creatorWalletId?: string | null; // if provided, add split to creator
+  netCreatorCents?: number | null; // valor fixo (em cents) que deve ir ao creator
   creditCard?: CreditCardInput;
   creditCardHolderInfo?: CreditCardHolderInfo;
   creditCardToken?: string;
@@ -320,10 +321,15 @@ export async function createPayment(input: {
   if (input.creatorWalletId) {
     const platformWalletId = await getPlatformWalletId();
     if (!platformWalletId || platformWalletId !== input.creatorWalletId) {
+      // Split por valor fixo: garante que o creator absorva 100% da taxa do Asaas
+      // (o restante fica na conta principal, cobrindo a comissão e a taxa retida pelo gateway).
+      if (input.netCreatorCents == null || input.netCreatorCents <= 0) {
+        throw new Error("netCreatorCents obrigatório para split de creator");
+      }
       body.split = [
         {
           walletId: input.creatorWalletId,
-          percentualValue: CREATOR_SPLIT_PCT,
+          fixedValue: centsToBrl(input.netCreatorCents),
         },
       ];
     }
