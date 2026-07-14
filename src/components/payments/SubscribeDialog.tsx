@@ -116,11 +116,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
         onOpenChange(false);
         return;
       }
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao assinar");
+      toast.error(translatePaymentError(e, "Erro ao assinar"));
     } finally {
       setLoading(false);
     }
