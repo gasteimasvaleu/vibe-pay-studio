@@ -1,17 +1,18 @@
 ## Mudanças
 
-### 1. `src/lib/publications.functions.ts`
-- Adicionar `is_owner: boolean` ao tipo `FeedItem`.
-- Preencher `is_owner: isOwner` no retorno de `getFeed` e `getUserPublications` (usa a variável `isOwner` já calculada).
+### 1. `src/components/feed/PublicationCard.tsx`
+- Nova prop opcional `onTip?: (item: FeedItem) => void`.
+- Adicionar botão de mimo (`Gift`, lucide) à direita do botão de comentar, dentro da barra de ações.
+- Mover a barra de ações para fora do bloco `{!item.locked && ...}` — ela precisa aparecer também em publicações bloqueadas (para permitir mimo). Curtir/comentar/salvar continuam habilitados; nada muda no visual do overlay de lock.
+- Botão de mimo visível quando `!item.is_owner` (não faz sentido mimar a si mesmo — server já bloqueia).
 
-### 2. `src/components/feed/PublicationOptionsMenu.tsx`
-Ramificar as opções por `item.is_owner`:
+### 2. `src/routes/_authenticated/feed.tsx`
+- Estado `tipFor: FeedItem | null`.
+- Passar `onTip={setTipFor}` ao `PublicationCard`.
+- Renderizar `<TipDialog open={!!tipFor} onOpenChange={v=>!v && setTipFor(null)} creatorId={tipFor.author_id} creatorName={tipFor.author_username ?? "creator"} publicationId={tipFor.id} />`.
 
-**Dono** (atual): Copiar link · Adicionar/remover favoritos · Editar legenda · Habilitar/desabilitar comentários · Arquivar post · Excluir post (destrutivo).
-
-**Não-dono** (novo): Copiar link · Adicionar/remover favoritos · Silenciar @usuário (Em breve) · Não tenho interesse (Em breve) · Denunciar post (destrutivo, Em breve).
-
-Ações "Em breve" reutilizam o helper `soon()` existente. "Copiar link" e favoritos continuam funcionais nos dois casos.
+### 3. `src/routes/_authenticated/perfil.$username.tsx`
+- Mesma integração (`tipFor` + `TipDialog`) para os `PublicationCard` da aba Postagens.
 
 ### Fora de escopo
-Nenhuma mudança em pagamentos, schema, feed, perfil ou `PublicationCard` (além de já receber `is_owner` via `item`).
+Sem mudanças no `TipDialog`, servidor ou schema.
