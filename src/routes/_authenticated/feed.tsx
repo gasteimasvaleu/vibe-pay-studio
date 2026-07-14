@@ -45,6 +45,7 @@ function FeedPage() {
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
