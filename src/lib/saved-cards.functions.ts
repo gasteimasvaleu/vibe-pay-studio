@@ -1,0 +1,225 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+async function loadAsaas() {
+  return await import("@/lib/asaas.server");
+}
+
+async function ensureCustomerId(
+  supabase: any,
+  userId: string,
+): Promise<string> {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("asaas_customer_id, username, cpf")
+    .eq("user_id", userId)
+    .single();
+  if (error || !profile) throw new Error("perfil não encontrado");
+
+  const cpf = (profile.cpf ?? "").replace(/\D/g, "");
+  if (!cpf) throw new Error("cpf_required");
+
+  if (profile.asaas_customer_id) return profile.asaas_customer_id as string;
+
+  const asaas = await loadAsaas();
+  const { data: userRes } = await supabase.auth.getUser();
+  const email = userRes?.user?.email ?? null;
+  const customer = await asaas.createCustomer({
+    name: profile.username,
+    email,
+    cpfCnpj: cpf,
+    externalReference: userId,
+  });
+  await supabase
+    .from("profiles")
+    .update({ asaas_customer_id: customer.id })
+    .eq("user_id", userId);
+  return customer.id;
+}
+
+export type SavedCardDTO = {
+  id: string;
+  brand: string | null;
+  last4: string;
+  holderName: string;
+  expMonth: string;
+  expYear: string;
+  createdAt: string;
+};
+
+export const listSavedCards = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SavedCardDTO[]> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("saved_cards")
+      .select("id, brand, last4, holder_name, exp_month, exp_year, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      brand: r.brand,
+      last4: r.last4,
+      holderName: r.holder_name,
+      expMonth: r.exp_month,
+      expYear: r.exp_year,
+      createdAt: r.created_at,
+    }));
+  });
+
+type TokenizeInput = {
+  number: string;
+  holderName: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+  cpf: string;
+  postalCode: string;
+  addressNumber: string;
+  phone?: string;
+};
+
+export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: TokenizeInput) => {
+    const number = (data?.number ?? "").replace(/\s+/g, "");
+    if (number.length < 13 || number.length > 19)
+      throw new Error("Número de cartão inválido");
+    if (!/^\d{2}$/.test(data?.expiryMonth ?? ""))
+      throw new Error("Validade inválida");
+    if (!/^\d{4}$/.test(data?.expiryYear ?? ""))
+      throw new Error("Validade inválida");
+    if ((data?.ccv ?? "").length < 3) throw new Error("CVV inválido");
+    if (!data?.holderName?.trim()) throw new Error("Nome do titular obrigatório");
+    const cpf = (data?.cpf ?? "").replace(/\D/g, "");
+    if (cpf.length !== 11) throw new Error("CPF inválido");
+    return { ...data, number, cpf };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Ensure profile has CPF stored for future charges
+    await supabase
+      .from("profiles")
+      .update({ cpf: data.cpf })
+      .eq("user_id", userId);
+
+    const customerId = await ensureCustomerId(supabase, userId);
+    const { data: userRes } = await supabase.auth.getUser();
+    const email = userRes?.user?.email ?? "no-reply@monetisexy.app";
+
+    const asaas = await loadAsaas();
+    const tokenized = await asaas.tokenizeCreditCard({
+      customerId,
+      creditCard: {
+        holderName: data.holderName,
+        number: data.number,
+        expiryMonth: data.expiryMonth,
+        expiryYear: data.expiryYear,
+        ccv: data.ccv,
+      },
+      creditCardHolderInfo: {
+        name: data.holderName,
+        email,
+        cpfCnpj: data.cpf,
+        postalCode: (data.postalCode || "00000000").replace(/\D/g, ""),
+        addressNumber: data.addressNumber || "0",
+        phone: data.phone,
+      },
+    });
+
+    const last4 = tokenized.creditCardNumber?.slice(-4) ?? data.number.slice(-4);
+
+    const { data: inserted, error } = await supabase
+      .from("saved_cards")
+      .insert({
+        user_id: userId,
+        asaas_customer_id: customerId,
+        asaas_card_token: tokenized.creditCardToken,
+        brand: tokenized.creditCardBrand ?? null,
+        last4,
+        holder_name: data.holderName,
+        exp_month: data.expiryMonth,
+        exp_year: data.expiryYear,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    return { id: inserted.id as string, last4, brand: tokenized.creditCardBrand };
+  });
+
+export const deleteSavedCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("saved_cards")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const chargeSavedCardTopUp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { savedCardId: string; amountCents: number }) => {
+    if (!data?.savedCardId) throw new Error("Cartão não informado");
+    if (!Number.isFinite(data?.amountCents) || data.amountCents < 1000)
+      throw new Error("Recarga mínima é R$ 10,00");
+    return data;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: card, error } = await supabase
+      .from("saved_cards")
+      .select("id, asaas_customer_id, asaas_card_token")
+      .eq("id", data.savedCardId)
+      .eq("user_id", userId)
+      .single();
+    if (error || !card) throw new Error("Cartão não encontrado");
+
+    const asaas = await loadAsaas();
+    const payment = await asaas.createPayment({
+      customerId: card.asaas_customer_id,
+      billingType: "CREDIT_CARD",
+      amountCents: data.amountCents,
+      description: `Recarga carteira`,
+      externalReference: `wallet_topup:${userId}`,
+      creditCardToken: card.asaas_card_token,
+    });
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: intent, error: iErr } = await supabaseAdmin
+      .from("payment_intents")
+      .insert({
+        provider: "asaas",
+        event_id: payment.id,
+        event_type: "created",
+        asaas_payment_id: payment.id,
+        asaas_invoice_url: payment.invoiceUrl ?? null,
+        method: "CREDIT_CARD",
+        payload: payment as any,
+        metadata: {
+          referenceTable: "wallet_topups",
+          referenceId: userId,
+          amountCents: data.amountCents,
+          buyerId: userId,
+          savedCardId: card.id,
+        },
+      })
+      .select("id")
+      .single();
+    if (iErr) throw new Error(iErr.message);
+
+    return {
+      paymentIntentId: intent.id as string,
+      asaasPaymentId: payment.id,
+      status: payment.status,
+      invoiceUrl: payment.invoiceUrl ?? null,
+    };
+  });
