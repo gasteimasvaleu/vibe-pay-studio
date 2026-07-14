@@ -57,6 +57,7 @@ async function asaasFetch<T = any>(
     ...init,
     headers: {
       "Content-Type": "application/json",
+      "User-Agent": "VibePayStudio/1.0 (+https://vibe-pay-studio.lovable.app)",
       access_token: apiKey ?? getApiKey(),
       accept: "application/json",
       ...(init.headers ?? {}),
