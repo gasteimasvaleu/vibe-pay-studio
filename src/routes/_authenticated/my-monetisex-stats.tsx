@@ -105,7 +105,7 @@ function useRange() {
   const navigate = useNavigate({ from: Route.fullPath });
   const range = search.from && search.to ? { from: search.from, to: search.to } : defaultRange();
   const setRange = (r: { from: string; to: string }) =>
-    navigate({ search: (prev) => ({ ...prev, from: r.from, to: r.to }) });
+    navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, from: r.from, to: r.to }) });
   return { range, setRange };
 }
 
