@@ -37,7 +37,7 @@ export const getEarningsSeries = createServerFn({ method: "GET" })
       .select("created_at, amount_cents_gross, net_cents, kind")
       .eq("creator_id", userId)
       .eq("status", "paid")
-      .in("kind", EARNING_KINDS as unknown as string[])
+      .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from)
       .lte("created_at", data.to);
     if (error) throw new Error(error.message);
@@ -67,7 +67,7 @@ export const getEarningsByProduct = createServerFn({ method: "GET" })
       .select("kind, amount_cents_gross, net_cents")
       .eq("creator_id", userId)
       .eq("status", "paid")
-      .in("kind", EARNING_KINDS as unknown as string[])
+      .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from)
       .lte("created_at", data.to);
     if (error) throw new Error(error.message);
@@ -108,7 +108,7 @@ export const getPeriodTotals = createServerFn({ method: "GET" })
         .select("amount_cents_gross, net_cents, kind, is_international, country_code")
         .eq("creator_id", userId)
         .eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[])
+        .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", a.toISOString())
         .lte("created_at", b.toISOString());
       if (error) throw new Error(error.message);
@@ -146,18 +146,18 @@ export const getResumoStats = createServerFn({ method: "GET" })
     const [todayRes, monthRes, historyRes, periodRes] = await Promise.all([
       supabase.from("transactions").select(baseSelect)
         .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[])
+        .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", startOfDay.toISOString()),
       supabase.from("transactions").select(baseSelect)
         .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[])
+        .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", startOfMonth.toISOString()),
       supabase.from("transactions").select(baseSelect)
         .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[]),
+        .in("kind", EARNING_KINDS as unknown as never[]),
       supabase.from("transactions").select(baseSelect)
         .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[])
+        .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", data.from).lte("created_at", data.to),
     ]);
 
@@ -220,7 +220,7 @@ export const getRecordes = createServerFn({ method: "GET" })
         .from("transactions")
         .select("created_at, amount_cents_gross")
         .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", EARNING_KINDS as unknown as string[])
+        .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", fromIso).lte("created_at", toIso);
       if (error) throw new Error(error.message);
       const map = new Map<string, number>();
@@ -267,8 +267,8 @@ export const listExtrato = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
 
-    if (data.kinds.length) q = q.in("kind", data.kinds as unknown as string[]);
-    if (data.statuses.length) q = q.in("status", data.statuses as unknown as string[]);
+    if (data.kinds.length) q = q.in("kind", data.kinds as unknown as never[]);
+    if (data.statuses.length) q = q.in("status", data.statuses as unknown as never[]);
 
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
@@ -378,7 +378,7 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
       .from("transactions")
       .select("buyer_id, amount_cents_gross, kind")
       .eq("creator_id", userId).eq("status", "paid")
-      .in("kind", EARNING_KINDS as unknown as string[])
+      .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from).lte("created_at", data.to);
 
     if (data.metric === "subscription") q = q.eq("kind", "subscription");
@@ -425,7 +425,7 @@ export const getTopPaises = createServerFn({ method: "GET" })
       .from("transactions")
       .select("country_code, amount_cents_gross")
       .eq("creator_id", userId).eq("status", "paid")
-      .in("kind", EARNING_KINDS as unknown as string[])
+      .in("kind", EARNING_KINDS as unknown as never[])
       .not("country_code", "is", null)
       .gte("created_at", data.from).lte("created_at", data.to);
     if (error) throw new Error(error.message);
