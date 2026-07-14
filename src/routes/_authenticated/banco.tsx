@@ -344,3 +344,15 @@ function BancoPage() {
     </div>
   );
 }
+
+function mapPayout(p: any) {
+  return {
+    bankName: p.bank_name,
+    accountType: p.account_type,
+    agency: p.agency,
+    accountNumber: p.account_number,
+    pixKeyType: p.pix_key_type,
+    pixKey: p.pix_key,
+  };
+}
+
