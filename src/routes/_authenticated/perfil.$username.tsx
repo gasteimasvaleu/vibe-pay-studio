@@ -605,9 +605,9 @@ function PerfilPage() {
                   setTipPubId(undefined);
                   setTipOpen(true);
                 }}
-                className="h-14 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-8 w-8 rounded-full border border-border grid place-items-center">
+                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <DollarSign className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Mimo
@@ -615,9 +615,9 @@ function PerfilPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/chat" })}
-                className="h-14 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-8 w-8 rounded-full border border-border grid place-items-center">
+                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Chat
