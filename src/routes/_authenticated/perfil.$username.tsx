@@ -497,6 +497,10 @@ function PerfilPage() {
                   item={item}
                   onUnlock={handleUnlock}
                   onComment={setCommentsFor}
+                  onTip={(it) => {
+                    setTipPubId(it.id);
+                    setTipOpen(true);
+                  }}
                 />
               ))
             ) : (

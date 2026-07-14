@@ -239,6 +239,14 @@ function FeedPage() {
         }}
       />
 
+      <TipDialog
+        open={!!tipFor}
+        onOpenChange={(v) => !v && setTipFor(null)}
+        creatorId={tipFor?.author_id ?? ""}
+        creatorName={tipFor?.author_username ?? "creator"}
+        publicationId={tipFor?.id}
+      />
+
 
     </div>
   );
