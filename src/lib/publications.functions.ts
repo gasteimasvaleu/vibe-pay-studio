@@ -322,7 +322,12 @@ export const getUserPublications = createServerFn({ method: "POST" })
       .order("published_at", { ascending: false })
       .limit(limit + 1);
 
+    if (data.userId !== currentUserId) {
+      query = query.is("archived_at", null);
+    }
+
     if (data.cursor) query = query.lt("published_at", data.cursor);
+
 
     const { data: pubs, error } = await query;
     if (error) throw new Error(error.message);
