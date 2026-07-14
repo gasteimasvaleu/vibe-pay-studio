@@ -66,6 +66,7 @@ function ChatThreadView() {
   const sendFn = useServerFn(sendMessage);
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [text, setText] = useState("");
