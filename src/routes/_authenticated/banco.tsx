@@ -214,6 +214,13 @@ function BancoPage() {
         qc.refetchQueries({ queryKey: ["bancoWithdrawals"], type: "active" }),
         qc.refetchQueries({ queryKey: ["payoutStatus"], type: "active" }),
       ]);
+    } catch {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["bancoOverview"] }),
+        qc.invalidateQueries({ queryKey: ["bancoTransactions"] }),
+        qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] }),
+        qc.invalidateQueries({ queryKey: ["payoutStatus"] }),
+      ]);
     } finally {
       setIsRefreshingAfterWithdrawal(false);
     }
