@@ -814,6 +814,8 @@ function PublisherPage() {
             onCancelAudio={cancelAudioRecording}
             onConfirmAudio={confirmAudioRecording}
             onRemoveAudio={removeAudio}
+            preview={preview}
+            onEditPreview={openPreviewSheet}
           />
         )}
       </main>
