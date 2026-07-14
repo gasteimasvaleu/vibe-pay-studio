@@ -1098,7 +1098,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
                   ) : (
                     <div className="mt-4 space-y-3">
                       {(pubQ.data?.items ?? []).map(p => (
-                        <Link key={p.id} to="/post/$postId" params={{ postId: p.id }} className="block rounded-xl bg-muted/50 p-3">
+                        <Link key={p.id} to="/feed" className="block rounded-xl bg-muted/50 p-3">
                           <p className="font-semibold truncate">{p.caption || "(sem legenda)"}</p>
                           <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
                             <span>{fullDate.format(new Date(p.publishedAt as string))}</span>
@@ -1397,7 +1397,7 @@ function DestaquesPanel({ range }: { range: { from: string; to: string } }) {
         <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
         {pubQ.isLoading ? <Skeleton className="mt-6 h-16 w-full" /> :
           !topPub ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma postagem no período.</p> : (
-            <Link to="/post/$postId" params={{ postId: topPub.id }} className="mt-4 block rounded-xl bg-muted/50 p-4">
+            <Link to="/feed" className="mt-4 block rounded-xl bg-muted/50 p-4">
               <p className="font-semibold truncate">{topPub.caption || "(sem legenda)"}</p>
               <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
                 <span>{fullDate.format(new Date(topPub.publishedAt as string))}</span>

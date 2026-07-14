@@ -50,12 +50,13 @@ function PromotionPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) return;
       const { data } = await supabase
         .from("profiles")
         .select("price_monthly")
-        .eq("user_id", userData.user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       setMonthlyPrice(data?.price_monthly ?? 0);
       setLoadingPrice(false);

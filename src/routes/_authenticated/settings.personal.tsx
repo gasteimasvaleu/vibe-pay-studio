@@ -22,9 +22,10 @@ export const Route = createFileRoute("/_authenticated/settings/personal")({
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
-    return { email: userData.user.email ?? "" };
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
+    return { email: user.email ?? "" };
   },
   component: PersonalPage,
 });

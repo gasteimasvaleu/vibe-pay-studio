@@ -79,7 +79,7 @@ function ChatLayout() {
   });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
+    supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
 
   useEffect(() => {

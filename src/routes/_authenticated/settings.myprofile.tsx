@@ -32,15 +32,16 @@ export const Route = createFileRoute("/_authenticated/settings/myprofile")({
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
       .select("username")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
     const username =
-      profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
+      profile?.username ?? user.email?.split("@")[0] ?? "voce";
     return { username };
   },
   component: SettingsMyProfilePage,

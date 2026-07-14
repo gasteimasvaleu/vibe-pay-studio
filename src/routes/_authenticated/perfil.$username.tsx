@@ -53,9 +53,10 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  beforeLoad: async ({ params }) => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+  loader: async ({ params }) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
 
 
     const { data: profile } = await supabase
@@ -108,7 +109,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       supabase
         .from("subscriptions")
         .select("id")
-        .eq("subscriber_id", userData.user.id)
+        .eq("subscriber_id", user.id)
         .eq("creator_id", profile.user_id)
         .eq("status", "active")
         .gt("current_period_end", new Date().toISOString())
@@ -116,13 +117,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       supabase
         .from("follows")
         .select("follower_id")
-        .eq("follower_id", userData.user.id)
+        .eq("follower_id", user.id)
         .eq("followee_id", profile.user_id)
         .maybeSingle(),
     ]);
 
     return {
-      viewerId: userData.user.id,
+      viewerId: user.id,
       profile: {
         userId: profile.user_id,
         username: profile.username,
@@ -231,7 +232,7 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 function PerfilPage() {
   const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
-    Route.useRouteContext();
+    Route.useLoaderData();
   const router = useRouter();
   const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
