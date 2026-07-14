@@ -241,14 +241,14 @@ function PerfilPage() {
               className="flex-1 h-full gap-2 rounded-none bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
               <Smartphone className="h-4 w-4" />
-              212 Postagens
+              {postsCount} Postagens
             </TabsTrigger>
             <TabsTrigger
               value="midias"
               className="flex-1 h-full gap-2 rounded-none border-l border-border bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
             >
               <Clapperboard className="h-4 w-4" />
-              411 Mídias
+              {mediaCount} Mídias
             </TabsTrigger>
           </TabsList>
 
