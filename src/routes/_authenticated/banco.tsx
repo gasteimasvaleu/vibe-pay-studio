@@ -162,11 +162,19 @@ function BancoPage() {
             </div>
           </section>
         ) : (
-          <section className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            <p className="text-sm text-emerald-900 font-medium">
-              Recebimento ativo
-              {status?.accountStatus ? ` · ${status.accountStatus}` : ""}
+          <section className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 space-y-2">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+              <p className="text-sm text-emerald-900 font-medium">
+                Recebimento ativo
+                {status?.accountStatus ? ` · ${status.accountStatus}` : ""}
+              </p>
+            </div>
+            <p className="text-xs text-emerald-900/80 break-all">
+              Wallet ID: {status?.walletId}
+            </p>
+            <p className="text-xs text-emerald-900/80">
+              Saque automático: {status?.hasApiKey ? "ativado" : "não ativado"}
             </p>
           </section>
         )}
