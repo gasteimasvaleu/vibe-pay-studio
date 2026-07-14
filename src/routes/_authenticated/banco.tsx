@@ -47,7 +47,6 @@ import {
 } from "@/lib/finance.functions";
 import { cancelWithdrawal } from "@/lib/payouts.functions";
 import { SacarDialog } from "@/components/banco/SacarDialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const BRL = new Intl.NumberFormat("pt-BR", {
