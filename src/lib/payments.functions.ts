@@ -611,3 +611,144 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
       processedAt: intent.processed_at,
     };
   });
+
+// ---------------- Payout setup (subconta Asaas + dados bancários) ----------------
+
+type PayoutSetupInput = {
+  // Titular (subconta Asaas)
+  fullName: string;
+  cpfCnpj: string;
+  birthDate?: string; // yyyy-MM-dd
+  mobilePhone: string;
+  postalCode: string;
+  address: string;
+  addressNumber: string;
+  province: string; // bairro
+  // Conta bancária / PIX
+  bankName: string;
+  accountType: "corrente" | "poupanca";
+  agency: string;
+  accountNumber: string;
+  pixKeyType: "cpf" | "cnpj" | "email" | "telefone" | "aleatoria";
+  pixKey: string;
+};
+
+export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: PayoutSetupInput) => {
+    const required: Array<[keyof PayoutSetupInput, string]> = [
+      ["fullName", "nome completo"],
+      ["cpfCnpj", "CPF/CNPJ"],
+      ["mobilePhone", "telefone"],
+      ["postalCode", "CEP"],
+      ["address", "endereço"],
+      ["addressNumber", "número"],
+      ["province", "bairro"],
+      ["bankName", "banco"],
+      ["accountType", "tipo de conta"],
+      ["agency", "agência"],
+      ["accountNumber", "número da conta"],
+      ["pixKeyType", "tipo de chave Pix"],
+      ["pixKey", "chave Pix"],
+    ];
+    for (const [k, label] of required) {
+      const v = (data as any)[k];
+      if (!v || String(v).trim().length === 0) {
+        throw new Error(`Informe ${label}`);
+      }
+    }
+    return data;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: profile, error: profErr } = await supabase
+      .from("profiles")
+      .select("asaas_wallet_id, asaas_account_id, asaas_account_status, kyc_status")
+      .eq("user_id", userId)
+      .single();
+    if (profErr || !profile) throw new Error("perfil não encontrado");
+
+    if (profile.kyc_status !== "verified") {
+      throw new Error(
+        "Verifique sua identidade antes de configurar o recebimento",
+      );
+    }
+
+    let walletId = profile.asaas_wallet_id as string | null;
+    let accountStatus = profile.asaas_account_status as string | null;
+
+    if (!walletId) {
+      const { data: userRes } = await supabase.auth.getUser();
+      const email = userRes?.user?.email;
+      if (!email) throw new Error("e-mail do usuário indisponível");
+
+      const asaas = await loadAsaas();
+      const sub = await asaas.createSubaccount({
+        name: data.fullName.trim(),
+        email,
+        cpfCnpj: data.cpfCnpj.replace(/\D/g, ""),
+        birthDate: data.birthDate,
+        mobilePhone: data.mobilePhone.replace(/\D/g, ""),
+        address: data.address,
+        addressNumber: data.addressNumber,
+        province: data.province,
+        postalCode: data.postalCode.replace(/\D/g, ""),
+      });
+      accountStatus =
+        typeof sub.accountStatus === "string"
+          ? sub.accountStatus
+          : sub.accountStatus?.general ?? "PENDING";
+      walletId = sub.walletId;
+
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({
+          asaas_account_id: sub.id,
+          asaas_wallet_id: sub.walletId,
+          asaas_account_status: accountStatus,
+        })
+        .eq("user_id", userId);
+      if (updErr) throw new Error(updErr.message);
+    }
+
+    const { error: payoutErr } = await (supabase as any)
+      .from("payout_accounts")
+      .upsert(
+        {
+          user_id: userId,
+          bank_name: data.bankName,
+          account_type: data.accountType,
+          agency: data.agency,
+          account_number: data.accountNumber,
+          pix_key_type: data.pixKeyType,
+          pix_key: data.pixKey,
+        },
+        { onConflict: "user_id" },
+      );
+    if (payoutErr) throw new Error(payoutErr.message);
+
+    return { walletId, accountStatus };
+  });
+
+export const getCreatorPayoutStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("kyc_status, asaas_wallet_id, asaas_account_status")
+      .eq("user_id", userId)
+      .single();
+    const { data: payout } = await (supabase as any)
+      .from("payout_accounts")
+      .select("bank_name, account_type, agency, account_number, pix_key_type, pix_key")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return {
+      kycStatus: profile?.kyc_status ?? "pending",
+      walletId: (profile?.asaas_wallet_id as string | null) ?? null,
+      accountStatus: (profile?.asaas_account_status as string | null) ?? null,
+      payoutAccount: payout ?? null,
+    };
+  });

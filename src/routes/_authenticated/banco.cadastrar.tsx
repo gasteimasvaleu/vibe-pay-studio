@@ -1,6 +1,9 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
+import { getCreatorPayoutStatus } from "@/lib/payments.functions";
 
 export const Route = createFileRoute("/_authenticated/banco/cadastrar")({
   head: () => ({
@@ -15,6 +18,12 @@ export const Route = createFileRoute("/_authenticated/banco/cadastrar")({
 function CadastrarBancoPage() {
   const router = useRouter();
   const close = () => router.history.back();
+  const fetchStatus = useServerFn(getCreatorPayoutStatus);
+  const statusQuery = useQuery({
+    queryKey: ["payoutStatus"],
+    queryFn: () => fetchStatus(),
+  });
+  const kycVerified = statusQuery.data?.kycStatus === "verified";
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -37,8 +46,24 @@ function CadastrarBancoPage() {
       </header>
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8">
-        <CadastrarBancoForm onClose={close} />
+        <CadastrarBancoForm
+          onClose={close}
+          kycVerified={kycVerified}
+          initial={
+            statusQuery.data?.payoutAccount
+              ? {
+                  bankName: (statusQuery.data.payoutAccount as any).bank_name,
+                  accountType: (statusQuery.data.payoutAccount as any).account_type,
+                  agency: (statusQuery.data.payoutAccount as any).agency,
+                  accountNumber: (statusQuery.data.payoutAccount as any).account_number,
+                  pixKeyType: (statusQuery.data.payoutAccount as any).pix_key_type,
+                  pixKey: (statusQuery.data.payoutAccount as any).pix_key,
+                }
+              : null
+          }
+        />
       </main>
     </div>
   );
 }
+
