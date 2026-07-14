@@ -1,72 +1,35 @@
 ## Objetivo
+Deixar todo o fluxo de onboarding do creator em **tema claro** com background `#FFFFFF`, ajustando cores de textos, botões e do loader do KYC para manter contraste e legibilidade.
 
-Diferenciar três perfis na plataforma:
+## Escopo (somente frontend/apresentação)
 
-| Tipo | account_type | Página pública | Dashboard / Navbar |
-|---|---|---|---|
-| Assinante puro (cadastro direto) | `subscriber` | ❌ | Dashboard e navbar reduzidos de assinante |
-| Assinante via "Perfil Gratuito" | **`free_creator`** (novo) | ✅ (gratuita) | Iguais aos do creator |
-| Creator pago (onboarding completo) | `creator` | ✅ (paga) | Dashboard e navbar de creator |
+### 1. `src/components/onboarding/OnboardingShell.tsx` (shell compartilhado)
+- Trocar wrapper: `bg-white text-neutral-900` no lugar de `#0b0713` + `text-white`.
+- Remover as camadas de fundo escuras: gradient radial e o pattern de pontos brancos.
+- Header: fundo `bg-white/80` com `backdrop-blur`, borda `border-neutral-200`, título `text-neutral-900`, botão voltar com hover `bg-neutral-100` e ícone `text-neutral-700`.
+- Barra de progresso: trilho `bg-neutral-200`, preenchimento mantém gradiente fúcsia/roxo (contraste ok em branco).
 
-## 1. Banco de dados (migração)
+### 2. Páginas de onboarding (ajustes de cor de texto/botão)
+Nos arquivos abaixo, substituir tokens escuros (`text-white`, `text-white/60`, `text-white/80`, `bg-white/5`, `border-white/10`, `bg-black/…`) por equivalentes claros (`text-neutral-900`, `text-neutral-600`, `bg-neutral-50`, `border-neutral-200`, etc.) e garantir que botões primários (fúcsia/roxo) tenham texto branco:
+- `src/routes/_authenticated/creator.onboarding.assinatura.tsx`
+- `src/routes/_authenticated/creator.onboarding.redes-sociais.tsx`
+- `src/routes/_authenticated/creator.onboarding.documentos.index.tsx`
+- `src/routes/_authenticated/creator.onboarding.documentos.aprovado.tsx`
+- `src/routes/_authenticated/creator.onboarding.documentos.verificando.tsx`
 
-- `profiles.account_type` hoje é `text` livre com CHECK/handle_new_user restringindo a `'subscriber'|'creator'`. Ampliar para aceitar `'free_creator'`:
-  - Atualizar `handle_new_user()` para aceitar os três valores (fallback continua `'subscriber'`).
-  - Se existir CHECK/enum restringindo os valores, ajustar.
-- Não precisa migração de dados: usuários existentes ficam como estão.
+Cards informativos (blocos de "Privacidade", "Segurança", listas de destaque, resumo de preços simulados) passam para superfícies claras: `bg-neutral-50` com `border-neutral-200`, ícones mantendo o roxo/fúcsia da marca, texto principal em `text-neutral-900` e secundário em `text-neutral-600`.
 
-## 2. Persistir tipo no fluxo `/criar-perfil-gratuito`
+### 3. Loading do KYC (background da página de loading)
+Em `creator.onboarding.documentos.verificando.tsx` e no `pendingComponent` do `aprovado.tsx`:
+- Como o `OnboardingShell` já será branco, o loader herda fundo `#FFFFFF`.
+- Ajustar textos abaixo do `GooeyLoader` de `text-white/90` e `text-white/60` para `text-neutral-900` e `text-neutral-600`.
+- Manter o `GooeyLoader` como está (SVG); apenas garantir que a `className` de cor (`text-[14px]`) não conflite com o novo fundo — se o gooey usar `currentColor` claro, trocar para uma cor da marca (ex.: `text-fuchsia-600`) para visibilidade sobre branco.
 
-`src/routes/_authenticated/criar-perfil-gratuito.tsx` hoje só mostra toast. Fazer o "Criar Conta" chamar uma nova server function `createFreeCreatorProfile` (em `src/lib/onboarding.functions.ts` ou novo `src/lib/free-creator.functions.ts`) que, com `requireSupabaseAuth`:
+### 4. Não alterar
+- Nenhuma lógica de negócio, server functions, validações, navegação ou dados.
+- Nenhuma outra rota fora do fluxo `/creator/onboarding/*`.
+- Dashboard, feed e demais telas permanecem no tema escuro atual.
 
-- Valida `handle` único (checa `profiles.username`).
-- Faz upload do avatar/cover para o bucket `criativos` (opcional nesta rodada; se ficar pesado, salvar só URLs picsum e deixar upload para depois — decidir com o valor atual das previews).
-- Atualiza `profiles` do usuário: `username = handle`, `display_name`, `bio`, `avatar_url`, `cover_url`, `account_type = 'free_creator'`, `onboarding_completed_at = now()`.
-- Retorna sucesso; página redireciona pra `/dashboard`.
-
-Bloqueia se o usuário já for `creator` (não faz downgrade).
-
-## 3. Dashboard
-
-Em `src/routes/_authenticated/dashboard.tsx`:
-
-- Ampliar `AccountType` para `"subscriber" | "free_creator" | "creator"`.
-- Tratar `free_creator` como creator para efeitos de UI: renderizar **`CreatorDashboard`** (que já mostra "Meu Perfil", Chat, Acervo, Em Alta etc.).
-- Manter redirecionamentos de onboarding apenas para `account_type === 'creator'` incompleto.
-
-Em `CreatorDashboard.tsx`: aceitar prop opcional `variant: 'creator' | 'free_creator'` (default `'creator'`) para, se necessário no futuro, esconder cards ligados a monetização paga (ex.: "Meu Banco", "Ofertas"). Nesta rodada, por padrão, **mostrar todos os cards** conforme pedido ("mesmas funções"), mas manter a prop para ajuste rápido depois.
-
-`SubscriberDashboard` continua sendo usado somente para `subscriber` puro; o `showProfileLink` pode voltar ao default (sempre escondido para subscriber puro, já que ele nunca terá página).
-
-## 4. Navbar inferior
-
-Em `src/components/site/BottomNav.tsx`:
-
-- Tratar `free_creator` como não-subscriber: `const isSubscriber = accountType === "subscriber"`.
-- Isso já dispara o layout de 5 colunas com botão central "Postar" e "Minha carteira" — igual ao creator.
-
-## 5. Página pública `/perfil/$username`
-
-`src/routes/_authenticated/perfil.$username.tsx` hoje faz `throw notFound()` quando `account_type !== 'creator'`. Trocar para permitir `creator` **e** `free_creator`. Diferenças de renderização:
-
-- Para `free_creator`: esconder botão/CTA de "Assinar" (ou mostrar apenas "Seguir"), já que o perfil é gratuito. Preços e planos ficam ocultos.
-- Manter todo o resto (bio, capa, publicações).
-
-## 6. Outros pontos a checar
-
-- `src/routes/_authenticated/feed.tsx`, `em-alta.tsx`, `chat.$threadId.tsx`, `settings.creator.tsx`: onde comparam com `"creator"`, ampliar para incluir `"free_creator"` quando o comportamento esperado é o mesmo (ex.: permitir postar, aparecer em Em Alta, exibir configurações de creator).
-- `handle_new_user()`: já mantém `'subscriber'` como default para cadastro direto — sem mudança comportamental.
-
-## Detalhes técnicos
-
-- Nova server function usa `requireSupabaseAuth` + upload em `criativos` via `context.supabase.storage.from('criativos').upload(...)`.
-- Regenerar tipos Supabase após a migração (automático).
-- Todas as comparações `=== "creator"` na UI que hoje decidem "pode ver painel/perfil/postar" precisam virar `accountType !== "subscriber"` (helper `isCreatorLike(accountType)` em `src/lib/auth.ts`).
-
-## Ordem de execução
-
-1. Migração: ajustar `handle_new_user` e CHECK/enum para aceitar `'free_creator'`.
-2. Novo helper `isCreatorLike` em `src/lib/auth.ts`.
-3. `BottomNav`, `dashboard.tsx`, `perfil.$username.tsx`, `feed.tsx`, `em-alta.tsx`, `chat.$threadId.tsx`, `settings.creator.tsx`: usar o helper.
-4. Server function `createFreeCreatorProfile` + wire no `/criar-perfil-gratuito`.
-5. Build + verificação visual.
+## Verificação
+- `bun run build:dev` para garantir tipos e build.
+- Conferência visual das 5 páginas de onboarding + estado de loading do KYC.
