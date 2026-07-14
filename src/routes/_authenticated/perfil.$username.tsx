@@ -41,6 +41,7 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 
