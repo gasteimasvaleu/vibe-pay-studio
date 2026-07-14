@@ -25,6 +25,68 @@ export const getCreatorWallet = createServerFn({ method: "GET" })
   });
 
 /**
+ * Visão geral do banco do criador: saldos separados por origem (Nacional/Internacional).
+ * Deriva o split de `released` a partir das próprias transactions, já que
+ * `creator_wallets.released_cents` é um pool único.
+ */
+export const getCreatorBancoOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    const [walletRes, txRes] = await Promise.all([
+      supabase
+        .from("creator_wallets")
+        .select(
+          "released_cents, pending_national_cents, pending_international_cents, updated_at",
+        )
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("transactions")
+        .select("net_cents, is_international, wallet_released_at")
+        .eq("creator_id", userId)
+        .eq("status", "paid")
+        .gt("net_cents", 0)
+        .not("kind", "in", "(withdrawal,refund,wallet_topup,wallet_bonus)"),
+    ]);
+
+    if (walletRes.error) throw new Error(walletRes.error.message);
+    if (txRes.error) throw new Error(txRes.error.message);
+
+    let releasedNational = 0;
+    let releasedIntl = 0;
+    let pendingNational = 0;
+    let pendingIntl = 0;
+    for (const t of txRes.data ?? []) {
+      const net = t.net_cents ?? 0;
+      const isIntl = !!t.is_international;
+      const released = !!t.wallet_released_at;
+      if (released && isIntl) releasedIntl += net;
+      else if (released) releasedNational += net;
+      else if (isIntl) pendingIntl += net;
+      else pendingNational += net;
+    }
+
+    // Fallback: se a soma derivada de released for zero mas a wallet tem saldo,
+    // atribui tudo ao Nacional (comportamento seguro).
+    const walletReleased = walletRes.data?.released_cents ?? 0;
+    if (releasedNational + releasedIntl === 0 && walletReleased > 0) {
+      releasedNational = walletReleased;
+    }
+
+    return {
+      national: { releasedCents: releasedNational, pendingCents: pendingNational },
+      international: { releasedCents: releasedIntl, pendingCents: pendingIntl },
+      totals: {
+        releasedCents: releasedNational + releasedIntl,
+        pendingCents: pendingNational + pendingIntl,
+      },
+      updatedAt: walletRes.data?.updated_at ?? null,
+    };
+  });
+
+/**
  * Saldo pré-pago (wallet) do assinante.
  */
 export const getSubscriberWallet = createServerFn({ method: "GET" })
