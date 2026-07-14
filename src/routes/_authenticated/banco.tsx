@@ -98,14 +98,35 @@ function BancoPage() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const fetchStatus = useServerFn(getCreatorPayoutStatus);
+  const fetchOverview = useServerFn(getCreatorBancoOverview);
+  const fetchTransactions = useServerFn(listCreatorTransactions);
+
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
     queryFn: () => fetchStatus(),
   });
+  const overviewQuery = useQuery({
+    queryKey: ["bancoOverview"],
+    queryFn: () => fetchOverview(),
+  });
+  const txQuery = useQuery({
+    queryKey: ["bancoTransactions"],
+    queryFn: () => fetchTransactions({ data: { limit: 20 } }),
+  });
+
   const status = statusQuery.data;
   const kycVerified = status?.kycStatus === "verified";
   const walletActive = !!status?.walletId;
   const payoutAccount = status?.payoutAccount ?? null;
+
+  const overview = overviewQuery.data;
+  const nationalReleased = overview?.national.releasedCents ?? 0;
+  const nationalPending = overview?.national.pendingCents ?? 0;
+  const intlReleased = overview?.international.releasedCents ?? 0;
+  const intlPending = overview?.international.pendingCents ?? 0;
+  const intlEmpty = intlReleased === 0 && intlPending === 0;
+
+
 
 
   return (
