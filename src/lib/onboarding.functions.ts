@@ -304,19 +304,17 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
     if (takenErr) throw new Error(takenErr.message);
     if (taken) throw new Error("handle_taken");
 
-    const update: Record<string, unknown> = {
-      username: data.handle,
-      account_type: "free_creator",
-      display_name: data.displayName,
-      bio: data.bio ?? null,
-      avatar_url: data.avatarUrl ?? null,
-      cover_url: data.coverUrl ?? null,
-      onboarding_completed_at: new Date().toISOString(),
-    };
-
     const { error: upErr } = await supabase
       .from("profiles")
-      .update(update)
+      .update({
+        username: data.handle,
+        account_type: "free_creator",
+        display_name: data.displayName,
+        bio: data.bio ?? null,
+        avatar_url: data.avatarUrl ?? null,
+        cover_url: data.coverUrl ?? null,
+        onboarding_completed_at: new Date().toISOString(),
+      })
       .eq("user_id", userId);
     if (upErr) throw new Error(upErr.message);
 
