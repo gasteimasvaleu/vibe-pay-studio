@@ -634,7 +634,11 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
     if (PAID.has(payment.status) && !intent.processed_at) {
       try {
         const { applyPaidIntent } = await import("@/lib/payments-reconcile.server");
-        const reconciled = await applyPaidIntent(supabaseAdmin, intent, intent.asaas_payment_id);
+        const reconciled = await applyPaidIntent(
+          supabaseAdmin,
+          intent,
+          intent.asaas_payment_id,
+        );
         if (reconciled) processedAt = new Date().toISOString();
       } catch (e) {
         console.error("[poller] reconcile failed", e);
