@@ -118,16 +118,15 @@ export function SacarDialog({
         description: `${formatBRL(amountCents)} enviado via PIX.`,
       });
       onOpenChange(false);
+      await onWithdrawalSuccess?.({
+        amountCents: withdrawnAmountCents,
+        previousReleasedCents,
+        origem,
+      });
       await Promise.all([
-        qc.invalidateQueries({ queryKey: ["bancoOverview"] }),
         qc.invalidateQueries({ queryKey: ["bancoTransactions"] }),
         qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] }),
         qc.invalidateQueries({ queryKey: ["payoutStatus"] }),
-        onWithdrawalSuccess?.({
-          amountCents: withdrawnAmountCents,
-          previousReleasedCents,
-          origem,
-        }),
       ]);
     },
     onError: (err: any) => {
