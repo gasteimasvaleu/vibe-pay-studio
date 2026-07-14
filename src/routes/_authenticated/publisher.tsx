@@ -1262,28 +1262,62 @@ function StepCompose({
             </div>
           </SortableContext>
         </DndContext>
-      ) : media.length === 1 && first ? (
-        <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
-          {first.type === "video" ? (
-            <video src={first.previewUrl} className="w-full h-full object-cover" />
-          ) : (
-            <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
-          )}
-        </div>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-          {media.map((m) => (
-            <div
-              key={m.id}
-              className="shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+          {toggles.paid.enabled && (
+            <button
+              type="button"
+              onClick={onEditPreview}
+              className={`relative shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted ring-2 ring-primary ${
+                preview?.status === "ready" ? "" : "border-2 border-dashed border-primary"
+              }`}
+              aria-label={preview ? "Editar prévia" : "Adicionar prévia"}
             >
-              {m.type === "video" ? (
-                <video src={m.previewUrl} className="w-full h-full object-cover" />
+              {preview?.status === "ready" ? (
+                preview.type === "video" ? (
+                  <video src={preview.previewUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={preview.previewUrl} alt="Prévia" className="w-full h-full object-cover" />
+                )
+              ) : preview?.status === "uploading" ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/70 backdrop-blur-sm px-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <Progress value={preview.uploadProgress} className="h-1.5 w-full" />
+                  <span className="text-[10px] font-semibold">{preview.uploadProgress}%</span>
+                </div>
               ) : (
-                <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 grid place-items-center text-primary">
+                  <Plus className="h-8 w-8" />
+                </div>
+              )}
+              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold px-2 py-1 shadow-md">
+                <ImageIcon className="h-3 w-3" />
+                Prévia
+              </span>
+            </button>
+          )}
+          {media.length === 1 && first && !toggles.paid.enabled ? (
+            <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
+              {first.type === "video" ? (
+                <video src={first.previewUrl} className="w-full h-full object-cover" />
+              ) : (
+                <img src={first.previewUrl} alt="" className="w-full h-full object-cover" />
               )}
             </div>
-          ))}
+          ) : (
+            media.map((m) => (
+              <div
+                key={m.id}
+                className="shrink-0 w-32 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+              >
+                {m.type === "video" ? (
+                  <video src={m.previewUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 
