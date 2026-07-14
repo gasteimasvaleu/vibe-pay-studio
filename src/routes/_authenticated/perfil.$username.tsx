@@ -42,6 +42,8 @@ import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { followCreatorFree, unfollowCreator } from "@/lib/monetization.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
