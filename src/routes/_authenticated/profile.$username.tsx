@@ -100,6 +100,42 @@ function ProfilePage() {
 
   const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
 
+  const fetchPosts = useServerFn(getUserPostsGrid);
+  const fetchMedias = useServerFn(getUserMediasGrid);
+
+  const postsQuery = useInfiniteQuery({
+    queryKey: ["user-posts-grid", profile.userId],
+    queryFn: ({ pageParam }) =>
+      fetchPosts({ data: { userId: profile.userId, limit: 24, cursor: pageParam ?? undefined } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: activeTab === "posts",
+  });
+
+  const mediasQuery = useInfiniteQuery({
+    queryKey: ["user-medias-grid", profile.userId],
+    queryFn: ({ pageParam }) =>
+      fetchMedias({ data: { userId: profile.userId, limit: 24, cursor: pageParam ?? undefined } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: activeTab === "medias",
+  });
+
+  const postsSentinel = useInfiniteScrollSentinel<HTMLDivElement>({
+    hasNextPage: postsQuery.hasNextPage,
+    isFetchingNextPage: postsQuery.isFetchingNextPage,
+    fetchNextPage: postsQuery.fetchNextPage,
+  });
+  const mediasSentinel = useInfiniteScrollSentinel<HTMLDivElement>({
+    hasNextPage: mediasQuery.hasNextPage,
+    isFetchingNextPage: mediasQuery.isFetchingNextPage,
+    fetchNextPage: mediasQuery.fetchNextPage,
+  });
+
+  const postsItems: GridPostItem[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const mediasItems: GridMediaItem[] = mediasQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
