@@ -49,6 +49,7 @@ function FeedPage() {
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+  const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
 
 
   const feedQuery = useQuery({
@@ -61,17 +62,14 @@ function FeedPage() {
     setPending(item);
   };
 
-  const cpfGuard = useCpfGuard();
-
   const confirmPayment = async (method: PaymentMethod) => {
     if (!pending) return;
     const item = pending;
     setUnlocking(item.id);
     try {
-      const res = await cpfGuard.run(() =>
-        unlock({ data: { publicationId: item.id, method } }),
-      );
-      if (!res) return; // aguardando CPF
+      const res = await unlock({
+        data: { publicationId: item.id, method },
+      });
       setPending(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
@@ -82,11 +80,16 @@ function FeedPage() {
       });
       setModalOpen(true);
     } catch (e: any) {
+      if (e?.message === "cpf_required") {
+        setCpfPromptFor(method);
+        return;
+      }
       toast.error(e?.message ?? "Erro ao gerar pagamento");
     } finally {
       setUnlocking(null);
     }
   };
+
 
 
   return (
