@@ -174,18 +174,18 @@ function PerfilPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
 
       {/* Topbar */}
-      <header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/20">
-        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+      <header className="relative z-10 border-b border-black/10 bg-white">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 text-black">
           <button
             onClick={() => router.history.back()}
-            className="h-9 w-9 grid place-items-center rounded-full text-white/80 hover:bg-white/10 transition-colors"
+            className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
             aria-label="Voltar"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold truncate">{displayName}</h1>
           <button
-            className="h-9 w-9 grid place-items-center rounded-full text-white/80 hover:bg-white/10 transition-colors"
+            className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
             aria-label="Mais opções"
           >
             <MoreVertical className="h-5 w-5" />
