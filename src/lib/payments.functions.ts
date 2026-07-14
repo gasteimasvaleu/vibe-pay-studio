@@ -34,6 +34,12 @@ async function loadAsaas() {
   return await import("@/lib/asaas.server");
 }
 
+// provider persistido nas tabelas (subs, tips, unlocks...) para o trigger
+// derivar o payment_method correto e calcular a taxa do gateway.
+function providerForMethod(method: Method): "asaas_pix" | "asaas_card" {
+  return method === "PIX" ? "asaas_pix" : "asaas_card";
+}
+
 async function ensureCustomerId(
   supabase: any,
   userId: string,
@@ -211,6 +217,10 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, pub.author_id);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(pub.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: existing } = await supabase
       .from("publication_unlocks")
       .select("id, status")
@@ -227,7 +237,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
         .from("publication_unlocks")
         .update({
           amount_cents: pub.price_cents,
-          provider: "asaas",
+          provider: providerTag,
           status: "pending",
           provider_ref: null,
         })
@@ -241,7 +251,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
           publication_id: pub.id,
           buyer_id: userId,
           amount_cents: pub.price_cents,
-          provider: "asaas",
+          provider: providerTag,
           status: "pending",
         })
         .select("id")
@@ -251,7 +261,6 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     }
 
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -259,6 +268,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       description: `Desbloqueio publicação ${pub.id.slice(0, 8)}`,
       externalReference: `publication_unlock:${unlockId}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
@@ -313,6 +323,10 @@ export const createTipPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, data.creatorId);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(data.amountCents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: tip, error } = await supabase
       .from("tips")
       .insert({
@@ -321,14 +335,13 @@ export const createTipPayment = createServerFn({ method: "POST" })
         publication_id: data.publicationId ?? null,
         amount_cents: data.amountCents,
         message: data.message?.slice(0, 300) ?? null,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -336,6 +349,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
       description: `Tip para criador`,
       externalReference: `tip:${tip.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
@@ -404,6 +418,10 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
     const periodEnd = new Date(Date.now() + months * 30 * 86400_000).toISOString();
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: sub, error: sErr } = await supabase
       .from("subscriptions")
       .insert({
@@ -412,14 +430,13 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
         plan: data.plan,
         price_cents_paid: amountCents,
         current_period_end: periodEnd,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (sErr) throw new Error(sErr.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -427,6 +444,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       description: `Assinatura ${data.plan}`,
       externalReference: `subscription:${sub.id}`,
       creatorWalletId: creator.asaas_wallet_id,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
@@ -470,6 +488,10 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, msg.sender_id);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(msg.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: unlock, error: uErr } = await supabase
       .from("chat_message_unlocks")
       .insert({
@@ -477,14 +499,13 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
         buyer_id: userId,
         creator_id: msg.sender_id,
         amount_cents: msg.price_cents,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (uErr) throw new Error(uErr.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -492,6 +513,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
       description: `Desbloqueio mensagem`,
       externalReference: `chat_unlock:${unlock.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
     await supabase
@@ -538,6 +560,9 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(call.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -545,11 +570,12 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
       description: `Videochamada ${call.duration_minutes}min`,
       externalReference: `video_call:${call.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
     await supabase
       .from("video_calls")
-      .update({ provider: "asaas", provider_ref: payment.id })
+      .update({ provider: providerTag, provider_ref: payment.id })
       .eq("id", call.id);
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
