@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Bookmark,
+  ChevronDown,
   Clapperboard,
   DollarSign,
   Film,
@@ -19,6 +20,7 @@ import {
   Smartphone,
   Twitter,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
