@@ -14,6 +14,7 @@ import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
+import { TipDialog } from "@/components/payments/TipDialog";
 
 
 
