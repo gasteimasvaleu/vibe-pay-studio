@@ -201,7 +201,7 @@ function PerfilPage() {
             <PopoverContent
               align="end"
               sideOffset={8}
-              className="w-64 rounded-3xl bg-[#f5f0e8] border-none shadow-xl p-3 text-black"
+              className="w-64 rounded-3xl p-3 bg-card border border-border shadow-xl"
             >
               <nav className="flex flex-col gap-1">
                 <button
@@ -220,9 +220,9 @@ function PerfilPage() {
                     }
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
                 >
-                  <Share2 className="h-6 w-6" />
+                  <Share2 className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Compartilhar
                 </button>
                 <button
@@ -231,9 +231,9 @@ function PerfilPage() {
                     alert("Denúncia enviada. Nossa equipe irá analisar este perfil.");
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
                 >
-                  <Flag className="h-6 w-6" />
+                  <Flag className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Denunciar perfil
                 </button>
                 <button
@@ -242,9 +242,9 @@ function PerfilPage() {
                     alert(`Solicitação de amizade enviada para ${displayName}!`);
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
                 >
-                  <UserPlus className="h-6 w-6" />
+                  <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Adicionar amigo
                 </button>
               </nav>
