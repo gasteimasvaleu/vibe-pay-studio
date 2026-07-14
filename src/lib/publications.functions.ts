@@ -67,6 +67,10 @@ export const createPublication = createServerFn({ method: "POST" })
         published_at: publishedAt.toISOString(),
         audio_url: data.audio?.url ?? null,
         audio_storage_path: data.audio?.storagePath ?? null,
+        preview_url:
+          data.visibility === "paid" ? data.preview?.url ?? null : null,
+        preview_storage_path:
+          data.visibility === "paid" ? data.preview?.storagePath ?? null : null,
       })
       .select("id")
       .single();
