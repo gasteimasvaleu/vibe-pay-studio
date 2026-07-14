@@ -1122,6 +1122,7 @@ export type Database = {
           country_code: string
           created_at: string
           creator_id: string | null
+          gateway_fee_cents: number
           id: string
           is_international: boolean
           kind: Database["public"]["Enums"]["transaction_kind"]
@@ -1146,6 +1147,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           creator_id?: string | null
+          gateway_fee_cents?: number
           id?: string
           is_international?: boolean
           kind: Database["public"]["Enums"]["transaction_kind"]
@@ -1170,6 +1172,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           creator_id?: string | null
+          gateway_fee_cents?: number
           id?: string
           is_international?: boolean
           kind?: Database["public"]["Enums"]["transaction_kind"]
@@ -1353,13 +1356,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      apply_transaction_split: {
-        Args: { _commission_pct?: number; _gross_cents: number }
-        Returns: {
-          commission_pct_applied: number
-          net_cents: number
-          platform_fee_cents: number
-        }[]
+      apply_transaction_split:
+        | {
+            Args: { _commission_pct?: number; _gross_cents: number }
+            Returns: {
+              commission_pct_applied: number
+              net_cents: number
+              platform_fee_cents: number
+            }[]
+          }
+        | {
+            Args: {
+              _commission_pct?: number
+              _gross_cents: number
+              _method?: Database["public"]["Enums"]["payment_method"]
+            }
+            Returns: {
+              commission_pct_applied: number
+              gateway_fee_cents: number
+              net_cents: number
+              platform_fee_cents: number
+            }[]
+          }
+      calc_gateway_fee_cents: {
+        Args: {
+          _gross_cents: number
+          _method: Database["public"]["Enums"]["payment_method"]
+        }
+        Returns: number
       }
       can_see_publication: {
         Args: { _publication_id: string }
