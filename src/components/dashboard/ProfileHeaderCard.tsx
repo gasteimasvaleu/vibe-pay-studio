@@ -6,11 +6,13 @@ export function ProfileHeaderCard({
   isCreator,
   stat,
   levelBadge = "+100",
+  showProfileLink = true,
 }: {
   username: string;
   isCreator: boolean;
   stat?: { value: number; label: string };
   levelBadge?: string;
+  showProfileLink?: boolean;
 }) {
   const displayName = username
     .replace(/[_-]+/g, " ")

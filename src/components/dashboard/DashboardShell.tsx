@@ -6,10 +6,12 @@ import { ProfileHeaderCard } from "./ProfileHeaderCard";
 export function DashboardShell({
   username,
   isCreator,
+  showProfileLink,
   children,
 }: {
   username: string;
   isCreator: boolean;
+  showProfileLink?: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
