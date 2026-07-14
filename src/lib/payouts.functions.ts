@@ -137,7 +137,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       };
       const withdrawalStatus = (statusMap[finalStatus] ?? "requested") as any;
 
-      const update: Record<string, unknown> = {
+      const update: any = {
         status: withdrawalStatus,
         provider_ref: transfer.id,
       };
