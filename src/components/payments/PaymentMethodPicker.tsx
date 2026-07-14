@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { CreditCard, QrCode, Wallet } from "lucide-react";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { getSubscriberWallet } from "@/lib/finance.functions";
+import { PAYMENT_MIN_GROSS_CENTS, formatMinimum } from "@/lib/payment-limits";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -10,8 +11,9 @@ type Props = {
   value: PaymentMethod;
   onChange: (m: PaymentMethod) => void;
   /**
-   * Valor total da compra em centavos. Usado para desabilitar a opção
-   * "Carteira" quando o saldo é insuficiente.
+   * Valor total da compra em centavos. Usado para desabilitar "Carteira"
+   * quando o saldo é insuficiente e PIX/Cartão quando o valor está abaixo
+   * do mínimo aceito pelo Asaas.
    */
   amountCents?: number;
 };
@@ -26,6 +28,9 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0 }: Props)
 
   const balance = walletQuery.data?.balanceCents ?? 0;
   const walletEnough = amountCents > 0 ? balance >= amountCents : balance > 0;
+
+  const pixBelowMin = amountCents > 0 && amountCents < PAYMENT_MIN_GROSS_CENTS.PIX;
+  const cardBelowMin = amountCents > 0 && amountCents < PAYMENT_MIN_GROSS_CENTS.CREDIT_CARD;
 
   const options: Array<{
     id: PaymentMethod;
@@ -48,14 +53,20 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0 }: Props)
     {
       id: "PIX",
       label: "PIX",
-      hint: "Confirmação em segundos",
+      hint: pixBelowMin
+        ? `Mínimo ${formatMinimum("PIX")}`
+        : "Confirmação em segundos",
       icon: <QrCode className="h-4 w-4" />,
+      disabled: pixBelowMin,
     },
     {
       id: "CREDIT_CARD",
       label: "Cartão",
-      hint: "Checkout seguro Asaas",
+      hint: cardBelowMin
+        ? `Mínimo ${formatMinimum("CREDIT_CARD")}`
+        : "Checkout seguro Asaas",
       icon: <CreditCard className="h-4 w-4" />,
+      disabled: cardBelowMin,
     },
   ];
 
