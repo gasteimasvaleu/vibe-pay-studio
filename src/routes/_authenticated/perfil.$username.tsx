@@ -148,6 +148,7 @@ function PerfilPage() {
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const formatCompact = (n: number) =>
     new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
