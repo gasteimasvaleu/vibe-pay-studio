@@ -3,16 +3,45 @@ import { useRouterState } from "@tanstack/react-router";
 import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 
 export function RouteTransitionOverlay() {
-  const status = useRouterState({ select: (s) => s.status });
+  const isLoading = useRouterState({ select: (s) => s.isLoading });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (status === "pending") {
-      const t = setTimeout(() => setVisible(true), 400);
-      return () => clearTimeout(t);
+    if (!isLoading) {
+      setVisible(false);
+      return;
     }
+
+    const showTimer = setTimeout(() => setVisible(true), 400);
+    const maxVisibleTimer = setTimeout(() => setVisible(false), 4_000);
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(maxVisibleTimer);
+    };
+  }, [isLoading, pathname]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const contentReadyTimer = setTimeout(() => {
+      const hasRenderedRouteContent =
+        document.querySelector("main") ||
+        document.querySelector("[data-route-content]") ||
+        document.querySelector("header");
+
+      if (hasRenderedRouteContent) {
+        setVisible(false);
+      }
+    }, 1_000);
+
+    return () => clearTimeout(contentReadyTimer);
+  }, [visible, pathname]);
+
+  useEffect(() => {
     setVisible(false);
-  }, [status]);
+  }, [pathname]);
 
   if (!visible) return null;
 

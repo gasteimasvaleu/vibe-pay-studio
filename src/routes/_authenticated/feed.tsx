@@ -26,15 +26,16 @@ export const Route = createFileRoute("/_authenticated/feed")({
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
       .select("account_type, username")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
     return {
-      username: profile?.username ?? userData.user.email?.split("@")[0] ?? "voce",
+      username: profile?.username ?? user.email?.split("@")[0] ?? "voce",
       accountType: profile?.account_type ?? "subscriber",
     };
   },

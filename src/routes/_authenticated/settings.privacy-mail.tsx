@@ -12,8 +12,8 @@ export const Route = createFileRoute("/_authenticated/settings/privacy-mail")({
     ],
   }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/entrar" });
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) throw redirect({ to: "/entrar" });
   },
   component: PrivacyMailPage,
 });

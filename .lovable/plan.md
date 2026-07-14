@@ -1,30 +1,16 @@
-## Problema
+Vou corrigir o travamento do preview focando no overlay global de navegação, porque a página já aparece carregada por trás, mas a camada “Carregando...” continua por cima.
 
-O overlay `Carregando...` (RouteTransitionOverlay) aparece em **toda** navegação e demora muito para sumir — dando sensação de travamento.
+Plano:
+1. Tornar o `RouteTransitionOverlay` tolerante a estados `pending` presos no preview:
+   - manter o delay antes de aparecer;
+   - adicionar um tempo máximo de exibição;
+   - esconder automaticamente quando o conteúdo da rota já estiver renderizado, evitando bloquear a UI.
 
-Causa raiz: cada troca de rota dispara o `beforeLoad` do layout `_authenticated` (e do `/dashboard`), que chama `supabase.auth.getUser()`. Esse método faz uma requisição de rede para `/auth/v1/user` a cada navegação. Enquanto essa chamada está em voo, o router fica em `status: "pending"` e o overlay aparece por segundos.
+2. Reduzir causas recorrentes de `pending` em rotas autenticadas:
+   - trocar `supabase.auth.getUser()` por `supabase.auth.getSession()` nos `beforeLoad` das rotas autenticadas que ainda fazem chamada de rede só para validar sessão;
+   - manter consultas reais de dados apenas onde elas são necessárias para montar a página.
 
-## Correção
-
-### 1. Trocar `getUser()` por `getSession()` nos guards
-
-`getSession()` lê do storage local (síncrono, sem rede). `getUser()` só é necessário quando você precisa revalidar a sessão contra o servidor — o que não é o caso de um simples guard de rota.
-
-- `src/routes/_authenticated/route.tsx`: `beforeLoad` passa a usar `supabase.auth.getSession()`; se não houver sessão, redireciona para `/entrar`.
-- `src/routes/_authenticated/dashboard.tsx`: mesmo tratamento — pega `user` de `session.user`.
-- Manter o mesmo comportamento de redirect quando não autenticado.
-
-### 2. Ajustar o `RouteTransitionOverlay` para não piscar em navegações rápidas
-
-- Aumentar o delay antes de mostrar de `150ms` para `400ms` (evita o flash em navegações que resolvem em <400ms).
-- Garantir que ele suma imediatamente quando `status !== 'pending'` (já faz, manter).
-
-### 3. Verificação
-
-Depois das mudanças, navegar entre `/dashboard`, `/my-monetisex-stats`, `/mywallet`, etc. — o overlay não deve mais aparecer em navegações normais, e quando aparecer deve desaparecer assim que a rota carrega.
-
-## Fora de escopo
-
-- Reescrever o modelo de autenticação.
-- Mudar `ensureCurrentUserProfile` (roda em `useEffect`, não bloqueia navegação).
-- Corrigir o warning de hydration mismatch (`data-tsd-source`) — é ruído do dev-tooling, não afeta funcionalidade.
+3. Validar no preview:
+   - abrir `/dashboard` e confirmar que o overlay some;
+   - navegar entre rotas principais e confirmar que o carregamento não fica preso;
+   - verificar console/logs se ainda houver erro real por trás.

@@ -14,17 +14,18 @@ export const Route = createFileRoute("/_authenticated/settings/subscription")({
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("price_monthly, discount_quarterly, discount_semiannual")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     return {
-      userId: userData.user.id,
+      userId: user.id,
       initial: {
         monthly: profile?.price_monthly != null ? Number(profile.price_monthly) : 50,
         discountQ: profile?.discount_quarterly ?? 0,

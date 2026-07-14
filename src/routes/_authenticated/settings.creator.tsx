@@ -25,15 +25,16 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, account_type")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
     const username =
-      profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
+      profile?.username ?? user.email?.split("@")[0] ?? "voce";
     const accountType = (profile?.account_type ?? "subscriber") as
       | "subscriber"
       | "creator"

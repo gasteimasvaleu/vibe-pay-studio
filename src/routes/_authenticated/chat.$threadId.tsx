@@ -79,18 +79,19 @@ function ChatThreadView() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
+    supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
 
   const { data: accountType } = useQuery({
     queryKey: ["viewer-account-type"],
     queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return "subscriber" as const;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) return "subscriber" as const;
       const { data: profile } = await supabase
         .from("profiles")
         .select("account_type")
-        .eq("user_id", userData.user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       return (profile?.account_type ?? "subscriber") as
         | "subscriber"

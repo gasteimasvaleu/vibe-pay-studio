@@ -34,16 +34,17 @@ export const Route = createFileRoute("/_authenticated/em-alta")({
     ],
   }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/entrar" });
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, account_type")
-      .eq("user_id", data.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
     const acct = profile?.account_type ?? "subscriber";
     return {
-      username: profile?.username ?? data.user.email?.split("@")[0] ?? "voce",
+      username: profile?.username ?? user.email?.split("@")[0] ?? "voce",
       isCreator: acct === "creator" || acct === "free_creator",
     };
   },

@@ -17,8 +17,8 @@ export const Route = createFileRoute("/_authenticated/settings/two-factor/setup"
     ],
   }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/entrar" });
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) throw redirect({ to: "/entrar" });
   },
   component: TwoFactorSetupPage,
 });
@@ -30,8 +30,8 @@ function TwoFactorSetupPage() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      const email = data.user?.email ?? "user@monetisexy.com";
+      const { data } = await supabase.auth.getSession();
+      const email = data.session?.user.email ?? "user@monetisexy.com";
       const otpauth = `otpauth://totp/Monetisexy:${encodeURIComponent(
         email
       )}?secret=${SECRET_CODE}&issuer=Monetisexy`;

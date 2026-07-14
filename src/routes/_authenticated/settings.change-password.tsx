@@ -14,8 +14,8 @@ export const Route = createFileRoute("/_authenticated/settings/change-password")
     ],
   }),
   beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/entrar" });
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session?.user) throw redirect({ to: "/entrar" });
     return {};
   },
   component: ChangePasswordPage,
