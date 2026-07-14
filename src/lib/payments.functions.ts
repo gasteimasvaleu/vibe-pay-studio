@@ -142,60 +142,6 @@ export const ensureAsaasCustomer = createServerFn({ method: "POST" })
     return { customerId: id };
   });
 
-export const createCreatorSubaccount = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (data: {
-      name: string;
-      email: string;
-      cpfCnpj: string;
-      birthDate?: string;
-      mobilePhone?: string;
-      address?: string;
-      addressNumber?: string;
-      province?: string;
-      postalCode?: string;
-    }) => data,
-  )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("asaas_wallet_id, kyc_status")
-      .eq("user_id", userId)
-      .single();
-    if (profile?.asaas_wallet_id) {
-      return { walletId: profile.asaas_wallet_id };
-    }
-    if (profile?.kyc_status !== "verified") {
-      throw new Error("KYC precisa estar verificado antes de criar subconta");
-    }
-    const asaas = await loadAsaas();
-    const sub = await asaas.createSubaccount({
-      name: data.name,
-      email: data.email,
-      cpfCnpj: data.cpfCnpj.replace(/\D/g, ""),
-      birthDate: data.birthDate,
-      mobilePhone: data.mobilePhone,
-      address: data.address,
-      addressNumber: data.addressNumber,
-      province: data.province,
-      postalCode: data.postalCode?.replace(/\D/g, ""),
-    });
-    const status =
-      typeof sub.accountStatus === "string"
-        ? sub.accountStatus
-        : sub.accountStatus?.general ?? "PENDING";
-    await supabase
-      .from("profiles")
-      .update({
-        asaas_account_id: sub.id,
-        asaas_wallet_id: sub.walletId,
-        asaas_account_status: status,
-      })
-      .eq("user_id", userId);
-    return { walletId: sub.walletId, accountId: sub.id, status };
-  });
 
 // ---------------- Publication unlock ----------------
 
