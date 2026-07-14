@@ -16,6 +16,21 @@ export const Route = createFileRoute("/_authenticated/settings/subscription")({
   beforeLoad: async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) throw redirect({ to: "/entrar" });
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("price_monthly, discount_quarterly, discount_semiannual")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+
+    return {
+      userId: userData.user.id,
+      initial: {
+        monthly: profile?.price_monthly != null ? Number(profile.price_monthly) : 50,
+        discountQ: profile?.discount_quarterly ?? 0,
+        discountS: profile?.discount_semiannual ?? 0,
+      },
+    };
   },
   component: SubscriptionPage,
 });
@@ -32,9 +47,11 @@ function formatBRL(value: number) {
 
 function SubscriptionPage() {
   const router = useRouter();
-  const [monthly, setMonthly] = useState<number>(50);
-  const [discountQ, setDiscountQ] = useState<number>(0);
-  const [discountS, setDiscountS] = useState<number>(0);
+  const { userId, initial } = Route.useRouteContext();
+  const [monthly, setMonthly] = useState<number>(initial.monthly);
+  const [discountQ, setDiscountQ] = useState<number>(initial.discountQ);
+  const [discountS, setDiscountS] = useState<number>(initial.discountS);
+  const [saving, setSaving] = useState(false);
 
   const quarterly = useMemo(
     () => monthly * 3 * (1 - discountQ / 100),
@@ -48,11 +65,26 @@ function SubscriptionPage() {
   const monthlyValid = monthly >= MIN && monthly <= MAX;
   const discountsValid =
     discountQ >= 0 && discountQ <= 100 && discountS >= 0 && discountS <= 100;
-  const canSave = monthlyValid && discountsValid;
+  const canSave = monthlyValid && discountsValid && !saving;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
-    toast.info("Em breve");
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        price_monthly: monthly,
+        discount_quarterly: Math.round(discountQ),
+        discount_semiannual: Math.round(discountS),
+      })
+      .eq("user_id", userId);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message ?? "Erro ao salvar");
+      return;
+    }
+    toast.success("Assinatura atualizada");
+    router.history.back();
   };
 
   return (
@@ -149,7 +181,7 @@ function SubscriptionPage() {
             disabled={!canSave}
             className="w-full h-12 rounded-full text-base font-semibold"
           >
-            Salvar
+            {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
       </div>
