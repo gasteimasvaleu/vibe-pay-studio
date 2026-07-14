@@ -323,6 +323,10 @@ export const createTipPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, data.creatorId);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(data.amountCents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: tip, error } = await supabase
       .from("tips")
       .insert({
@@ -331,14 +335,13 @@ export const createTipPayment = createServerFn({ method: "POST" })
         publication_id: data.publicationId ?? null,
         amount_cents: data.amountCents,
         message: data.message?.slice(0, 300) ?? null,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -346,6 +349,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
       description: `Tip para criador`,
       externalReference: `tip:${tip.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
 
