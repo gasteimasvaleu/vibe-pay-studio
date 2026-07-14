@@ -87,6 +87,8 @@ const dateFmt = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
     meta: [
@@ -104,6 +106,8 @@ function BancoPage() {
   const [sacarOrigin, setSacarOrigin] = useState<
     null | "Nacional" | "Internacional"
   >(null);
+  const [isRefreshingAfterWithdrawal, setIsRefreshingAfterWithdrawal] =
+    useState(false);
   const qc = useQueryClient();
   const fetchStatus = useServerFn(getCreatorPayoutStatus);
   const fetchOverview = useServerFn(getCreatorBancoOverview);
@@ -155,6 +159,40 @@ function BancoPage() {
         description: String(err?.message ?? "erro desconhecido"),
       }),
   });
+
+  async function refreshAfterWithdrawal(args: { amountCents: number }) {
+    const previousTotalReleased = overviewQuery.data?.totals.releasedCents ?? 0;
+    const expectedTotalReleased = Math.max(
+      previousTotalReleased - args.amountCents,
+      0,
+    );
+
+    setIsRefreshingAfterWithdrawal(true);
+    try {
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const overview = await qc.fetchQuery({
+          queryKey: ["bancoOverview"],
+          queryFn: () => fetchOverview(),
+          staleTime: 0,
+        });
+
+        if ((overview?.totals.releasedCents ?? 0) <= expectedTotalReleased) {
+          break;
+        }
+
+        await wait(1200);
+      }
+
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["bancoOverview"], type: "active" }),
+        qc.refetchQueries({ queryKey: ["bancoTransactions"], type: "active" }),
+        qc.refetchQueries({ queryKey: ["bancoWithdrawals"], type: "active" }),
+        qc.refetchQueries({ queryKey: ["payoutStatus"], type: "active" }),
+      ]);
+    } finally {
+      setIsRefreshingAfterWithdrawal(false);
+    }
+  }
 
   function withdrawDisabledReason(released: number): string | null {
     if (!kycVerified) return "Conclua a verificação de identidade";
@@ -228,7 +266,7 @@ function BancoPage() {
                 <p className="mt-4 text-sm text-foreground">
                   Liberado para saque
                 </p>
-                {overviewQuery.isLoading ? (
+                {overviewQuery.isLoading || isRefreshingAfterWithdrawal ? (
                   <div className="mt-1 h-8 w-32 rounded bg-muted animate-pulse" />
                 ) : (
                   <p className="text-3xl font-bold tracking-tight text-foreground">
@@ -236,7 +274,7 @@ function BancoPage() {
                   </p>
                 )}
                 <p className="mt-3 text-sm text-foreground">Saldo a liberar</p>
-                {overviewQuery.isLoading ? (
+                {overviewQuery.isLoading || isRefreshingAfterWithdrawal ? (
                   <div className="mt-1 h-6 w-24 rounded bg-muted animate-pulse" />
                 ) : (
                   <p className="text-lg font-semibold text-foreground">
@@ -254,7 +292,7 @@ function BancoPage() {
                   Sacar
                 </Button>
 
-                {c.muted && !overviewQuery.isLoading ? (
+                {c.muted && !overviewQuery.isLoading && !isRefreshingAfterWithdrawal ? (
                   <p className="mt-2 text-xs text-muted-foreground">
                     Sem movimentações internacionais
                   </p>
@@ -438,6 +476,7 @@ function BancoPage() {
           }
           pixKey={pixKey}
           pixKeyType={pixKeyType}
+          onWithdrawalSuccess={refreshAfterWithdrawal}
         />
 
 
