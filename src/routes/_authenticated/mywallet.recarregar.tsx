@@ -60,7 +60,7 @@ function RecarregarPage() {
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao criar cobrança");
+      toast.error(translatePaymentError(e, "Erro ao criar cobrança"));
     } finally {
       setLoading(false);
     }
