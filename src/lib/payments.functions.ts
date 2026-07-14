@@ -558,19 +558,11 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
     };
   });
 
-// ---------------- Payout setup (subconta Asaas + dados bancários) ----------------
+// ---------------- Payout setup (conta Asaas própria + dados bancários) ----------------
 
 type PayoutSetupInput = {
-  // Titular (subconta Asaas)
-  fullName: string;
-  cpfCnpj: string;
-  birthDate?: string; // yyyy-MM-dd
-  mobilePhone: string;
-  postalCode: string;
-  address: string;
-  addressNumber: string;
-  province: string; // bairro
-  // Conta bancária / PIX
+  walletId: string;
+  apiKey?: string;
   bankName: string;
   accountType: "corrente" | "poupanca";
   agency: string;
@@ -579,17 +571,32 @@ type PayoutSetupInput = {
   pixKey: string;
 };
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function mapPixKeyTypeToAsaas(
+  type: PayoutSetupInput["pixKeyType"],
+): "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP" {
+  switch (type) {
+    case "cpf":
+      return "CPF";
+    case "cnpj":
+      return "CNPJ";
+    case "email":
+      return "EMAIL";
+    case "telefone":
+      return "PHONE";
+    case "aleatoria":
+    default:
+      return "EVP";
+  }
+}
+
 export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: PayoutSetupInput) => {
     const required: Array<[keyof PayoutSetupInput, string]> = [
-      ["fullName", "nome completo"],
-      ["cpfCnpj", "CPF/CNPJ"],
-      ["mobilePhone", "telefone"],
-      ["postalCode", "CEP"],
-      ["address", "endereço"],
-      ["addressNumber", "número"],
-      ["province", "bairro"],
+      ["walletId", "Wallet ID Asaas"],
       ["bankName", "banco"],
       ["accountType", "tipo de conta"],
       ["agency", "agência"],
@@ -603,6 +610,9 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
         throw new Error(`Informe ${label}`);
       }
     }
+    if (!UUID_REGEX.test(data.walletId.trim())) {
+      throw new Error("Wallet ID inválido. Deve ser um UUID válido.");
+    }
     return data;
   })
   .handler(async ({ data, context }) => {
@@ -610,7 +620,7 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
 
     const { data: profile, error: profErr } = await supabase
       .from("profiles")
-      .select("asaas_wallet_id, asaas_account_id, asaas_account_status, kyc_status")
+      .select("kyc_status")
       .eq("user_id", userId)
       .single();
     if (profErr || !profile) throw new Error("perfil não encontrado");
@@ -621,65 +631,32 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
       );
     }
 
-    let walletId = profile.asaas_wallet_id as string | null;
-    let accountStatus = profile.asaas_account_status as string | null;
+    const walletId = data.walletId.trim();
+    let encryptedApiKey: string | null = null;
 
-    if (!walletId) {
-      const { data: userRes } = await supabase.auth.getUser();
-      const email = userRes?.user?.email;
-      if (!email) throw new Error("e-mail do usuário indisponível");
-
+    if (data.apiKey?.trim()) {
       const asaas = await loadAsaas();
-      const cleanCpf = data.cpfCnpj.replace(/\D/g, "");
-
-      // Reuse existing Asaas subaccount if this email/cpf was already registered
-      let sub = await asaas.findSubaccount({ email, cpfCnpj: cleanCpf });
-
-      if (!sub) {
-        try {
-          sub = await asaas.createSubaccount({
-            name: data.fullName.trim(),
-            email,
-            cpfCnpj: cleanCpf,
-            birthDate: data.birthDate,
-            mobilePhone: data.mobilePhone.replace(/\D/g, ""),
-            address: data.address,
-            addressNumber: data.addressNumber,
-            province: data.province,
-            postalCode: data.postalCode.replace(/\D/g, ""),
-          });
-        } catch (err: any) {
-          const msg = String(err?.message ?? "");
-          if (/já está em uso|already in use/i.test(msg)) {
-            // Race or previous partial create — try lookup one more time
-            sub = await asaas.findSubaccount({ email, cpfCnpj: cleanCpf });
-            if (!sub) {
-              throw new Error(
-                "Já existe uma conta Asaas com esse e-mail ou CPF/CNPJ que não pertence a este perfil. Fale com o suporte.",
-              );
-            }
-          } else {
-            throw err;
-          }
-        }
+      const recovered = await asaas.getWalletForApiKey(data.apiKey.trim());
+      if (recovered.walletId.toLowerCase() !== walletId.toLowerCase()) {
+        throw new Error("A API key informada não pertence ao Wallet ID");
       }
-
-      accountStatus =
-        typeof sub.accountStatus === "string"
-          ? sub.accountStatus
-          : sub.accountStatus?.general ?? "PENDING";
-      walletId = sub.walletId;
-
-      const { error: updErr } = await supabase
-        .from("profiles")
-        .update({
-          asaas_account_id: sub.id,
-          asaas_wallet_id: sub.walletId,
-          asaas_account_status: accountStatus,
-        })
-        .eq("user_id", userId);
-      if (updErr) throw new Error(updErr.message);
+      encryptedApiKey = asaas.encryptApiKey(data.apiKey.trim());
     }
+
+    const updatePayload: Record<string, unknown> = {
+      asaas_wallet_id: walletId,
+      asaas_account_status: "ACTIVE",
+      asaas_account_id: null,
+    };
+    if (encryptedApiKey) {
+      updatePayload.asaas_api_key_encrypted = encryptedApiKey;
+    }
+
+    const { error: updErr } = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("user_id", userId);
+    if (updErr) throw new Error(updErr.message);
 
     const { error: payoutErr } = await (supabase as any)
       .from("payout_accounts")
@@ -697,27 +674,36 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
       );
     if (payoutErr) throw new Error(payoutErr.message);
 
-    return { walletId, accountStatus };
+    return {
+      walletId,
+      accountStatus: "ACTIVE",
+      hasApiKey: !!encryptedApiKey,
+    };
   });
 
 export const getCreatorPayoutStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from("profiles")
-      .select("kyc_status, asaas_wallet_id, asaas_account_status")
+      .select(
+        "kyc_status, asaas_wallet_id, asaas_account_status, asaas_api_key_encrypted",
+      )
       .eq("user_id", userId)
       .single();
     const { data: payout } = await (supabase as any)
       .from("payout_accounts")
-      .select("bank_name, account_type, agency, account_number, pix_key_type, pix_key")
+      .select(
+        "bank_name, account_type, agency, account_number, pix_key_type, pix_key",
+      )
       .eq("user_id", userId)
       .maybeSingle();
     return {
       kycStatus: profile?.kyc_status ?? "pending",
       walletId: (profile?.asaas_wallet_id as string | null) ?? null,
       accountStatus: (profile?.asaas_account_status as string | null) ?? null,
+      hasApiKey: !!(profile?.asaas_api_key_encrypted as string | undefined),
       payoutAccount: payout ?? null,
     };
   });
