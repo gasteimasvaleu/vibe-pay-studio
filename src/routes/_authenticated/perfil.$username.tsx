@@ -5,25 +5,29 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
+  AlertCircle,
   ArrowLeft,
   BadgeCheck,
   ChevronDown,
   Clapperboard,
   DollarSign,
   Film,
-  Flag,
   Heart,
+  HeartOff,
   Image as ImageIcon,
   Instagram,
   Lock,
   MapPin,
+  MessageCircle,
   MoreVertical,
   Music2,
   Share2,
   Smartphone,
   Twitter,
   UserPlus,
+  VolumeX,
 } from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
