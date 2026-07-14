@@ -1,38 +1,45 @@
-## Objetivo
-Transformar o botão "Mais opções" (ícone de três pontos) no header da página de perfil em um gatilho que abre um `Sheet` deslizando pela esquerda, com as opções exibidas no screenshot: **Compartilhar**, **Denunciar perfil** e **Adicionar amigo**.
+## Ajustar menu do botão de opções
 
-## Arquivo alvo
-- `src/routes/_authenticated/perfil.$username.tsx`
+Trocar o `Sheet` lateral por um **Popover** que abre logo abaixo/à esquerda do botão de três pontinhos, com visual de balão (cantos arredondados, fundo bege claro, sombra suave e uma pequena seta apontando para o botão), exatamente como no screenshot.
 
-## Alterações propostas
+### Alterações em `src/routes/_authenticated/perfil.$username.tsx`
 
-1. **Importar componentes e ícones**
-   - Adicionar `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` de `@/components/ui/sheet`.
-   - Adicionar ícones `Share2`, `Flag` e `UserPlus` do `lucide-react`.
+1. **Imports**
+   - Remover: `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger`.
+   - Adicionar: `Popover`, `PopoverContent`, `PopoverTrigger` de `@/components/ui/popover`.
+   - Manter os ícones `Share2`, `Flag`, `UserPlus`.
 
-2. **Adicionar estado local**
-   - Criar `const [menuOpen, setMenuOpen] = useState(false);` no componente `PerfilPage`.
+2. **Estado**
+   - Renomear `menuOpen` (segue igual, só muda o componente que consome).
 
-3. **Envolver o botão de opções**
-   - Substituir o `<button>` do header por `<SheetTrigger asChild>` mantendo o botão atual.
-   - Conectar o estado do Sheet ao botão.
+3. **Estrutura no header**
+   ```tsx
+   <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+     <PopoverTrigger asChild>
+       <button ...><MoreVertical /></button>
+     </PopoverTrigger>
+     <PopoverContent
+       align="end"
+       sideOffset={8}
+       className="w-64 rounded-3xl bg-[#f5f0e8] border-none shadow-xl p-3 text-black"
+     >
+       <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-black/5 text-lg">
+         <Share2 className="w-6 h-6" /> Compartilhar
+       </button>
+       <button ...><Flag /> Denunciar perfil</button>
+       <button ...><UserPlus /> Adicionar amigo</button>
+     </PopoverContent>
+   </Popover>
+   ```
+   - `align="end"` alinha a borda direita do popover com o botão (abre para a esquerda).
+   - Fundo `#f5f0e8` (bege claro do screenshot), texto preto, ícones outline pretos.
+   - Cantos bem arredondados (`rounded-3xl`) e sombra suave (`shadow-xl`).
 
-4. **Renderizar o Sheet à esquerda**
-   - Inserir `<SheetContent side="left">` após o `SheetTrigger`.
-   - Usar `SheetHeader` + `SheetTitle` com título "Opções".
-   - Criar lista de ações com três itens:
-     - **Compartilhar** (ícone `Share2`) — usa `navigator.share` quando disponível; fallback para copiar URL da página via `navigator.clipboard`.
-     - **Denunciar perfil** (ícone `Flag`) — exibe um `alert` ou `confirm` informativo (placeholder para futura integração real).
-     - **Adicionar amigo** (ícone `UserPlus`) — exibe um `alert` de confirmação (placeholder para futura integração real).
-   - Cada item deve ocupar a largura total, ter hover visual e texto preto/alta opacidade para manter consistência com o header branco recém-alterado.
+4. **Handlers**
+   - Manter as ações atuais (`navigator.share` / `clipboard`, alerts de denunciar e adicionar amigo). Cada clique fecha o popover via `setMenuOpen(false)`.
 
-5. **Manter comportamentos existentes**
-   - Preservar o botão de voltar e o título centralizado.
-   - Não alterar lógica de assinatura, posts, estatísticas ou diálogos de pagamento.
+5. **Fora de escopo**
+   - Sem mudanças em posts, assinaturas, pagamentos, botão de voltar ou título.
 
-6. **Verificação**
-   - Rodar `bun run build:dev` para garantir que não haja erros de tipo ou importação.
-
-## Notas
-- O componente `Sheet` do projeto já suporta `side="left"` nativamente (`src/components/ui/sheet.tsx`).
-- As ações de denunciar e adicionar amigo serão placeholders visuais; a integração real com backend pode ser feita em seguida se solicitado.
+### Verificação
+- `bun run build:dev` para confirmar que compila.

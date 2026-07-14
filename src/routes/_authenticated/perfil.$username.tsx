@@ -26,7 +26,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 
@@ -189,20 +189,21 @@ function PerfilPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold truncate">{displayName}</h1>
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger asChild>
               <button
                 className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
                 aria-label="Mais opções"
               >
                 <MoreVertical className="h-5 w-5" />
               </button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-3/4 max-w-sm bg-white border-r border-black/10 text-black">
-              <SheetHeader>
-                <SheetTitle className="text-left text-black">Opções</SheetTitle>
-              </SheetHeader>
-              <nav className="mt-6 flex flex-col gap-1">
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={8}
+              className="w-64 rounded-3xl bg-[#f5f0e8] border-none shadow-xl p-3 text-black"
+            >
+              <nav className="flex flex-col gap-1">
                 <button
                   type="button"
                   onClick={async () => {
@@ -219,9 +220,9 @@ function PerfilPage() {
                     }
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
                 >
-                  <Share2 className="h-5 w-5" />
+                  <Share2 className="h-6 w-6" />
                   Compartilhar
                 </button>
                 <button
@@ -230,9 +231,9 @@ function PerfilPage() {
                     alert("Denúncia enviada. Nossa equipe irá analisar este perfil.");
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
                 >
-                  <Flag className="h-5 w-5" />
+                  <Flag className="h-6 w-6" />
                   Denunciar perfil
                 </button>
                 <button
@@ -241,14 +242,14 @@ function PerfilPage() {
                     alert(`Solicitação de amizade enviada para ${displayName}!`);
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium text-black/90 hover:bg-black/10 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-base font-medium text-black hover:bg-black/5 transition-colors"
                 >
-                  <UserPlus className="h-5 w-5" />
+                  <UserPlus className="h-6 w-6" />
                   Adicionar amigo
                 </button>
               </nav>
-            </SheetContent>
-          </Sheet>
+            </PopoverContent>
+          </Popover>
         </div>
       </header>
 
