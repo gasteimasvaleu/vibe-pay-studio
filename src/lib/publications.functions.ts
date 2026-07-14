@@ -139,6 +139,7 @@ export type FeedItem = {
   comment_count: number;
   liked_by_me: boolean;
   saved_by_me: boolean;
+  is_owner: boolean;
 };
 
 const getFeedSchema = z.object({
@@ -274,6 +275,7 @@ export const getFeed = createServerFn({ method: "POST" })
         comment_count: commentCounts.get(p.id) ?? 0,
         liked_by_me: likedSet.has(p.id),
         saved_by_me: savedSet.has(p.id),
+        is_owner: isOwner,
       };
     });
 
@@ -413,6 +415,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
         comment_count: commentCounts.get(p.id) ?? 0,
         liked_by_me: likedSet.has(p.id),
         saved_by_me: savedSet.has(p.id),
+        is_owner: isOwner,
       };
     });
 
