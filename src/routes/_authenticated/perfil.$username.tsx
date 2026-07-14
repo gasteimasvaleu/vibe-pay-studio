@@ -212,6 +212,78 @@ function PerfilPage() {
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const queryClient = useQueryClient();
+  const fetchUserPubs = useServerFn(getUserPublications);
+  const unlockFn = useServerFn(createUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
+  const [pending, setPending] = useState<FeedItem | null>(null);
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState<string | null>(null);
+  const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+
+  const pubsQueryKey = ["user-publications", profile.userId] as const;
+  const pubsQuery = useQuery({
+    queryKey: pubsQueryKey,
+    queryFn: () => fetchUserPubs({ data: { userId: profile.userId, limit: 20 } }),
+  });
+
+  const handleUnlock = (item: FeedItem) => {
+    if (unlocking) return;
+    setPending(item);
+  };
+
+  const confirmPayment = async (method: PaymentMethod) => {
+    if (!pending) return;
+    const item = pending;
+    setUnlocking(item.id);
+    try {
+      if (method === "WALLET") {
+        await walletPay({
+          data: { kind: "publication_unlock", publicationId: item.id },
+        });
+        setPending(null);
+        toast.success("Publicação desbloqueada!");
+        void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        return;
+      }
+      const res = await unlockFn({
+        data: { publicationId: item.id, method },
+      });
+      setPending(null);
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        method,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (e: any) {
+      if (e?.message === "cpf_required") {
+        setCpfPromptFor(method);
+        return;
+      }
+      if (e?.message === "publicação já desbloqueada" || e?.message === "already_unlocked") {
+        setPending(null);
+        await queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        toast.success("Publicação já desbloqueada");
+        return;
+      }
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
+      toast.error(e?.message ?? "Erro ao gerar pagamento");
+    } finally {
+      setUnlocking(null);
+    }
+  };
+
+
   const formatCompact = (n: number) =>
     new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
   const stats = {
