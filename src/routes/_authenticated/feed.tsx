@@ -165,17 +165,18 @@ function FeedPage() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <h2 className="mt-5 text-xl md:text-2xl font-bold text-white">
-                Seu feed ainda está vazio
+                Seu feed está vazio
               </h2>
               <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
-                Assim que você começar a seguir creators, os posts mais recentes aparecem aqui em tempo real.
+                Assine creators para ver as publicações deles aqui.
               </p>
               <Link
-                to="/dashboard"
+                to="/em-alta"
                 className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
               >
-                Ir para o painel
+                Explorar creators
               </Link>
+
             </motion.section>
           )}
       </main>

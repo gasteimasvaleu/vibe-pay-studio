@@ -1,18 +1,27 @@
+## Regra de negócio confirmada
+
+Assinatura paga = seguir. Não haverá tabela `follows` separada nem botão "Seguir" gratuito. O feed passa a mostrar apenas publicações de creators que o viewer assina (ativos), além das do próprio viewer.
+
 ## Mudanças
 
-### 1. `src/components/feed/PublicationCard.tsx`
-- Nova prop opcional `onTip?: (item: FeedItem) => void`.
-- Adicionar botão de mimo (`Gift`, lucide) à direita do botão de comentar, dentro da barra de ações.
-- Mover a barra de ações para fora do bloco `{!item.locked && ...}` — ela precisa aparecer também em publicações bloqueadas (para permitir mimo). Curtir/comentar/salvar continuam habilitados; nada muda no visual do overlay de lock.
-- Botão de mimo visível quando `!item.is_owner` (não faz sentido mimar a si mesmo — server já bloqueia).
+### 1. `src/lib/publications.functions.ts` — `getFeed`
+- Antes de buscar `publications`, carregar os `creator_id` de `subscriptions` onde `subscriber_id = viewer`, `status = 'active'` e `current_period_end > now()`.
+- Montar `allowedAuthors = [viewer, ...creatorIds]`.
+- Aplicar `.in('author_id', allowedAuthors)` na query de publicações.
+- Se `allowedAuthors` só tiver o próprio viewer e ele não tiver posts, o feed volta vazio (comportamento esperado).
+- Manter a ordenação atual (`pinned`, `published_at`) e paginação.
 
-### 2. `src/routes/_authenticated/feed.tsx`
-- Estado `tipFor: FeedItem | null`.
-- Passar `onTip={setTipFor}` ao `PublicationCard`.
-- Renderizar `<TipDialog open={!!tipFor} onOpenChange={v=>!v && setTipFor(null)} creatorId={tipFor.author_id} creatorName={tipFor.author_username ?? "creator"} publicationId={tipFor.id} />`.
+### 2. `src/routes/_authenticated/feed.tsx` — estado vazio
+- Quando `items.length === 0`, mostrar mensagem clara:
+  - Título: "Seu feed está vazio"
+  - Texto: "Assine creators para ver publicações deles aqui."
+  - Botão "Explorar creators" → navega para `/em-alta` (ponto de descoberta atual).
+- Não mexer no restante do layout.
 
-### 3. `src/routes/_authenticated/perfil.$username.tsx`
-- Mesma integração (`tipFor` + `TipDialog`) para os `PublicationCard` da aba Postagens.
+### 3. `/follow` (`src/routes/_authenticated/follow.tsx`)
+- Fora de escopo desta iteração. Como "seguir" = "assinar", esta página vira redundante com `/subscriptions`. Posso remover/redirecionar em uma próxima etapa se você quiser — só me diga.
 
-### Fora de escopo
-Sem mudanças no `TipDialog`, servidor ou schema.
+## Fora de escopo
+- Nenhuma alteração no schema (sem tabela `follows`).
+- Nenhuma mudança em `TipDialog`, `PublicationCard` ou perfil.
+- Sem criar botão "Seguir" separado.
