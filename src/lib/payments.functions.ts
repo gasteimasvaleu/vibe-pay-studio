@@ -488,6 +488,10 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
     const walletId = await getCreatorWallet(supabase, msg.sender_id);
     const customerId = await ensureCustomerId(supabase, userId);
 
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(msg.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
     const { data: unlock, error: uErr } = await supabase
       .from("chat_message_unlocks")
       .insert({
@@ -495,14 +499,13 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
         buyer_id: userId,
         creator_id: msg.sender_id,
         amount_cents: msg.price_cents,
-        provider: "asaas",
+        provider: providerTag,
         status: "pending",
       })
       .select("id")
       .single();
     if (uErr) throw new Error(uErr.message);
 
-    const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
       billingType: data.method,
@@ -510,6 +513,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
       description: `Desbloqueio mensagem`,
       externalReference: `chat_unlock:${unlock.id}`,
       creatorWalletId: walletId,
+      netCreatorCents,
       ...buildCardArgs(data.card),
     });
     await supabase
