@@ -201,20 +201,6 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-type ProfilePost = {
-  id: string;
-  time: string;
-  photos: number;
-  videos: number;
-  likes: number;
-  gradient: string;
-};
-
-const MOCK_POSTS: ProfilePost[] = [
-  { id: "1", time: "há 2 h", photos: 12, videos: 3, likes: 421, gradient: "from-fuchsia-500 via-purple-500 to-indigo-600" },
-  { id: "2", time: "há 1 d", photos: 8, videos: 1, likes: 289, gradient: "from-amber-400 via-pink-500 to-fuchsia-600" },
-  { id: "3", time: "há 3 d", photos: 20, videos: 5, likes: 1204, gradient: "from-cyan-400 via-purple-500 to-fuchsia-600" },
-];
 
 function PerfilPage() {
   const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
