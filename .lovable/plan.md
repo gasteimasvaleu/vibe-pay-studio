@@ -1,31 +1,32 @@
-## Diagnóstico
+## Problema
 
-- O pagamento foi registrado e há um `publication_unlocks` com `status = paid` para a publicação mostrada.
-- O toast “publicação já desbloqueada” vem porque o backend reconhece que essa compra já está paga.
-- O problema principal está no feed: `getFeed` marca qualquer publicação não pública como bloqueada sem consultar `publication_unlocks`, então mesmo paga ela continua aparecendo bloqueada.
-- A situação “Interrompido” no painel do Asaas indica que o Asaas não está entregando eventos para o webhook. O app tem polling como fallback, mas o webhook também precisa ficar funcional para processar pagamentos quando o usuário fecha o modal.
+Em `src/routes/_authenticated/perfil.$username.tsx` (linhas 44-46), o `beforeLoad` faz:
 
-## Plano de correção
+```ts
+if ((viewerProfile?.account_type ?? "subscriber") === "subscriber") {
+  throw redirect({ to: "/dashboard" });
+}
+```
 
-1. Ajustar `getFeed`
-   - Buscar os desbloqueios pagos (`publication_unlocks.status = paid`) do usuário logado para as publicações retornadas.
-   - Marcar `locked = false` quando o usuário for autor ou tiver desbloqueio pago.
-   - Garantir que a mídia completa apareça quando a publicação estiver desbloqueada.
+Ou seja: qualquer visitante do tipo "subscriber" que clicar no `@username` do autor de uma publicação (link do `PublicationCard`) é chutado para o próprio dashboard antes do perfil carregar. Só criadores conseguem ver perfis alheios hoje.
 
-2. Melhorar a experiência após pagamento
-   - Ao confirmar pagamento no modal, invalidar/refazer a query do feed e fechar/atualizar o modal de forma consistente.
-   - Evitar que uma publicação já paga permita abrir novo checkout; ao clicar, atualizar o feed e mostrar uma mensagem adequada.
+## Correção
 
-3. Endurecer reconciliação do pagamento
-   - Conferir o polling `getPaymentIntentStatus` para garantir que, quando o Asaas retornar status pago, ele aplique o desbloqueio e retorne o estado atualizado.
-   - Se necessário, fazer o retorno indicar `processedAt` depois da reconciliação, não o valor antigo lido antes dela.
+Remover esse bloqueio para que **assinantes também possam abrir o perfil de um criador** clicando em `@usuario` no feed.
 
-4. Orientar o webhook Asaas
-   - Manter a URL correta: `https://vibe-pay-studio.lovable.app/api/public/webhooks/asaas`.
-   - O status “Interrompido” deve ser corrigido no painel do Asaas reativando o webhook e confirmando que o token está no header `asaas-access-token` com o mesmo valor salvo em `ASAAS_WEBHOOK_TOKEN`.
+### Mudança única em `src/routes/_authenticated/perfil.$username.tsx`
+
+- Apagar o trecho que busca `viewerProfile.account_type` e o `redirect` para `/dashboard` (linhas ~38-46).
+- Manter o restante do `beforeLoad`: verificação de login, busca do `profile` pelo `username`, `notFound()` se não existir, e retorno do contexto (`viewerId`, `profile`).
+
+Nenhuma outra tela é alterada. O link do `PublicationCard` (`to="/perfil/$username"`) já está correto.
 
 ## Validação
 
-- Testar no banco que a publicação paga aparece com `locked = false` para o comprador.
-- Verificar que o clique em uma publicação já paga não tenta gerar nova cobrança.
-- Confirmar que o feed recarrega e exibe a mídia desbloqueada após pagamento confirmado.
+1. Logar como assinante, abrir `/feed`, clicar em `@username` no cabeçalho de uma publicação → deve abrir `/perfil/<username>` do criador (e não o dashboard).
+2. Logar como criador e repetir → continua funcionando como antes.
+3. Abrir `/perfil/<username-inexistente>` → continua mostrando "Perfil não encontrado".
+
+## Fora do escopo
+
+- Ajustes visuais na página de perfil quando vista por assinante (ex.: esconder botões de edição). Se quiser, tratamos em passo separado.

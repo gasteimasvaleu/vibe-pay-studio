@@ -35,15 +35,6 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) throw redirect({ to: "/entrar" });
 
-    const { data: viewerProfile } = await supabase
-      .from("profiles")
-      .select("account_type")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
-
-    if ((viewerProfile?.account_type ?? "subscriber") === "subscriber") {
-      throw redirect({ to: "/dashboard" });
-    }
 
     const { data: profile } = await supabase
       .from("profiles")
