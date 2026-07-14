@@ -1,4 +1,6 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +14,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  getSubscriberWallet,
+  listSubscriberTransactions,
+} from "@/lib/finance.functions";
 
 export const Route = createFileRoute("/_authenticated/mywallet/")({
   head: () => ({
@@ -23,8 +29,52 @@ export const Route = createFileRoute("/_authenticated/mywallet/")({
   component: MyWalletPage,
 });
 
+const currency = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+const KIND_LABEL: Record<string, string> = {
+  wallet_topup: "Recarga da carteira",
+  wallet_bonus: "Bônus na carteira",
+  publication_unlock: "Desbloqueio de publicação",
+  chat_unlock: "Desbloqueio de mensagem",
+  subscription: "Assinatura",
+  tip: "Gorjeta enviada",
+  video_call: "Videochamada",
+  withdrawal: "Saque",
+  refund: "Estorno",
+};
+
+const CREDIT_KINDS = new Set(["wallet_topup", "wallet_bonus", "refund"]);
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 function MyWalletPage() {
   const router = useRouter();
+
+  const getWallet = useServerFn(getSubscriberWallet);
+  const listTx = useServerFn(listSubscriberTransactions);
+
+  const walletQ = useQuery({
+    queryKey: ["subscriber-wallet"],
+    queryFn: () => getWallet(),
+  });
+
+  const txQ = useQuery({
+    queryKey: ["subscriber-transactions"],
+    queryFn: () => listTx({ data: { limit: 10 } }),
+  });
 
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState("");
@@ -70,7 +120,8 @@ function MyWalletPage() {
     setCvv("");
   };
 
-
+  const balanceCents = walletQ.data?.balanceCents ?? 0;
+  const transactions = txQ.data ?? [];
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -102,7 +153,9 @@ function MyWalletPage() {
               >
                 <p className="text-sm text-muted-foreground">Saldo na carteira</p>
                 <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
-                  R$ -
+                  {walletQ.isLoading
+                    ? "R$ …"
+                    : currency.format(balanceCents / 100)}
                 </p>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Recarregue a sua carteira e compre conteúdos de forma simples e
@@ -204,7 +257,6 @@ function MyWalletPage() {
               </DialogContent>
             </Dialog>
           </div>
-
         </section>
 
         <hr className="border-border" />
@@ -213,9 +265,47 @@ function MyWalletPage() {
           <h2 className="text-lg font-bold tracking-tight text-foreground">
             Últimas Transações
           </h2>
-          <p className="text-center text-sm text-muted-foreground py-8">
-            Nenhuma transação encontrada
-          </p>
+
+          {txQ.isLoading ? (
+            <p className="text-center text-sm text-muted-foreground py-8">
+              Carregando…
+            </p>
+          ) : transactions.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">
+              Nenhuma transação encontrada
+            </p>
+          ) : (
+            <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
+              {transactions.map((tx) => {
+                const isCredit = CREDIT_KINDS.has(tx.kind);
+                const amount = currency.format(tx.amount_cents_gross / 100);
+                return (
+                  <li
+                    key={tx.id}
+                    className="flex items-center justify-between px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {KIND_LABEL[tx.kind] ?? tx.kind}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(tx.created_at)}
+                        {tx.status !== "paid" ? ` · ${tx.status}` : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-sm font-bold tabular-nums ${
+                        isCredit ? "text-emerald-600" : "text-foreground"
+                      }`}
+                    >
+                      {isCredit ? "+" : "−"} {amount}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           <Button
             asChild
             variant="outline"
