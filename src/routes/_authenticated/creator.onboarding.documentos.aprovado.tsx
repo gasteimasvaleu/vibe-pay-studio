@@ -26,7 +26,7 @@ function AprovadoPending() {
       <div className="mx-auto max-w-2xl text-center">
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
           <GooeyLoader className="h-28 w-56 text-[14px]" />
-          <p className="mt-8 text-lg font-semibold text-white/90">
+          <p className="mt-8 text-lg font-semibold text-neutral-900">
             Finalizando sua verificação...
           </p>
         </div>
@@ -52,20 +52,20 @@ function AprovadoPage() {
   return (
     <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
       <div className="max-w-2xl mx-auto text-center">
-        <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shadow-glow">
-          <CheckCircle2 className="w-10 h-10 text-emerald-400" strokeWidth={2.2} />
+        <div className="mx-auto w-20 h-20 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shadow-glow">
+          <CheckCircle2 className="w-10 h-10 text-emerald-600" strokeWidth={2.2} />
         </div>
 
-        <h2 className="mt-6 text-2xl md:text-3xl font-black tracking-tight leading-tight">
+        <h2 className="mt-6 text-2xl md:text-3xl font-black tracking-tight leading-tight text-neutral-900">
           Identidade aprovada!
         </h2>
-        <p className="mt-3 text-white/70 leading-relaxed max-w-lg mx-auto">
+        <p className="mt-3 text-neutral-700 leading-relaxed max-w-lg mx-auto">
           Tudo certo por aqui. Sua conta está oficialmente pronta para monetizar
           — pagamentos, publicações e assinantes já podem ser gerenciados no seu
           painel.
         </p>
 
-        <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-white/10 shadow-glow">
+        <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-neutral-200 shadow-glow">
           <img
             src={heroImg}
             alt=""
@@ -98,7 +98,7 @@ function AprovadoPage() {
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
-            className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
+            className="px-8 py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
           >
             Ir para o painel
           </button>
@@ -118,12 +118,12 @@ function NextCard({
   desc: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4">
-      <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300">
+    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+      <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-600">
         {icon}
       </span>
-      <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-xs text-white/60 leading-relaxed">{desc}</p>
+      <h3 className="mt-3 text-sm font-semibold text-neutral-900">{title}</h3>
+      <p className="mt-1 text-xs text-neutral-600 leading-relaxed">{desc}</p>
     </div>
   );
 }
