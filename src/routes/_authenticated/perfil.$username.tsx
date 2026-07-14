@@ -534,6 +534,66 @@ function PerfilPage() {
           />
         </>
       )}
+
+      <PaymentMethodDialog
+        open={!!pending}
+        onOpenChange={(v) => !v && setPending(null)}
+        title="Desbloquear publicação"
+        amountCents={pending?.price_cents ?? 0}
+        loading={!!unlocking}
+        onConfirm={confirmPayment}
+      />
+
+      <PaymentModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        title="Desbloquear publicação"
+        checkout={checkout}
+        onPaid={() => {
+          toast.success("Pagamento confirmado!");
+          setModalOpen(false);
+          setCheckout(null);
+          void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        }}
+      />
+
+      <CommentsSheet
+        publicationId={commentsFor?.id ?? null}
+        publicationAuthorId={commentsFor?.author_id}
+        commentsDisabled={commentsFor?.comments_disabled}
+        currentUserName={profile.username}
+        open={!!commentsFor}
+        onOpenChange={(v) => !v && setCommentsFor(null)}
+        onCountChange={(delta) => {
+          const id = commentsFor?.id;
+          if (!id) return;
+          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+            pubsQueryKey,
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    items: prev.items.map((it) =>
+                      it.id === id
+                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                        : it,
+                    ),
+                  }
+                : prev,
+          );
+        }}
+      />
+
+      <CpfPromptDialog
+        open={!!cpfPromptFor}
+        onOpenChange={(v) => !v && setCpfPromptFor(null)}
+        onSaved={() => {
+          const method = cpfPromptFor;
+          setCpfPromptFor(null);
+          if (method) void confirmPayment(method);
+        }}
+      />
+
     </div>
   );
 }
