@@ -324,6 +324,31 @@ export async function refundPayment(paymentId: string): Promise<AsaasPayment> {
   });
 }
 
+// ---------- Credit card tokenization ----------
+
+export type AsaasTokenizedCard = {
+  creditCardNumber: string; // masked last 4
+  creditCardBrand: string;
+  creditCardToken: string;
+};
+
+export async function tokenizeCreditCard(input: {
+  customerId: string;
+  creditCard: CreditCardInput;
+  creditCardHolderInfo: CreditCardHolderInfo;
+  remoteIp?: string;
+}): Promise<AsaasTokenizedCard> {
+  return asaasFetch<AsaasTokenizedCard>("/creditCard/tokenize", {
+    method: "POST",
+    body: JSON.stringify({
+      customer: input.customerId,
+      creditCard: input.creditCard,
+      creditCardHolderInfo: input.creditCardHolderInfo,
+      remoteIp: input.remoteIp,
+    }),
+  });
+}
+
 // ---------- Transfers (using creator API key) ----------
 
 export type AsaasPixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP";
