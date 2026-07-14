@@ -9,9 +9,13 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Film,
+  Gift,
   Info,
+  MessageCircle,
   Pencil,
   Plus,
+  Repeat,
   ShieldAlert,
   Wallet,
 } from "lucide-react";
