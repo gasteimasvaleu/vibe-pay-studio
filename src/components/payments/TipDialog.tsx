@@ -197,7 +197,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amount * 100} />
             </div>
 
             <Button
