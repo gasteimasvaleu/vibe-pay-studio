@@ -7,6 +7,9 @@ import {
   MessageSquare,
   Archive,
   Trash2,
+  VolumeX,
+  EyeOff,
+  Flag,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { showTopBanner } from "@/components/ui/top-banner";
@@ -41,7 +44,7 @@ export function PublicationOptionsMenu({
     close();
   };
 
-  const options: Array<{
+  const ownerOptions: Array<{
     key: string;
     label: string;
     icon: ReactNode;
@@ -90,6 +93,52 @@ export function PublicationOptionsMenu({
       onClick: soon,
     },
   ];
+
+  const viewerOptions: Array<{
+    key: string;
+    label: string;
+    icon: ReactNode;
+    onClick: () => void;
+  }> = [
+    {
+      key: "copy",
+      label: "Copiar link",
+      icon: <Copy className="h-6 w-6" strokeWidth={1.75} />,
+      onClick: copyLink,
+    },
+    {
+      key: "bookmark",
+      label: item.saved_by_me ? "Remover dos favoritos" : "Adicionar aos favoritos",
+      icon: (
+        <Bookmark
+          className={`h-6 w-6 ${item.saved_by_me ? "fill-foreground" : ""}`}
+          strokeWidth={1.75}
+        />
+      ),
+      onClick: () => {
+        onToggleBookmark?.(item);
+        close();
+      },
+    },
+    {
+      key: "mute",
+      label: `Silenciar @${item.author_username ?? "usuario"}`,
+      icon: <VolumeX className="h-6 w-6" strokeWidth={1.75} />,
+      onClick: soon,
+    },
+    {
+      key: "not-interested",
+      label: "Não tenho interesse",
+      icon: <EyeOff className="h-6 w-6" strokeWidth={1.75} />,
+      onClick: soon,
+    },
+  ];
+
+  const isOwner = item.is_owner;
+  const options = isOwner ? ownerOptions : viewerOptions;
+  const destructive = isOwner
+    ? { label: "Excluir post", icon: <Trash2 className="h-6 w-6 text-destructive" strokeWidth={1.75} /> }
+    : { label: "Denunciar post", icon: <Flag className="h-6 w-6 text-destructive" strokeWidth={1.75} /> };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
