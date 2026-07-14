@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -37,6 +38,8 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const queryClient = useQueryClient();
 
   const priceQuery = useQuery({
     queryKey: ["creator-price", creatorId],
@@ -83,6 +86,13 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   const submit = async () => {
     setLoading(true);
     try {
+      if (method === "WALLET") {
+        await walletPay({ data: { kind: "subscription", creatorId, plan } });
+        toast.success("Assinatura ativada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onOpenChange(false);
+        return;
+      }
       const res = await subscribe({
         data: { creatorId, plan, method },
       });
@@ -100,6 +110,15 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
+      if (e?.message === "already_subscribed") {
+        toast.info("Você já assina este criador");
+        onOpenChange(false);
+        return;
+      }
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error(e?.message ?? "Erro ao assinar");
     } finally {
       setLoading(false);
@@ -201,7 +220,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Forma de pagamento
                   </p>
-                  <PaymentMethodPicker value={method} onChange={setMethod} />
+                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} />
                 </div>
 
                 <Button
@@ -212,7 +231,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
-                      {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
+                      {method === "WALLET" ? "Debitando saldo..." : method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
                     </>
                   ) : (
                     `Pagar ${brl.format(totals[plan].cents / 100)}`

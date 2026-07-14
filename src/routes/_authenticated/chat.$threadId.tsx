@@ -13,6 +13,7 @@ import {
   type ChatMessage,
 } from "@/lib/chat.functions";
 import { createChatUnlockPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { Textarea } from "@/components/ui/textarea";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { PriceDialog } from "@/components/chat/PriceDialog";
@@ -65,6 +66,7 @@ function ChatThreadView() {
   const sendFn = useServerFn(sendMessage);
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -204,6 +206,14 @@ function ChatThreadView() {
     const messageId = pendingMsg.id;
     try {
       setUnlockingId(messageId);
+      if (method === "WALLET") {
+        await walletPay({ data: { kind: "chat_unlock", messageId } });
+        setPendingMsg(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Mensagem desbloqueada");
+        return;
+      }
       const res = await unlockFn({ data: { messageId, method } });
       setPendingMsg(null);
       setCheckout({
@@ -214,7 +224,17 @@ function ChatThreadView() {
         invoiceUrl: res.invoiceUrl,
       });
       setModalOpen(true);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === "already_unlocked") {
+        setPendingMsg(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        toast.success("Mensagem já desbloqueada");
+        return;
+      }
+      if (err?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error((err as Error).message ?? "Erro ao gerar pagamento");
     } finally {
       setUnlockingId(null);

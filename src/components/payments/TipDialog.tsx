@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -9,6 +10,7 @@ import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createTipPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const PRESETS = [10, 20, 50, 100];
@@ -36,6 +38,8 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTip = useServerFn(createTipPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const queryClient = useQueryClient();
 
   const handleClose = (v: boolean) => {
     if (!v) {
@@ -54,6 +58,21 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
     }
     setLoading(true);
     try {
+      if (method === "WALLET") {
+        await walletPay({
+          data: {
+            kind: "tip",
+            creatorId,
+            publicationId,
+            amountCents: amount * 100,
+            message: message.trim() || undefined,
+          },
+        });
+        toast.success("Gorjeta enviada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        handleClose(false);
+        return;
+      }
       const res = await createTip({
         data: {
           creatorId,
@@ -77,6 +96,10 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         invoiceUrl: res.invoiceUrl,
       });
     } catch (e: any) {
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error(e?.message ?? "Erro ao criar tip");
     } finally {
       setLoading(false);
@@ -174,7 +197,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amount * 100} />
             </div>
 
             <Button
@@ -185,7 +208,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
-                  {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
+                  {method === "WALLET" ? "Debitando saldo..." : method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
                 </>
               ) : (
                 `Enviar ${brl.format(amount)}`

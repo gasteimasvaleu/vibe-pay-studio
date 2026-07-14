@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
@@ -44,6 +45,7 @@ function FeedPage() {
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
+  const walletPay = useServerFn(payWithWallet);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
@@ -67,6 +69,16 @@ function FeedPage() {
     const item = pending;
     setUnlocking(item.id);
     try {
+      if (method === "WALLET") {
+        await walletPay({
+          data: { kind: "publication_unlock", publicationId: item.id },
+        });
+        setPending(null);
+        toast.success("Publicação desbloqueada!");
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        return;
+      }
       const res = await unlock({
         data: { publicationId: item.id, method },
       });
@@ -84,10 +96,14 @@ function FeedPage() {
         setCpfPromptFor(method);
         return;
       }
-      if (e?.message === "publicação já desbloqueada") {
+      if (e?.message === "publicação já desbloqueada" || e?.message === "already_unlocked") {
         setPending(null);
         await queryClient.invalidateQueries({ queryKey: ["feed"] });
         toast.success("Publicação já desbloqueada");
+        return;
+      }
+      if (e?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
         return;
       }
       toast.error(e?.message ?? "Erro ao gerar pagamento");

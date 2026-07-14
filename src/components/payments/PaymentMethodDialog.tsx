@@ -43,7 +43,7 @@ export function PaymentMethodDialog({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Forma de pagamento
             </p>
-            <PaymentMethodPicker value={method} onChange={setMethod} />
+            <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} />
           </div>
 
           <Button
@@ -54,7 +54,11 @@ export function PaymentMethodDialog({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />{" "}
-                {method === "PIX" ? "Gerando PIX..." : "Abrindo checkout..."}
+                {method === "WALLET"
+                  ? "Debitando saldo..."
+                  : method === "PIX"
+                    ? "Gerando PIX..."
+                    : "Abrindo checkout..."}
               </>
             ) : (
               `Pagar ${brl.format(amountCents / 100)}`

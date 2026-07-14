@@ -1217,6 +1217,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      pay_with_wallet: {
+        Args: {
+          _amount_cents?: number
+          _creator_id?: string
+          _kind: string
+          _message?: string
+          _message_id?: string
+          _plan?: string
+          _publication_id?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
