@@ -670,9 +670,18 @@ export const deleteComment = createServerFn({ method: "POST" })
 const publicationIdSchema = z.object({ id: z.string().uuid() });
 
 async function assertPublicationOwner(
-  supabase: ReturnType<typeof (undefined as unknown as { supabase: never })["supabase"]> extends never
-    ? any
-    : any,
+  supabase: {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (col: string, v: string) => {
+          maybeSingle: () => Promise<{
+            data: { id: string; author_id: string } | null;
+            error: { message: string } | null;
+          }>;
+        };
+      };
+    };
+  },
   publicationId: string,
   userId: string,
 ) {
@@ -685,6 +694,7 @@ async function assertPublicationOwner(
   if (!data) throw new Error("Publicação não encontrada");
   if (data.author_id !== userId) throw new Error("Sem permissão");
 }
+
 
 export const updatePublicationCaption = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
