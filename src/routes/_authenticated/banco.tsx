@@ -162,54 +162,55 @@ function BancoPage() {
 
   async function refreshAfterWithdrawal(args: {
     amountCents: number;
+    previousReleasedCents: number;
     origem: "Nacional" | "Internacional";
   }) {
-    const previousTotalReleased = overviewQuery.data?.totals.releasedCents ?? 0;
-    const expectedTotalReleased = Math.max(
-      previousTotalReleased - args.amountCents,
-      0,
-    );
+    const bucket = args.origem === "Internacional" ? "international" : "national";
+    const currentOverview = qc.getQueryData<any>(["bancoOverview"]) ?? overviewQuery.data;
+    const previousBucketReleased = args.previousReleasedCents;
+    const expectedBucketReleased = Math.max(previousBucketReleased - args.amountCents, 0);
+    const previousTotalReleased = currentOverview?.totals?.releasedCents ?? previousBucketReleased;
+    const expectedTotalReleased = Math.max(previousTotalReleased - args.amountCents, 0);
 
-    setIsRefreshingAfterWithdrawal(true);
-    qc.setQueryData(["bancoOverview"], (old: any) => {
-      if (!old) return old;
-      const bucket = args.origem === "Internacional" ? "international" : "national";
-      const nextBucketReleased = Math.max(
-        (old[bucket]?.releasedCents ?? 0) - args.amountCents,
-        0,
-      );
+    const applyExpectedOverview = (base: any) => {
+      if (!base) return base;
       return {
-        ...old,
+        ...base,
         [bucket]: {
-          ...old[bucket],
-          releasedCents: nextBucketReleased,
+          ...base[bucket],
+          releasedCents: expectedBucketReleased,
         },
         totals: {
-          ...old.totals,
-          releasedCents: Math.max(
-            (old.totals?.releasedCents ?? 0) - args.amountCents,
-            0,
-          ),
+          ...base.totals,
+          releasedCents: expectedTotalReleased,
         },
       };
-    });
-    try {
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        const overview = await qc.fetchQuery({
-          queryKey: ["bancoOverview"],
-          queryFn: () => fetchOverview(),
-          staleTime: 0,
-        });
+    };
 
-        if ((overview?.totals.releasedCents ?? 0) <= expectedTotalReleased) {
+    setIsRefreshingAfterWithdrawal(true);
+    await qc.cancelQueries({ queryKey: ["bancoOverview"] });
+    qc.setQueryData(["bancoOverview"], applyExpectedOverview);
+    try {
+      let confirmedOverview: any = null;
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const freshOverview = await fetchOverview();
+
+        if ((freshOverview?.totals.releasedCents ?? 0) <= expectedTotalReleased) {
+          confirmedOverview = freshOverview;
           break;
         }
+
+        qc.setQueryData(["bancoOverview"], applyExpectedOverview);
 
         await wait(1200);
       }
 
+      qc.setQueryData(
+        ["bancoOverview"],
+        confirmedOverview ? confirmedOverview : applyExpectedOverview,
+      );
+
       await Promise.all([
-        qc.refetchQueries({ queryKey: ["bancoOverview"], type: "active" }),
         qc.refetchQueries({ queryKey: ["bancoTransactions"], type: "active" }),
         qc.refetchQueries({ queryKey: ["bancoWithdrawals"], type: "active" }),
         qc.refetchQueries({ queryKey: ["payoutStatus"], type: "active" }),
