@@ -332,7 +332,12 @@ function BancoPage() {
             </div>
           </SheetHeader>
           <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
-            <CadastrarBancoForm onClose={() => setCadastroOpen(false)} />
+            <CadastrarBancoForm
+              onClose={() => setCadastroOpen(false)}
+              kycVerified={kycVerified}
+              initial={payoutAccount as any}
+            />
+
           </div>
         </SheetContent>
       </Sheet>
