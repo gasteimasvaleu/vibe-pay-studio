@@ -99,6 +99,29 @@ export async function createSubaccount(input: {
   });
 }
 
+export async function findSubaccount(params: {
+  email?: string | null;
+  cpfCnpj?: string | null;
+}): Promise<AsaasSubaccount | null> {
+  const tryQuery = async (qs: string) => {
+    const res = await asaasFetch<{ data?: AsaasSubaccount[] }>(`/accounts?${qs}`);
+    const first = res?.data?.[0];
+    return first ?? null;
+  };
+  if (params.email) {
+    const found = await tryQuery(`email=${encodeURIComponent(params.email)}`);
+    if (found) return found;
+  }
+  if (params.cpfCnpj) {
+    const clean = params.cpfCnpj.replace(/\D/g, "");
+    if (clean) {
+      const found = await tryQuery(`cpfCnpj=${encodeURIComponent(clean)}`);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export async function getSubaccount(id: string): Promise<AsaasSubaccount> {
   return asaasFetch<AsaasSubaccount>(`/accounts/${id}`);
 }
