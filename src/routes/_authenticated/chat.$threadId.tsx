@@ -14,6 +14,7 @@ import {
 } from "@/lib/chat.functions";
 import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 import { Textarea } from "@/components/ui/textarea";
 import { ComposerIcon } from "@/components/chat/ComposerIcon";
 import { PriceDialog } from "@/components/chat/PriceDialog";
