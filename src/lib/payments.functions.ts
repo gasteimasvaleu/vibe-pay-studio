@@ -263,7 +263,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     await supabase
       .from("publication_unlocks")
       .update({ provider_ref: payment.id })
-      .eq("id", unlock.id);
+      .eq("id", unlockId);
 
     let pixQr = null;
     if (data.method === "PIX") {
