@@ -365,6 +365,7 @@ export type Database = {
           account_type: string
           asaas_account_id: string | null
           asaas_account_status: string | null
+          asaas_api_key_encrypted: string | null
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
           created_at: string
@@ -391,6 +392,7 @@ export type Database = {
           account_type?: string
           asaas_account_id?: string | null
           asaas_account_status?: string | null
+          asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           created_at?: string
@@ -417,6 +419,7 @@ export type Database = {
           account_type?: string
           asaas_account_id?: string | null
           asaas_account_status?: string | null
+          asaas_api_key_encrypted?: string | null
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           created_at?: string
