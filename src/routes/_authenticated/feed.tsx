@@ -14,6 +14,7 @@ import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
+import { TipDialog } from "@/components/payments/TipDialog";
 
 
 
@@ -52,6 +53,7 @@ function FeedPage() {
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+  const [tipFor, setTipFor] = useState<FeedItem | null>(null);
 
 
   const feedQuery = useQuery({
@@ -149,7 +151,7 @@ function FeedPage() {
           ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
             <div className="space-y-4">
               {feedQuery.data.items.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
               ))}
             </div>
           ) : (
@@ -235,6 +237,14 @@ function FeedPage() {
           setCpfPromptFor(null);
           if (method) void confirmPayment(method);
         }}
+      />
+
+      <TipDialog
+        open={!!tipFor}
+        onOpenChange={(v) => !v && setTipFor(null)}
+        creatorId={tipFor?.author_id ?? ""}
+        creatorName={tipFor?.author_username ?? "creator"}
+        publicationId={tipFor?.id}
       />
 
 

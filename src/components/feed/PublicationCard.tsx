@@ -7,6 +7,7 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
+  Gift,
   Heart,
   Images,
   Layers,
@@ -47,10 +48,12 @@ export function PublicationCard({
   item,
   onUnlock,
   onComment,
+  onTip,
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
   onComment?: (item: FeedItem) => void;
+  onTip?: (item: FeedItem) => void;
 }) {
   const queryClient = useQueryClient();
   const likeFn = useServerFn(toggleLike);
@@ -169,64 +172,77 @@ export function PublicationCard({
         </div>
       ) : null}
 
-      {!item.locked && (
-        <>
-          <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
-            <button
-              type="button"
-              aria-label={item.liked_by_me ? "Descurtir" : "Curtir"}
-              onClick={() => likeMutation.mutate()}
-              disabled={likeMutation.isPending}
-              className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
-            >
-              <Heart
-                className={`h-6 w-6 ${item.liked_by_me ? "fill-red-500 text-red-500" : "text-foreground/80"}`}
-                strokeWidth={1.75}
-              />
-            </button>
-            <button
-              type="button"
-              aria-label="Comentar"
-              onClick={() => onComment?.(item)}
-              className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
-            >
-              <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
-            </button>
-            <button
-              type="button"
-              aria-label={item.saved_by_me ? "Remover dos salvos" : "Salvar"}
-              onClick={() => bookmarkMutation.mutate()}
-              disabled={bookmarkMutation.isPending}
-              className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
-            >
-              <Bookmark
-                className={`h-6 w-6 ${item.saved_by_me ? "fill-primary text-primary" : "text-foreground/80"}`}
-                strokeWidth={1.75}
-              />
-            </button>
-          </div>
+      <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
+        {!item.locked && (
+          <button
+            type="button"
+            aria-label={item.liked_by_me ? "Descurtir" : "Curtir"}
+            onClick={() => likeMutation.mutate()}
+            disabled={likeMutation.isPending}
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
+          >
+            <Heart
+              className={`h-6 w-6 ${item.liked_by_me ? "fill-red-500 text-red-500" : "text-foreground/80"}`}
+              strokeWidth={1.75}
+            />
+          </button>
+        )}
+        {!item.locked && (
+          <button
+            type="button"
+            aria-label="Comentar"
+            onClick={() => onComment?.(item)}
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
+          >
+            <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
+          </button>
+        )}
+        {!item.is_owner && (
+          <button
+            type="button"
+            aria-label="Enviar mimo"
+            onClick={() => onTip?.(item)}
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors text-foreground/80 hover:text-foreground"
+          >
+            <Gift className="h-6 w-6" strokeWidth={1.75} />
+          </button>
+        )}
+        {!item.locked && (
+          <button
+            type="button"
+            aria-label={item.saved_by_me ? "Remover dos salvos" : "Salvar"}
+            onClick={() => bookmarkMutation.mutate()}
+            disabled={bookmarkMutation.isPending}
+            className="ml-auto h-10 w-10 grid place-items-center rounded-full hover:bg-foreground/10 transition-colors"
+          >
+            <Bookmark
+              className={`h-6 w-6 ${item.saved_by_me ? "fill-primary text-primary" : "text-foreground/80"}`}
+              strokeWidth={1.75}
+            />
+          </button>
+        )}
+      </div>
 
-          {(item.like_count > 0 || item.comment_count > 0) && (
-            <div className="px-4 pb-2 text-sm text-foreground flex items-center gap-4">
-              {item.like_count > 0 && (
-                <span>
-                  <strong className="font-semibold">{item.like_count}</strong>{" "}
-                  {item.like_count === 1 ? "curtida" : "curtidas"}
-                </span>
-              )}
-              {item.comment_count > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onComment?.(item)}
-                  className="text-muted-foreground hover:underline"
-                >
-                  Ver {item.comment_count === 1 ? "1 comentário" : `${item.comment_count} comentários`}
-                </button>
-              )}
-            </div>
+      {!item.locked && (item.like_count > 0 || item.comment_count > 0) && (
+        <div className="px-4 pb-2 text-sm text-foreground flex items-center gap-4">
+          {item.like_count > 0 && (
+            <span>
+              <strong className="font-semibold">{item.like_count}</strong>{" "}
+              {item.like_count === 1 ? "curtida" : "curtidas"}
+            </span>
           )}
-        </>
+          {item.comment_count > 0 && (
+            <button
+              type="button"
+              onClick={() => onComment?.(item)}
+              className="text-muted-foreground hover:underline"
+            >
+              Ver {item.comment_count === 1 ? "1 comentário" : `${item.comment_count} comentários`}
+            </button>
+          )}
+        </div>
       )}
+
 
       {item.caption && (
         <p className="px-4 py-2 pb-3 text-sm text-foreground/90 whitespace-pre-wrap">
