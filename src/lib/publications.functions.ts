@@ -172,11 +172,14 @@ export const getFeed = createServerFn({ method: "POST" })
       )
       .in("author_id", allowedAuthors)
       .lte("published_at", new Date().toISOString())
+      .is("archived_at", null)
       .order("pinned", { ascending: false })
       .order("published_at", { ascending: false })
       .limit(limit + 1);
 
     if (data.cursor) query = query.lt("published_at", data.cursor);
+
+
 
 
     const { data: pubs, error } = await query;
