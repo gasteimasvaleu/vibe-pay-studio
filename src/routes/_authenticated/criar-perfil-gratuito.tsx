@@ -1,10 +1,12 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ArrowLeft, Camera } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createFreeCreatorProfile } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/_authenticated/criar-perfil-gratuito")({
   head: () => ({
