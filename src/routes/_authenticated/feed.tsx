@@ -204,15 +204,15 @@ function FeedPage() {
       />
 
       <CpfPromptDialog
-        open={cpfGuard.needsCpf}
-        onOpenChange={cpfGuard.close}
+        open={!!cpfPromptFor}
+        onOpenChange={(v) => !v && setCpfPromptFor(null)}
         onSaved={() => {
-          if (pending) {
-            void confirmPayment("PIX" as any);
-          }
-          void cpfGuard.retry();
+          const method = cpfPromptFor;
+          setCpfPromptFor(null);
+          if (method) void confirmPayment(method);
         }}
       />
+
 
     </div>
   );
