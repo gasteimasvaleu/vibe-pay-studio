@@ -275,12 +275,15 @@ export async function createPayment(input: {
   };
 
   if (input.creatorWalletId) {
-    body.split = [
-      {
-        walletId: input.creatorWalletId,
-        percentualValue: CREATOR_SPLIT_PCT,
-      },
-    ];
+    const platformWalletId = await getPlatformWalletId();
+    if (!platformWalletId || platformWalletId !== input.creatorWalletId) {
+      body.split = [
+        {
+          walletId: input.creatorWalletId,
+          percentualValue: CREATOR_SPLIT_PCT,
+        },
+      ];
+    }
   }
 
   if (input.billingType === "CREDIT_CARD") {
