@@ -1,29 +1,32 @@
 ## Problema
 
-Ao clicar em **Pagar R$ 14,90**, a API do Asaas responde 400 com:
+`Pagar` falha com **new row violates row-level security policy for table "publication_unlocks"**.
 
-```
-{"code":"user_agent_not_informed","description":"É obrigatório preencher User-Agent no cabeçalho da requisição"}
-```
-
-O Asaas passou a exigir o header `User-Agent` em toda requisição. O helper `asaasFetch` em `src/lib/asaas.server.ts` não envia esse header, então **todas** as chamadas Asaas (criação de pagamento PIX, cartão, transferências, wallets, subaccounts) estão sujeitas ao mesmo erro.
+A tabela `publication_unlocks` só tem políticas de SELECT (`unlocks_author_read`, `unlocks_buyer_read`) — não existe policy de INSERT. Como o insert em `createUnlockPayment` roda com o cliente do usuário autenticado (via `requireSupabaseAuth`), o RLS bloqueia.
 
 ## Correção
 
-Em `src/lib/asaas.server.ts`, dentro de `asaasFetch`, adicionar um `User-Agent` padrão identificando a plataforma (permitindo override via `init.headers`):
+Migration adicionando policy de INSERT restrita ao comprador:
 
-```ts
-headers: {
-  "Content-Type": "application/json",
-  "User-Agent": "VibePayStudio/1.0 (+https://vibe-pay-studio.lovable.app)",
-  access_token: apiKey ?? getApiKey(),
-  accept: "application/json",
-  ...(init.headers ?? {}),
-},
+```sql
+CREATE POLICY "unlocks_buyer_insert"
+  ON public.publication_unlocks
+  FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = buyer_id);
 ```
 
-Uma única alteração de ~1 linha cobre todos os endpoints (`/payments`, `/transfers`, `/wallets`, `/accounts`, etc.).
+O `provider_ref` é atualizado logo depois via `.update()` — também precisa de UPDATE policy pelo mesmo motivo (senão o próximo passo falha). Adicionar:
+
+```sql
+CREATE POLICY "unlocks_buyer_update"
+  ON public.publication_unlocks
+  FOR UPDATE TO authenticated
+  USING (auth.uid() = buyer_id)
+  WITH CHECK (auth.uid() = buyer_id);
+```
+
+Sem alterar as políticas de SELECT existentes nem grants.
 
 ## Arquivos alterados
 
-- `src/lib/asaas.server.ts` — adicionar `User-Agent` em `asaasFetch`.
+- Uma migration nova adicionando as duas policies.
