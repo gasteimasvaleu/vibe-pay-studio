@@ -1,10 +1,12 @@
 import { createFileRoute, Link, notFound, redirect, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   BadgeCheck,
-  Bookmark,
   ChevronDown,
   Clapperboard,
   DollarSign,
@@ -15,7 +17,6 @@ import {
   Instagram,
   Lock,
   MapPin,
-  MessageCircle,
   MoreVertical,
   Music2,
   Share2,
@@ -29,6 +30,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
+import { PublicationCard } from "@/components/feed/PublicationCard";
+import { CommentsSheet } from "@/components/feed/CommentsSheet";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
+import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
+import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
+import { createUnlockPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
+
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
   head: ({ params }) => ({
