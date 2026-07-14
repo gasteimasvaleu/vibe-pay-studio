@@ -1,27 +1,35 @@
 ## Problema
 
-Asaas 400 `invalid_action`: "Não é permitido split para sua própria carteira."
+Toast: `new row violates row-level security policy for table "payment_intents"`.
 
-O `creatorWalletId` enviado no `split` é o mesmo wallet da API key da plataforma (`ASAAS_API_KEY`). Isso acontece quando o creator cadastrou como Wallet ID a própria wallet da conta principal (típico em ambiente sandbox / auto-teste) — Asaas proíbe splitar para si mesmo.
+`payment_intents` só tem policy de SELECT para admin. Nenhuma policy de INSERT. A função `recordIntent` insere usando o client autenticado do comprador (RLS aplica), então bate na barreira.
+
+Essa tabela é infraestrutura interna (log de eventos Asaas), não pertence ao usuário. Não faz sentido dar `INSERT` para `authenticated` no Data API — seria uma superfície de escrita arbitrária.
 
 ## Correção
 
-Detectar essa condição e omitir o split.
+Fazer o INSERT com o client admin (service role, bypassa RLS) dentro do próprio server function.
 
-### 1. `src/lib/asaas.server.ts`
+### Mudança em `src/lib/payments.functions.ts`
 
-- Adicionar `getPlatformWalletId()` que chama `getWalletForApiKey(process.env.ASAAS_API_KEY!)` e memoiza o resultado em uma variável de módulo (`let cached: string | null = null`). Usar sem apiKey adicional (usa a padrão).
-- Em `createPayment`, antes de montar `body.split`:
-  - `const platformWalletId = await getPlatformWalletId().catch(() => null);`
-  - Se `input.creatorWalletId && platformWalletId && input.creatorWalletId === platformWalletId` → **não** adicionar `body.split` (100% vai para a conta principal; o crédito ao creator já é registrado localmente via trigger `transactions_apply_wallet_effects` na tabela `creator_wallets`).
-  - Caso contrário, comportamento atual.
+Em `recordIntent`, ignorar o `supabase` do contexto e usar `supabaseAdmin`:
 
-### 2. Nada muda no fluxo do banco / trigger
+```ts
+async function recordIntent(_supabase: any, args: { ... }): Promise<string> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("payment_intents")
+    .insert({ ... })
+    .select("id")
+    .single();
+  ...
+}
+```
 
-A tabela `transactions` continua sendo alimentada normalmente (net_cents vai para `creator_wallets` do author), então o creator ainda vê o saldo. A diferença é só que no Asaas o dinheiro não é dividido — fica todo na conta principal — o que é o comportamento correto quando "creator" e "plataforma" são a mesma wallet Asaas.
+Manter a assinatura `(_supabase, args)` para não mexer nos ~6 call-sites; o parâmetro fica ignorado.
+
+Nenhuma migration necessária — a policy admin-read existente continua sendo suficiente porque a leitura é só para painel admin.
 
 ## Arquivos alterados
 
-- `src/lib/asaas.server.ts` — nova `getPlatformWalletId()` + guard em `createPayment`.
-
-Sem migration.
+- `src/lib/payments.functions.ts` — `recordIntent` passa a usar `supabaseAdmin`.

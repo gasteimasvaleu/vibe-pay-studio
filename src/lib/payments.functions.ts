@@ -154,7 +154,9 @@ async function recordIntent(
     pixQr?: { encodedImage: string; payload: string } | null;
   },
 ): Promise<string> {
-  const { data, error } = await supabase
+  void supabase;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
     .from("payment_intents")
     .insert({
       provider: "asaas",
