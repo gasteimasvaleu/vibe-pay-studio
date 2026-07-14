@@ -295,6 +295,75 @@ function PerfilPage() {
   );
 }
 
+function SubscriptionPlansCard({
+  monthly,
+  quarterly,
+  semiannual,
+  hasPromotions,
+  onSelect,
+  format,
+}: {
+  monthly: number;
+  quarterly: number;
+  semiannual: number;
+  hasPromotions: boolean;
+  onSelect: () => void;
+  format: (v: number) => string;
+}) {
+  const [promoOpen, setPromoOpen] = useState(true);
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-bold text-foreground mb-2">Assinaturas</h3>
+        <PlanPill label="1 mês" price={format(monthly)} onClick={onSelect} />
+      </div>
+
+      {hasPromotions && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setPromoOpen((v) => !v)}
+            className="w-full flex items-center justify-between mb-2"
+          >
+            <h3 className="text-base font-bold text-foreground">Promoções</h3>
+            <ChevronDown
+              className={`h-5 w-5 text-foreground transition-transform ${promoOpen ? "" : "-rotate-90"}`}
+            />
+          </button>
+          {promoOpen && (
+            <div className="space-y-2">
+              <PlanPill label="3 meses" price={format(quarterly)} onClick={onSelect} />
+              <PlanPill label="6 meses" price={format(semiannual)} onClick={onSelect} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanPill({
+  label,
+  price,
+  onClick,
+}: {
+  label: string;
+  price: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full h-12 px-5 rounded-full flex items-center justify-between bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 text-black font-semibold shadow-md hover:brightness-105 transition"
+    >
+      <span>{label}</span>
+      <span>{price}</span>
+    </button>
+  );
+}
+
+
 function Stat({
   icon,
   value,
