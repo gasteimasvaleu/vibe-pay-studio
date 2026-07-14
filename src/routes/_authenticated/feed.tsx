@@ -59,9 +59,20 @@ function FeedPage() {
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
 
 
-  const feedQuery = useQuery({
+  const feedQuery = useInfiniteQuery({
     queryKey: ["feed"],
-    queryFn: () => fetchFeed({ data: { limit: 20 } }),
+    queryFn: ({ pageParam }) =>
+      fetchFeed({ data: { limit: 20, cursor: pageParam ?? undefined } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+  const feedItems = feedQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  const sentinelRef = useInfiniteScrollSentinel<HTMLDivElement>({
+    hasNextPage: feedQuery.hasNextPage,
+    isFetchingNextPage: feedQuery.isFetchingNextPage,
+    fetchNextPage: feedQuery.fetchNextPage,
   });
 
   const handleUnlock = (item: FeedItem) => {
