@@ -167,8 +167,8 @@ export function PublicationOptionsMenu({
           onClick={soon}
           className="mt-3 w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-destructive/10 hover:bg-destructive/15 transition-colors text-left"
         >
-          <Trash2 className="h-6 w-6 text-destructive" strokeWidth={1.75} />
-          <span className="text-sm font-semibold text-destructive">Excluir post</span>
+          {destructive.icon}
+          <span className="text-sm font-semibold text-destructive">{destructive.label}</span>
         </button>
       </PopoverContent>
     </Popover>
