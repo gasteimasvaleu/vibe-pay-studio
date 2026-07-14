@@ -40,6 +40,48 @@ import {
 } from "@/components/ui/sheet";
 import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 import { getCreatorPayoutStatus } from "@/lib/payments.functions";
+import {
+  getCreatorBancoOverview,
+  listCreatorTransactions,
+} from "@/lib/finance.functions";
+
+const BRL = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const formatBRL = (cents: number) => BRL.format((cents ?? 0) / 100);
+
+const KIND_META: Record<
+  string,
+  { label: string; Icon: typeof Banknote }
+> = {
+  subscription: { label: "Assinatura", Icon: Repeat },
+  tip: { label: "Gorjeta", Icon: Gift },
+  publication_unlock: { label: "Desbloqueio de publicação", Icon: Wallet },
+  chat_unlock: { label: "Desbloqueio no chat", Icon: MessageCircle },
+  video_call: { label: "Chamada de vídeo", Icon: Film },
+  withdrawal: { label: "Saque", Icon: Banknote },
+  refund: { label: "Estorno", Icon: AlertCircle },
+  wallet_topup: { label: "Recarga", Icon: Wallet },
+  wallet_bonus: { label: "Bônus", Icon: Gift },
+};
+const kindMeta = (kind: string) =>
+  KIND_META[kind] ?? { label: kind, Icon: Banknote };
+
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: "PIX",
+  credit_card: "Cartão",
+  boleto: "Boleto",
+  wallet: "Carteira",
+  manual: "Manual",
+};
+
+const dateFmt = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export const Route = createFileRoute("/_authenticated/banco")({
   head: () => ({
