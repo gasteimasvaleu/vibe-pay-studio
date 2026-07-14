@@ -104,14 +104,22 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
-    const { data: activeSub } = await supabase
-      .from("subscriptions")
-      .select("id")
-      .eq("subscriber_id", userData.user.id)
-      .eq("creator_id", profile.user_id)
-      .eq("status", "active")
-      .gt("current_period_end", new Date().toISOString())
-      .maybeSingle();
+    const [{ data: activeSub }, { data: followRow }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("subscriber_id", userData.user.id)
+        .eq("creator_id", profile.user_id)
+        .eq("status", "active")
+        .gt("current_period_end", new Date().toISOString())
+        .maybeSingle(),
+      supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("follower_id", userData.user.id)
+        .eq("followee_id", profile.user_id)
+        .maybeSingle(),
+    ]);
 
     return {
       viewerId: userData.user.id,
@@ -123,7 +131,8 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
-      isFollowing: !!activeSub,
+      isFollowing: !!followRow,
+      isSubscribed: !!activeSub,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
@@ -132,6 +141,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       likesCount: likesCount ?? 0,
     };
   },
+
 
 
 
