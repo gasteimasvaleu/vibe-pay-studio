@@ -1051,7 +1051,7 @@ function StepMedia({
           {media.length} de {MAX_MEDIA} - Você pode enviar até {MAX_MEDIA} mídias
         </p>
         {reorderMode && (
-          <p className="text-xs text-orange-500 mt-1">
+          <p className="text-xs text-primary mt-1">
             Arraste as miniaturas para reordenar
           </p>
         )}
@@ -1522,7 +1522,7 @@ function ToggleRow({
       <span className="flex-1 font-medium">
         {label}
         {hint && (
-          <span className="ml-2 text-xs text-orange-500 font-semibold">{hint}</span>
+          <span className="ml-2 text-xs text-primary font-semibold">{hint}</span>
         )}
       </span>
       <Switch checked={checked} onCheckedChange={onChange} />
@@ -1670,13 +1670,13 @@ function ScheduleDialog({
           <TabsList className="grid grid-cols-2 w-full bg-transparent border-b border-border rounded-none h-auto p-0">
             <TabsTrigger
               value="date"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold text-base py-3"
             >
               {format(date, "MMM dd, EEE.", { locale: ptBR })}
             </TabsTrigger>
             <TabsTrigger
               value="time"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-500 data-[state=active]:bg-transparent font-bold text-base py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold text-base py-3"
             >
               {time}
             </TabsTrigger>
@@ -1697,14 +1697,14 @@ function ScheduleDialog({
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="text-4xl font-bold bg-transparent border-b-2 border-orange-500 text-center outline-none py-4"
+                className="text-4xl font-bold bg-transparent border-b-2 border-primary text-center outline-none py-4"
               />
             </div>
           </TabsContent>
         </Tabs>
         <Button
           onClick={handleApply}
-          className="w-full h-12 mt-4 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+          className="w-full h-12 mt-4 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Aplicar
         </Button>
