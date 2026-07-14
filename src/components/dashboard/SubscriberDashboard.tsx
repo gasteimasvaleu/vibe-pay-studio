@@ -44,7 +44,7 @@ export function SubscriberDashboard({
     <DashboardShell
       username={username}
       isCreator={false}
-      showProfileLink={creatorOnboardingStarted}
+      showProfileLink={false}
     >
       <section className="space-y-4">
         <h3 className="text-lg font-bold tracking-tight text-white/90">
