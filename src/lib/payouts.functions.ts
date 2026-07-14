@@ -64,13 +64,35 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       throw new Error(`valor mínimo de saque: R$ ${(WITHDRAWAL_MIN_CENTS / 100).toFixed(2)}`);
     if (!data.pixKey?.trim()) throw new Error("chave pix obrigatória");
 
-    const { data: wallet, error: wErr } = await supabase
-      .from("creator_wallets")
-      .select("released_cents")
-      .eq("user_id", userId)
-      .single();
+    const [walletRes, activeWithdrawalsRes] = await Promise.all([
+      supabase
+        .from("creator_wallets")
+        .select("released_cents")
+        .eq("user_id", userId)
+        .single(),
+      supabase
+        .from("withdrawals")
+        .select("amount_cents")
+        .eq("creator_id", userId)
+        .in("status", ["requested", "paid"] as any),
+    ]);
+    const wallet = walletRes.data;
+    const wErr = walletRes.error;
     if (wErr || !wallet) throw new Error("carteira não encontrada");
-    if (wallet.released_cents < amount) throw new Error("saldo liberado insuficiente");
+    if (activeWithdrawalsRes.error)
+      throw new Error(activeWithdrawalsRes.error.message);
+
+    const activeWithdrawalCents =
+      activeWithdrawalsRes.data?.reduce(
+        (acc, row) => acc + (row.amount_cents ?? 0),
+        0,
+      ) ?? 0;
+    const availableReleasedCents = Math.max(
+      wallet.released_cents - activeWithdrawalCents,
+      0,
+    );
+    if (availableReleasedCents < amount)
+      throw new Error("saldo liberado insuficiente");
 
     const { data: profile, error: pErr } = await (supabase as any)
       .from("profiles")
@@ -82,13 +104,6 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         "Você precisa cadastrar sua API key Asaas em Meu Banco para sacar automaticamente. Sem ela, faça o saque direto no painel Asaas.",
       );
     }
-
-    // Reserva o valor debitando do saldo liberado
-    const { error: uErr } = await supabase
-      .from("creator_wallets")
-      .update({ released_cents: wallet.released_cents - amount })
-      .eq("user_id", userId);
-    if (uErr) throw new Error(uErr.message);
 
     const { data: row, error } = await supabase
       .from("withdrawals")
@@ -105,13 +120,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       })
       .select("id, amount_cents, fee_cents, net_cents, status, is_first_withdrawal, requested_at")
       .single();
-    if (error) {
-      await supabase
-        .from("creator_wallets")
-        .update({ released_cents: wallet.released_cents })
-        .eq("user_id", userId);
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
     try {
       const asaas = await loadAsaas();
@@ -152,11 +161,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
 
       return { ...row, status: withdrawalStatus, provider_ref: transfer.id };
     } catch (err: any) {
-      // Em caso de falha na transferência, reverte o saldo interno e marca o saque como falho
-      await supabase
-        .from("creator_wallets")
-        .update({ released_cents: wallet.released_cents })
-        .eq("user_id", userId);
+      // Em caso de falha na transferência, o saque deixa de contar como débito.
       await supabase
         .from("withdrawals")
         .update({
@@ -188,18 +193,7 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
       .eq("id", w.id);
     if (error) throw new Error(error.message);
 
-    // Devolve o valor ao saldo liberado
-    const { data: wallet } = await supabase
-      .from("creator_wallets")
-      .select("released_cents")
-      .eq("user_id", userId)
-      .single();
-    if (wallet) {
-      await supabase
-        .from("creator_wallets")
-        .update({ released_cents: wallet.released_cents + w.amount_cents })
-        .eq("user_id", userId);
-    }
+    // Status rejeitado remove o saque do cálculo de saldo disponível.
     return { ok: true };
   });
 
