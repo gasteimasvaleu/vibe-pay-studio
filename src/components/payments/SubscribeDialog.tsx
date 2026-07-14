@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
