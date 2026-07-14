@@ -102,6 +102,15 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
+    const { data: activeSub } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("subscriber_id", userData.user.id)
+      .eq("creator_id", profile.user_id)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .maybeSingle();
+
     return {
       viewerId: userData.user.id,
       profile: {
@@ -112,6 +121,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
+      isFollowing: !!activeSub,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
@@ -120,6 +130,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       likesCount: likesCount ?? 0,
     };
   },
+
 
 
   component: PerfilPage,
