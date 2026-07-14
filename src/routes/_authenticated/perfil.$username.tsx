@@ -381,25 +381,40 @@ function PerfilPage() {
               <nav className="flex flex-col gap-1">
                 {(() => {
                   const isFree = profile.priceMonthly === 0;
-                  const topLabel = isFree
-                    ? "Assinatura gratuita"
-                    : isFollowing
-                      ? "Seguir"
+                  const followLabel = isFollowing ? "Seguindo" : "Seguir";
+                  const subLabel = isSubscribed
+                    ? "Assinado"
+                    : isFree
+                      ? "Assinatura gratuita"
                       : "Assinar";
-                  const topDisabled = isFollowing || followBusy;
-                  const onTop = async () => {
-                    if (isFollowing) return;
+                  const onFollow = async () => {
+                    if (isFollowing || followBusy) return;
+                    setFollowBusy(true);
+                    try {
+                      await followFn({ data: { creatorId: profile.userId } });
+                      setIsFollowing(true);
+                      toast.success("Você agora segue este perfil.");
+                      router.invalidate();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                    } finally {
+                      setFollowBusy(false);
+                      setMenuOpen(false);
+                    }
+                  };
+                  const onSubscribe = async () => {
+                    if (isSubscribed || subscribeBusy) return;
                     if (isFree) {
-                      setFollowBusy(true);
+                      setSubscribeBusy(true);
                       try {
-                        await followFreeFn({ data: { creatorId: profile.userId } });
-                        setIsFollowing(true);
-                        toast.success("Você agora segue este perfil.");
+                        await subscribeFreeFn({ data: { creatorId: profile.userId } });
+                        setIsSubscribed(true);
+                        toast.success("Assinatura gratuita ativada!");
                         router.invalidate();
                       } catch (e) {
-                        toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                        toast.error(e instanceof Error ? e.message : "Erro ao assinar.");
                       } finally {
-                        setFollowBusy(false);
+                        setSubscribeBusy(false);
                         setMenuOpen(false);
                       }
                     } else {
@@ -411,16 +426,25 @@ function PerfilPage() {
                     <>
                       <button
                         type="button"
-                        onClick={onTop}
-                        disabled={topDisabled}
+                        onClick={onFollow}
+                        disabled={isFollowing || followBusy}
                         className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {topLabel}
+                        {followLabel}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onSubscribe}
+                        disabled={isSubscribed || subscribeBusy}
+                        className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {subLabel}
                       </button>
                       <div className="my-1 h-px bg-border" />
                     </>
                   );
                 })()}
+
                 <button
                   type="button"
                   onClick={() => {
