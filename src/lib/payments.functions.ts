@@ -617,7 +617,9 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { paymentIntentId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { data: intent, error } = await context.supabase
+    void context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: intent, error } = await supabaseAdmin
       .from("payment_intents")
       .select("id, asaas_payment_id, processed_at, metadata")
       .eq("id", data.paymentIntentId)
@@ -631,6 +633,7 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
       processedAt: intent.processed_at,
     };
   });
+
 
 // ---------------- Payout setup (conta Asaas própria + dados bancários) ----------------
 
