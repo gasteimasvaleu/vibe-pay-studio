@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
@@ -53,6 +53,11 @@ interface Props {
   saldoLiberadoCents: number;
   pixKey: string | null;
   pixKeyType: string | null;
+  onWithdrawalSuccess?: (args: {
+    amountCents: number;
+    previousReleasedCents: number;
+    origem: "Nacional" | "Internacional";
+  }) => Promise<void> | void;
 }
 
 export function SacarDialog({
@@ -62,6 +67,7 @@ export function SacarDialog({
   saldoLiberadoCents,
   pixKey,
   pixKeyType,
+  onWithdrawalSuccess,
 }: Props) {
   const qc = useQueryClient();
   const run = useServerFn(requestWithdrawal);
@@ -74,6 +80,11 @@ export function SacarDialog({
     if (!Number.isFinite(n) || n <= 0) return 0;
     return Math.round(n * 100);
   }, [valorStr]);
+
+  useEffect(() => {
+    if (!open) return;
+    setValorStr((saldoLiberadoCents / 100).toFixed(2).replace(".", ","));
+  }, [open, saldoLiberadoCents]);
 
   const error = useMemo(() => {
     if (!pixKey) return "Cadastre uma chave PIX em Dados bancários.";
@@ -94,7 +105,9 @@ export function SacarDialog({
           pixKeyType: pixKeyType ?? undefined,
         },
       }),
-    onSuccess: (res: any) => {
+    onSuccess: async (res: any) => {
+      const withdrawnAmountCents = amountCents;
+      const previousReleasedCents = saldoLiberadoCents;
       const statusMsg =
         res?.status === "paid"
           ? "Saque concluído"
@@ -104,10 +117,17 @@ export function SacarDialog({
       toast.success(statusMsg, {
         description: `${formatBRL(amountCents)} enviado via PIX.`,
       });
-      qc.invalidateQueries({ queryKey: ["bancoOverview"] });
-      qc.invalidateQueries({ queryKey: ["bancoTransactions"] });
-      qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] });
-      qc.invalidateQueries({ queryKey: ["payoutStatus"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["bancoOverview"] }),
+        qc.invalidateQueries({ queryKey: ["bancoTransactions"] }),
+        qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] }),
+        qc.invalidateQueries({ queryKey: ["payoutStatus"] }),
+        onWithdrawalSuccess?.({
+          amountCents: withdrawnAmountCents,
+          previousReleasedCents,
+          origem,
+        }),
+      ]);
       onOpenChange(false);
     },
     onError: (err: any) => {
