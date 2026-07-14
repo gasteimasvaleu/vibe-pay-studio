@@ -170,12 +170,22 @@ export async function getWalletForApiKey(
   apiKey: string,
 ): Promise<{ walletId: string }> {
   const body = await asaasFetch<Record<string, unknown>>("/wallets/", {}, apiKey);
-  const walletId =
-    (typeof body === "object" && body && "walletId" in body
-      ? body.walletId
-      : typeof body === "object" && body && "id" in body
-        ? body.id
-        : null) ?? null;
+  let walletId: unknown = null;
+  if (body && typeof body === "object") {
+    const data = (body as { data?: unknown }).data;
+    if (Array.isArray(data) && data.length > 0) {
+      const first = data[0] as Record<string, unknown> | null;
+      if (first && typeof first === "object") {
+        walletId = first.id ?? first.walletId ?? null;
+      }
+    }
+    if (!walletId) {
+      walletId =
+        (body as { walletId?: unknown }).walletId ??
+        (body as { id?: unknown }).id ??
+        null;
+    }
+  }
   if (!walletId || typeof walletId !== "string") {
     throw new Error("não foi possível recuperar o Wallet ID com essa API key");
   }
