@@ -1,28 +1,46 @@
+
 ## Objetivo
 
-Agrupar respostas (replies) sob o comentário pai no `CommentsSheet`, com um toggle "Ver N respostas" / "Ocultar respostas" para expandir e recolher a thread — igual aos screenshots.
+Quando o usuário confirma o preço no `PriceDialog` (botão **Avançar**) do fluxo de conteúdo pago, abrir um bottom sheet **"Adicionar prévia"** (modelo do screenshot) e permitir escolher/enviar a mídia de prévia de verdade — biblioteca do dispositivo, acervo do app e câmera.
 
-## Contexto
+## Escopo
 
-- `publication_comments` já tem `parent_id` e `addComment` já aceita `parentId`.
-- `listComments` retorna a lista plana (pais + respostas misturadas por `created_at`).
-- Hoje respostas aparecem no mesmo nível do pai; não há indentação nem toggle.
+Alterações em `src/routes/_authenticated/publisher.tsx`, `src/lib/publications.functions.ts` e uma migração Supabase para persistir a prévia.
 
-## Mudanças (somente frontend)
+## UX
 
-### `src/components/feed/CommentsSheet.tsx`
+1. Novo estado `previewSheetOpen` em `PublisherPage`.
+2. Ao clicar **Avançar** no `PriceDialog` (paid):
+   - fecha o dialog atual;
+   - marca `toggles.paid = { enabled: true, priceCents }`;
+   - abre `previewSheetOpen`.
+3. `PreviewPickerSheet` (novo componente, mesmo padrão visual do `pickerOpen` existente — `Sheet` inferior, `rounded-t-2xl`, `sm:max-w-[420px]`, header "Adicionar prévia" + copy "Para publicar **conteúdo pago**, é necessário definir uma **mídia de prévia**."):
+   - `PickerOption` **Biblioteca do dispositivo** → abre `<input type="file" accept="image/*,video/*">` (novo `previewInputRef`, mesmo padrão do `fileInputRef` com `flushSync` para preservar user-gesture).
+   - `PickerOption` **Acervo na Privacy** → placeholder por enquanto (`toast.info("Em breve")`) — não existe feature de acervo salvo no app hoje.
+   - `PickerOption` **Câmera** → segundo input com `capture="environment"`.
+4. Após escolher o arquivo, faz upload no bucket `publications` em `posts/{userId}/drafts/preview-{uuid}.{ext}` reusando `uploadWithProgress` + `createSignedUrl` (mesmo fluxo do `onFiles`). Estado local `preview: { status, previewUrl, storagePath, publicUrl, uploadProgress, type }`.
+5. Na etapa 2 (composer), quando `toggles.paid.enabled`, exibir o card "Prévia" com thumbnail (a partir de `preview.previewUrl`) e botão **Editar prévia** que reabre `previewSheetOpen`. Se `preview` estiver ausente e `paid.enabled=true`, `canContinue` fica falso (bloqueia postar).
+6. Se o usuário desabilitar o toggle "Conteúdo pago", limpar `preview` e remover o arquivo via `deleteDraftMedia`.
 
-1. **Agrupar em memória**: derivar `roots` (comentários sem `parent_id`) e `repliesByParent: Record<string, PublicationComment[]>` a partir de `query.data`, ordenados por `created_at` asc.
-2. **Estado local**: `const [expanded, setExpanded] = useState<Set<string>>(new Set())` — quais threads estão abertas.
-3. **Render**:
-   - Renderizar apenas `roots` no `<ul>` principal.
-   - Abaixo de cada root com `replies.length > 0`, um botão toggle no estilo do print:
-     - Recolhido: `— Ver N resposta(s)`
-     - Expandido: `— Ocultar respostas`
-     - Alinhado à esquerda do conteúdo do comentário (com o mesmo padding do avatar + traço horizontal curto `<span className="h-px w-6 bg-border" />`, texto em `text-sm font-semibold text-muted-foreground`).
-   - Quando expandido, renderizar `replies` indentados (ex.: `pl-12`) usando o mesmo layout de item (avatar menor `h-8 w-8`, mesmas ações de like/responder/excluir).
-4. **Responder a uma reply**: `startReply` continua usando o `id` do comentário clicado como `parentId`; ao criar uma resposta a uma reply, tratar como reply do mesmo root — em `onSuccess` do `mutation`, se `replyingTo` existir, encontrar o root ancestral (`comment.parent_id ?? comment.id`) e garantir que a thread desse root fique `expanded`.
-5. **Exclusão**: manter `canDelete` atual; ao excluir um root que tem replies, a UI já se limpa via `setQueryData` (as replies somem junto com o root do agrupamento — comportamento consistente com o RLS).
-6. **Contador de likes / botões**: sem mudança na lógica; apenas reaproveitar o mesmo bloco JSX para pai e reply (extrair um subcomponente local `CommentRow` para evitar duplicação).
+## Backend
 
-Sem mudanças em backend, server functions, RLS ou schema.
+- Migração `add_publication_preview.sql`:
+  - `ALTER TABLE public.publications ADD COLUMN preview_url text, ADD COLUMN preview_storage_path text;`
+  - Sem novas policies (já herdam as existentes de `publications`).
+- `createPublication` (`src/lib/publications.functions.ts`):
+  - Adicionar ao schema `preview: z.object({ storagePath, url, type: z.enum(["image","video"]) }).nullable().optional()`.
+  - No insert, gravar `preview_url` / `preview_storage_path` quando `visibility === "paid"`.
+  - Regenerar `src/integrations/supabase/types.ts` manualmente (adicionar os campos em `publications`).
+- Client envia `preview` no payload do `mutation.mutate` quando existir.
+
+## Fora de escopo
+
+- Feed / detalhe da publicação exibindo a mídia de prévia bloqueada (o pedido é só o sheet + upload real). Fica para uma próxima iteração.
+- Implementação do "Acervo na Privacy" — vira placeholder com `toast.info`.
+
+## Arquivos
+
+- `src/routes/_authenticated/publisher.tsx` — novo sheet, estado `preview`, handlers, thumbnail na etapa 2.
+- `src/lib/publications.functions.ts` — schema + insert.
+- `src/integrations/supabase/types.ts` — novos campos.
+- `supabase/migrations/<timestamp>_add_publication_preview.sql`.
