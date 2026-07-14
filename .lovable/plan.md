@@ -1,45 +1,21 @@
-## Ajustar menu do botão de opções
+## Problema
 
-Trocar o `Sheet` lateral por um **Popover** que abre logo abaixo/à esquerda do botão de três pontinhos, com visual de balão (cantos arredondados, fundo bege claro, sombra suave e uma pequena seta apontando para o botão), exatamente como no screenshot.
+A recarga de R$50,00 foi processada com sucesso (webhook Asaas creditou `subscriber_wallets.balance_cents = 5000`), mas a página `/mywallet` mostra `R$ -` fixo no template — nunca consulta o banco. A seção "Últimas Transações" também é estática ("Nenhuma transação encontrada").
 
-### Alterações em `src/routes/_authenticated/perfil.$username.tsx`
+## Alterações
 
-1. **Imports**
-   - Remover: `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger`.
-   - Adicionar: `Popover`, `PopoverContent`, `PopoverTrigger` de `@/components/ui/popover`.
-   - Manter os ícones `Share2`, `Flag`, `UserPlus`.
+### 1. `src/lib/finance.functions.ts`
+Adicionar `listSubscriberTransactions` (server fn autenticada) que retorna as últimas transações onde `buyer_id = userId` (kinds: `wallet_topup`, `wallet_bonus`, `publication_unlock`, `chat_unlock`, `subscription`, `tip`, `video_call`), ordenadas por `created_at desc`, com limite (default 10).
 
-2. **Estado**
-   - Renomear `menuOpen` (segue igual, só muda o componente que consome).
+Campos: `id, kind, status, amount_cents_gross, payment_method, created_at`.
 
-3. **Estrutura no header**
-   ```tsx
-   <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-     <PopoverTrigger asChild>
-       <button ...><MoreVertical /></button>
-     </PopoverTrigger>
-     <PopoverContent
-       align="end"
-       sideOffset={8}
-       className="w-64 rounded-3xl bg-[#f5f0e8] border-none shadow-xl p-3 text-black"
-     >
-       <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-black/5 text-lg">
-         <Share2 className="w-6 h-6" /> Compartilhar
-       </button>
-       <button ...><Flag /> Denunciar perfil</button>
-       <button ...><UserPlus /> Adicionar amigo</button>
-     </PopoverContent>
-   </Popover>
-   ```
-   - `align="end"` alinha a borda direita do popover com o botão (abre para a esquerda).
-   - Fundo `#f5f0e8` (bege claro do screenshot), texto preto, ícones outline pretos.
-   - Cantos bem arredondados (`rounded-3xl`) e sombra suave (`shadow-xl`).
+### 2. `src/routes/_authenticated/mywallet.index.tsx`
+- Usar `useQuery` (via `useServerFn`) para chamar `getSubscriberWallet` e `listSubscriberTransactions`.
+- Substituir `R$ -` pelo `balanceCents` formatado em BRL (mostrar `R$ 0,00` quando zero, skeleton enquanto carrega).
+- Renderizar a lista de "Últimas Transações" com label amigável por `kind` (ex: "Recarga via PIX", "Desbloqueio de publicação"), data curta e valor formatado (positivo para topup/bonus, negativo para compras). Manter mensagem "Nenhuma transação encontrada" apenas quando a lista vier vazia.
+- Manter todo o resto (cartões, botões, layout) inalterado.
 
-4. **Handlers**
-   - Manter as ações atuais (`navigator.share` / `clipboard`, alerts de denunciar e adicionar amigo). Cada clique fecha o popover via `setMenuOpen(false)`.
-
-5. **Fora de escopo**
-   - Sem mudanças em posts, assinaturas, pagamentos, botão de voltar ou título.
-
-### Verificação
-- `bun run build:dev` para confirmar que compila.
+### Detalhes técnicos
+- Query keys: `["subscriber-wallet"]` e `["subscriber-transactions"]`.
+- Formatação com `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`.
+- Sem mudanças em rotas, migrations, ou webhook — o backend já funciona corretamente.
