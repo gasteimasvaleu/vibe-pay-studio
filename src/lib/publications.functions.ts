@@ -16,6 +16,15 @@ const audioSchema = z
   .nullable()
   .optional();
 
+const previewSchema = z
+  .object({
+    storagePath: z.string().min(1),
+    url: z.string().url(),
+    type: z.enum(["image", "video"]),
+  })
+  .nullable()
+  .optional();
+
 const createPublicationSchema = z.object({
   caption: z.string().max(2000).optional().nullable(),
   visibility: z.enum(["public", "paid", "challenge"]),
@@ -27,6 +36,7 @@ const createPublicationSchema = z.object({
   pinned: z.boolean(),
   media: z.array(mediaItemSchema).min(1).max(10),
   audio: audioSchema,
+  preview: previewSchema,
 });
 
 export const createPublication = createServerFn({ method: "POST" })
@@ -57,6 +67,10 @@ export const createPublication = createServerFn({ method: "POST" })
         published_at: publishedAt.toISOString(),
         audio_url: data.audio?.url ?? null,
         audio_storage_path: data.audio?.storagePath ?? null,
+        preview_url:
+          data.visibility === "paid" ? data.preview?.url ?? null : null,
+        preview_storage_path:
+          data.visibility === "paid" ? data.preview?.storagePath ?? null : null,
       })
       .select("id")
       .single();

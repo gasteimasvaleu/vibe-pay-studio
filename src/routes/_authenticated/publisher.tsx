@@ -114,6 +114,16 @@ type AudioRecording = {
   error?: string;
 };
 
+type PreviewMedia = {
+  status: "uploading" | "ready" | "error";
+  type: "image" | "video";
+  previewUrl: string;
+  storagePath?: string;
+  publicUrl?: string;
+  uploadProgress: number;
+  error?: string;
+};
+
 const MAX_AUDIO_SEC = 300;
 
 function formatAudioTime(sec: number) {
@@ -210,10 +220,14 @@ function PublisherPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewInputRef = useRef<HTMLInputElement | null>(null);
+  const previewCameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const [paidOpen, setPaidOpen] = useState(false);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
+  const [preview, setPreview] = useState<PreviewMedia | null>(null);
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
@@ -238,8 +252,15 @@ function PublisherPage() {
         )
       : 0;
   const audioBusy = audio.status === "recording" || audio.status === "uploading";
+  const previewBusy = preview?.status === "uploading";
+  const previewMissing = toggles.paid.enabled && (!preview || preview.status !== "ready");
   const canContinue =
-    media.length > 0 && uploadingCount === 0 && errorCount === 0 && !audioBusy;
+    media.length > 0 &&
+    uploadingCount === 0 &&
+    errorCount === 0 &&
+    !audioBusy &&
+    !previewBusy &&
+    !previewMissing;
 
   const goBack = () => {
     if (step === 2) return setStep(1);
@@ -375,7 +396,107 @@ function PublisherPage() {
     if (item) URL.revokeObjectURL(item.previewUrl);
   };
 
+  const clearPreview = async () => {
+    const prev = preview;
+    setPreview(null);
+    if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+    if (prev?.storagePath) {
+      try {
+        await deleteDraft({ data: { storagePath: prev.storagePath } });
+      } catch {
+        // silencioso
+      }
+    }
+  };
+
+  const openPreviewSheet = () => setPreviewSheetOpen(true);
+
+  const triggerPreviewLibrary = () => {
+    flushSync(() => setPreviewSheetOpen(false));
+    previewInputRef.current?.click();
+  };
+  const triggerPreviewCamera = () => {
+    flushSync(() => setPreviewSheetOpen(false));
+    previewCameraInputRef.current?.click();
+  };
+
+  const onPreviewFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes.data.session;
+    const userId = session?.user.id;
+    const token = session?.access_token;
+    if (!userId || !token) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return;
+    }
+    const isVideo = file.type.startsWith("video");
+    const type: "image" | "video" = isVideo ? "video" : "image";
+    const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (file.size > limit) {
+      toast.error(
+        `${file.name} excede o limite de ${isVideo ? "200MB" : "15MB"}`,
+      );
+      return;
+    }
+
+    // Cleanup previous preview file
+    const previous = preview;
+    if (previous?.previewUrl) URL.revokeObjectURL(previous.previewUrl);
+    if (previous?.storagePath) {
+      void deleteDraft({ data: { storagePath: previous.storagePath } }).catch(
+        () => {},
+      );
+    }
+
+    const id = crypto.randomUUID();
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+    const path = `posts/${userId}/drafts/preview-${id}.${ext}`;
+    const previewUrl = URL.createObjectURL(file);
+    setPreview({
+      status: "uploading",
+      type,
+      previewUrl,
+      uploadProgress: 0,
+    });
+    try {
+      await uploadWithProgress({
+        file,
+        path,
+        token,
+        onProgress: (progress) =>
+          setPreview((p) => (p ? { ...p, uploadProgress: progress } : p)),
+      });
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+      if (signErr || !signed) {
+        throw new Error(signErr?.message ?? "Falha ao gerar URL da prévia");
+      }
+      setPreview({
+        status: "ready",
+        type,
+        previewUrl,
+        storagePath: path,
+        publicUrl: signed.signedUrl,
+        uploadProgress: 100,
+      });
+    } catch (err) {
+      URL.revokeObjectURL(previewUrl);
+      setPreview({
+        status: "error",
+        type,
+        previewUrl,
+        uploadProgress: 0,
+        error: err instanceof Error ? err.message : "Falha no upload",
+      });
+      toast.error("Falha ao enviar prévia");
+    }
+  };
+
   const stopMediaRecorder = () => {
+
+
     if (audioTimerRef.current !== null) {
       window.clearInterval(audioTimerRef.current);
       audioTimerRef.current = null;
@@ -549,6 +670,11 @@ function PublisherPage() {
       : toggles.challenge.enabled
         ? "challenge"
         : "public";
+    if (visibility === "paid" && (!preview || preview.status !== "ready")) {
+      toast.error("Adicione uma mídia de prévia");
+      setPreviewSheetOpen(true);
+      return;
+    }
     mutation.mutate({
       data: {
         caption: caption.trim() || null,
@@ -568,6 +694,18 @@ function PublisherPage() {
           audio.status === "ready" && audio.storagePath && audio.publicUrl
             ? { storagePath: audio.storagePath, url: audio.publicUrl }
             : null,
+        preview:
+          visibility === "paid" &&
+          preview &&
+          preview.status === "ready" &&
+          preview.storagePath &&
+          preview.publicUrl
+            ? {
+                storagePath: preview.storagePath,
+                url: preview.publicUrl,
+                type: preview.type,
+              }
+            : null,
       },
     });
   };
@@ -575,7 +713,10 @@ function PublisherPage() {
   // Handlers for switches
   const onPaidChange = (v: boolean) => {
     if (v) setPaidOpen(true);
-    else setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
+    else {
+      setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
+      void clearPreview();
+    }
   };
   const onChallengeChange = (v: boolean) => {
     if (v) setChallengeOpen(true);
@@ -620,6 +761,31 @@ function PublisherPage() {
         }}
       />
 
+      <input
+        ref={previewInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onPreviewFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <input
+        ref={previewCameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onPreviewFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-40">
         {step === 1 ? (
           <StepMedia
@@ -648,6 +814,8 @@ function PublisherPage() {
             onCancelAudio={cancelAudioRecording}
             onConfirmAudio={confirmAudioRecording}
             onRemoveAudio={removeAudio}
+            preview={preview}
+            onEditPreview={openPreviewSheet}
           />
         )}
       </main>
@@ -715,6 +883,39 @@ function PublisherPage() {
         </SheetContent>
       </Sheet>
 
+      <Sheet open={previewSheetOpen} onOpenChange={setPreviewSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl sm:max-w-[420px] sm:mx-auto sm:left-0 sm:right-0"
+        >
+          <SheetHeader>
+            <SheetTitle>Adicionar prévia</SheetTitle>
+          </SheetHeader>
+          <p className="text-sm text-muted-foreground pt-1">
+            Para publicar <strong className="text-foreground">conteúdo pago</strong>, é necessário definir uma <strong className="text-foreground">mídia de prévia</strong>.
+          </p>
+          <div className="grid gap-3 py-4">
+            <PickerOption
+              icon={<ImageIcon className="h-5 w-5" />}
+              label="Biblioteca do dispositivo"
+              onClick={triggerPreviewLibrary}
+            />
+            <PickerOption
+              icon={<FolderPlus className="h-5 w-5" />}
+              label="Acervo no Monetisexy"
+              onClick={() => toast.info("Em breve")}
+            />
+            <PickerOption
+              icon={<Camera className="h-5 w-5" />}
+              label="Câmera"
+              onClick={triggerPreviewCamera}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+
+
       <PriceDialog
         open={paidOpen}
         onOpenChange={(v) => {
@@ -738,6 +939,7 @@ function PublisherPage() {
             challenge: { enabled: false, priceCents: null },
           }));
           setPaidOpen(false);
+          setPreviewSheetOpen(true);
         }}
       />
 
@@ -1002,6 +1204,8 @@ function StepCompose({
   onCancelAudio,
   onConfirmAudio,
   onRemoveAudio,
+  preview,
+  onEditPreview,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1019,6 +1223,8 @@ function StepCompose({
   onCancelAudio: () => void;
   onConfirmAudio: () => void;
   onRemoveAudio: () => void;
+  preview: PreviewMedia | null;
+  onEditPreview: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
@@ -1192,6 +1398,41 @@ function StepCompose({
           checked={toggles.paid.enabled}
           onChange={onPaidChange}
         />
+        {toggles.paid.enabled && (
+          <div className="flex items-center gap-3 pb-3 pl-8">
+            <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted grid place-items-center shrink-0">
+              {preview?.status === "ready" ? (
+                preview.type === "video" ? (
+                  <video src={preview.previewUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={preview.previewUrl} alt="Prévia" className="w-full h-full object-cover" />
+                )
+              ) : preview?.status === "uploading" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {preview?.status === "ready"
+                  ? "Prévia adicionada"
+                  : preview?.status === "uploading"
+                    ? `Enviando prévia... ${preview.uploadProgress}%`
+                    : preview?.status === "error"
+                      ? preview.error ?? "Falha ao enviar prévia"
+                      : "Nenhuma prévia definida"}
+              </p>
+              <button
+                type="button"
+                onClick={onEditPreview}
+                className="text-xs font-semibold text-primary hover:underline mt-0.5"
+              >
+                {preview ? "Editar prévia" : "Adicionar prévia"}
+              </button>
+            </div>
+          </div>
+        )}
         <ToggleRow
           icon={<Wallet className="h-5 w-5" />}
           label="Desafio"
