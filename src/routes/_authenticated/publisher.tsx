@@ -114,6 +114,16 @@ type AudioRecording = {
   error?: string;
 };
 
+type PreviewMedia = {
+  status: "uploading" | "ready" | "error";
+  type: "image" | "video";
+  previewUrl: string;
+  storagePath?: string;
+  publicUrl?: string;
+  uploadProgress: number;
+  error?: string;
+};
+
 const MAX_AUDIO_SEC = 300;
 
 function formatAudioTime(sec: number) {
