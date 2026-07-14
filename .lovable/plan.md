@@ -1,45 +1,59 @@
-# Cartão salvo na Carteira — Recarga com 1-clique
+# Pagar com saldo da Carteira nos modais
 
-Hoje o botão "Adicionar novo cartão" em `/mywallet` só mostra um toast e some. Vamos torná-lo funcional: o cartão adicionado fica salvo (tokenizado no Asaas), aparece na grade "Meus Cartões" e pode ser usado para recarregar a carteira sem redigitar dados.
+Hoje os modais de pagamento (`PaymentMethodDialog`, `SubscribeDialog`, `TipDialog`, e o unlock de chat) só oferecem PIX e Cartão. Vamos adicionar "Carteira" como terceiro método, debitando o saldo do assinante e creditando a carteira do criador na mesma transação — sem passar pelo Asaas.
 
-## O que muda para o usuário
+## Escopo (onde a opção aparece)
 
-- Ao adicionar um cartão, ele é tokenizado no Asaas (nenhum PAN salvo no nosso banco — só a bandeira, últimos 4 dígitos, validade e o token do Asaas).
-- A grade "Meus Cartões" passa a listar os cartões salvos, com opção de remover.
-- Na tela `/mywallet/recarregar`, quando o método for Cartão, aparece a opção "Usar cartão salvo" listando os cartões já tokenizados — 1 clique para confirmar a recarga.
+- Desbloqueio de publicação (`PaymentMethodDialog` em `PublicationCard`).
+- Assinatura de criador (`SubscribeDialog`).
+- Gorjeta / Mimo (`TipDialog`).
+- Desbloqueio de mensagem no chat (`PriceDialog` / fluxo de chat unlock).
+
+Fora de escopo (por enquanto): recarga da própria carteira, videochamadas, saques.
 
 ## Backend
 
-**Nova tabela** `saved_cards` (migration):
-- `id uuid pk`, `user_id uuid` (fk auth.users, RLS por auth.uid()), `asaas_customer_id text`, `asaas_card_token text`, `brand text`, `last4 text`, `holder_name text`, `exp_month text`, `exp_year text`, `created_at`, `updated_at`.
-- RLS: dono lê/insere/deleta os próprios; sem acesso anon. GRANT SELECT/INSERT/DELETE ao `authenticated`; ALL ao `service_role`.
+**Nova server fn genérica** `payWithWalletBalance` em `src/lib/payments.functions.ts`, com `requireSupabaseAuth`:
 
-**Novas server functions** em `src/lib/payments.functions.ts` (ou novo `src/lib/saved-cards.functions.ts`), todas com `requireSupabaseAuth`:
-- `listSavedCards()` → retorna cartões do usuário (sem token).
-- `tokenizeAndSaveCard({ number, holderName, expMonth, expYear, ccv, cpf, postalCode, addressNumber, phone })` → cria/reusa `asaas_customer_id` do usuário, faz uma cobrança R$0 tokenizada OU usa endpoint `/creditCard/tokenize` do Asaas (o cliente já tem `createPayment` com `creditCard`, então reaproveitamos o fluxo: fazemos um `authorizationOnly` de valor mínimo já existente, ou preferimos o endpoint dedicado de tokenização do Asaas). Persiste apenas token + metadados públicos.
-- `deleteSavedCard({ id })` → apaga a linha (o token no Asaas fica inerte).
+Entrada: `{ kind: "publication_unlock" | "chat_unlock" | "subscription" | "tip", referenceId?, creatorId?, publicationId?, messageId?, plan?, amountCents?, message? }`.
 
-**Extensão em `createPayment`** (`src/lib/asaas.server.ts`): já aceita `creditCardToken` — não muda.
+Fluxo (em uma função Postgres `pay_with_wallet(...)` chamada via RPC para ser atômica):
+1. Trava a linha de `subscriber_wallets` do comprador com `SELECT ... FOR UPDATE`.
+2. Recalcula o `amount_cents` do lado servidor a partir do recurso (preço da publicação, do plano, da mensagem; tip usa `amountCents` validado).
+3. Verifica `balance_cents >= amount_cents`; senão levanta `insufficient_funds`.
+4. Debita `subscriber_wallets.balance_cents`.
+5. Insere a linha no domínio correspondente já com `status='paid'` e `provider='wallet'` (para publicação e chat: `publication_unlocks` / `chat_message_unlocks`; para assinatura: `subscriptions` com `status='active'`; para tip: `tips` com `status='paid'`). Os triggers existentes (`*_sync_transaction` + `transactions_apply_wallet_effects`) já criam a `transactions` correta, aplicam o split de 15%, marcam `payment_method='wallet'` e creditam a carteira do criador imediatamente (`released_at = now()` para wallet).
+6. Impede autocompra (buyer ≠ creator) — regras já existentes.
 
-**Nova server fn** `chargeSavedCardTopUp({ savedCardId, amountCents })` para recarregar a carteira via cartão salvo, reusando o mesmo caminho de recarga existente com `creditCardToken`.
+A função Postgres é `SECURITY DEFINER`, `search_path=public`, e valida `auth.uid() = _buyer_id`.
+
+Retorno da server fn: `{ ok: true, transactionId, referenceId }` — sem `paymentIntentId` (não passa pelo Asaas).
 
 ## Frontend
 
-**`src/routes/_authenticated/mywallet.index.tsx`**:
-- Substituir o `toast` do `handleConfirm` por chamada real a `tokenizeAndSaveCard` (`useServerFn` + `useMutation`), invalidando `["saved-cards"]` e fechando o diálogo em sucesso, com toast de erro em falha.
-- Renderizar a grade a partir de `useQuery(["saved-cards"], listSavedCards)`: cada cartão vira um card mostrando bandeira, `**** last4`, validade, com botão de remover (confirmação).
-- Botão "Adicionar novo cartão" continua abrindo o mesmo diálogo já existente.
+**`PaymentMethodPicker`**: adicionar terceira opção "Carteira" (ícone Wallet, label com saldo atual formatado, desabilitada quando `balanceCents < amountCents` com hint "Saldo insuficiente — recarregar").
 
-**`src/routes/_authenticated/mywallet.recarregar.tsx`** (ajuste mínimo):
-- Quando o método de pagamento for Cartão, mostrar seletor "Cartão salvo" com a lista; se o usuário escolher um, chamar `chargeSavedCardTopUp` em vez do fluxo de digitar cartão. Manter "Usar novo cartão" como opção.
+- Buscar saldo com `useQuery(["subscriber-wallet"], getSubscriberWallet)`.
+- Passar `amountCents` como prop para o picker calcular disponibilidade.
 
-## Segurança / Compliance
+**Tipos**: expandir `PaymentMethod` para `"PIX" | "CREDIT_CARD" | "WALLET"`.
 
-- Nenhum dado sensível (PAN, CVV) é gravado no nosso banco — só o token do Asaas e metadados públicos.
-- Tokenização e cobrança sempre server-side, com `requireSupabaseAuth`.
-- RLS restrita ao dono; nada de acesso anônimo.
+**Modais**:
+- `PaymentMethodDialog` (unlock de post): quando `method === "WALLET"`, chama `payWithWalletBalance({ kind: "publication_unlock", publicationId })` e ao sucesso fecha o modal e chama `onPaid` sem abrir checkout PIX/cartão. Invalidar `["subscriber-wallet"]` e a query da publicação.
+- `SubscribeDialog`: idem para `kind: "subscription"` com `creatorId` + `plan`. Ao sucesso, fecha e mostra "Assinatura ativa".
+- `TipDialog`: idem para `kind: "tip"` com `creatorId` + `amountCents` + `message`.
+- `PriceDialog` (chat unlock): idem para `kind: "chat_unlock"` com `messageId`.
+
+Quando saldo insuficiente, o botão "Confirmar" fica desabilitado e aparece link "Recarregar carteira" → `/mywallet/recarregar`.
+
+## Segurança
+
+- Preços são sempre recalculados no servidor — o cliente nunca informa `amountCents` (exceto tip, com valor mínimo já validado).
+- Débito e crédito acontecem na mesma transação SQL, com `FOR UPDATE` para evitar race de saldo negativo.
+- RLS mantida; a função é `SECURITY DEFINER` só para permitir o débito atômico da carteira do próprio usuário.
+- Sem chamada ao Asaas, sem split externo — o split de comissão é aplicado pelo trigger `apply_transaction_split` já existente.
 
 ## Fora de escopo
 
-- Cobrança recorrente automática de assinaturas com o cartão salvo.
-- Pagar publicações/chats/mimos direto no cartão (continua via carteira).
+- Reembolso automático para saldo em caso de estorno (já coberto parcialmente pelo trigger, mas não devolve à `subscriber_wallets`).
+- Usar carteira para recarga de si própria ou saques.
