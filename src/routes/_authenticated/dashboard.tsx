@@ -21,12 +21,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       .select(
         "account_type, username, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at",
       )
-      .eq("user_id", userData.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     const accountType = (profile?.account_type ?? "subscriber") as AccountType;
     const username =
-      profile?.username ?? userData.user.email?.split("@")[0] ?? "voce";
+      profile?.username ?? user.email?.split("@")[0] ?? "voce";
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
     // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
