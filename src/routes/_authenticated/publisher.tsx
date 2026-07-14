@@ -1345,7 +1345,7 @@ function PriceDialog({
           </p>
           <Button
             onClick={() => onConfirm(cents)}
-            className="w-full h-12 mt-6 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+            className="w-full h-12 mt-6 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
