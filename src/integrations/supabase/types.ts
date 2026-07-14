@@ -321,6 +321,45 @@ export type Database = {
           },
         ]
       }
+      payout_accounts: {
+        Row: {
+          account_number: string
+          account_type: string
+          agency: string
+          bank_name: string
+          created_at: string
+          id: string
+          pix_key: string
+          pix_key_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          account_type: string
+          agency: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          pix_key: string
+          pix_key_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string
+          agency?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          pix_key?: string
+          pix_key_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: string
