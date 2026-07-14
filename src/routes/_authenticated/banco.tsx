@@ -101,9 +101,15 @@ function BancoPage() {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [sacarOrigin, setSacarOrigin] = useState<
+    null | "Nacional" | "Internacional"
+  >(null);
+  const qc = useQueryClient();
   const fetchStatus = useServerFn(getCreatorPayoutStatus);
   const fetchOverview = useServerFn(getCreatorBancoOverview);
   const fetchTransactions = useServerFn(listCreatorTransactions);
+  const fetchWithdrawals = useServerFn(listCreatorWithdrawals);
+  const runCancel = useServerFn(cancelWithdrawal);
 
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
@@ -117,11 +123,18 @@ function BancoPage() {
     queryKey: ["bancoTransactions"],
     queryFn: () => fetchTransactions({ data: { limit: 20 } }),
   });
+  const withdrawalsQuery = useQuery({
+    queryKey: ["bancoWithdrawals"],
+    queryFn: () => fetchWithdrawals(),
+  });
 
   const status = statusQuery.data;
   const kycVerified = status?.kycStatus === "verified";
   const walletActive = !!status?.walletId;
+  const hasApiKey = !!status?.hasApiKey;
   const payoutAccount = status?.payoutAccount ?? null;
+  const pixKey: string | null = (payoutAccount as any)?.pix_key ?? null;
+  const pixKeyType: string | null = (payoutAccount as any)?.pix_key_type ?? null;
 
   const overview = overviewQuery.data;
   const nationalReleased = overview?.national.releasedCents ?? 0;
@@ -129,6 +142,30 @@ function BancoPage() {
   const intlReleased = overview?.international.releasedCents ?? 0;
   const intlPending = overview?.international.pendingCents ?? 0;
   const intlEmpty = intlReleased === 0 && intlPending === 0;
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => runCancel({ data: { withdrawalId: id } }),
+    onSuccess: () => {
+      toast.success("Saque cancelado");
+      qc.invalidateQueries({ queryKey: ["bancoOverview"] });
+      qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível cancelar", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
+  });
+
+  function withdrawDisabledReason(released: number): string | null {
+    if (!kycVerified) return "Conclua a verificação de identidade";
+    if (!walletActive) return "Configure seu recebimento primeiro";
+    if (!hasApiKey) return "Cadastre sua API Key Asaas para sacar";
+    if (!pixKey) return "Cadastre uma chave PIX em Dados bancários";
+    if (released < 5000) return "Saldo mínimo para saque: R$ 50,00";
+    return null;
+  }
+
+
 
 
 
