@@ -1313,7 +1313,7 @@ function PriceDialog({
             <button
               type="button"
               onClick={() => setCents((c) => clamp(c - stepCents))}
-              className="h-11 w-11 grid place-items-center rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="h-11 w-11 grid place-items-center rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               aria-label="Diminuir"
             >
               <Minus className="h-5 w-5" />
@@ -1324,7 +1324,7 @@ function PriceDialog({
             <button
               type="button"
               onClick={() => setCents((c) => clamp(c + stepCents))}
-              className="h-11 w-11 grid place-items-center rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="h-11 w-11 grid place-items-center rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               aria-label="Aumentar"
             >
               <Plus className="h-5 w-5" />
@@ -1345,7 +1345,7 @@ function PriceDialog({
           </p>
           <Button
             onClick={() => onConfirm(cents)}
-            className="w-full h-12 mt-6 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 hover:opacity-95 text-white font-semibold"
+            className="w-full h-12 mt-6 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
