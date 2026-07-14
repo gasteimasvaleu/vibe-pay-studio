@@ -1,7 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { useNavigate } from "@tanstack/react-router";
 
-export type AccountType = "subscriber" | "creator";
+export type AccountType = "subscriber" | "creator" | "free_creator";
+
+/**
+ * Retorna true para contas que possuem página pública própria e acessam
+ * as mesmas funcionalidades do creator (creator pago e perfil gratuito).
+ */
+export function isCreatorLike(accountType?: string | null): boolean {
+  return accountType === "creator" || accountType === "free_creator";
+}
 
 export function homeForAccountType(_accountType?: AccountType | string | null) {
   // Home única para todos os usuários.
