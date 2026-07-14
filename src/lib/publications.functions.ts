@@ -540,8 +540,9 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
       const limit = data.limit ?? 24;
       const client = context.supabase;
 
-      // Busca as publicações do autor em ordem, e vai puxando mídias até completar o limite.
-      // Para paginação usamos o cursor = published_at da última publicação lida (não da mídia).
+      // Estratégia: paginação por publicações. Cada página retorna todas as
+      // mídias das próximas `limit` publicações do autor. O cursor é o
+      // published_at da última publicação consumida.
       let pubQuery = client
         .from("publications")
         .select("id, published_at")
@@ -549,7 +550,7 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
         .is("archived_at", null)
         .lte("published_at", new Date().toISOString())
         .order("published_at", { ascending: false })
-        .limit(limit + 1);
+        .limit(limit);
 
       if (data.cursor) pubQuery = pubQuery.lt("published_at", data.cursor);
 
@@ -574,8 +575,7 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
         return a.position - b.position;
       });
 
-      const page = sorted.slice(0, limit);
-      const items: GridMediaItem[] = page.map((m) => ({
+      const items: GridMediaItem[] = sorted.map((m) => ({
         id: m.id,
         publication_id: m.publication_id,
         url: m.url,
@@ -584,15 +584,15 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
         published_at: pubDate.get(m.publication_id)!,
       }));
 
-      // Se lemos mais publicações do que o limit, ainda há mais páginas.
+      // Se o número de publicações retornadas atingiu o limite, provavelmente
+      // há mais páginas: usamos o published_at da última como cursor.
       const nextCursor =
-        pubRows.length > limit || sorted.length > page.length
-          ? pubRows[Math.min(pubRows.length, limit) - 1]!.published_at!
-          : null;
+        pubRows.length === limit ? pubRows[pubRows.length - 1]!.published_at! : null;
 
       return { items, nextCursor };
     },
   );
+
 
 
 const idSchema = z.object({ publicationId: z.string().uuid() });
