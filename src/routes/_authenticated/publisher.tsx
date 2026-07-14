@@ -1207,6 +1207,7 @@ function StepCompose({
   onRemoveAudio,
   preview,
   onEditPreview,
+  onEditPrice,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1226,6 +1227,7 @@ function StepCompose({
   onRemoveAudio: () => void;
   preview: PreviewMedia | null;
   onEditPreview: () => void;
+  onEditPrice: () => void;
 }) {
   const first = media[0];
   const sensors = useSensors(
