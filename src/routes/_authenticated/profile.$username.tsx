@@ -269,7 +269,156 @@ function ProfilePage() {
             </button>
           </div>
         </section>
+
+        {/* Grid */}
+        {activeTab === "posts" ? (
+          <PostsGrid
+            username={profile.username}
+            items={postsItems}
+            isLoading={postsQuery.isLoading}
+            isFetchingNextPage={postsQuery.isFetchingNextPage}
+            hasNextPage={!!postsQuery.hasNextPage}
+            sentinelRef={postsSentinel}
+          />
+        ) : (
+          <MediasGrid
+            username={profile.username}
+            items={mediasItems}
+            isLoading={mediasQuery.isLoading}
+            isFetchingNextPage={mediasQuery.isFetchingNextPage}
+            hasNextPage={!!mediasQuery.hasNextPage}
+            sentinelRef={mediasSentinel}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+function GridSkeleton() {
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} className="aspect-square bg-muted animate-pulse rounded-sm" />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
+}
+
+type GridProps<T> = {
+  username: string;
+  items: T[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
+};
+
+function PostsGrid({ username, items, isLoading, isFetchingNextPage, hasNextPage, sentinelRef }: GridProps<GridPostItem>) {
+  if (isLoading && items.length === 0) return <GridSkeleton />;
+  if (!isLoading && items.length === 0) return <EmptyState message="Nenhuma postagem ainda." />;
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-1">
+        {items.map((post) => (
+          <Link
+            key={post.id}
+            to="/perfil/$username"
+            params={{ username }}
+            className="relative aspect-square overflow-hidden bg-muted group"
+          >
+            {post.cover_type === "video" && post.cover_url ? (
+              <video
+                src={post.cover_url}
+                preload="metadata"
+                muted
+                playsInline
+                className="h-full w-full object-cover"
+              />
+            ) : post.cover_url ? (
+              <img
+                src={post.cover_url}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            ) : post.has_audio ? (
+              <div className="h-full w-full grid place-items-center bg-gradient-to-br from-fuchsia-500/20 to-purple-600/20 text-fuchsia-300">
+                <AudioLines className="h-8 w-8" />
+              </div>
+            ) : (
+              <div className="h-full w-full grid place-items-center text-muted-foreground text-xs">
+                —
+              </div>
+            )}
+            <div className="absolute top-1.5 right-1.5 flex gap-1 text-white drop-shadow">
+              {post.media_count > 1 && <Layers className="h-4 w-4" />}
+              {post.cover_type === "video" && <Film className="h-4 w-4" />}
+              {post.has_audio && post.cover_url && <AudioLines className="h-4 w-4" />}
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div ref={sentinelRef} className="h-8" />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-4 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      )}
+      {!hasNextPage && items.length > 0 && (
+        <p className="text-center text-xs text-muted-foreground py-4">Fim das postagens.</p>
+      )}
+    </div>
+  );
+}
+
+function MediasGrid({ username, items, isLoading, isFetchingNextPage, hasNextPage, sentinelRef }: GridProps<GridMediaItem>) {
+  if (isLoading && items.length === 0) return <GridSkeleton />;
+  if (!isLoading && items.length === 0) return <EmptyState message="Nenhuma mídia ainda." />;
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-1">
+        {items.map((m) => (
+          <Link
+            key={m.id}
+            to="/perfil/$username"
+            params={{ username }}
+            className="relative aspect-square overflow-hidden bg-muted"
+          >
+            {m.type === "video" ? (
+              <>
+                <video
+                  src={m.url}
+                  preload="metadata"
+                  muted
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+                <Film className="absolute top-1.5 right-1.5 h-4 w-4 text-white drop-shadow" />
+              </>
+            ) : (
+              <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+            )}
+          </Link>
+        ))}
+      </div>
+      <div ref={sentinelRef} className="h-8" />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-4 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      )}
+      {!hasNextPage && items.length > 0 && (
+        <p className="text-center text-xs text-muted-foreground py-4">Fim das mídias.</p>
+      )}
     </div>
   );
 }
