@@ -64,19 +64,21 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   const discountQ = priceQuery.data?.discount_quarterly ?? 0;
   const discountS = priceQuery.data?.discount_semiannual ?? 0;
 
+  const monthlyCents = Math.round(Number(monthly) * 100);
   const totals: Record<Plan, { months: number; cents: number; discount: number }> = {
-    monthly: { months: 1, cents: monthly, discount: 0 },
+    monthly: { months: 1, cents: monthlyCents, discount: 0 },
     quarterly: {
       months: 3,
-      cents: Math.round(monthly * 3 * (1 - discountQ / 100)),
+      cents: Math.round(monthlyCents * 3 * (1 - discountQ / 100)),
       discount: discountQ,
     },
     semiannual: {
       months: 6,
-      cents: Math.round(monthly * 6 * (1 - discountS / 100)),
+      cents: Math.round(monthlyCents * 6 * (1 - discountS / 100)),
       discount: discountS,
     },
   };
+
 
   const submit = async () => {
     setLoading(true);
