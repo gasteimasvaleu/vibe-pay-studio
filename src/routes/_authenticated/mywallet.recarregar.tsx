@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PixCheckout } from "@/components/payments/PixCheckout";
 import { createWalletTopupPayment } from "@/lib/payments.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 export const Route = createFileRoute("/_authenticated/mywallet/recarregar")({
   head: () => ({
