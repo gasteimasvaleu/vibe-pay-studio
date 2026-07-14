@@ -630,10 +630,12 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
     const payment = await asaas.getPayment(intent.asaas_payment_id);
 
     const PAID = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
+    let processedAt = intent.processed_at as string | null;
     if (PAID.has(payment.status) && !intent.processed_at) {
       try {
         const { applyPaidIntent } = await import("@/lib/payments-reconcile.server");
-        await applyPaidIntent(supabaseAdmin, intent, intent.asaas_payment_id);
+        const reconciled = await applyPaidIntent(supabaseAdmin, intent, intent.asaas_payment_id);
+        if (reconciled) processedAt = new Date().toISOString();
       } catch (e) {
         console.error("[poller] reconcile failed", e);
       }
@@ -641,7 +643,7 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
 
     return {
       status: payment.status,
-      processedAt: intent.processed_at,
+      processedAt,
     };
   });
 

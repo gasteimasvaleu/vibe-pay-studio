@@ -191,6 +191,7 @@ export const getFeed = createServerFn({ method: "POST" })
       { data: myLikeRows },
       { data: mySavedRows },
       { data: commentRows },
+      { data: unlockRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -219,6 +220,12 @@ export const getFeed = createServerFn({ method: "POST" })
         .from("publication_comments")
         .select("publication_id")
         .in("publication_id", ids),
+      client
+        .from("publication_unlocks")
+        .select("publication_id")
+        .in("publication_id", ids)
+        .eq("buyer_id", currentUserId)
+        .eq("status", "paid"),
     ]);
 
     const profileMap = new Map(
@@ -234,10 +241,12 @@ export const getFeed = createServerFn({ method: "POST" })
     });
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
+    const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
-      const isLocked = p.visibility !== "public" && !isOwner;
+      const isUnlocked = isOwner || p.visibility === "public" || unlockedSet.has(p.id);
+      const isLocked = !isUnlocked;
       const media = (mediaRows ?? [])
         .filter((m) => m.publication_id === p.id)
         .map((m) => ({
