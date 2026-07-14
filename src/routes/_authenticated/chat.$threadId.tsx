@@ -206,6 +206,14 @@ function ChatThreadView() {
     const messageId = pendingMsg.id;
     try {
       setUnlockingId(messageId);
+      if (method === "WALLET") {
+        await walletPay({ data: { kind: "chat_unlock", messageId } });
+        setPendingMsg(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Mensagem desbloqueada");
+        return;
+      }
       const res = await unlockFn({ data: { messageId, method } });
       setPendingMsg(null);
       setCheckout({
@@ -216,7 +224,17 @@ function ChatThreadView() {
         invoiceUrl: res.invoiceUrl,
       });
       setModalOpen(true);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === "already_unlocked") {
+        setPendingMsg(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        toast.success("Mensagem já desbloqueada");
+        return;
+      }
+      if (err?.message === "insufficient_funds") {
+        toast.error("Saldo insuficiente na carteira");
+        return;
+      }
       toast.error((err as Error).message ?? "Erro ao gerar pagamento");
     } finally {
       setUnlockingId(null);
