@@ -679,6 +679,8 @@ export type Database = {
           moderation_note: string | null
           moderation_status: Database["public"]["Enums"]["moderation_status"]
           pinned: boolean
+          preview_storage_path: string | null
+          preview_url: string | null
           price_cents: number | null
           published_at: string | null
           scheduled_at: string | null
@@ -698,6 +700,8 @@ export type Database = {
           moderation_note?: string | null
           moderation_status?: Database["public"]["Enums"]["moderation_status"]
           pinned?: boolean
+          preview_storage_path?: string | null
+          preview_url?: string | null
           price_cents?: number | null
           published_at?: string | null
           scheduled_at?: string | null
@@ -717,6 +721,8 @@ export type Database = {
           moderation_note?: string | null
           moderation_status?: Database["public"]["Enums"]["moderation_status"]
           pinned?: boolean
+          preview_storage_path?: string | null
+          preview_url?: string | null
           price_cents?: number | null
           published_at?: string | null
           scheduled_at?: string | null
