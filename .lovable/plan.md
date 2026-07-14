@@ -1,27 +1,59 @@
-## Regra de negócio confirmada
+## Popover do botão "⋮" no perfil do creator
 
-Assinatura paga = seguir. Não haverá tabela `follows` separada nem botão "Seguir" gratuito. O feed passa a mostrar apenas publicações de creators que o viewer assina (ativos), além das do próprio viewer.
+Trocar as opções atuais (Compartilhar, Denunciar, Adicionar amigo) pelas do screenshot, nesta ordem:
 
-## Mudanças
+1. **[Assinatura gratuita | Assinar | Seguir]** (item de topo, com separador embaixo)
+2. Chat
+3. Compartilhar
+4. Deixar de seguir *(só aparece quando o viewer já está seguindo/assinando)*
+5. Denunciar perfil
+6. Silenciar perfil
+7. Adicionar amigo
 
-### 1. `src/lib/publications.functions.ts` — `getFeed`
-- Antes de buscar `publications`, carregar os `creator_id` de `subscriptions` onde `subscriber_id = viewer`, `status = 'active'` e `current_period_end > now()`.
-- Montar `allowedAuthors = [viewer, ...creatorIds]`.
-- Aplicar `.in('author_id', allowedAuthors)` na query de publicações.
-- Se `allowedAuthors` só tiver o próprio viewer e ele não tiver posts, o feed volta vazio (comportamento esperado).
-- Manter a ordenação atual (`pinned`, `published_at`) e paginação.
+### Regra do item de topo
+Como "assinatura paga = seguir", derivamos tudo de duas informações: preço do creator e assinatura ativa do viewer.
 
-### 2. `src/routes/_authenticated/feed.tsx` — estado vazio
-- Quando `items.length === 0`, mostrar mensagem clara:
-  - Título: "Seu feed está vazio"
-  - Texto: "Assine creators para ver publicações deles aqui."
-  - Botão "Explorar creators" → navega para `/em-alta` (ponto de descoberta atual).
-- Não mexer no restante do layout.
+- `priceMonthly === 0` → **"Assinatura gratuita"** (assinar/seguir grátis)
+- `priceMonthly > 0` e viewer **não** segue → **"Assinar"** (abre `SubscribeDialog`)
+- `priceMonthly > 0` e viewer **já** segue → **"Seguir"** rótulo neutro (item fica desabilitado indicando estado atual — não temos ação "seguir sem assinar")
 
-### 3. `/follow` (`src/routes/_authenticated/follow.tsx`)
-- Fora de escopo desta iteração. Como "seguir" = "assinar", esta página vira redundante com `/subscriptions`. Posso remover/redirecionar em uma próxima etapa se você quiser — só me diga.
+Se preferir outro rótulo/comportamento para o caso "já assinante paga", me diga.
+
+### Estado "está seguindo"
+Consulta em `beforeLoad` (paralela com as demais):
+```
+supabase.from("subscriptions")
+  .select("id")
+  .eq("subscriber_id", viewerId)
+  .eq("creator_id", profile.user_id)
+  .eq("status","active")
+  .gt("current_period_end", now)
+  .maybeSingle()
+```
+Expor `isFollowing: boolean` no context.
+
+### Ações
+- **Chat** → `navigate({ to: "/chat" })` (mesmo destino já usado no botão Chat do card do perfil).
+- **Compartilhar** → mantém a lógica atual (Web Share + fallback clipboard).
+- **Deixar de seguir** → chama server function nova `unfollowCreator` que faz `update subscriptions set status='cancelled' where subscriber_id = viewer AND creator_id = target AND status='active'`. Confirmação via `window.confirm`. Depois `router.invalidate()`.
+- **Denunciar perfil** → mantém alert atual (placeholder existente).
+- **Silenciar perfil** → placeholder `alert("Perfil silenciado")` (sem backend nesta iteração).
+- **Adicionar amigo** → mantém alert atual.
+
+O item "Deixar de seguir" só é renderizado quando `isFollowing === true` e o viewer não é o próprio dono. O bloco todo do popover não aparece para `isOwner`.
+
+## Arquivos
+
+### 1. `src/lib/monetization.functions.ts` (ou onde ficam server fns de assinatura)
+- Nova `unfollowCreator({ creatorId })` com `requireSupabaseAuth`, cancela subscription ativa.
+
+### 2. `src/routes/_authenticated/perfil.$username.tsx`
+- No `beforeLoad`, buscar `isFollowing` e retornar no context.
+- Popover: substituir os 3 itens atuais pela lista de 7 acima, com separador entre o item de topo e o restante, ícones do screenshot (Chat: `MessageCircle`, Compartilhar: `Share2`, Deixar de seguir: `HeartOff`, Denunciar: `AlertCircle`, Silenciar: `VolumeX`, Adicionar amigo: `UserPlus`). Item de topo sem ícone à esquerda (como no screenshot).
+- Handler "Assinar" (paid, não segue) reaproveita o `SubscribeDialog` já usado no botão principal.
+- Handler "Assinatura gratuita" cria a assinatura grátis (server fn existente ou nova — verifico no build).
 
 ## Fora de escopo
-- Nenhuma alteração no schema (sem tabela `follows`).
-- Nenhuma mudança em `TipDialog`, `PublicationCard` ou perfil.
-- Sem criar botão "Seguir" separado.
+- Nenhuma alteração no botão principal Mimo/Chat do card.
+- Sem tabela nova. Sem UI de gestão de "silenciar".
+- Sem alterar `PublicationOptionsMenu`.

@@ -1,29 +1,33 @@
-import { createFileRoute, Link, notFound, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
+  AlertCircle,
   ArrowLeft,
   BadgeCheck,
   ChevronDown,
   Clapperboard,
   DollarSign,
   Film,
-  Flag,
   Heart,
+  HeartOff,
   Image as ImageIcon,
   Instagram,
   Lock,
   MapPin,
+  MessageCircle,
   MoreVertical,
   Music2,
   Share2,
   Smartphone,
   Twitter,
   UserPlus,
+  VolumeX,
 } from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,6 +42,8 @@ import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { followCreatorFree, unfollowCreator } from "@/lib/monetization.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
@@ -98,6 +104,15 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
+    const { data: activeSub } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("subscriber_id", userData.user.id)
+      .eq("creator_id", profile.user_id)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .maybeSingle();
+
     return {
       viewerId: userData.user.id,
       profile: {
@@ -108,6 +123,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
+      isFollowing: !!activeSub,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
@@ -116,6 +132,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       likesCount: likesCount ?? 0,
     };
   },
+
 
 
   component: PerfilPage,
@@ -203,19 +220,26 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
     Route.useRouteContext();
   const router = useRouter();
+  const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [followBusy, setFollowBusy] = useState(false);
+
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const followFreeFn = useServerFn(followCreatorFree);
+  const unfollowFn = useServerFn(unfollowCreator);
+
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -323,6 +347,9 @@ function PerfilPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold truncate">{displayName}</h1>
+          {isOwner ? (
+            <span className="w-9" />
+          ) : (
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <PopoverTrigger asChild>
               <button
@@ -338,6 +365,59 @@ function PerfilPage() {
               className="w-64 rounded-3xl p-3 bg-card border border-border shadow-xl"
             >
               <nav className="flex flex-col gap-1">
+                {(() => {
+                  const isFree = profile.priceMonthly === 0;
+                  const topLabel = isFree
+                    ? "Assinatura gratuita"
+                    : isFollowing
+                      ? "Seguir"
+                      : "Assinar";
+                  const topDisabled = isFollowing || followBusy;
+                  const onTop = async () => {
+                    if (isFollowing) return;
+                    if (isFree) {
+                      setFollowBusy(true);
+                      try {
+                        await followFreeFn({ data: { creatorId: profile.userId } });
+                        setIsFollowing(true);
+                        toast.success("Você agora segue este perfil.");
+                        router.invalidate();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                      } finally {
+                        setFollowBusy(false);
+                        setMenuOpen(false);
+                      }
+                    } else {
+                      setMenuOpen(false);
+                      setSubscribeOpen(true);
+                    }
+                  };
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onTop}
+                        disabled={topDisabled}
+                        className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {topLabel}
+                      </button>
+                      <div className="my-1 h-px bg-border" />
+                    </>
+                  );
+                })()}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate({ to: "/chat" });
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <MessageCircle className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  Chat
+                </button>
                 <button
                   type="button"
                   onClick={async () => {
@@ -350,7 +430,7 @@ function PerfilPage() {
                       }
                     } else if (navigator.clipboard) {
                       await navigator.clipboard.writeText(url);
-                      alert("Link copiado para a área de transferência!");
+                      toast.success("Link copiado para a área de transferência!");
                     }
                     setMenuOpen(false);
                   }}
@@ -359,21 +439,57 @@ function PerfilPage() {
                   <Share2 className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Compartilhar
                 </button>
+                {isFollowing && (
+                  <button
+                    type="button"
+                    disabled={followBusy}
+                    onClick={async () => {
+                      if (!confirm(`Deixar de seguir ${displayName}?`)) return;
+                      setFollowBusy(true);
+                      try {
+                        await unfollowFn({ data: { creatorId: profile.userId } });
+                        setIsFollowing(false);
+                        toast.success("Você deixou de seguir este perfil.");
+                        router.invalidate();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Erro ao deixar de seguir.");
+                      } finally {
+                        setFollowBusy(false);
+                        setMenuOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60"
+                  >
+                    <HeartOff className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                    Deixar de seguir
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
-                    alert("Denúncia enviada. Nossa equipe irá analisar este perfil.");
+                    toast.success("Denúncia enviada. Nossa equipe irá analisar este perfil.");
                     setMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
                 >
-                  <Flag className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  <AlertCircle className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Denunciar perfil
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    alert(`Solicitação de amizade enviada para ${displayName}!`);
+                    toast.success("Perfil silenciado.");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                  Silenciar perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.success(`Solicitação de amizade enviada para ${displayName}!`);
                     setMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
@@ -384,6 +500,8 @@ function PerfilPage() {
               </nav>
             </PopoverContent>
           </Popover>
+          )}
+
         </div>
       </header>
 
