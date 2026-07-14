@@ -494,6 +494,9 @@ function PublisherPage() {
     }
   };
 
+  const stopMediaRecorder = () => {
+
+
     if (audioTimerRef.current !== null) {
       window.clearInterval(audioTimerRef.current);
       audioTimerRef.current = null;
