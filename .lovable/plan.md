@@ -1,19 +1,38 @@
 ## Objetivo
-Alterar o background do header da página de perfil (`/src/routes/_authenticated/perfil.$username.tsx`) para `#FFFFFF` e deixar o texto e elementos internos (título, ícones de voltar e menu) na cor preta.
+Transformar o botão "Mais opções" (ícone de três pontos) no header da página de perfil em um gatilho que abre um `Sheet` deslizando pela esquerda, com as opções exibidas no screenshot: **Compartilhar**, **Denunciar perfil** e **Adicionar amigo**.
 
-## Elemento alvo
-- Arquivo: `src/routes/_authenticated/perfil.$username.tsx`
-- Linha aproximada: 177
-- Elemento: `<header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/20">`
+## Arquivo alvo
+- `src/routes/_authenticated/perfil.$username.tsx`
 
 ## Alterações propostas
-1. Substituir `bg-black/20` por `bg-white` no header.
-2. Substituir `border-white/10` por `border-black/10` para manter a separação sutil com a nova cor de fundo.
-3. Aplicar `text-black` no container interno (`<div className="max-w-3xl ...">`) para herdar cor preta nos elementos filhos.
-4. Atualizar as classes dos botões de navegação para refletir o tema claro:
-   - Trocar `text-white/80` por `text-black/80`.
-   - Trocar `hover:bg-white/10` por `hover:bg-black/10`.
-5. Manter o `backdrop-blur-md` se desejado (pode ser removido caso o fundo sólido branco seja o objetivo).
 
-## Resultado esperado
-Header com fundo branco sólido, texto e ícones pretos, mantendo o layout e comportamentos existentes (voltar, menu, título centralizado).
+1. **Importar componentes e ícones**
+   - Adicionar `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` de `@/components/ui/sheet`.
+   - Adicionar ícones `Share2`, `Flag` e `UserPlus` do `lucide-react`.
+
+2. **Adicionar estado local**
+   - Criar `const [menuOpen, setMenuOpen] = useState(false);` no componente `PerfilPage`.
+
+3. **Envolver o botão de opções**
+   - Substituir o `<button>` do header por `<SheetTrigger asChild>` mantendo o botão atual.
+   - Conectar o estado do Sheet ao botão.
+
+4. **Renderizar o Sheet à esquerda**
+   - Inserir `<SheetContent side="left">` após o `SheetTrigger`.
+   - Usar `SheetHeader` + `SheetTitle` com título "Opções".
+   - Criar lista de ações com três itens:
+     - **Compartilhar** (ícone `Share2`) — usa `navigator.share` quando disponível; fallback para copiar URL da página via `navigator.clipboard`.
+     - **Denunciar perfil** (ícone `Flag`) — exibe um `alert` ou `confirm` informativo (placeholder para futura integração real).
+     - **Adicionar amigo** (ícone `UserPlus`) — exibe um `alert` de confirmação (placeholder para futura integração real).
+   - Cada item deve ocupar a largura total, ter hover visual e texto preto/alta opacidade para manter consistência com o header branco recém-alterado.
+
+5. **Manter comportamentos existentes**
+   - Preservar o botão de voltar e o título centralizado.
+   - Não alterar lógica de assinatura, posts, estatísticas ou diálogos de pagamento.
+
+6. **Verificação**
+   - Rodar `bun run build:dev` para garantir que não haja erros de tipo ou importação.
+
+## Notas
+- O componente `Sheet` do projeto já suporta `side="left"` nativamente (`src/components/ui/sheet.tsx`).
+- As ações de denunciar e adicionar amigo serão placeholders visuais; a integração real com backend pode ser feita em seguida se solicitado.
