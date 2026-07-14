@@ -1,8 +1,28 @@
-Ajustar os botões de ação **Mimo** e **Chat** no card de identidade de `src/routes/_authenticated/perfil.$username.tsx`:
+## Objetivo
+Remover o link "Ver perfil →" do card de identidade no dashboard quando o usuário for um assinante puro — ou seja, conta atual do tipo `subscriber` e que nunca iniciou o onboarding de creator.
 
-1. **Botões mais finos**: reduzir a altura de `h-14` para `h-10` (40 px) e manter o layout centralizado.
-2. **Bolinha do ícone proporcional**: reduzir o círculo de `h-8 w-8` para `h-7 w-7` para acompanhar o botão mais fino.
-3. **Cor da borda da bolinha**: trocar `border border-border` por `border border-black` no `<span>` que envolve o ícone, tornando o contorno visível conforme solicitado.
-4. **Manter comportamento**: os `onClick` de abrir `TipDialog` e navegar para `/chat` permanecem inalterados.
+## Alterações
 
-Escopo limitado ao card de perfil; nenhuma outra página ou componente será alterada.
+### 1. `src/components/dashboard/ProfileHeaderCard.tsx`
+- Adicionar prop opcional `showProfileLink?: boolean` (default `true`).
+- Renderizar o `<Link to="/perfil/$username">` apenas quando `showProfileLink` for `true`.
+
+### 2. `src/components/dashboard/DashboardShell.tsx`
+- Receber e repassar a prop `showProfileLink` para `<ProfileHeaderCard />`.
+
+### 3. `src/components/dashboard/SubscriberDashboard.tsx`
+- Passar `showProfileLink={creatorOnboardingStarted}` para `<DashboardShell />`.
+- Assim, assinantes que clicaram em "Virar creator" ou preencheram algum passo do onboarding continuam vendo o link; assinantes puros não veem.
+
+### 4. `src/components/dashboard/CreatorDashboard.tsx`
+- Nenhuma mudança necessária: creators continuam vendo o link por padrão.
+
+## Critério de esconder
+```
+account_type === "subscriber" && !creatorOnboardingStarted
+```
+
+O dashboard já calcula `creatorOnboardingStarted` a partir das redes sociais, preço mensal e status KYC, então nenhuma mudança de banco de dados é necessária.
+
+## Validação
+- Rodar `bun run build:dev` para garantir que as alterações de props e JSX não quebram a build.
