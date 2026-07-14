@@ -4,7 +4,53 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // ---- Withdrawals ----
 
 const WITHDRAWAL_MIN_CENTS = 5000; // R$50,00
-const WITHDRAWAL_FEE_CENTS = 367; // R$3,67 taxa padrão pós-primeiro saque
+
+async function loadAsaas() {
+  return await import("@/lib/asaas.server");
+}
+
+function centsToBrl(cents: number): number {
+  return Math.round(cents) / 100;
+}
+
+function mapPixKeyType(
+  type?: string,
+): "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP" {
+  switch (type) {
+    case "cpf":
+      return "CPF";
+    case "cnpj":
+      return "CNPJ";
+    case "email":
+      return "EMAIL";
+    case "telefone":
+      return "PHONE";
+    case "aleatoria":
+    default:
+      return "EVP";
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function pollTransferStatus(
+  asaas: any,
+  apiKey: string,
+  transferId: string,
+  maxAttempts = 10,
+  delayMs = 2000,
+) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const transfer = await asaas.getTransfer(apiKey, transferId);
+    if (transfer.status === "DONE" || transfer.status === "CANCELLED") {
+      return transfer;
+    }
+    if (i < maxAttempts - 1) await sleep(delayMs);
+  }
+  return null;
+}
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -26,13 +72,16 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     if (wErr || !wallet) throw new Error("carteira não encontrada");
     if (wallet.released_cents < amount) throw new Error("saldo liberado insuficiente");
 
-    const { count } = await supabase
-      .from("withdrawals")
-      .select("id", { count: "exact", head: true })
-      .eq("creator_id", userId);
-    const isFirst = (count ?? 0) === 0;
-    const fee = isFirst ? 0 : WITHDRAWAL_FEE_CENTS;
-    const net = amount - fee;
+    const { data: profile, error: pErr } = await (supabase as any)
+      .from("profiles")
+      .select("asaas_api_key_encrypted")
+      .eq("user_id", userId)
+      .single();
+    if (pErr || !profile?.asaas_api_key_encrypted) {
+      throw new Error(
+        "Você precisa cadastrar sua API key Asaas em Meu Banco para sacar automaticamente. Sem ela, faça o saque direto no painel Asaas.",
+      );
+    }
 
     // Reserva o valor debitando do saldo liberado
     const { error: uErr } = await supabase
@@ -46,13 +95,13 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .insert({
         creator_id: userId,
         amount_cents: amount,
-        fee_cents: fee,
-        net_cents: net,
+        fee_cents: 0,
+        net_cents: amount,
         pix_key: data.pixKey.trim(),
         pix_key_type: data.pixKeyType ?? null,
         status: "requested",
-        is_first_withdrawal: isFirst,
-        provider: "manual",
+        is_first_withdrawal: false,
+        provider: "asaas",
       })
       .select("id, amount_cents, fee_cents, net_cents, status, is_first_withdrawal, requested_at")
       .single();
@@ -63,7 +112,60 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         .eq("user_id", userId);
       throw new Error(error.message);
     }
-    return row;
+
+    try {
+      const asaas = await loadAsaas();
+      const apiKey = asaas.decryptApiKey(profile.asaas_api_key_encrypted as string);
+      const transfer = await asaas.createPixTransfer(apiKey, {
+        value: centsToBrl(amount),
+        pixAddressKey: data.pixKey.trim(),
+        pixAddressKeyType: mapPixKeyType(data.pixKeyType),
+        externalReference: row.id,
+        description: "Saque Monetisexy",
+      });
+
+      let finalStatus = transfer.status;
+      if (transfer.status === "PENDING") {
+        const polled = await pollTransferStatus(asaas, apiKey, transfer.id);
+        if (polled) finalStatus = polled.status;
+      }
+
+      const statusMap: Record<string, string> = {
+        DONE: "paid",
+        CANCELLED: "rejected",
+        PENDING: "requested",
+      };
+      const withdrawalStatus = (statusMap[finalStatus] ?? "requested") as any;
+
+      const update: Record<string, unknown> = {
+        status: withdrawalStatus,
+        provider_ref: transfer.id,
+      };
+      if (withdrawalStatus === "paid") {
+        update.processed_at = new Date().toISOString();
+      }
+      if (withdrawalStatus === "rejected" && transfer.failReason) {
+        update.rejection_reason = transfer.failReason;
+      }
+
+      await supabase.from("withdrawals").update(update).eq("id", row.id);
+
+      return { ...row, status: withdrawalStatus, provider_ref: transfer.id };
+    } catch (err: any) {
+      // Em caso de falha na transferência, reverte o saldo interno e marca o saque como falho
+      await supabase
+        .from("creator_wallets")
+        .update({ released_cents: wallet.released_cents })
+        .eq("user_id", userId);
+      await supabase
+        .from("withdrawals")
+        .update({
+          status: "failed",
+          rejection_reason: String(err?.message ?? "falha na transferência Asaas"),
+        })
+        .eq("id", row.id);
+      throw new Error(err?.message ?? "falha ao criar transferência Asaas");
+    }
   });
 
 export const cancelWithdrawal = createServerFn({ method: "POST" })
