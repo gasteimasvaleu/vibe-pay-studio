@@ -37,7 +37,9 @@ const HERO_IMAGES = [
 
 function CriarPerfilGratuitoPage() {
   const navigate = useNavigate();
+  const createProfile = useServerFn(createFreeCreatorProfile);
   const [step, setStep] = useState<1 | 2>(1);
+  const [submitting, setSubmitting] = useState(false);
 
   // Step 2 state
   const [displayName, setDisplayName] = useState("");
@@ -49,7 +51,7 @@ function CriarPerfilGratuitoPage() {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
-  const canSubmit = displayName.trim().length > 0 && handleValid;
+  const canSubmit = displayName.trim().length > 0 && handleValid && !submitting;
 
   const initials = (displayName.trim() || "CA")
     .split(/\s+/)
@@ -69,10 +71,33 @@ function CriarPerfilGratuitoPage() {
     setSelectedCover(URL.createObjectURL(file));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    toast.success("Perfil criado!");
-    navigate({ to: "/dashboard" });
+    setSubmitting(true);
+    try {
+      // Só persistimos URLs http(s); previews locais (blob:) ficam pra edição posterior.
+      const coverUrl =
+        selectedCover && /^https?:\/\//i.test(selectedCover) ? selectedCover : null;
+      await createProfile({
+        data: {
+          handle: handle.trim().toLowerCase(),
+          displayName: displayName.trim(),
+          bio: bio.trim() || null,
+          avatarUrl: null,
+          coverUrl,
+        },
+      });
+      toast.success("Perfil criado!");
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao criar perfil";
+      if (msg === "handle_taken") toast.error("Este @ já está em uso.");
+      else if (msg === "already_creator")
+        toast.error("Sua conta já é creator pago.");
+      else toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
