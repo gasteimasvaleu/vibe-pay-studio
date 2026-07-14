@@ -38,6 +38,8 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTip = useServerFn(createTipPayment);
+  const walletPay = useServerFn(payWithWallet);
+  const queryClient = useQueryClient();
 
   const handleClose = (v: boolean) => {
     if (!v) {
