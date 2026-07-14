@@ -42,7 +42,7 @@ import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
-import { followCreatorFree, unfollowCreator } from "@/lib/monetization.functions";
+import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 
 
 
@@ -104,14 +104,22 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
-    const { data: activeSub } = await supabase
-      .from("subscriptions")
-      .select("id")
-      .eq("subscriber_id", userData.user.id)
-      .eq("creator_id", profile.user_id)
-      .eq("status", "active")
-      .gt("current_period_end", new Date().toISOString())
-      .maybeSingle();
+    const [{ data: activeSub }, { data: followRow }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("subscriber_id", userData.user.id)
+        .eq("creator_id", profile.user_id)
+        .eq("status", "active")
+        .gt("current_period_end", new Date().toISOString())
+        .maybeSingle(),
+      supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("follower_id", userData.user.id)
+        .eq("followee_id", profile.user_id)
+        .maybeSingle(),
+    ]);
 
     return {
       viewerId: userData.user.id,
@@ -123,7 +131,8 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
       },
-      isFollowing: !!activeSub,
+      isFollowing: !!followRow,
+      isSubscribed: !!activeSub,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
@@ -132,6 +141,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       likesCount: likesCount ?? 0,
     };
   },
+
 
 
 
@@ -220,7 +230,7 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
     Route.useRouteContext();
   const router = useRouter();
   const navigate = useNavigate();
@@ -230,15 +240,19 @@ function PerfilPage() {
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const [isSubscribed, setIsSubscribed] = useState(initialSubscribed);
   const [followBusy, setFollowBusy] = useState(false);
+  const [subscribeBusy, setSubscribeBusy] = useState(false);
 
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
-  const followFreeFn = useServerFn(followCreatorFree);
+  const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
+  const subscribeFreeFn = useServerFn(subscribeFree);
+
 
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
@@ -367,25 +381,40 @@ function PerfilPage() {
               <nav className="flex flex-col gap-1">
                 {(() => {
                   const isFree = profile.priceMonthly === 0;
-                  const topLabel = isFree
-                    ? "Assinatura gratuita"
-                    : isFollowing
-                      ? "Seguir"
+                  const followLabel = isFollowing ? "Seguindo" : "Seguir";
+                  const subLabel = isSubscribed
+                    ? "Assinado"
+                    : isFree
+                      ? "Assinatura gratuita"
                       : "Assinar";
-                  const topDisabled = isFollowing || followBusy;
-                  const onTop = async () => {
-                    if (isFollowing) return;
+                  const onFollow = async () => {
+                    if (isFollowing || followBusy) return;
+                    setFollowBusy(true);
+                    try {
+                      await followFn({ data: { creatorId: profile.userId } });
+                      setIsFollowing(true);
+                      toast.success("Você agora segue este perfil.");
+                      router.invalidate();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                    } finally {
+                      setFollowBusy(false);
+                      setMenuOpen(false);
+                    }
+                  };
+                  const onSubscribe = async () => {
+                    if (isSubscribed || subscribeBusy) return;
                     if (isFree) {
-                      setFollowBusy(true);
+                      setSubscribeBusy(true);
                       try {
-                        await followFreeFn({ data: { creatorId: profile.userId } });
-                        setIsFollowing(true);
-                        toast.success("Você agora segue este perfil.");
+                        await subscribeFreeFn({ data: { creatorId: profile.userId } });
+                        setIsSubscribed(true);
+                        toast.success("Assinatura gratuita ativada!");
                         router.invalidate();
                       } catch (e) {
-                        toast.error(e instanceof Error ? e.message : "Erro ao seguir.");
+                        toast.error(e instanceof Error ? e.message : "Erro ao assinar.");
                       } finally {
-                        setFollowBusy(false);
+                        setSubscribeBusy(false);
                         setMenuOpen(false);
                       }
                     } else {
@@ -397,16 +426,25 @@ function PerfilPage() {
                     <>
                       <button
                         type="button"
-                        onClick={onTop}
-                        disabled={topDisabled}
+                        onClick={onFollow}
+                        disabled={isFollowing || followBusy}
                         className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {topLabel}
+                        {followLabel}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onSubscribe}
+                        disabled={isSubscribed || subscribeBusy}
+                        className="w-full px-3 py-3 rounded-xl text-left text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {subLabel}
                       </button>
                       <div className="my-1 h-px bg-border" />
                     </>
                   );
                 })()}
+
                 <button
                   type="button"
                   onClick={() => {

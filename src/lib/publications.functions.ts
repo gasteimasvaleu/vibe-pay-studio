@@ -155,16 +155,15 @@ export const getFeed = createServerFn({ method: "POST" })
     const client = context.supabase;
     const currentUserId = context.userId;
 
-    const { data: subs, error: subsErr } = await client
-      .from("subscriptions")
-      .select("creator_id")
-      .eq("subscriber_id", currentUserId)
-      .eq("status", "active")
-      .gt("current_period_end", new Date().toISOString());
-    if (subsErr) throw new Error(subsErr.message);
+    const { data: follows, error: followsErr } = await client
+      .from("follows")
+      .select("followee_id")
+      .eq("follower_id", currentUserId);
+    if (followsErr) throw new Error(followsErr.message);
     const allowedAuthors = Array.from(
-      new Set([currentUserId, ...(subs ?? []).map((s) => s.creator_id)]),
+      new Set([currentUserId, ...(follows ?? []).map((f) => f.followee_id)]),
     );
+
 
     let query = client
       .from("publications")
