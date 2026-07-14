@@ -870,6 +870,7 @@ export type Database = {
       }
       publications: {
         Row: {
+          archived_at: string | null
           audio_storage_path: string | null
           audio_url: string | null
           author_id: string
@@ -891,6 +892,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          archived_at?: string | null
           audio_storage_path?: string | null
           audio_url?: string | null
           author_id: string
@@ -912,6 +914,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          archived_at?: string | null
           audio_storage_path?: string | null
           audio_url?: string | null
           author_id?: string

@@ -11,9 +11,27 @@ import {
   EyeOff,
   Flag,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { showTopBanner } from "@/components/ui/top-banner";
+import { EditCaptionDialog } from "@/components/feed/EditCaptionDialog";
 import type { FeedItem } from "@/lib/publications.functions";
+import {
+  deletePublication,
+  setPublicationArchived,
+  setPublicationCommentsDisabled,
+} from "@/lib/publications.functions";
 
 export function PublicationOptionsMenu({
   item,
@@ -25,6 +43,18 @@ export function PublicationOptionsMenu({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const queryClient = useQueryClient();
+  const toggleCommentsFn = useServerFn(setPublicationCommentsDisabled);
+  const archiveFn = useServerFn(setPublicationArchived);
+  const deleteFn = useServerFn(deletePublication);
+
+  const invalidateFeeds = () => {
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
+    queryClient.invalidateQueries({ queryKey: ["user-publications"] });
+  };
 
   const close = () => setOpen(false);
 
@@ -43,6 +73,40 @@ export function PublicationOptionsMenu({
     showTopBanner("Em breve");
     close();
   };
+
+  const toggleCommentsMutation = useMutation({
+    mutationFn: () =>
+      toggleCommentsFn({
+        data: { id: item.id, disabled: !item.comments_disabled },
+      }),
+    onSuccess: (res) => {
+      showTopBanner(res.disabled ? "Comentários desabilitados" : "Comentários habilitados");
+      invalidateFeeds();
+    },
+    onError: (e: unknown) =>
+      showTopBanner(e instanceof Error ? e.message : "Erro ao atualizar"),
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: () => archiveFn({ data: { id: item.id, archived: true } }),
+    onSuccess: () => {
+      showTopBanner("Post arquivado");
+      invalidateFeeds();
+    },
+    onError: (e: unknown) =>
+      showTopBanner(e instanceof Error ? e.message : "Erro ao arquivar"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteFn({ data: { id: item.id } }),
+    onSuccess: () => {
+      showTopBanner("Post excluído");
+      invalidateFeeds();
+      setConfirmDelete(false);
+    },
+    onError: (e: unknown) =>
+      showTopBanner(e instanceof Error ? e.message : "Erro ao excluir"),
+  });
 
   const ownerOptions: Array<{
     key: string;
@@ -74,7 +138,10 @@ export function PublicationOptionsMenu({
       key: "edit",
       label: "Editar legenda",
       icon: <Pencil className="h-6 w-6" strokeWidth={1.75} />,
-      onClick: soon,
+      onClick: () => {
+        close();
+        setEditOpen(true);
+      },
     },
     {
       key: "toggle-comments",
@@ -84,13 +151,19 @@ export function PublicationOptionsMenu({
       ) : (
         <MessageSquareOff className="h-6 w-6" strokeWidth={1.75} />
       ),
-      onClick: soon,
+      onClick: () => {
+        close();
+        toggleCommentsMutation.mutate();
+      },
     },
     {
       key: "archive",
       label: "Arquivar post",
       icon: <Archive className="h-6 w-6" strokeWidth={1.75} />,
-      onClick: soon,
+      onClick: () => {
+        close();
+        archiveMutation.mutate();
+      },
     },
   ];
 
@@ -140,37 +213,85 @@ export function PublicationOptionsMenu({
     ? { label: "Excluir post", icon: <Trash2 className="h-6 w-6 text-destructive" strokeWidth={1.75} /> }
     : { label: "Denunciar post", icon: <Flag className="h-6 w-6 text-destructive" strokeWidth={1.75} /> };
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="w-[340px] rounded-3xl p-4 bg-card border border-border shadow-xl"
-      >
-        <div className="rounded-2xl bg-background border border-border overflow-hidden divide-y divide-border">
-          {options.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={opt.onClick}
-              className="w-full flex items-center gap-4 px-4 py-3.5 text-left hover:bg-foreground/5 transition-colors"
-            >
-              <span className="text-foreground">{opt.icon}</span>
-              <span className="text-sm font-semibold text-foreground">{opt.label}</span>
-            </button>
-          ))}
-        </div>
+  const handleDestructive = () => {
+    if (isOwner) {
+      close();
+      setConfirmDelete(true);
+    } else {
+      soon();
+    }
+  };
 
-        <button
-          type="button"
-          onClick={soon}
-          className="mt-3 w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-destructive/10 hover:bg-destructive/15 transition-colors text-left"
+  return (
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+        <PopoverContent
+          align="end"
+          sideOffset={8}
+          className="w-[340px] rounded-3xl p-4 bg-card border border-border shadow-xl"
         >
-          {destructive.icon}
-          <span className="text-sm font-semibold text-destructive">{destructive.label}</span>
-        </button>
-      </PopoverContent>
-    </Popover>
+          <div className="rounded-2xl bg-background border border-border overflow-hidden divide-y divide-border">
+            {options.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={opt.onClick}
+                className="w-full flex items-center gap-4 px-4 py-3.5 text-left hover:bg-foreground/5 transition-colors"
+              >
+                <span className="text-foreground">{opt.icon}</span>
+                <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDestructive}
+            className="mt-3 w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-destructive/10 hover:bg-destructive/15 transition-colors text-left"
+          >
+            {destructive.icon}
+            <span className="text-sm font-semibold text-destructive">{destructive.label}</span>
+          </button>
+        </PopoverContent>
+      </Popover>
+
+      {isOwner && (
+        <EditCaptionDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          publicationId={item.id}
+          initialCaption={item.caption}
+        />
+      )}
+
+      {isOwner && (
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir post?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação é permanente. O post e todas as mídias serão removidos e não poderão ser recuperados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteMutation.isPending}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  deleteMutation.mutate();
+                }}
+                disabled={deleteMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   );
 }
