@@ -1,11 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
@@ -58,9 +59,20 @@ function FeedPage() {
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
 
 
-  const feedQuery = useQuery({
+  const feedQuery = useInfiniteQuery({
     queryKey: ["feed"],
-    queryFn: () => fetchFeed({ data: { limit: 20 } }),
+    queryFn: ({ pageParam }) =>
+      fetchFeed({ data: { limit: 20, cursor: pageParam ?? undefined } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+  const feedItems = feedQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  const sentinelRef = useInfiniteScrollSentinel<HTMLDivElement>({
+    hasNextPage: feedQuery.hasNextPage,
+    isFetchingNextPage: feedQuery.isFetchingNextPage,
+    fetchNextPage: feedQuery.fetchNextPage,
   });
 
   const handleUnlock = (item: FeedItem) => {
@@ -146,11 +158,20 @@ function FeedPage() {
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
               Carregando publicações...
             </div>
-          ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
+          ) : feedItems.length > 0 ? (
             <div className="space-y-4">
-              {feedQuery.data.items.map((item) => (
+              {feedItems.map((item) => (
                 <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
               ))}
+              <div ref={sentinelRef} className="h-8" />
+              {feedQuery.isFetchingNextPage && (
+                <div className="flex justify-center py-4 text-white/60">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+              )}
+              {!feedQuery.hasNextPage && (
+                <p className="text-center text-xs text-white/40 py-4">Você chegou ao fim do feed.</p>
+              )}
             </div>
           ) : (
             <motion.section
@@ -211,17 +232,20 @@ function FeedPage() {
         onCountChange={(delta) => {
           const id = commentsFor?.id;
           if (!id) return;
-          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+          queryClient.setQueryData<InfiniteData<{ items: FeedItem[]; nextCursor: string | null }>>(
             ["feed"],
             (prev) =>
               prev
                 ? {
                     ...prev,
-                    items: prev.items.map((it) =>
-                      it.id === id
-                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
-                        : it,
-                    ),
+                    pages: prev.pages.map((page) => ({
+                      ...page,
+                      items: page.items.map((it) =>
+                        it.id === id
+                          ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                          : it,
+                      ),
+                    })),
                   }
                 : prev,
           );

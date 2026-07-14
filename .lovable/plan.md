@@ -1,43 +1,54 @@
-## Ações do popover do criador (post próprio)
+## Objetivo
 
-Hoje o `PublicationOptionsMenu` já mostra as 6 opções para o dono, mas 4 delas caem no toast "Em breve". Vou implementá-las de verdade.
+Carregar mais publicações gradualmente no feed e nas abas "Postagens" e "Mídias" do perfil, usando infinite scroll (rolagem infinita) com `IntersectionObserver` e `useInfiniteQuery`.
 
-### 1. Migração (schema)
-Adicionar coluna de arquivamento em `publications`:
-- `archived_at TIMESTAMPTZ NULL`
-- Atualizar policy `publications_public_read` para exigir `archived_at IS NULL` (dono continua vendo pela policy `publications_author_read`).
-- Índice parcial `WHERE archived_at IS NULL` para o feed.
+## Feed (`/feed`)
 
-### 2. Novos server functions em `src/lib/publications.functions.ts`
-Todos com `requireSupabaseAuth` e checagem `author_id = userId`:
+`getFeed` já retorna `nextCursor`. Migrar `src/routes/_authenticated/feed.tsx`:
 
-- `updatePublicationCaption({ id, caption })` — `update publications set caption`.
-- `setPublicationCommentsDisabled({ id, disabled })` — toggle `comments_disabled`.
-- `setPublicationArchived({ id, archived })` — set `archived_at = now()/null`.
-- `deletePublication({ id })`:
-  1. carrega `publication_media` (storage_path) e `audio_storage_path` do post.
-  2. `supabaseAdmin.storage.from('publications').remove([...paths])` (import dinâmico dentro do handler).
-  3. `delete from publications where id and author_id = userId` (cascade cuida de likes/comments/bookmarks/unlocks).
+- Trocar `useQuery` por `useInfiniteQuery`:
+  - `queryKey: ["feed"]`
+  - `queryFn: ({ pageParam }) => fetchFeed({ data: { limit: 20, cursor: pageParam } })`
+  - `initialPageParam: undefined`
+  - `getNextPageParam: (last) => last.nextCursor ?? undefined`
+- Renderizar `data.pages.flatMap(p => p.items)`.
+- Sentinela ao final da lista (`<div ref={sentinelRef} />`) com `IntersectionObserver` que chama `fetchNextPage()` quando visível e `hasNextPage && !isFetchingNextPage`.
+- Mostrar loader pequeno enquanto `isFetchingNextPage`; "Fim do feed" quando não houver mais.
+- Ajustar as chamadas que hoje fazem `setQueryData(["feed"], ...)` para atualizar todas as páginas (`{ pages: prev.pages.map(...), pageParams }`). Nas mutações destrutivas (delete/edit), continuar usando `invalidateQueries(["feed"])`.
 
-### 3. Filtrar arquivados nos feeds
-Em `getFeed` e `getUserPublications` adicionar `.is('archived_at', null)` (o próprio dono vê os arquivados em uma view separada — fora do escopo desta task; hoje ele só verá que sumiu do feed público, que é o comportamento pedido "estilo Instagram simplificado").
+## Perfil — abas "Postagens" e "Mídias"
 
-### 4. UI — `PublicationOptionsMenu.tsx`
-Substituir os `soon` por mutations (`useMutation` + `queryClient.invalidateQueries(['feed'])` + `showTopBanner`):
+Criar dois `createServerFn` em `src/lib/publications.functions.ts` (protegidos, mas aceitando `userId` do dono do perfil consultado):
 
-- **Editar legenda**: abre novo `EditCaptionDialog` (Dialog do shadcn com Textarea pré-preenchida com `item.caption`, botão Salvar chama `updatePublicationCaption`).
-- **Desabilitar/Habilitar comentários**: chama `setPublicationCommentsDisabled` com o inverso do estado atual; feedback via banner.
-- **Arquivar post**: chama `setPublicationArchived({archived:true})`; banner "Post arquivado".
-- **Excluir post**: abre `AlertDialog` de confirmação ("Esta ação não pode ser desfeita"); on-confirm chama `deletePublication`.
+1. `getUserPostsGrid({ userId, cursor?, limit=24 })` → `{ items: GridPostItem[]; nextCursor: string | null }`
+   - `publications` do autor, `archived_at IS NULL`, `published_at <= now()`, `order by published_at desc`, `limit+1` para calcular cursor.
+   - Junta primeira mídia (`position asc`) para `cover_url`/`cover_type` + `media_count` + flag `has_audio`.
+   - `GridPostItem = { id, cover_url, cover_type: 'image'|'video'|null, media_count, has_audio, published_at }`.
 
-O menu recebe callbacks via props (`onEditCaption`, `onDelete`, etc.) ou lida internamente — vou manter internamente para não inflar o `PublicationCard`, exceto o dialog de edição que precisa de estado próprio.
+2. `getUserMediasGrid({ userId, cursor?, limit=24 })` → `{ items: GridMediaItem[]; nextCursor: string | null }`
+   - `publication_media` join `publications` do autor com filtros de publicação.
+   - Cursor composto `published_at|position` (ordenar por `published_at desc, position asc`); serializado como string.
+   - `GridMediaItem = { id, publication_id, url, type: 'image'|'video' }`.
 
-### 5. Tipo `FeedItem`
-Já contém `caption`, `comments_disabled`, `is_owner`. Não precisa alterar. `archived_at` não precisa ser exposto ao cliente.
+Atualizar `src/routes/_authenticated/profile.$username.tsx`:
 
-### Arquivos tocados
-- migração SQL (nova)
-- `src/lib/publications.functions.ts`
-- `src/components/feed/PublicationOptionsMenu.tsx`
-- `src/components/feed/EditCaptionDialog.tsx` (novo)
-- `src/components/feed/PublicationCard.tsx` (só para invalidar cache após ações, se necessário)
+- Adicionar `useInfiniteQuery` para cada aba:
+  - `["user-posts-grid", userId]` — sempre habilitado.
+  - `["user-medias-grid", userId]` — `enabled: activeTab === "medias"`.
+- Renderizar grade `grid-cols-3 gap-1` com células `aspect-square`:
+  - Postagens: capa (img ou `<video preload="metadata">`), ícone `Layers` se `media_count > 1`, `Film` se vídeo, `AudioLines` se `has_audio` sem mídia visual.
+  - Mídias: cada arquivo individual (img/video).
+  - Clique → `navigate({ to: "/publicacao/$id", params: { id } })` (rota existente do feed/publicação).
+- Skeleton grid 9 células enquanto `isLoading`.
+- Empty state ("Nenhuma postagem ainda" / "Nenhuma mídia ainda").
+- Sentinela ao final de cada grade com o mesmo padrão de `IntersectionObserver` para `fetchNextPage`.
+
+## Utilitário compartilhado
+
+Criar `src/hooks/useInfiniteScrollSentinel.ts` — hook que recebe `{ hasNextPage, isFetchingNextPage, fetchNextPage }` e retorna um `ref` para colocar num `<div>` sentinela. Usado no feed e nas duas grades.
+
+## Escopo
+
+- Sem mudanças de layout/visual além do loader e sentinela.
+- Sem mudanças nas mutações de curtir/comentar/desbloquear.
+- Migração do `feed.tsx` mantém todas as sheets/dialogs existentes.

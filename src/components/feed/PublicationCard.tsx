@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   AudioLines,
@@ -60,13 +60,16 @@ export function PublicationCard({
   const bookmarkFn = useServerFn(toggleBookmark);
 
   const patchItem = (patch: Partial<FeedItem>) => {
-    queryClient.setQueryData<FeedData>(["feed"], (prev) => {
+    queryClient.setQueryData<InfiniteData<FeedData>>(["feed"], (prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        items: prev.items.map((it) =>
-          it.id === item.id ? { ...it, ...patch } : it,
-        ),
+        pages: prev.pages.map((page) => ({
+          ...page,
+          items: page.items.map((it) =>
+            it.id === item.id ? { ...it, ...patch } : it,
+          ),
+        })),
       };
     });
   };
