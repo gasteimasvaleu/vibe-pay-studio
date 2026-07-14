@@ -142,26 +142,6 @@ async function applyTransferStatus(
 
 
 
-async function creditWalletTopup(
-  supabaseAdmin: any,
-  buyerId: string,
-  amountCents: number,
-  providerRef: string,
-) {
-  // Cria uma transaction wallet_topup paga; trigger existente credita subscriber_wallets
-  await supabaseAdmin.from("transactions").insert({
-    kind: "wallet_topup",
-    status: "paid",
-    buyer_id: buyerId,
-    amount_cents_gross: amountCents,
-    platform_fee_cents: 0,
-    net_cents: amountCents,
-    commission_pct_applied: 0,
-    payment_method: "pix",
-    provider: "asaas",
-    provider_ref: providerRef,
-  });
-}
 
 export const Route = createFileRoute("/api/public/webhooks/asaas")({
   server: {
