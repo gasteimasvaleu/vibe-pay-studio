@@ -232,17 +232,20 @@ function FeedPage() {
         onCountChange={(delta) => {
           const id = commentsFor?.id;
           if (!id) return;
-          queryClient.setQueryData<{ items: FeedItem[]; nextCursor: string | null }>(
+          queryClient.setQueryData<InfiniteData<{ items: FeedItem[]; nextCursor: string | null }>>(
             ["feed"],
             (prev) =>
               prev
                 ? {
                     ...prev,
-                    items: prev.items.map((it) =>
-                      it.id === id
-                        ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
-                        : it,
-                    ),
+                    pages: prev.pages.map((page) => ({
+                      ...page,
+                      items: page.items.map((it) =>
+                        it.id === id
+                          ? { ...it, comment_count: Math.max(0, it.comment_count + delta) }
+                          : it,
+                      ),
+                    })),
                   }
                 : prev,
           );
