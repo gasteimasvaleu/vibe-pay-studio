@@ -643,7 +643,7 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
       encryptedApiKey = asaas.encryptApiKey(data.apiKey.trim());
     }
 
-    const updatePayload: Record<string, unknown> = {
+    const updatePayload: any = {
       asaas_wallet_id: walletId,
       asaas_account_status: "ACTIVE",
       asaas_account_id: null,
