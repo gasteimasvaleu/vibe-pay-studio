@@ -151,7 +151,7 @@ function FeedPage() {
           ) : feedQuery.data && feedQuery.data.items.length > 0 ? (
             <div className="space-y-4">
               {feedQuery.data.items.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
               ))}
             </div>
           ) : (
