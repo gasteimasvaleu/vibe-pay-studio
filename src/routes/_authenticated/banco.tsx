@@ -8,12 +8,19 @@ import {
   Banknote,
   CheckCircle2,
   Clock,
+  ExternalLink,
   Info,
   Pencil,
   Plus,
   ShieldAlert,
   Wallet,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -119,6 +126,184 @@ function BancoPage() {
               Aqui você verá as movimentações da sua conta
             </p>
           </div>
+        </section>
+
+        {/* Integração com Asaas (explicativo) */}
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center shrink-0">
+              <Wallet className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-bold text-foreground">
+                Integração com o Asaas
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Usamos o Asaas como processador de pagamentos. Para receber, você
+                precisa de uma conta lá — o repasse cai direto na sua carteira
+                Asaas via split.
+              </p>
+              <a
+                href="https://www.asaas.com/registrar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              >
+                Criar conta no Asaas
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="why">
+              <AccordionTrigger className="text-sm font-semibold">
+                Por que preciso de uma conta Asaas?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  O Asaas é o gateway que processa PIX e cartão dos seus fãs.
+                  Toda venda é liquidada diretamente na sua carteira Asaas
+                  através de um split automático — a plataforma retém apenas a
+                  comissão e o restante é seu.
+                </p>
+                <p>
+                  Sem uma conta Asaas cadastrada, não conseguimos enviar os
+                  valores das vendas para você.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="wallet">
+              <AccordionTrigger className="text-sm font-semibold">
+                O que é o Wallet ID e como pegar?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  O Wallet ID é o identificador único da sua carteira Asaas
+                  (formato UUID, ex.:{" "}
+                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                    ced4e093-41f5-...
+                  </code>
+                  ). É para onde o split envia o valor de cada venda.
+                </p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Entre na sua conta em asaas.com</li>
+                  <li>
+                    Vá em <strong>Minha conta → Integrações</strong> (ou{" "}
+                    <strong>Configurações → Wallet ID</strong>)
+                  </li>
+                  <li>Copie o identificador exibido</li>
+                  <li>Cole no campo <strong>Wallet ID</strong> ao cadastrar seu banco aqui</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="apikey">
+              <AccordionTrigger className="text-sm font-semibold">
+                Como gerar minha API Key
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  A API Key permite que a plataforma consulte status de
+                  cobranças e habilite saque automático na sua conta.
+                </p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>
+                    Vá em{" "}
+                    <strong>Minha conta → Integrações → Chaves de API</strong>
+                  </li>
+                  <li>
+                    Clique em <strong>Gerar nova chave</strong> no ambiente{" "}
+                    <strong>Produção</strong>
+                  </li>
+                  <li>
+                    Copie o valor iniciado por{" "}
+                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                      $aact_
+                    </code>
+                  </li>
+                  <li>Cole no campo API Key ao cadastrar seu banco</li>
+                </ol>
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                  ⚠ A chave é exibida apenas uma vez. Guarde em local seguro e
+                  nunca compartilhe com terceiros.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="fees">
+              <AccordionTrigger className="text-sm font-semibold">
+                Taxas cobradas
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-3">
+                <div>
+                  <p className="font-semibold text-foreground">
+                    Comissão da plataforma
+                  </p>
+                  <p>
+                    <strong>15%</strong> sobre cada transação (retida pela
+                    Monetisexy).
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    Taxas do Asaas (descontadas 100% do creator)
+                  </p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>
+                      <strong>PIX:</strong> R$ 1,99 por cobrança recebida
+                    </li>
+                    <li>
+                      <strong>Cartão de crédito à vista:</strong> 2,99% + R$ 0,49
+                      por transação
+                    </li>
+                    <li className="text-xs">
+                      Boleto e cartão parcelado ainda não estão disponíveis no
+                      checkout
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    Valores mínimos por método
+                  </p>
+                  <p>
+                    PIX <strong>R$ 3,00</strong> · Cartão <strong>R$ 2,00</strong>{" "}
+                    — garantem sobra positiva ao creator após as taxas.
+                  </p>
+                </div>
+                <div className="rounded-md bg-muted/60 p-3 text-xs">
+                  <p className="font-semibold text-foreground mb-1">
+                    Exemplo em um PIX de R$ 10,00:
+                  </p>
+                  <ul className="space-y-0.5">
+                    <li>Plataforma (15%): R$ 1,50</li>
+                    <li>Taxa Asaas (PIX): R$ 1,99</li>
+                    <li className="font-semibold text-foreground">
+                      Você recebe: R$ 6,51
+                    </li>
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="prazo">
+              <AccordionTrigger className="text-sm font-semibold">
+                Prazo de recebimento
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground space-y-1">
+                <p>
+                  <strong>PIX:</strong> liquidação em poucos segundos após o
+                  pagamento.
+                </p>
+                <p>
+                  <strong>Cartão de crédito:</strong> ~32 dias após o pagamento
+                  (regra padrão do Asaas).
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </section>
 
         {/* Status recebimento */}

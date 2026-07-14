@@ -1,56 +1,37 @@
 ## Objetivo
-Impedir que checkouts caiam no erro `amount_too_low_for_fees` do Asaas expondo mínimos por método já na UI, e — quando ainda assim escaparem — mostrar uma mensagem clara em português no lugar da string técnica.
+Adicionar, acima do card "Recebimento ativo" em `/banco`, um card em formato acordeão explicando a integração com o Asaas: por que precisa criar conta, o que é o Wallet ID, como obter a API Key, e quais taxas são aplicadas.
 
-## Escopo
-Métodos em uso hoje: **PIX** e **CREDIT_CARD à vista**. Boleto e débito não estão ativos no checkout (não há UI que os selecione), então ficam de fora — se forem ativados no futuro, o mesmo helper cobre.
+## Onde
+`src/routes/_authenticated/banco.tsx` — inserir uma nova `<section>` logo antes do bloco de status de recebimento (o card que o usuário selecionou, ~linha 106+ do preview). Fica sempre visível, independente do `kycVerified`/`walletActive`, para servir de referência.
 
-## Mínimos por método
-Cálculo do menor bruto em que o líquido do creator (`bruto − 15% − taxa Asaas`) ainda é positivo, arredondado para valores "de UI" que deixem uma sobra razoável ao creator:
+## Componente
+Usar o `Accordion` do shadcn já existente em `src/components/ui/accordion.tsx` (`Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`), com `type="single"` e `collapsible`. Estilo casando com os demais cards da página (`rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]`).
 
-| Método       | Taxa Asaas         | Mínimo técnico | Mínimo aplicado na UI |
-|--------------|--------------------|----------------|-----------------------|
-| PIX          | R$ 1,99            | ~R$ 2,35       | **R$ 3,00**           |
-| CREDIT_CARD  | 2,99% + R$ 0,49    | ~R$ 0,60       | **R$ 2,00**           |
+## Estrutura do card
+- Cabeçalho do card (fora do accordion):
+  - Título: "Integração com o Asaas"
+  - Subtítulo curto: "Usamos o Asaas como processador de pagamentos. Para receber, você precisa de uma conta lá."
+  - CTA externo: link "Criar conta no Asaas" para `https://www.asaas.com/registrar` (`target="_blank"`, `rel="noopener noreferrer"`).
 
-Os valores ficam em uma única fonte de verdade em `src/lib/asaas.server.ts` para casar server e UI.
+- Itens do accordion:
+  1. **"Por que preciso de uma conta Asaas?"** — Explica que o Asaas é o gateway que processa PIX/cartão e liquida diretamente na conta do creator via split, e que sem conta não conseguimos enviar os valores.
+  2. **"O que é o Wallet ID e como pegar?"** — Passo a passo: entrar na conta Asaas → menu **Minha conta → Integrações → API** (ou **Configurações → Wallet ID**) → copiar o identificador no formato UUID (ex.: `ced4e093-...`). Colar no campo "Wallet ID" ao cadastrar o banco.
+  3. **"Como gerar minha API Key"** — Passo a passo: **Minha conta → Integrações → Chaves de API → Gerar nova chave** (ambiente **Produção**), copiar o valor `$aact_...` e colar no cadastro. Aviso: a chave é mostrada uma única vez; guarde em local seguro; nunca compartilhe.
+  4. **"Taxas cobradas"** — Tabela/lista com:
+     - Comissão da plataforma Monetisexy: **15%** sobre cada transação (fica com a plataforma).
+     - Taxas do Asaas (100% descontadas do creator):
+       - PIX: **R$ 1,99** por cobrança recebida.
+       - Cartão de crédito à vista: **2,99% + R$ 0,49** por transação.
+       - (Boleto e cartão parcelado ainda não estão disponíveis no checkout.)
+     - Mínimos por método aplicados no checkout: **PIX R$ 3,00** e **Cartão R$ 2,00**, para garantir sobra positiva ao creator após as taxas.
+     - Nota curta: "Exemplo: em um PIX de R$ 10,00 → R$ 1,50 vai para a plataforma, R$ 1,99 para o Asaas, você recebe R$ 6,51."
+  5. **"Prazo de recebimento"** — PIX cai em segundos; cartão de crédito cai em ~32 dias após o pagamento (regra padrão do Asaas).
 
-## Mudanças
-
-### 1. `src/lib/asaas.server.ts`
-- Exportar `MIN_GROSS_CENTS_BY_METHOD: Record<AsaasBillingMethod, number>` com os valores acima.
-- Exportar `getMinGrossCents(method)` e `assertMeetsMinimum(grossCents, method)` que lança um erro tipado `amount_below_minimum:<method>:<minCents>`.
-- Em `computeCreatorNetCents`, chamar `assertMeetsMinimum` antes do cálculo — passa a lançar `amount_below_minimum` em vez de `amount_too_low_for_fees` quando o input é muito baixo.
-
-### 2. `src/lib/payments.functions.ts` (client-safe wrapper)
-- Exportar uma constante espelho `PAYMENT_MIN_GROSS_CENTS` (objeto literal com os mesmos valores) para uso na UI sem importar código server.
-- Exportar um helper puro `getPaymentMethodMinimum(method)` na mesma constante para reuso.
-
-Observação: os checkouts server já chamam `computeCreatorNetCents`, então herdam automaticamente a nova validação.
-
-### 3. UI de checkout
-Aplicar a mesma pattern em cada componente/rota que abre um pagamento:
-
-- `src/components/payments/TipDialog.tsx` — validar o input de valor da gorjeta contra o mínimo do método selecionado; desabilitar o botão "Enviar" quando abaixo; mostrar helper text (`"Mínimo para PIX: R$ 3,00"`).
-- `src/routes/_authenticated/mywallet.recarregar.tsx` — mesmo tratamento no valor de recarga.
-- `src/components/payments/SubscribeDialog.tsx`, `src/routes/_authenticated/feed.tsx` (unlock), `src/routes/_authenticated/chat.$threadId.tsx` (chat unlock), `src/routes/_authenticated/perfil.$username.tsx` (video call/unlock) — o valor vem do preço da publicação/assinatura, então:
-  - Se `price_cents < mínimo do método`, desabilitar o botão desse método no seletor e mostrar tooltip `"Indisponível para este valor (mínimo R$ X,XX no PIX)"`.
-  - Se todos os métodos forem inválidos (raro), mostrar aviso "Valor abaixo do mínimo aceito pelo meio de pagamento".
-
-### 4. Tradução de erro no toast
-Em um util compartilhado (novo `src/lib/payment-errors.ts`) mapear:
-- `amount_below_minimum:PIX:300` → `"Mínimo para PIX é R$ 3,00."`
-- `amount_below_minimum:CREDIT_CARD:200` → `"Mínimo para cartão é R$ 2,00."`
-- `amount_too_low_for_fees` (fallback legado) → `"Valor muito baixo para cobrir as taxas do meio de pagamento."`
-
-Cada callsite que hoje faz `toast.error(err.message)` passa a usar `toast.error(translatePaymentError(err))`.
+## Ícones e polish
+- Ícone `Info` ou `Wallet` no cabeçalho do card.
+- Tipografia consistente com o restante da página (`text-sm text-muted-foreground` para corpo, `font-semibold text-foreground` para títulos internos).
+- Links externos com sublinhado sutil e `text-primary`.
 
 ## Fora de escopo
-- Boleto / débito / crédito parcelado (não estão em uso).
-- Ajuste de preços mínimos de publicação/assinatura no cadastro do creator (pode virar tarefa separada; hoje só bloqueia o checkout).
-- Preços promocionais Asaas (continuam ignorados, conforme decisão anterior).
-
-## Como testar
-1. Tentar gorjeta de R$ 2,00 via PIX → botão desabilitado + helper "Mínimo R$ 3,00".
-2. Tentar recarga de R$ 1,00 via PIX → mesmo bloqueio.
-3. Publicação com `price_cents = 250` (R$ 2,50) → PIX aparece desabilitado, cartão habilitado.
-4. Forçar chamada direta ao server fn com valor abaixo do mínimo → server responde `amount_below_minimum:...` e a UI mostra o toast traduzido.
+- Não muda lógica de status, formulário de cadastro, nem cálculo de taxas — é conteúdo estático explicativo.
+- Não altera o card "Recebimento ativo" existente.
