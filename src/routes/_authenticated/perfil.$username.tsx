@@ -313,11 +313,7 @@ function PerfilPage() {
         toast.success("Publicação já desbloqueada");
         return;
       }
-      if (e?.message === "insufficient_funds") {
-        toast.error("Saldo insuficiente na carteira");
-        return;
-      }
-      toast.error(e?.message ?? "Erro ao gerar pagamento");
+      toast.error(translatePaymentError(e, "Erro ao gerar pagamento"));
     } finally {
       setUnlocking(null);
     }
