@@ -15,6 +15,7 @@ import { ensureCurrentUserProfile } from "@/lib/auth";
 import { ThemeInit } from "@/components/theme-init";
 import { TopBanner } from "@/components/ui/top-banner";
 import { Toaster as SonnerToaster } from "sonner";
+import { RouteTransitionOverlay } from "@/components/site/RouteTransitionOverlay";
 
 
 
@@ -134,6 +135,7 @@ function RootComponent() {
     <>
       <TopBanner />
       <SonnerToaster />
+      <RouteTransitionOverlay />
       <QueryClientProvider client={queryClient}>
         <ThemeInit />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

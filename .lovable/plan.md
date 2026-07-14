@@ -1,35 +1,26 @@
 ## Objetivo
-Deixar todo o fluxo de onboarding do creator em **tema claro** com background `#FFFFFF`, ajustando cores de textos, botões e do loader do KYC para manter contraste e legibilidade.
+Mostrar um overlay de loading global durante a troca entre páginas do site inteiro, usando o mesmo elemento animado (GooeyLoader) já usado no KYC — porém em tamanho maior, já que hoje ele aparece pequeno demais.
 
-## Escopo (somente frontend/apresentação)
+## Escopo (frontend/apresentação apenas)
 
-### 1. `src/components/onboarding/OnboardingShell.tsx` (shell compartilhado)
-- Trocar wrapper: `bg-white text-neutral-900` no lugar de `#0b0713` + `text-white`.
-- Remover as camadas de fundo escuras: gradient radial e o pattern de pontos brancos.
-- Header: fundo `bg-white/80` com `backdrop-blur`, borda `border-neutral-200`, título `text-neutral-900`, botão voltar com hover `bg-neutral-100` e ícone `text-neutral-700`.
-- Barra de progresso: trilho `bg-neutral-200`, preenchimento mantém gradiente fúcsia/roxo (contraste ok em branco).
+### 1. Novo componente `src/components/site/RouteTransitionOverlay.tsx`
+- Usa `useRouterState({ select: s => s.status })` do `@tanstack/react-router`.
+- Quando `status === "pending"` por mais de ~150ms (evita flash em navegações instantâneas), renderiza um overlay `fixed inset-0 z-[100]` com fundo `bg-white/85 backdrop-blur-sm` centralizando o `GooeyLoader`.
+- Fade-in via `animate-fade-in` (utility já existente).
+- Usa `role="status"` + `aria-live="polite"` e texto "Carregando..." em `text-neutral-700` abaixo do loader.
+- Tamanho: `GooeyLoader` com `className="h-48 w-96 text-[22px]"` (hoje é `h-28 w-56 text-[14px]` no KYC — quase o dobro, ficando bem visível).
 
-### 2. Páginas de onboarding (ajustes de cor de texto/botão)
-Nos arquivos abaixo, substituir tokens escuros (`text-white`, `text-white/60`, `text-white/80`, `bg-white/5`, `border-white/10`, `bg-black/…`) por equivalentes claros (`text-neutral-900`, `text-neutral-600`, `bg-neutral-50`, `border-neutral-200`, etc.) e garantir que botões primários (fúcsia/roxo) tenham texto branco:
-- `src/routes/_authenticated/creator.onboarding.assinatura.tsx`
-- `src/routes/_authenticated/creator.onboarding.redes-sociais.tsx`
-- `src/routes/_authenticated/creator.onboarding.documentos.index.tsx`
-- `src/routes/_authenticated/creator.onboarding.documentos.aprovado.tsx`
-- `src/routes/_authenticated/creator.onboarding.documentos.verificando.tsx`
+### 2. Registrar no `src/routes/__root.tsx`
+- Importar e renderizar `<RouteTransitionOverlay />` dentro de `RootComponent`, ao lado de `TopBanner` / `SonnerToaster`, fora do `<Outlet />` para não desmontar durante a transição.
 
-Cards informativos (blocos de "Privacidade", "Segurança", listas de destaque, resumo de preços simulados) passam para superfícies claras: `bg-neutral-50` com `border-neutral-200`, ícones mantendo o roxo/fúcsia da marca, texto principal em `text-neutral-900` e secundário em `text-neutral-600`.
-
-### 3. Loading do KYC (background da página de loading)
-Em `creator.onboarding.documentos.verificando.tsx` e no `pendingComponent` do `aprovado.tsx`:
-- Como o `OnboardingShell` já será branco, o loader herda fundo `#FFFFFF`.
-- Ajustar textos abaixo do `GooeyLoader` de `text-white/90` e `text-white/60` para `text-neutral-900` e `text-neutral-600`.
-- Manter o `GooeyLoader` como está (SVG); apenas garantir que a `className` de cor (`text-[14px]`) não conflite com o novo fundo — se o gooey usar `currentColor` claro, trocar para uma cor da marca (ex.: `text-fuchsia-600`) para visibilidade sobre branco.
+### 3. Ajuste no `GooeyLoader` (não mudar API, só permitir escalar bem)
+- Nenhuma mudança de lógica. O componente já escala por `font-size` (em unidades `em`). O `text-[22px]` no wrapper aumenta proporcionalmente rail, blobs e blur.
+- Opcional: no overlay, passar `primaryColor`/`secondaryColor` para tons roxo/fúcsia da marca fixos (`oklch(0.62 0.24 305)` e `oklch(0.72 0.20 330)`) para contraste consistente sobre fundo claro.
 
 ### 4. Não alterar
-- Nenhuma lógica de negócio, server functions, validações, navegação ou dados.
-- Nenhuma outra rota fora do fluxo `/creator/onboarding/*`.
-- Dashboard, feed e demais telas permanecem no tema escuro atual.
+- Nenhuma rota, loader, server function, ou lógica de negócio.
+- Overlays de páginas específicas (KYC verificando/aprovado) continuam usando o `GooeyLoader` embutido — o overlay global cobre apenas transições de rota.
 
 ## Verificação
-- `bun run build:dev` para garantir tipos e build.
-- Conferência visual das 5 páginas de onboarding + estado de loading do KYC.
+- `bun run build:dev`.
+- Navegação entre 2–3 rotas: overlay aparece durante a troca, com o loader visivelmente maior, e some ao completar.
