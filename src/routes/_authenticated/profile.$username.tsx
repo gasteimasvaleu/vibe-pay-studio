@@ -149,6 +149,30 @@ function ProfilePage() {
   const postsItems: FeedItem[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const mediasItems: GridMediaItem[] = mediasQuery.data?.pages.flatMap((p) => p.items) ?? [];
 
+  useEffect(() => {
+    if (!pendingScrollId || activeTab !== "posts") return;
+    const found = postsItems.some((p) => p.id === pendingScrollId);
+    if (!found) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`pub-${pendingScrollId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("ring-2", "ring-primary", "rounded-3xl");
+        setTimeout(() => {
+          el.classList.remove("ring-2", "ring-primary", "rounded-3xl");
+        }, 2000);
+      }
+      setPendingScrollId(null);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [pendingScrollId, activeTab, postsItems]);
+
+  const handleOpenPost = (publicationId: string) => {
+    setOpenMedia(null);
+    setActiveTab("posts");
+    setPendingScrollId(publicationId);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
