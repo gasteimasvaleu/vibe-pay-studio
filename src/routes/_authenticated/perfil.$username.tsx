@@ -264,6 +264,7 @@ function PerfilPage() {
   const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
   const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("monthly");
   const [tipOpen, setTipOpen] = useState(false);
   const [tipPubId, setTipPubId] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -363,9 +364,10 @@ function PerfilPage() {
   const monthlyPrice = profile.priceMonthly > 0 ? profile.priceMonthly : 0;
   const quarterlyPrice = monthlyPrice * 3 * (1 - (profile.discountQuarterly ?? 0) / 100);
   const semiannualPrice = monthlyPrice * 6 * (1 - (profile.discountSemiannual ?? 0) / 100);
-  const hasPromotions =
-    monthlyPrice > 0 &&
-    ((profile.discountQuarterly ?? 0) > 0 || (profile.discountSemiannual ?? 0) > 0);
+  const openSubscribe = (plan: SubscriptionPlan = "monthly") => {
+    setSelectedPlan(plan);
+    setSubscribeOpen(true);
+  };
 
 
   return (
@@ -443,7 +445,7 @@ function PerfilPage() {
                       }
                     } else {
                       setMenuOpen(false);
-                      setSubscribeOpen(true);
+                      openSubscribe("monthly");
                     }
                   };
                   return (
@@ -667,7 +669,7 @@ function PerfilPage() {
               <SubscriptionOfferCard
                 promotion={promotion}
                 avatarInitial={profile.username.slice(0, 1).toUpperCase()}
-                onSubscribe={() => setSubscribeOpen(true)}
+                onSubscribe={() => openSubscribe("monthly")}
                 format={(v) => brl.format(v)}
               />
             </div>
@@ -681,8 +683,7 @@ function PerfilPage() {
             monthly={monthlyPrice}
             quarterly={quarterlyPrice}
             semiannual={semiannualPrice}
-            hasPromotions={hasPromotions}
-            onSelect={() => setSubscribeOpen(true)}
+            onSelect={openSubscribe}
             format={(v) => brl.format(v)}
           />
         )}
@@ -812,6 +813,7 @@ function PerfilPage() {
             onOpenChange={setSubscribeOpen}
             creatorId={profile.userId}
             creatorName={displayName}
+            initialPlan={selectedPlan}
           />
           <TipDialog
             open={tipOpen}
@@ -890,45 +892,23 @@ function SubscriptionPlansCard({
   monthly,
   quarterly,
   semiannual,
-  hasPromotions,
   onSelect,
   format,
 }: {
   monthly: number;
   quarterly: number;
   semiannual: number;
-  hasPromotions: boolean;
-  onSelect: () => void;
+  onSelect: (plan: SubscriptionPlan) => void;
   format: (v: number) => string;
 }) {
-  const [promoOpen, setPromoOpen] = useState(true);
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-base font-bold text-foreground mb-2">Assinaturas</h3>
-        <PlanPill label="1 mês" price={format(monthly)} onClick={onSelect} />
+    <div>
+      <h3 className="text-base font-bold text-foreground mb-2">Assinaturas</h3>
+      <div className="space-y-2">
+        <PlanPill label="1 mês" price={format(monthly)} onClick={() => onSelect("monthly")} />
+        <PlanPill label="3 meses" price={format(quarterly)} onClick={() => onSelect("quarterly")} />
+        <PlanPill label="6 meses" price={format(semiannual)} onClick={() => onSelect("semiannual")} />
       </div>
-
-      {hasPromotions && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setPromoOpen((v) => !v)}
-            className="w-full flex items-center justify-between mb-2"
-          >
-            <h3 className="text-base font-bold text-foreground">Promoções</h3>
-            <ChevronDown
-              className={`h-5 w-5 text-foreground transition-transform ${promoOpen ? "" : "-rotate-90"}`}
-            />
-          </button>
-          {promoOpen && (
-            <div className="space-y-2">
-              <PlanPill label="3 meses" price={format(quarterly)} onClick={onSelect} />
-              <PlanPill label="6 meses" price={format(semiannual)} onClick={onSelect} />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
