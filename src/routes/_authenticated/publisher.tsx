@@ -668,7 +668,10 @@ function PublisherPage() {
       : toggles.challenge.enabled
         ? "challenge"
         : "public";
-    if (visibility === "paid" && (!preview || preview.status !== "ready")) {
+    if (
+      (visibility === "paid" || visibility === "challenge") &&
+      (!preview || preview.status !== "ready")
+    ) {
       toast.error("Adicione uma mídia de prévia");
       setPreviewSheetOpen(true);
       return;
@@ -694,7 +697,7 @@ function PublisherPage() {
             ? { storagePath: audio.storagePath, url: audio.publicUrl }
             : null,
         preview:
-          visibility === "paid" &&
+          (visibility === "paid" || visibility === "challenge") &&
           preview &&
           preview.status === "ready" &&
           preview.storagePath &&
