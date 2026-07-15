@@ -102,7 +102,9 @@ export function PublicationOptionsMenu({
     onSuccess: () => {
       showTopBanner(isArchived ? "Post desarquivado" : "Post arquivado");
       invalidateFeeds();
+      setConfirmArchive(false);
     },
+
     onError: (e: unknown) =>
       showTopBanner(e instanceof Error ? e.message : "Erro ao arquivar"),
   });
