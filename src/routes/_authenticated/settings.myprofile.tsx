@@ -153,10 +153,10 @@ function SettingsMyProfilePage() {
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent
-          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl [&>button]:top-4 [&>button]:right-4 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-md [&>button]:bg-muted [&>button]:grid [&>button]:place-items-center [&>button]:opacity-100"
+          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl [&>button]:top-4 [&>button]:right-4 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-full [&>button]:bg-muted [&>button]:grid [&>button]:place-items-center [&>button]:opacity-100"
         >
           <div className="flex flex-col items-center text-center pt-2">
-            <div className="h-16 w-16 rounded-md border-[3px] border-primary grid place-items-center mb-5">
+            <div className="h-16 w-16 rounded-full border-[3px] border-primary grid place-items-center mb-5">
               <AlertCircle className="h-9 w-9 text-primary" />
               <span className="sr-only">Atenção</span>
             </div>

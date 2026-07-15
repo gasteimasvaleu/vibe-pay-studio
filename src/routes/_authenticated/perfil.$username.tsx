@@ -554,13 +554,13 @@ function PerfilPage() {
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <div className="h-24 w-24 md:h-28 md:w-28 rounded-md border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40">
+            <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40">
               {profile.username.slice(0, 1).toUpperCase()}
             </div>
           </div>
 
           {/* Stats */}
-          <div className="absolute right-4 md:right-6 bottom-4 hidden sm:flex items-center gap-4 rounded-md bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 text-xs">
+          <div className="absolute right-4 md:right-6 bottom-4 hidden sm:flex items-center gap-4 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 text-xs">
             <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} />
             <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} />
             <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} />

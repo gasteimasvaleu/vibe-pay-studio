@@ -329,7 +329,7 @@ export function CommentsSheet({
           ) : roots.length === 0 ? (
             <div className="h-full grid place-items-center text-center">
               <div>
-                <div className="mx-auto h-12 w-12 rounded-md bg-muted grid place-items-center text-muted-foreground mb-4">
+                <div className="mx-auto h-12 w-12 rounded-full bg-muted grid place-items-center text-muted-foreground mb-4">
                   <MessageCircle className="h-6 w-6" />
                 </div>
                 <p className="text-xl font-semibold text-foreground leading-snug">
