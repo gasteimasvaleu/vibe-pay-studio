@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { createFileRoute, useNavigate, notFound, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, notFound } from "@tanstack/react-router";
+import { MediaLightbox } from "@/components/feed/MediaLightbox";
 import { useSuspenseQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -97,6 +98,8 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"posts" | "medias">("posts");
   const [mediaFilter, setMediaFilter] = useState<GridMediaFilter>("all");
+  const [openMedia, setOpenMedia] = useState<GridMediaItem | null>(null);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const { data: profile } = useSuspenseQuery(profileQueryOptions(username));
 
   const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
@@ -145,6 +148,30 @@ function ProfilePage() {
 
   const postsItems: FeedItem[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const mediasItems: GridMediaItem[] = mediasQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  useEffect(() => {
+    if (!pendingScrollId || activeTab !== "posts") return;
+    const found = postsItems.some((p) => p.id === pendingScrollId);
+    if (!found) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`pub-${pendingScrollId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("ring-2", "ring-primary", "rounded-3xl");
+        setTimeout(() => {
+          el.classList.remove("ring-2", "ring-primary", "rounded-3xl");
+        }, 2000);
+      }
+      setPendingScrollId(null);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [pendingScrollId, activeTab, postsItems]);
+
+  const handleOpenPost = (publicationId: string) => {
+    setOpenMedia(null);
+    setActiveTab("posts");
+    setPendingScrollId(publicationId);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -297,15 +324,21 @@ function ProfilePage() {
           <MediasSection
             filter={mediaFilter}
             onFilterChange={setMediaFilter}
-            username={profile.username}
             items={mediasItems}
             isLoading={mediasQuery.isLoading}
             isFetchingNextPage={mediasQuery.isFetchingNextPage}
             hasNextPage={!!mediasQuery.hasNextPage}
             sentinelRef={mediasSentinel}
+            onOpen={setOpenMedia}
           />
         )}
       </div>
+
+      <MediaLightbox
+        item={openMedia}
+        onClose={() => setOpenMedia(null)}
+        onOpenPost={handleOpenPost}
+      />
     </div>
   );
 }
@@ -346,7 +379,9 @@ function PostsList({
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <PublicationCard key={item.id} item={item} queryKey={queryKey} />
+        <div key={item.id} id={`pub-${item.id}`} className="transition-all">
+          <PublicationCard item={item} queryKey={queryKey} />
+        </div>
       ))}
       <div ref={sentinelRef} className="h-8" />
       {isFetchingNextPage && (
@@ -371,21 +406,21 @@ const FILTERS: Array<{ id: GridMediaFilter; label: string; empty: string }> = [
 function MediasSection({
   filter,
   onFilterChange,
-  username,
   items,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
   sentinelRef,
+  onOpen,
 }: {
   filter: GridMediaFilter;
   onFilterChange: (f: GridMediaFilter) => void;
-  username: string;
   items: GridMediaItem[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   sentinelRef: React.RefObject<HTMLDivElement | null>;
+  onOpen: (item: GridMediaItem) => void;
 }) {
   const active = FILTERS.find((f) => f.id === filter) ?? FILTERS[0]!;
   return (
@@ -424,10 +459,10 @@ function MediasSection({
         <div>
           <div className="grid grid-cols-3 md:grid-cols-4 gap-1">
             {items.map((m) => (
-              <Link
+              <button
                 key={m.id}
-                to="/perfil/$username"
-                params={{ username }}
+                type="button"
+                onClick={() => onOpen(m)}
                 className="relative aspect-square overflow-hidden bg-muted"
               >
                 {m.type === "video" ? (
@@ -444,7 +479,7 @@ function MediasSection({
                 ) : (
                   <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
                 )}
-              </Link>
+              </button>
             ))}
           </div>
           <div ref={sentinelRef} className="h-8" />
