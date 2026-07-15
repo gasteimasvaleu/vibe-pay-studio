@@ -842,8 +842,10 @@ function VaultPage() {
 
           {content.loading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>
-          ) : content.items.length === 0 ? (
-            activeTab.kind === "fixed" && activeTab.key === "conversas" ? (
+          ) : displayedItems.length === 0 ? (
+            content.items.length > 0 ? (
+              <EmptyCategory message="Nenhuma mídia nesta data." />
+            ) : activeTab.kind === "fixed" && activeTab.key === "conversas" ? (
               <EmptyCategory message="Mídias das conversas em breve" />
             ) : activeTab.kind === "fixed" && activeTab.key === "envios" ? (
               <EnviosEmpty onUpload={() => fileInputRef.current?.click()} uploading={uploading} />
@@ -852,7 +854,7 @@ function VaultPage() {
             )
           ) : (
             <MediaGrid
-              items={content.items}
+              items={displayedItems}
               selectionMode={selectionMode}
               selectedKeys={selectedKeys}
               onSelect={toggleSelect}
