@@ -377,9 +377,8 @@ function LockedOverlay({
 }) {
   const isChallenge = item.visibility === "challenge";
   const cents = isChallenge ? item.challenge_cents : item.price_cents;
-  const raised = item.challenge_raised_cents ?? 0;
   const goal = item.challenge_cents ?? 0;
-  const progress = isChallenge && goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+  const raised = item.challenge_raised_cents ?? 0;
   const reached = isChallenge && goal > 0 && raised >= goal;
   const label = isChallenge
     ? reached
@@ -393,26 +392,7 @@ function LockedOverlay({
         {isChallenge ? <Trophy className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col items-center gap-2">
-        {isChallenge && (
-          <div className="w-full max-w-xs rounded-xl bg-black/40 backdrop-blur-sm px-3 py-2 space-y-1">
-            <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
-              <div
-                className="h-full bg-primary"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-white/80">
-              <span>
-                {brl.format(raised / 100)} / {brl.format(goal / 100)}
-              </span>
-              <span>
-                {item.challenge_contributor_count ?? 0} contribuiç
-                {item.challenge_contributor_count === 1 ? "ão" : "ões"}
-              </span>
-            </div>
-          </div>
-        )}
+      <div className="absolute inset-0 flex items-center justify-center p-3">
         <button
           type="button"
           onClick={() => onUnlock?.(item)}
@@ -425,6 +405,7 @@ function LockedOverlay({
     </>
   );
 }
+
 
 function ChallengeTiersPanel({
   item,
