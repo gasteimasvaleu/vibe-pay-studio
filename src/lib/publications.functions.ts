@@ -156,6 +156,7 @@ export type FeedItem = {
   expires_at: string | null;
   published_at: string;
   locked: boolean;
+  preview_url: string | null;
   audio_url: string | null;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
   like_count: number;
@@ -194,7 +195,7 @@ export const getFeed = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url",
+        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, preview_url",
       )
       .in("author_id", allowedAuthors)
       .lte("published_at", new Date().toISOString())
@@ -345,6 +346,10 @@ export const getFeed = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
+        preview_url:
+          p.visibility === "paid" || p.visibility === "challenge"
+            ? (p as { preview_url: string | null }).preview_url ?? null
+            : null,
         audio_url: (p as { audio_url: string | null }).audio_url ?? null,
         media: isLocked && media.length === 0 ? [] : media,
         like_count: likeCounts.get(p.id) ?? 0,
@@ -378,7 +383,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at",
+        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
       )
 
       .eq("author_id", data.userId)
@@ -527,6 +532,10 @@ export const getUserPublications = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
+        preview_url:
+          p.visibility === "paid" || p.visibility === "challenge"
+            ? (p as { preview_url: string | null }).preview_url ?? null
+            : null,
         audio_url: (p as { audio_url: string | null }).audio_url ?? null,
         media: isLocked && media.length === 0 ? [] : media,
         like_count: likeCounts.get(p.id) ?? 0,
@@ -1074,7 +1083,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
       let query = client
         .from("publications")
         .select(
-          "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at",
+          "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
         )
         .eq("author_id", currentUserId)
         .not("archived_at", "is", null)
@@ -1173,6 +1182,10 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           expires_at: p.expires_at,
           published_at: p.published_at!,
           locked: false,
+          preview_url:
+            p.visibility === "paid" || p.visibility === "challenge"
+              ? (p as { preview_url: string | null }).preview_url ?? null
+              : null,
           audio_url: (p as { audio_url: string | null }).audio_url ?? null,
           media,
           like_count: likeCounts.get(p.id) ?? 0,
