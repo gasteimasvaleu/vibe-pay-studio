@@ -54,7 +54,9 @@ export function PublicationOptionsMenu({
   const invalidateFeeds = () => {
     queryClient.invalidateQueries({ queryKey: ["feed"] });
     queryClient.invalidateQueries({ queryKey: ["user-publications"] });
+    queryClient.invalidateQueries({ queryKey: ["archived-posts"] });
   };
+
 
   const close = () => setOpen(false);
 
