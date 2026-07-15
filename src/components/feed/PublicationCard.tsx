@@ -181,6 +181,15 @@ export function PublicationCard({
         </div>
       ) : null}
 
+      {item.visibility === "challenge" && (item.challenge_tiers_cents?.length ?? 0) > 0 && (
+        <ChallengeTiersPanel
+          item={item}
+          onSelectTier={(tier) => onChallengeTierSelect?.(item, tier)}
+        />
+      )}
+
+
+
       <div className="flex items-center gap-1 px-3 py-1.5 mt-1 border-t border-border/40">
         {!item.locked && (
           <button
