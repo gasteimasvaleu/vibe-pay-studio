@@ -279,8 +279,19 @@ function FeedPage() {
         publicationId={tipFor?.id}
       />
 
+      <ChallengeContributeSheet
+        publicationId={challengeFor?.id ?? null}
+        creatorName={challengeFor?.author_username}
+        open={!!challengeFor}
+        onOpenChange={(v) => !v && setChallengeFor(null)}
+        onContributed={() => {
+          void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        }}
+      />
+
 
     </div>
   );
 }
+
 
