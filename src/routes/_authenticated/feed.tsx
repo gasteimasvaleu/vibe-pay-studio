@@ -17,6 +17,8 @@ import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/component
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
+import { ChallengeContributeSheet } from "@/components/payments/ChallengeContributeSheet";
+
 
 
 
