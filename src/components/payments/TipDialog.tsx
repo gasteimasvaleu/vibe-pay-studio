@@ -184,7 +184,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
                   key={v}
                   type="button"
                   onClick={() => setAmount(v)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold border ${
                     amount === v
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-secondary text-secondary-foreground border-border"
