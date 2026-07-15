@@ -663,6 +663,16 @@ function PerfilPage() {
           )}
         </div>
 
+        {/* Oferta ativa */}
+        {!isOwner && !isSubscribed && promotion && (
+          <SubscriptionOfferCard
+            promotion={promotion}
+            avatarInitial={profile.username.slice(0, 1).toUpperCase()}
+            onSubscribe={() => setSubscribeOpen(true)}
+            format={(v) => brl.format(v)}
+          />
+        )}
+
         {/* Assinaturas */}
         {!isOwner && monthlyPrice > 0 && (
           <SubscriptionPlansCard
