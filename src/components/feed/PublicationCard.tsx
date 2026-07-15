@@ -178,11 +178,7 @@ export function PublicationCard({
               className="absolute inset-0 h-full w-full object-cover"
             />
           )}
-          <LockedOverlay
-            item={item}
-            onUnlock={onUnlock}
-            hasPreview={!!item.preview_url}
-          />
+          <LockedOverlay item={item} onUnlock={onUnlock} />
         </div>
       ) : item.media.length > 0 ? (
         <MediaCarousel media={item.media} />
@@ -374,7 +370,6 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
 function LockedOverlay({
   item,
   onUnlock,
-  hasPreview = false,
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
@@ -392,69 +387,22 @@ function LockedOverlay({
       : "Aceitar desafio"
     : "Desbloquear";
 
-  if (hasPreview) {
-    return (
-      <>
-        <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
-          {isChallenge ? <Trophy className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col items-center gap-2">
-          {isChallenge && (
-            <div className="w-full max-w-xs rounded-xl bg-black/40 backdrop-blur-sm px-3 py-2 space-y-1">
-              <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between text-[10px] text-white/80">
-                <span>
-                  {brl.format(raised / 100)} / {brl.format(goal / 100)}
-                </span>
-                <span>
-                  {item.challenge_contributor_count ?? 0} contribuiç
-                  {item.challenge_contributor_count === 1 ? "ão" : "ões"}
-                </span>
-              </div>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => onUnlock?.(item)}
-            className="inline-flex items-center gap-2 px-6 h-11 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 hover:opacity-95"
-          >
-            {label}
-            {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
-          </button>
-        </div>
-      </>
-    );
-  }
-
   return (
-    <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-black/70 via-black/60 to-black/80">
-      <div className="text-center px-6 w-full max-w-xs">
-        <div className="mx-auto h-14 w-14 rounded-full bg-white/10 border border-white/20 grid place-items-center text-white">
-          {isChallenge ? (
-            <Trophy className="h-6 w-6" />
-          ) : (
-            <Lock className="h-6 w-6" />
-          )}
-        </div>
-        <p className="mt-4 text-sm text-white/80">
-          {isChallenge ? "Publicação de desafio" : "Publicação exclusiva"}
-        </p>
+    <>
+      <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
+        {isChallenge ? <Trophy className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+      </div>
 
+      <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col items-center gap-2">
         {isChallenge && (
-          <div className="mt-4 space-y-1.5">
-            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+          <div className="w-full max-w-xs rounded-xl bg-black/40 backdrop-blur-sm px-3 py-2 space-y-1">
+            <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400"
+                className="h-full bg-primary"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-white/70">
+            <div className="flex items-center justify-between text-[10px] text-white/80">
               <span>
                 {brl.format(raised / 100)} / {brl.format(goal / 100)}
               </span>
@@ -463,24 +411,18 @@ function LockedOverlay({
                 {item.challenge_contributor_count === 1 ? "ão" : "ões"}
               </span>
             </div>
-            {reached && (
-              <p className="text-[11px] font-semibold text-emerald-300">
-                Meta atingida
-              </p>
-            )}
           </div>
         )}
-
         <button
           type="button"
           onClick={() => onUnlock?.(item)}
-          className="mt-4 inline-flex items-center gap-2 px-6 h-11 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 hover:opacity-95"
+          className="inline-flex items-center gap-2 px-6 h-11 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
         >
           {label}
           {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
         </button>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -515,7 +457,7 @@ function ChallengeTiersPanel({
 
       <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden mx-1">
         <div
-          className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 transition-all"
+          className="h-full bg-primary transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>

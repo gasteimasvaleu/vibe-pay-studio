@@ -1,45 +1,19 @@
-## Diagnóstico
+## Plano
 
-`publications.preview_url` já é salvo no publisher para posts `paid`/`challenge`, mas o feed nunca devolve nem exibe esse campo. Em `PublicationCard`, quando `item.locked`, só aparece um overlay preto com cadeado — a prévia fica invisível.
+1. Backend — gravar prévia também no desafio
+   - Em `createPublication`, salvar `preview_url` / `preview_storage_path` quando `visibility === "paid"` **ou** `visibility === "challenge"`, e não só em pagas.
 
-## Correção
+2. Frontend — obrigar prévia no desafio
+   - Já é obrigatório em `paid`. Manter também obrigatório em `challenge` (comportamento atual já bloqueia sem prévia — apenas garantir a mensagem/estado corretos no `publisher`).
 
-### 1. `src/lib/publications.functions.ts`
+3. Card do feed com prévia (usuários que não são donos)
+   - Como toda publicação paga/desafio agora tem prévia obrigatória, remover o fallback escuro sem imagem. O `LockedOverlay` passa a assumir sempre que há prévia.
+   - Mostrar a imagem de prévia totalmente visível (sem gradiente escuro por cima), apenas com um cadeado/troféu translúcido no canto e o CTA embaixo.
 
-- Adicionar `preview_url: string | null` no tipo `FeedItem`.
-- Em `getFeed` e `getUserPublications`, incluir `preview_url` no `select(...)` de `publications`.
-- Ao montar cada item: `preview_url: (p.visibility === 'paid' || p.visibility === 'challenge') ? p.preview_url ?? null : null`.
+4. Trocar botões e progresso pelo roxo padrão do app
+   - No overlay bloqueado do card (`LockedOverlay`) e no painel de tiers do desafio (`ChallengeTiersPanel`), substituir o gradiente `from-orange-400 via-orange-500 to-pink-400` (tanto no botão quanto na barra de progresso) por `bg-primary` / `text-primary-foreground`, mantendo consistência com o tema roxo do app.
+   - Aplicar a mesma cor em todas as telas escuras de bloqueio (card no feed e no perfil).
 
-### 2. `src/components/feed/PublicationCard.tsx`
-
-Quando `item.locked` e existir `item.preview_url`, mostrar a imagem da prévia **totalmente visível** (sem gradiente escuro por cima). Sobrepor apenas um cadeado discreto/translúcido e o CTA de desbloqueio/desafio.
-
-```tsx
-{item.locked ? (
-  item.preview_url ? (
-    <div className="relative aspect-[16/10] bg-black/40">
-      <img
-        src={item.preview_url}
-        alt="Prévia"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <LockedOverlay item={item} onUnlock={onUnlock} hasPreview />
-    </div>
-  ) : (
-    <div className="relative aspect-[16/10] bg-black/40">
-      <LockedOverlay item={item} onUnlock={onUnlock} />
-    </div>
-  )
-) : ...}
-```
-
-Em `LockedOverlay`, aceitar a nova prop `hasPreview?: boolean`. Quando `hasPreview`:
-
-- **Remover** o `bg-gradient-to-br from-black/70 ...` — sem escurecimento.
-- No canto superior direito, exibir apenas um cadeadinho translúcido (`Trophy` no caso de desafio), ex.: `<div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 grid place-items-center text-white/90"><Lock className="h-4 w-4" /></div>`.
-- Manter o botão de ação (Desbloquear / Aceitar desafio) ancorado na base do card (`absolute bottom-3 left-1/2 -translate-x-1/2`), sem o bloco central de ícone/título grandes.
-- Para desafio, manter a barrinha de progresso logo acima do botão (fundo semitransparente para contraste).
-
-Quando `hasPreview` for falso, comportamento atual permanece (overlay escuro + ícone grande centralizado).
-
-Nada mais na lógica de compra/RLS muda.
+5. Verificação
+   - Conferir visualmente no `/feed` que o card de desafio de outro usuário mostra a imagem de prévia com cadeado + botão roxo.
+   - Conferir que uma publicação de desafio recém-criada persiste `preview_url` no banco.
