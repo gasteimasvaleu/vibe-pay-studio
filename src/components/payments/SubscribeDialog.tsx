@@ -23,6 +23,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   creatorId: string;
   creatorName?: string;
+  initialPlan?: Plan;
 };
 
 type Checkout = {
@@ -33,7 +34,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: Props) {
+export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly" }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [loading, setLoading] = useState(false);
@@ -57,12 +58,15 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
   });
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setPlan(initialPlan);
+      setCheckout(null);
+    } else {
       setCheckout(null);
       setPlan("monthly");
       setMethod("PIX");
     }
-  }, [open]);
+  }, [initialPlan, open]);
 
   const monthly = priceQuery.data?.price_monthly ?? 0;
   const discountQ = priceQuery.data?.discount_quarterly ?? 0;
