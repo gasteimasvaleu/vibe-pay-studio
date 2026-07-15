@@ -441,7 +441,9 @@ export const getUserPublications = createServerFn({ method: "POST" })
         liked_by_me: likedSet.has(p.id),
         saved_by_me: savedSet.has(p.id),
         is_owner: isOwner,
+        archived_at: (p as { archived_at: string | null }).archived_at ?? null,
       };
+
     });
 
     return { items, nextCursor };
