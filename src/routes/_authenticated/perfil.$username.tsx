@@ -25,6 +25,7 @@ import {
   Smartphone,
   Twitter,
   UserPlus,
+  Sparkles,
   VolumeX,
 } from "lucide-react";
 
