@@ -431,3 +431,55 @@ function LockedOverlay({
   );
 }
 
+function ChallengeTiersPanel({
+  item,
+  onSelectTier,
+}: {
+  item: FeedItem;
+  onSelectTier: (tierCents: number) => void;
+}) {
+  const tiers = item.challenge_tiers_cents ?? [];
+  const raised = item.challenge_raised_cents ?? 0;
+  const goal = item.challenge_cents ?? 0;
+  const progress = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+
+  return (
+    <div className="mx-3 my-3 rounded-2xl border border-border/60 bg-muted/40 p-3 space-y-3">
+      <div className="rounded-xl bg-background px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <Wallet className="h-5 w-5 text-foreground/70 shrink-0" strokeWidth={1.75} />
+          <span className="text-base font-semibold text-foreground truncate">
+            {brl.format(raised / 100)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-base font-semibold text-foreground">
+            {brl.format(goal / 100)}
+          </span>
+          <Info className="h-4 w-4 text-foreground/50" strokeWidth={1.75} />
+        </div>
+      </div>
+
+      <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden mx-1">
+        <div
+          className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {tiers.map((amount) => (
+          <button
+            key={amount}
+            type="button"
+            onClick={() => onSelectTier(amount)}
+            className="rounded-full border border-border/60 bg-background/60 py-2.5 text-sm font-medium text-foreground/90 hover:bg-background hover:border-primary/50 transition-colors"
+          >
+            {brl.format(amount / 100)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
