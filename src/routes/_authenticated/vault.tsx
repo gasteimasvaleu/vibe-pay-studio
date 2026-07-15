@@ -856,6 +856,67 @@ function VaultPage() {
   );
 }
 
+function SelectionPill({
+  selectedCount,
+  totalCount,
+  canDelete,
+  onClose,
+  onDelete,
+  onDownload,
+  onAddToCategory,
+}: {
+  selectedCount: number;
+  totalCount: number;
+  canDelete: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+  onDownload: () => void;
+  onAddToCategory: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full bg-neutral-800 text-white shadow-2xl px-2 py-2">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fechar seleção"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <span className="px-3 text-sm font-medium whitespace-nowrap">
+        {selectedCount} / {totalCount} selecionado
+      </span>
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={!canDelete}
+        aria-label="Excluir"
+        title={canDelete ? "Excluir selecionados" : "Só é possível excluir na aba Envios ou em Categorias"}
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+      >
+        <Trash2 className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={onDownload}
+        aria-label="Baixar"
+        title="Baixar selecionados"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+      >
+        <Download className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={onAddToCategory}
+        className="ml-1 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+      >
+        Adicionar à categoria
+      </button>
+    </div>
+  );
+}
+
+
 function SidebarRow({
   label,
   count,
