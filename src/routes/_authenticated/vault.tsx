@@ -181,7 +181,7 @@ function VaultPage() {
               {activeTab === "publicacoes" && (
                 <button
                   type="button"
-                  className="h-9 w-9 grid place-items-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="h-9 w-9 grid place-items-center rounded-full border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                   aria-label="Selecionar"
                 >
                   <CheckSquare className="h-5 w-5" />
