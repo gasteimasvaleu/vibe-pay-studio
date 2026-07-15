@@ -666,6 +666,15 @@ function VaultPage() {
                   ? counts.uploads
                   : counts.chat
                 : null;
+              const previews = counts?.previews
+                ? t.key === "todas"
+                  ? counts.previews.all
+                  : t.key === "publicacoes"
+                  ? counts.previews.publications
+                  : t.key === "envios"
+                  ? counts.previews.uploads
+                  : counts.previews.chat
+                : [];
               return (
                 <li key={t.key}>
                   <SidebarRow
@@ -673,6 +682,7 @@ function VaultPage() {
                     count={count}
                     subtitle={count === 0 ? "Vazio" : null}
                     active={isActive}
+                    previewUrls={previews}
                     onClick={() => selectTab({ kind: "fixed", key: t.key })}
                   />
                 </li>
@@ -693,12 +703,14 @@ function VaultPage() {
                     count={c.itemCount}
                     subtitle={c.itemCount === 0 ? "Vazio" : null}
                     active={isActive}
+                    previewUrls={c.previews}
                     onClick={() => selectTab({ kind: "category", id: c.id, name: c.name })}
                   />
                 </li>
               );
             })}
           </ul>
+
         </aside>
 
         {/* Content */}
