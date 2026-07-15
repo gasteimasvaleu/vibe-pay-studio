@@ -60,6 +60,7 @@ function FeedPage() {
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
   const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
+  const [challengeTier, setChallengeTier] = useState<number | null>(null);
 
 
 
