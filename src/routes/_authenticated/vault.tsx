@@ -586,11 +586,7 @@ function VaultPage() {
                 type="button"
                 onClick={() => {
                   selectedItems.forEach((it) => {
-                    // find the actual join row id — we listed items using the media key, need join id
-                    // The list returns key/id from the underlying media. For removal we need vault_category_items.id.
-                    // Simplification: refetch and remove by id from list mapping below.
-                    const joinId = (categoryItemsQ.data ?? []).find((i) => i.key === it.key)?.id;
-                    if (joinId) removeFromCatMut.mutate(joinId);
+                    if (it.joinId) removeFromCatMut.mutate(it.joinId);
                   });
                   setSelectionMode(false);
                   setSelectedKeys(new Set());
