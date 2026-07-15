@@ -269,7 +269,7 @@ export const listVaultCategories = createServerFn({ method: "GET" })
   });
 
 
-const createCategorySchema = z.object({ name: z.string().trim().min(1).max(60) });
+const createCategorySchema = z.object({ name: z.string().trim().min(1).max(64) });
 
 export const createVaultCategory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

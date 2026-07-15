@@ -9,6 +9,7 @@ import {
   Download,
   FileAudio,
   Film,
+  FolderPlus,
   Image as ImageIcon,
   MoreVertical,
   Play,
@@ -136,6 +137,16 @@ function VaultPage() {
 
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [dialogView, setDialogView] = useState<"form" | "picker">("form");
+  const [pickedItems, setPickedItems] = useState<VaultMediaItem[]>([]);
+  const [pickerSelected, setPickerSelected] = useState<Set<string>>(new Set());
+
+  const resetAddDialog = () => {
+    setCategoryName("");
+    setPickedItems([]);
+    setPickerSelected(new Set());
+    setDialogView("form");
+  };
 
   const [sidebarSort, setSidebarSort] = useState<"padrao" | "nome" | "recentes" | "midias">("padrao");
   const [sidebarDirection, setSidebarDirection] = useState<"asc" | "desc">("asc");
@@ -189,6 +200,21 @@ function VaultPage() {
         },
       }),
     enabled: activeTab.kind === "category",
+  });
+
+  // Picker: todas as mídias (publicações + envios) para o dialog de categoria
+  const pickerMediaQ = useQuery({
+    queryKey: ["vault", "picker", "all"],
+    queryFn: async () => {
+      const [pubs, ups] = await Promise.all([
+        fnPublications({ data: { mediaType: "all", sort: "recent", limit: 300 } }),
+        fnUploads({ data: { mediaType: "all", sort: "recent", limit: 300 } }),
+      ]);
+      return [...pubs, ...ups].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    },
+    enabled: addCategoryOpen && dialogView === "picker",
   });
 
   // Derive content list for current tab
@@ -274,12 +300,24 @@ function VaultPage() {
 
   // Mutations
   const createCatMut = useMutation({
-    mutationFn: (name: string) => fnCreateCat({ data: { name } }),
+    mutationFn: async ({
+      name,
+      items,
+    }: {
+      name: string;
+      items: { source: "publication" | "upload"; id: string }[];
+    }) => {
+      const cat = await fnCreateCat({ data: { name } });
+      if (items.length > 0) {
+        await fnAddToCat({ data: { categoryId: cat.id, items } });
+      }
+      return cat;
+    },
     onSuccess: () => {
       toast.success("Categoria criada");
       setAddCategoryOpen(false);
-      setCategoryName("");
-      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+      resetAddDialog();
+      qc.invalidateQueries({ queryKey: ["vault"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -782,39 +820,262 @@ function VaultPage() {
       </main>
 
       {/* Add category dialog */}
-      <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
-        <DialogContent className="sm:max-w-md rounded-3xl p-6">
-          <DialogTitle className="text-lg font-bold tracking-wide uppercase text-foreground">
-            Nova categoria
-          </DialogTitle>
-          <div className="mt-4">
-            <Input
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              placeholder="Ex.: Favoritas, Verão, Ensaios..."
-              className="h-11 rounded-md text-base"
-              autoFocus
-            />
-          </div>
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setAddCategoryOpen(false)}
-              className="h-10 px-4 rounded-md border border-border text-foreground font-medium hover:bg-accent transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              disabled={!categoryName.trim() || createCatMut.isPending}
-              onClick={() => createCatMut.mutate(categoryName.trim())}
-              className="h-10 px-5 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
-            >
-              {createCatMut.isPending ? "Criando…" : "Criar"}
-            </button>
-          </div>
+      <Dialog
+        open={addCategoryOpen}
+        onOpenChange={(o) => {
+          setAddCategoryOpen(o);
+          if (!o) resetAddDialog();
+        }}
+      >
+        <DialogContent className="sm:max-w-3xl rounded-3xl p-6 md:p-8 gap-0 [&>button]:hidden">
+          <VisuallyHidden>
+            <DialogTitle>Adicionar nova categoria</DialogTitle>
+          </VisuallyHidden>
+
+          {dialogView === "form" ? (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-base md:text-lg font-bold tracking-wider uppercase text-foreground">
+                  Adicionar nova categoria
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setAddCategoryOpen(false)}
+                  className="h-8 w-8 -mt-1 -mr-1 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Fechar"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-6 relative">
+                <FolderPlus className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value.slice(0, 64))}
+                  maxLength={64}
+                  placeholder="Nome da categoria"
+                  className="h-12 rounded-full pl-12 pr-20 text-base border-border/70"
+                  autoFocus
+                />
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground tabular-nums pointer-events-none">
+                  {categoryName.length} / 64
+                </span>
+              </div>
+
+              <div className="mt-6 max-h-[420px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickerSelected(new Set(pickedItems.map((i) => i.key)));
+                      setDialogView("picker");
+                    }}
+                    className="aspect-square rounded-2xl bg-muted hover:bg-accent transition-colors grid place-items-center gap-2 text-foreground"
+                  >
+                    <Plus className="h-8 w-8" strokeWidth={2} />
+                    <span className="text-sm md:text-base font-semibold">Adicionar mídia</span>
+                  </button>
+
+                  {pickedItems.map((it) => (
+                    <div
+                      key={it.key}
+                      className="relative aspect-square overflow-hidden rounded-2xl bg-muted"
+                    >
+                      <MediaThumb item={it} />
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
+                        {it.type === "video" && (
+                          <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                            <Play className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                        {it.type === "audio" && (
+                          <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                            <FileAudio className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                        {it.type === "gif" && (
+                          <span className="px-1.5 h-6 grid place-items-center rounded-md bg-black/60 text-white text-[10px] font-bold">
+                            GIF
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPickedItems((prev) => prev.filter((p) => p.key !== it.key))
+                        }
+                        aria-label="Remover"
+                        className="absolute top-1.5 right-1.5 h-7 w-7 grid place-items-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={!categoryName.trim() || createCatMut.isPending}
+                  onClick={() =>
+                    createCatMut.mutate({
+                      name: categoryName.trim(),
+                      items: pickedItems.map((i) => ({ source: i.source, id: i.id })),
+                    })
+                  }
+                  className="h-11 px-8 rounded-full border-2 border-border text-muted-foreground font-semibold transition-colors enabled:bg-primary enabled:text-primary-foreground enabled:border-primary enabled:hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {createCatMut.isPending ? "Criando…" : "Confirmar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddCategoryOpen(false)}
+                  className="h-11 px-8 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickerSelected(new Set());
+                      setDialogView("form");
+                    }}
+                    aria-label="Voltar"
+                    className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <h2 className="text-base md:text-lg font-bold tracking-wider uppercase text-foreground">
+                    Selecionar mídias
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddCategoryOpen(false)}
+                  aria-label="Fechar"
+                  className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-4 max-h-[60vh] overflow-y-auto pr-1">
+                {pickerMediaQ.isLoading ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>
+                ) : (pickerMediaQ.data ?? []).length === 0 ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">
+                    Nenhuma mídia disponível.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {(pickerMediaQ.data ?? []).map((it) => {
+                      const selected = pickerSelected.has(it.key);
+                      return (
+                        <button
+                          key={it.key}
+                          type="button"
+                          onClick={() =>
+                            setPickerSelected((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(it.key)) next.delete(it.key);
+                              else next.add(it.key);
+                              return next;
+                            })
+                          }
+                          className={`relative aspect-square overflow-hidden rounded-lg bg-muted ${
+                            selected ? "ring-2 ring-primary" : ""
+                          }`}
+                        >
+                          <MediaThumb item={it} />
+                          <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
+                            {it.type === "video" && (
+                              <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                                <Play className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            {it.type === "audio" && (
+                              <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                                <FileAudio className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            {it.type === "gif" && (
+                              <span className="px-1.5 h-6 grid place-items-center rounded-md bg-black/60 text-white text-[10px] font-bold">
+                                GIF
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`absolute top-1.5 right-1.5 h-6 w-6 grid place-items-center rounded-full border-2 ${
+                              selected
+                                ? "border-primary bg-primary"
+                                : "border-white bg-black/40"
+                            }`}
+                          >
+                            {selected && (
+                              <span className="h-2 w-2 rounded-full bg-primary-foreground" />
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPickerSelected(new Set());
+                    setDialogView("form");
+                  }}
+                  className="h-11 px-6 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const all = pickerMediaQ.data ?? [];
+                    const byKey = new Map(all.map((i) => [i.key, i]));
+                    const merged: VaultMediaItem[] = [];
+                    const seen = new Set<string>();
+                    for (const it of pickedItems) {
+                      if (pickerSelected.has(it.key) && !seen.has(it.key)) {
+                        merged.push(it);
+                        seen.add(it.key);
+                      }
+                    }
+                    for (const k of pickerSelected) {
+                      if (!seen.has(k)) {
+                        const it = byKey.get(k);
+                        if (it) {
+                          merged.push(it);
+                          seen.add(k);
+                        }
+                      }
+                    }
+                    setPickedItems(merged);
+                    setDialogView("form");
+                  }}
+                  className="h-11 px-8 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Concluído{pickerSelected.size > 0 ? ` (${pickerSelected.size})` : ""}
+                </button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
 
       {/* Pick category for selected items */}
       <Dialog open={pickCategoryOpen} onOpenChange={setPickCategoryOpen}>
