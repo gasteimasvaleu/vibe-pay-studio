@@ -285,12 +285,24 @@ function VaultPage() {
 
   // Mutations
   const createCatMut = useMutation({
-    mutationFn: (name: string) => fnCreateCat({ data: { name } }),
+    mutationFn: async ({
+      name,
+      items,
+    }: {
+      name: string;
+      items: { source: "publication" | "upload"; id: string }[];
+    }) => {
+      const cat = await fnCreateCat({ data: { name } });
+      if (items.length > 0) {
+        await fnAddToCat({ data: { categoryId: cat.id, items } });
+      }
+      return cat;
+    },
     onSuccess: () => {
       toast.success("Categoria criada");
       setAddCategoryOpen(false);
-      setCategoryName("");
-      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+      resetAddDialog();
+      qc.invalidateQueries({ queryKey: ["vault"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
