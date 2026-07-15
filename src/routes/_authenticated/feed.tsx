@@ -291,7 +291,17 @@ function FeedPage() {
         publicationId={challengeFor?.id ?? null}
         creatorName={challengeFor?.author_username}
         open={!!challengeFor}
-        onOpenChange={(v) => !v && setChallengeFor(null)}
+      <ChallengeContributeSheet
+        publicationId={challengeFor?.id ?? null}
+        creatorName={challengeFor?.author_username}
+        open={!!challengeFor}
+        onOpenChange={(v) => {
+          if (!v) {
+            setChallengeFor(null);
+            setChallengeTier(null);
+          }
+        }}
+        preselectedTierCents={challengeTier}
         onContributed={() => {
           void queryClient.invalidateQueries({ queryKey: ["feed"] });
         }}
@@ -301,5 +311,6 @@ function FeedPage() {
     </div>
   );
 }
+
 
 
