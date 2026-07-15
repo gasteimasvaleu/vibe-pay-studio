@@ -722,11 +722,13 @@ function PublisherPage() {
   };
   const onChallengeChange = (v: boolean) => {
     if (v) setChallengeOpen(true);
-    else
+    else {
       setToggles((t) => ({
         ...t,
         challenge: { enabled: false, goalCents: null, tiersCents: [] },
       }));
+      void clearPreview();
+    }
   };
   const onScheduleChange = (v: boolean) => {
     if (v) setScheduleOpen(true);
