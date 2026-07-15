@@ -1166,6 +1166,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           challenge_cents: p.challenge_cents,
           challenge_raised_cents: null,
           challenge_contributor_count: null,
+          challenge_tiers_cents: null,
 
           pinned: p.pinned,
           comments_disabled: p.comments_disabled,
