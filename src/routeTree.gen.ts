@@ -20,6 +20,7 @@ import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
 import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
+import { Route as AuthenticatedPostsarquivadosRouteImport } from './routes/_authenticated/postsarquivados'
 import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticated/mywallet'
 import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
 import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
@@ -131,6 +132,12 @@ const AuthenticatedPromotionRoute = AuthenticatedPromotionRouteImport.update({
   path: '/promotion',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPostsarquivadosRoute =
+  AuthenticatedPostsarquivadosRouteImport.update({
+    id: '/postsarquivados',
+    path: '/postsarquivados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMywalletRoute = AuthenticatedMywalletRouteImport.update({
   id: '/mywallet',
   path: '/mywallet',
@@ -472,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
   '/mywallet': typeof AuthenticatedMywalletRouteWithChildren
+  '/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -537,6 +545,7 @@ export interface FileRoutesByTo {
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
+  '/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
   '/publisher': typeof AuthenticatedPublisherRoute
@@ -603,6 +612,7 @@ export interface FileRoutesById {
   '/_authenticated/follow': typeof AuthenticatedFollowRoute
   '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
   '/_authenticated/mywallet': typeof AuthenticatedMywalletRouteWithChildren
+  '/_authenticated/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
@@ -672,6 +682,7 @@ export interface FileRouteTypes {
     | '/follow'
     | '/my-monetisex-stats'
     | '/mywallet'
+    | '/postsarquivados'
     | '/promotion'
     | '/promotions'
     | '/publisher'
@@ -737,6 +748,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
+    | '/postsarquivados'
     | '/promotion'
     | '/promotions'
     | '/publisher'
@@ -802,6 +814,7 @@ export interface FileRouteTypes {
     | '/_authenticated/follow'
     | '/_authenticated/my-monetisex-stats'
     | '/_authenticated/mywallet'
+    | '/_authenticated/postsarquivados'
     | '/_authenticated/promotion'
     | '/_authenticated/promotions'
     | '/_authenticated/publisher'
@@ -937,6 +950,13 @@ declare module '@tanstack/react-router' {
       path: '/promotion'
       fullPath: '/promotion'
       preLoaderRoute: typeof AuthenticatedPromotionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/postsarquivados': {
+      id: '/_authenticated/postsarquivados'
+      path: '/postsarquivados'
+      fullPath: '/postsarquivados'
+      preLoaderRoute: typeof AuthenticatedPostsarquivadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/mywallet': {
@@ -1441,6 +1461,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFollowRoute: typeof AuthenticatedFollowRoute
   AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
   AuthenticatedMywalletRoute: typeof AuthenticatedMywalletRouteWithChildren
+  AuthenticatedPostsarquivadosRoute: typeof AuthenticatedPostsarquivadosRoute
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
@@ -1489,6 +1510,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFollowRoute: AuthenticatedFollowRoute,
   AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
   AuthenticatedMywalletRoute: AuthenticatedMywalletRouteWithChildren,
+  AuthenticatedPostsarquivadosRoute: AuthenticatedPostsarquivadosRoute,
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
