@@ -1378,7 +1378,7 @@ function StepCompose({
           <div className="flex items-center justify-between gap-3 h-12 pl-4 pr-2 rounded-md bg-muted/60">
             <div className="flex items-center gap-2 text-sm font-medium">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full rounded-md bg-red-500 opacity-75 animate-ping" />
+                <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
               </span>
               <span className="tabular-nums">{formatAudioTime(audio.elapsedSec)}</span>
