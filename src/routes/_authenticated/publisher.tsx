@@ -249,7 +249,9 @@ function PublisherPage() {
   const errorCount = media.filter((m) => m.status === "error").length;
   const audioBusy = audio.status === "recording" || audio.status === "uploading";
   const previewBusy = preview?.status === "uploading";
-  const previewMissing = toggles.paid.enabled && (!preview || preview.status !== "ready");
+  const previewMissing =
+    (toggles.paid.enabled || toggles.challenge.enabled) &&
+    (!preview || preview.status !== "ready");
   const canContinue =
     media.length > 0 &&
     uploadingCount === 0 &&
