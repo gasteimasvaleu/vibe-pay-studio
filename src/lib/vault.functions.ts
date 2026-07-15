@@ -274,6 +274,7 @@ export const listVaultCategoryItems = createServerFn({ method: "GET" })
           key: `publication:${pm.id}`,
           source: "publication",
           id: pm.id,
+          joinId: row.id,
           publicationId: pm.publication_id,
           type: pm.type === "video" ? "video" : "image",
           url: pm.url,
