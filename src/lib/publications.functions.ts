@@ -99,10 +99,28 @@ export const createPublication = createServerFn({ method: "POST" })
       throw new Error(mediaErr.message);
     }
 
-    // TODO(Mercado Pago): quando visibility === 'paid' | 'challenge',
-    // criar preferência de pagamento e retornar init_point para o front.
+    // Faixas de contribuição do desafio
+    if (data.visibility === "challenge" && data.challengeTiersCents && data.challengeTiersCents.length > 0) {
+      const uniqueSorted = Array.from(new Set(data.challengeTiersCents.map((v) => Math.floor(v)))).sort(
+        (a, b) => a - b,
+      );
+      const tierRows = uniqueSorted.map((amount, index) => ({
+        publication_id: pub.id,
+        amount_cents: amount,
+        position: index,
+      }));
+      const { error: tierErr } = await context.supabase
+        .from("publication_challenge_tiers")
+        .insert(tierRows);
+      if (tierErr) {
+        await context.supabase.from("publications").delete().eq("id", pub.id);
+        throw new Error(tierErr.message);
+      }
+    }
+
     return { ok: true as const, publicationId: pub.id };
   });
+
 
 const deleteDraftSchema = z.object({ storagePath: z.string().min(1) });
 
