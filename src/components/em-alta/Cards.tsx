@@ -156,7 +156,7 @@ export function PostEmAltaCard({ item, rank }: { item: CreatorBase; rank: number
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
       <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 text-white">
-        <img src={item.avatarUrl} alt="" className="h-9 w-9 rounded-md border-2 border-white object-cover" loading="lazy" />
+        <img src={item.avatarUrl} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" loading="lazy" />
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <span className="font-bold text-sm truncate">{item.name}</span>
