@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { createFileRoute, useNavigate, notFound, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, notFound } from "@tanstack/react-router";
+import { MediaLightbox } from "@/components/feed/MediaLightbox";
 import { useSuspenseQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
