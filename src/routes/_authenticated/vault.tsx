@@ -448,9 +448,22 @@ function VaultPage() {
     });
   };
 
+  const displayedItems = useMemo(() => {
+    if (timeRange === "specific" && specificDate) {
+      const y = specificDate.getFullYear();
+      const m = specificDate.getMonth();
+      const d = specificDate.getDate();
+      return content.items.filter((it) => {
+        const dt = new Date(it.createdAt);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      });
+    }
+    return content.items;
+  }, [content.items, timeRange, specificDate]);
+
   const selectedItems = useMemo(
-    () => content.items.filter((i) => selectedKeys.has(i.key)),
-    [content.items, selectedKeys],
+    () => displayedItems.filter((i) => selectedKeys.has(i.key)),
+    [displayedItems, selectedKeys],
   );
 
   return (
