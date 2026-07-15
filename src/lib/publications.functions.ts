@@ -339,6 +339,7 @@ export const getFeed = createServerFn({ method: "POST" })
         challenge_cents: p.challenge_cents,
         challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
         challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
+        challenge_tiers_cents: p.visibility === "challenge" ? challengeTiers.get(p.id) ?? [] : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
