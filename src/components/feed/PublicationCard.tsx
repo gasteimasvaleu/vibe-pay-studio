@@ -374,9 +374,11 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
 function LockedOverlay({
   item,
   onUnlock,
+  hasPreview = false,
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
+  hasPreview?: boolean;
 }) {
   const isChallenge = item.visibility === "challenge";
   const cents = isChallenge ? item.challenge_cents : item.price_cents;
@@ -389,6 +391,46 @@ function LockedOverlay({
       ? "Contribuir mesmo assim"
       : "Aceitar desafio"
     : "Desbloquear";
+
+  if (hasPreview) {
+    return (
+      <>
+        <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
+          {isChallenge ? <Trophy className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col items-center gap-2">
+          {isChallenge && (
+            <div className="w-full max-w-xs rounded-xl bg-black/40 backdrop-blur-sm px-3 py-2 space-y-1">
+              <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-white/80">
+                <span>
+                  {brl.format(raised / 100)} / {brl.format(goal / 100)}
+                </span>
+                <span>
+                  {item.challenge_contributor_count ?? 0} contribuiç
+                  {item.challenge_contributor_count === 1 ? "ão" : "ões"}
+                </span>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => onUnlock?.(item)}
+            className="inline-flex items-center gap-2 px-6 h-11 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 hover:opacity-95"
+          >
+            {label}
+            {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-black/70 via-black/60 to-black/80">
