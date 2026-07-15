@@ -656,6 +656,38 @@ export type Database = {
           },
         ]
       }
+      publication_challenge_tiers: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          position: number
+          publication_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          position?: number
+          publication_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          position?: number
+          publication_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_challenge_tiers_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publication_comment_likes: {
         Row: {
           comment_id: string
