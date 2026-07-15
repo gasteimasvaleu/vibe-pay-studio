@@ -471,6 +471,12 @@ const gridSchema = z.object({
   cursor: z.string().optional(),
 });
 
+export type GridMediaFilter = "all" | "photos" | "videos" | "paid";
+
+const mediaGridSchema = gridSchema.extend({
+  filter: z.enum(["all", "photos", "videos", "paid"]).optional(),
+});
+
 export const getUserPostsGrid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => gridSchema.parse(d))
