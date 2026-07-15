@@ -171,7 +171,18 @@ export function PublicationCard({
 
       {item.locked ? (
         <div className="relative aspect-[16/10] bg-black/40">
-          <LockedOverlay item={item} onUnlock={onUnlock} />
+          {item.preview_url && (
+            <img
+              src={item.preview_url}
+              alt="Prévia"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          <LockedOverlay
+            item={item}
+            onUnlock={onUnlock}
+            hasPreview={!!item.preview_url}
+          />
         </div>
       ) : item.media.length > 0 ? (
         <MediaCarousel media={item.media} />
