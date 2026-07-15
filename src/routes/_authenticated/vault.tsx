@@ -292,15 +292,16 @@ function VaultPage() {
     return list.filter((c) => c.name.toLowerCase().includes(q));
   }, [categoriesQ.data, sidebarSort, sidebarDirection, searchQuery]);
 
+  const countsData = countsQ.data;
   const filteredFixedTabs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const base = q ? FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q)) : [...FIXED_TABS];
     const getCount = (key: FixedTabKey): number => {
-      if (!counts) return 0;
-      if (key === "todas") return counts.all;
-      if (key === "publicacoes") return counts.publications;
-      if (key === "envios") return counts.uploads;
-      return counts.chat;
+      if (!countsData) return 0;
+      if (key === "todas") return countsData.all;
+      if (key === "publicacoes") return countsData.publications;
+      if (key === "envios") return countsData.uploads;
+      return countsData.chat;
     };
     const originalIndex = (key: FixedTabKey) => FIXED_TABS.findIndex((t) => t.key === key);
     const dir = sidebarDirection === "asc" ? 1 : -1;
@@ -315,7 +316,7 @@ function VaultPage() {
       return 0;
     });
     return base;
-  }, [searchQuery, sidebarSort, sidebarDirection, counts]);
+  }, [searchQuery, sidebarSort, sidebarDirection, countsData]);
 
   const counts = countsQ.data;
 
