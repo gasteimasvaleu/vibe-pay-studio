@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Trophy, X } from "lucide-react";
+import { Loader2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -116,45 +116,37 @@ export function ChallengeContributeSheet({
       <Sheet open={open} onOpenChange={handleClose}>
         <SheetContent
           side="bottom"
-          className="mx-auto sm:max-w-[420px] rounded-t-3xl border-t border-white/10 bg-[#12071e] text-white p-0 max-h-[92vh] overflow-y-auto"
+          className="mx-auto sm:max-w-[420px] rounded-t-3xl border-t border-border bg-background text-foreground p-0 max-h-[92vh] overflow-y-auto"
         >
-          <SheetHeader className="px-5 pt-5 pb-3 flex-row items-center justify-between space-y-0">
+          <SheetHeader className="px-5 pt-5 pb-3 space-y-0">
             <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-full bg-orange-500/15 border border-orange-500/30 grid place-items-center text-orange-300">
+              <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/30 grid place-items-center text-primary">
                 <Trophy className="h-4 w-4" />
               </div>
-              <div>
-                <SheetTitle className="text-white text-base font-bold">
+              <div className="text-left">
+                <SheetTitle className="text-base font-bold">
                   Aceitar desafio
                 </SheetTitle>
-                <SheetDescription className="text-xs text-white/60">
+                <SheetDescription className="text-xs text-muted-foreground">
                   {creatorName ? `de @${creatorName}` : "Contribua para destravar"}
                 </SheetDescription>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleClose(false)}
-              className="h-8 w-8 grid place-items-center rounded-full text-white/70 hover:text-white hover:bg-white/10"
-              aria-label="Fechar"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </SheetHeader>
 
           <div className="px-5 pb-6 space-y-5">
             {/* Meta + progresso */}
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs uppercase tracking-widest text-white/60">Meta do desafio</p>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Meta do desafio</p>
               <p className="mt-1 text-2xl font-black">
                 {status ? brl.format(status.goalCents / 100) : "—"}
               </p>
               <div className="mt-3">
-                <Progress value={progress} className="h-2 bg-white/10" />
-                <div className="mt-2 flex items-center justify-between text-xs text-white/70">
+                <Progress value={progress} className="h-2" />
+                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                   <span>
                     Arrecadado{" "}
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-foreground">
                       {status ? brl.format(status.raisedCents / 100) : "—"}
                     </span>
                   </span>
@@ -165,14 +157,14 @@ export function ChallengeContributeSheet({
                 </div>
               </div>
               {status?.reached && (
-                <p className="mt-3 text-xs font-semibold text-emerald-300">
+                <p className="mt-3 text-xs font-semibold text-primary">
                   Meta atingida — conteúdo liberado para quem contribuiu.
                 </p>
               )}
               {status?.myContributionCents != null && (
-                <p className="mt-2 text-xs text-white/60">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Você já contribuiu com{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-foreground">
                     {brl.format(status.myContributionCents / 100)}
                   </span>
                   .
@@ -180,21 +172,21 @@ export function ChallengeContributeSheet({
               )}
             </div>
 
-            <p className="text-[11px] text-white/50">
+            <p className="text-[11px] text-muted-foreground">
               Contribuições em desafios não são reembolsáveis.
             </p>
 
             {/* Faixas */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Escolha uma faixa
               </p>
               {tiersQuery.isLoading ? (
-                <div className="py-8 grid place-items-center text-white/60">
+                <div className="py-8 grid place-items-center text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
               ) : tiers.length === 0 ? (
-                <p className="text-sm text-white/60 py-4 text-center">
+                <p className="text-sm text-muted-foreground py-4 text-center">
                   Nenhuma faixa configurada.
                 </p>
               ) : (
@@ -211,12 +203,12 @@ export function ChallengeContributeSheet({
                         className={cn(
                           "rounded-xl border px-4 py-3 text-left transition-all",
                           isSel
-                            ? "border-orange-400 bg-orange-500/15 text-white"
-                            : "border-white/10 bg-white/[0.04] text-white/90 hover:bg-white/[0.06]",
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border bg-card text-foreground hover:bg-accent",
                           disabled && "opacity-50 cursor-not-allowed",
                         )}
                       >
-                        <p className="text-[10px] uppercase tracking-widest text-white/50">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                           Contribuir
                         </p>
                         <p className="text-lg font-black">
@@ -237,7 +229,7 @@ export function ChallengeContributeSheet({
                 tiers.length === 0 ||
                 status?.myContributionCents != null
               }
-              className="w-full h-11 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-white font-semibold shadow-lg shadow-orange-500/30 hover:opacity-95"
+              className="w-full h-11 rounded-full font-semibold"
             >
               {loading ? (
                 <>
