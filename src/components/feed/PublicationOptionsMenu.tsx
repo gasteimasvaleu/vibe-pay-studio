@@ -172,12 +172,17 @@ export function PublicationOptionsMenu({
     {
       key: "archive",
       label: isArchived ? "Desarquivar post" : "Arquivar post",
-      icon: <Archive className="h-6 w-6" strokeWidth={1.75} />,
+      icon: isArchived ? (
+        <ArchiveRestore className="h-6 w-6" strokeWidth={1.75} />
+      ) : (
+        <Archive className="h-6 w-6" strokeWidth={1.75} />
+      ),
       onClick: () => {
         close();
-        archiveMutation.mutate();
+        setConfirmArchive(true);
       },
     },
+
   ];
 
   const viewerOptions: Array<{
