@@ -1,40 +1,95 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient, useServerFn } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ChevronLeft,
   CheckSquare,
+  FileAudio,
+  Film,
   Image as ImageIcon,
+  MoreVertical,
+  Play,
   Plus,
   Search,
   SlidersHorizontal,
-  Sparkles,
+  Trash2,
+  Upload,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  addItemsToCategory,
+  createVaultCategory,
+  createVaultUpload,
+  deleteVaultCategory,
+  deleteVaultUpload,
+  getVaultCounts,
+  listVaultCategories,
+  listVaultCategoryItems,
+  listVaultChatMedia,
+  listVaultPublicationMedia,
+  listVaultUploads,
+  removeItemFromCategory,
+  renameVaultCategory,
+  type VaultCategory,
+  type VaultMediaItem,
+  type VaultMediaType,
+} from "@/lib/vault.functions";
+
+const BUCKET = "publications";
+const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
 
 type TimeRange = "all" | "specific";
 type SortOrder = "recent" | "oldest";
+type MediaFilter = "TODAS" | "FOTO" | "VÍDEO" | "ÁUDIO" | "GIF";
 
-type TabKey = "todas" | "publicacoes" | "conversas" | "envios";
+const MEDIA_FILTERS: MediaFilter[] = ["TODAS", "FOTO", "VÍDEO", "ÁUDIO", "GIF"];
 
-const TABS: Array<{
-  key: TabKey;
-  label: string;
-  title: string;
-  count: number | null;
-  subtitle: string | null;
-}> = [
-  { key: "todas", label: "Todas as mídias", title: "TODAS AS MÍDIAS", count: 1, subtitle: null },
-  { key: "publicacoes", label: "Publicações", title: "PUBLICAÇÕES", count: 1, subtitle: null },
-  { key: "conversas", label: "Conversas", title: "CONVERSAS", count: null, subtitle: "Vazio" },
-  { key: "envios", label: "Envios", title: "ENVIOS", count: null, subtitle: "Vazio" },
+type FixedTabKey = "todas" | "publicacoes" | "conversas" | "envios";
+type ActiveTab = { kind: "fixed"; key: FixedTabKey } | { kind: "category"; id: string; name: string };
+
+const FIXED_TABS: Array<{ key: FixedTabKey; label: string; title: string }> = [
+  { key: "todas", label: "Todas as mídias", title: "TODAS AS MÍDIAS" },
+  { key: "publicacoes", label: "Publicações", title: "PUBLICAÇÕES" },
+  { key: "conversas", label: "Conversas", title: "CONVERSAS" },
+  { key: "envios", label: "Envios", title: "ENVIOS" },
 ];
 
-const MEDIA_FILTERS = ["TODAS", "FOTO", "VÍDEO", "ÁUDIO", "GIF"] as const;
+function filterToApi(f: MediaFilter): VaultMediaType | "all" {
+  switch (f) {
+    case "FOTO":
+      return "image";
+    case "VÍDEO":
+      return "video";
+    case "ÁUDIO":
+      return "audio";
+    case "GIF":
+      return "gif";
+    default:
+      return "all";
+  }
+}
+
+const dateFmt = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 
 export const Route = createFileRoute("/_authenticated/vault")({
   head: () => ({
@@ -52,25 +107,125 @@ export const Route = createFileRoute("/_authenticated/vault")({
 
 function VaultPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabKey>("todas");
+  const qc = useQueryClient();
+
+  // Server-fn bindings (bearer attaches via functionMiddleware)
+  const fnCounts = useServerFn(getVaultCounts);
+  const fnCategories = useServerFn(listVaultCategories);
+  const fnPublications = useServerFn(listVaultPublicationMedia);
+  const fnUploads = useServerFn(listVaultUploads);
+  const fnChat = useServerFn(listVaultChatMedia);
+  const fnCategoryItems = useServerFn(listVaultCategoryItems);
+  const fnCreateCat = useServerFn(createVaultCategory);
+  const fnRenameCat = useServerFn(renameVaultCategory);
+  const fnDeleteCat = useServerFn(deleteVaultCategory);
+  const fnAddToCat = useServerFn(addItemsToCategory);
+  const fnRemoveFromCat = useServerFn(removeItemFromCategory);
+  const fnCreateUpload = useServerFn(createVaultUpload);
+  const fnDeleteUpload = useServerFn(deleteVaultUpload);
+
+  // UI state
+  const [activeTab, setActiveTab] = useState<ActiveTab>({ kind: "fixed", key: "todas" });
   const [mobileDetail, setMobileDetail] = useState(false);
-  const [mediaFilter, setMediaFilter] = useState<(typeof MEDIA_FILTERS)[number]>("TODAS");
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("TODAS");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
+
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+
   const [sidebarSort, setSidebarSort] = useState<"padrao" | "nome" | "recentes" | "midias">("padrao");
   const [sidebarDirection, setSidebarDirection] = useState<"asc" | "desc">("asc");
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const current = TABS.find((t) => t.key === activeTab)!;
-  const isEmptyCategory = activeTab === "conversas" || activeTab === "envios";
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [pickCategoryOpen, setPickCategoryOpen] = useState(false);
 
-  const selectTab = (k: TabKey) => {
-    setActiveTab(k);
+  const [preview, setPreview] = useState<VaultMediaItem | null>(null);
+
+  // Queries
+  const countsQ = useQuery({
+    queryKey: ["vault", "counts"],
+    queryFn: () => fnCounts(),
+  });
+  const categoriesQ = useQuery({
+    queryKey: ["vault", "categories"],
+    queryFn: () => fnCategories(),
+  });
+
+  const mediaTypeArg = filterToApi(mediaFilter);
+  const listArgs = { mediaType: mediaTypeArg, sort: sortOrder, limit: 300 } as const;
+
+  const publicationsQ = useQuery({
+    queryKey: ["vault", "publications", mediaTypeArg, sortOrder],
+    queryFn: () => fnPublications({ data: listArgs }),
+    enabled: activeTab.kind === "fixed" && (activeTab.key === "publicacoes" || activeTab.key === "todas"),
+  });
+  const uploadsQ = useQuery({
+    queryKey: ["vault", "uploads", mediaTypeArg, sortOrder],
+    queryFn: () => fnUploads({ data: listArgs }),
+    enabled: activeTab.kind === "fixed" && (activeTab.key === "envios" || activeTab.key === "todas"),
+  });
+  const chatQ = useQuery({
+    queryKey: ["vault", "chat"],
+    queryFn: () => fnChat(),
+    enabled: activeTab.kind === "fixed" && activeTab.key === "conversas",
+  });
+  const categoryItemsQ = useQuery({
+    queryKey: ["vault", "category", activeTab.kind === "category" ? activeTab.id : null, mediaTypeArg, sortOrder],
+    queryFn: () =>
+      fnCategoryItems({
+        data: {
+          categoryId: activeTab.kind === "category" ? activeTab.id : "",
+          mediaType: mediaTypeArg,
+          sort: sortOrder,
+        },
+      }),
+    enabled: activeTab.kind === "category",
+  });
+
+  // Derive content list for current tab
+  const content: { items: VaultMediaItem[]; loading: boolean } = (() => {
+    if (activeTab.kind === "category") {
+      return { items: categoryItemsQ.data ?? [], loading: categoryItemsQ.isLoading };
+    }
+    switch (activeTab.key) {
+      case "publicacoes":
+        return { items: publicationsQ.data ?? [], loading: publicationsQ.isLoading };
+      case "envios":
+        return { items: uploadsQ.data ?? [], loading: uploadsQ.isLoading };
+      case "conversas":
+        return { items: chatQ.data ?? [], loading: chatQ.isLoading };
+      case "todas":
+      default: {
+        const merged = [...(publicationsQ.data ?? []), ...(uploadsQ.data ?? [])];
+        merged.sort((a, b) => {
+          const aT = new Date(a.createdAt).getTime();
+          const bT = new Date(b.createdAt).getTime();
+          return sortOrder === "recent" ? bT - aT : aT - bT;
+        });
+        return { items: merged, loading: publicationsQ.isLoading || uploadsQ.isLoading };
+      }
+    }
+  })();
+
+  const current = (() => {
+    if (activeTab.kind === "category") {
+      return { title: activeTab.name.toUpperCase(), isEmpty: false };
+    }
+    const meta = FIXED_TABS.find((t) => t.key === activeTab.key)!;
+    return { title: meta.title, isEmpty: false };
+  })();
+
+  const selectTab = (t: ActiveTab) => {
+    setActiveTab(t);
     setMobileDetail(true);
+    setSelectionMode(false);
+    setSelectedKeys(new Set());
   };
 
   const closeSearch = () => {
@@ -79,27 +234,196 @@ function VaultPage() {
   };
 
   useEffect(() => {
-    if (searchOpen) {
-      searchInputRef.current?.focus();
-    }
+    if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && searchOpen) {
-        closeSearch();
-      }
+      if (e.key === "Escape" && searchOpen) closeSearch();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [searchOpen]);
 
-  const filteredTabs = TABS.filter((t) =>
-    t.label.toLowerCase().includes(searchQuery.toLowerCase())
+  // Sidebar entries: fixed + user categories, respect search + sort
+  const sidebarCategories = useMemo(() => {
+    const list = [...(categoriesQ.data ?? [])];
+    list.sort((a, b) => {
+      const dir = sidebarDirection === "asc" ? 1 : -1;
+      if (sidebarSort === "nome") return a.name.localeCompare(b.name, "pt-BR") * dir;
+      if (sidebarSort === "recentes")
+        return (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) * dir;
+      if (sidebarSort === "midias") return (b.itemCount - a.itemCount) * dir;
+      return (a.position - b.position) * dir;
+    });
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categoriesQ.data, sidebarSort, sidebarDirection, searchQuery]);
+
+  const filteredFixedTabs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return FIXED_TABS;
+    return FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q));
+  }, [searchQuery]);
+
+  const counts = countsQ.data;
+
+  // Mutations
+  const createCatMut = useMutation({
+    mutationFn: (name: string) => fnCreateCat({ data: { name } }),
+    onSuccess: () => {
+      toast.success("Categoria criada");
+      setAddCategoryOpen(false);
+      setCategoryName("");
+      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteCatMut = useMutation({
+    mutationFn: (id: string) => fnDeleteCat({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Categoria excluída");
+      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+      setActiveTab({ kind: "fixed", key: "todas" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const renameCatMut = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => fnRenameCat({ data: { id, name } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addToCatMut = useMutation({
+    mutationFn: (payload: { categoryId: string; items: { source: "publication" | "upload"; id: string }[] }) =>
+      fnAddToCat({ data: payload }),
+    onSuccess: (_r, vars) => {
+      toast.success("Adicionado à categoria");
+      setSelectionMode(false);
+      setSelectedKeys(new Set());
+      setPickCategoryOpen(false);
+      qc.invalidateQueries({ queryKey: ["vault", "categories"] });
+      qc.invalidateQueries({ queryKey: ["vault", "category", vars.categoryId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeFromCatMut = useMutation({
+    mutationFn: (itemId: string) => fnRemoveFromCat({ data: { itemId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vault"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteUploadMut = useMutation({
+    mutationFn: (id: string) => fnDeleteUpload({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Envio excluído");
+      qc.invalidateQueries({ queryKey: ["vault"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Uploads (Envios tab)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFiles(files: FileList | File[]) {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    setUploading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId) throw new Error("Sessão expirada.");
+
+      for (const file of arr) {
+        const type = classifyFile(file);
+        if (!type) {
+          toast.error(`Tipo não suportado: ${file.name}`);
+          continue;
+        }
+        const limit =
+          type === "video" ? MAX_VIDEO_BYTES : type === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+        if (file.size > limit) {
+          toast.error(`${file.name} excede o limite permitido.`);
+          continue;
+        }
+        const id = crypto.randomUUID();
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        const path = `vault/${userId}/${id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, file, { contentType: file.type || undefined, upsert: false });
+        if (upErr) {
+          toast.error(`Falha no upload de ${file.name}: ${upErr.message}`);
+          continue;
+        }
+        const { data: signed, error: signErr } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(path, SIGNED_URL_EXPIRES_IN);
+        if (signErr || !signed) {
+          toast.error(`Falha ao gerar URL de ${file.name}`);
+          await supabase.storage.from(BUCKET).remove([path]);
+          continue;
+        }
+        try {
+          await fnCreateUpload({
+            data: {
+              storagePath: path,
+              url: signed.signedUrl,
+              type,
+              mime: file.type || null,
+              sizeBytes: file.size,
+            },
+          });
+        } catch (e) {
+          await supabase.storage.from(BUCKET).remove([path]);
+          toast.error(`Falha ao salvar ${file.name}: ${(e as Error).message}`);
+          continue;
+        }
+      }
+      qc.invalidateQueries({ queryKey: ["vault"] });
+      toast.success("Envio concluído");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  const toggleSelect = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const selectedItems = useMemo(
+    () => content.items.filter((i) => selectedKeys.has(i.key)),
+    [content.items, selectedKeys],
   );
 
   return (
     <div className="min-h-screen bg-background">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,video/*,audio/*"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) void handleFiles(e.target.files);
+        }}
+      />
+
       <header className="border-b border-border bg-white">
         <div className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
           {/* Left header */}
@@ -129,7 +453,7 @@ function VaultPage() {
                     ref={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar"
+                    placeholder="Buscar categoria"
                     className="h-10 pr-10 rounded-md border-2 border-primary bg-background text-foreground placeholder:text-muted-foreground"
                   />
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -178,29 +502,131 @@ function VaultPage() {
               </h2>
             </div>
             <div className="flex items-center gap-1">
-              {activeTab === "publicacoes" && (
+              {activeTab.kind === "fixed" && activeTab.key === "envios" && (
                 <button
                   type="button"
-                  className="h-9 w-9 grid place-items-center rounded-full border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="h-9 px-3 grid place-items-center gap-1.5 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Upload className="h-4 w-4" />
+                    {uploading ? "Enviando..." : "Enviar"}
+                  </span>
+                </button>
+              )}
+              {content.items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectionMode((s) => !s);
+                    setSelectedKeys(new Set());
+                  }}
+                  className={`h-9 w-9 grid place-items-center rounded-md border transition-colors ${
+                    selectionMode
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
                   aria-label="Selecionar"
                 >
                   <CheckSquare className="h-5 w-5" />
                 </button>
               )}
-              {activeTab === "envios" && (
-                <button
-                  type="button"
-                  onClick={() => setAddCategoryOpen(true)}
-                  className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  aria-label="Adicionar"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
+              {activeTab.kind === "category" && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      aria-label="Mais opções"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const name = window.prompt("Novo nome da categoria", activeTab.name);
+                        if (name && name.trim() && name !== activeTab.name) {
+                          renameCatMut.mutate({ id: activeTab.id, name: name.trim() });
+                          setActiveTab({ ...activeTab, name: name.trim() });
+                        }
+                      }}
+                    >
+                      Renomear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => {
+                        if (window.confirm(`Excluir a categoria "${activeTab.name}"?`)) {
+                          deleteCatMut.mutate(activeTab.id);
+                        }
+                      }}
+                    >
+                      Excluir categoria
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
         </div>
       </header>
+
+      {/* Selection bar */}
+      {selectionMode && selectedKeys.size > 0 && (
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-2 flex items-center justify-between bg-primary/10 border-b border-primary/20">
+          <span className="text-sm font-medium text-foreground">
+            {selectedKeys.size} selecionado(s)
+          </span>
+          <div className="flex items-center gap-2">
+            {activeTab.kind === "category" && (
+              <button
+                type="button"
+                onClick={() => {
+                  selectedItems.forEach((it) => {
+                    // find the actual join row id — we listed items using the media key, need join id
+                    // The list returns key/id from the underlying media. For removal we need vault_category_items.id.
+                    // Simplification: refetch and remove by id from list mapping below.
+                    const joinId = (categoryItemsQ.data ?? []).find((i) => i.key === it.key)?.id;
+                    if (joinId) removeFromCatMut.mutate(joinId);
+                  });
+                  setSelectionMode(false);
+                  setSelectedKeys(new Set());
+                }}
+                className="h-8 px-3 rounded-md border border-border text-sm font-medium hover:bg-accent transition-colors"
+              >
+                Remover da categoria
+              </button>
+            )}
+            {activeTab.kind === "fixed" && activeTab.key === "envios" && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!window.confirm(`Excluir ${selectedKeys.size} envio(s)?`)) return;
+                  selectedItems
+                    .filter((i) => i.source === "upload")
+                    .forEach((i) => deleteUploadMut.mutate(i.id));
+                  setSelectionMode(false);
+                  setSelectedKeys(new Set());
+                }}
+                className="h-8 px-3 rounded-md border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Trash2 className="h-4 w-4" /> Excluir
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setPickCategoryOpen(true)}
+              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Adicionar à categoria
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
         {/* Sidebar */}
@@ -208,9 +634,7 @@ function VaultPage() {
           className={`${mobileDetail ? "hidden md:block" : "block"} md:border-r md:border-border px-4 md:px-6 py-6`}
         >
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-sm font-bold tracking-wider text-muted-foreground">
-              PADRÃO
-            </span>
+            <span className="text-sm font-bold tracking-wider text-muted-foreground">PADRÃO</span>
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -234,31 +658,46 @@ function VaultPage() {
           </div>
 
           <ul className="space-y-1">
-            {filteredTabs.map((t) => {
-              const isActive = t.key === activeTab;
+            {filteredFixedTabs.map((t) => {
+              const isActive = activeTab.kind === "fixed" && activeTab.key === t.key;
+              const count = counts
+                ? t.key === "todas"
+                  ? counts.all
+                  : t.key === "publicacoes"
+                  ? counts.publications
+                  : t.key === "envios"
+                  ? counts.uploads
+                  : counts.chat
+                : null;
               return (
                 <li key={t.key}>
-                  <button
-                    type="button"
-                    onClick={() => selectTab(t.key)}
-                    className={`w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors ${
-                      isActive
-                        ? "bg-primary/10 text-foreground"
-                        : "hover:bg-accent text-foreground"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold truncate">{t.label}</p>
-                      {t.count != null ? (
-                        <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <ImageIcon className="h-4 w-4" />
-                          <span>{t.count}</span>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-sm text-muted-foreground">{t.subtitle}</p>
-                      )}
-                    </div>
-                  </button>
+                  <SidebarRow
+                    label={t.label}
+                    count={count}
+                    subtitle={count === 0 ? "Vazio" : null}
+                    active={isActive}
+                    onClick={() => selectTab({ kind: "fixed", key: t.key })}
+                  />
+                </li>
+              );
+            })}
+
+            {sidebarCategories.length > 0 && (
+              <li className="pt-3 pb-1 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Suas categorias
+              </li>
+            )}
+            {sidebarCategories.map((c) => {
+              const isActive = activeTab.kind === "category" && activeTab.id === c.id;
+              return (
+                <li key={c.id}>
+                  <SidebarRow
+                    label={c.name}
+                    count={c.itemCount}
+                    subtitle={c.itemCount === 0 ? "Vazio" : null}
+                    active={isActive}
+                    onClick={() => selectTab({ kind: "category", id: c.id, name: c.name })}
+                  />
                 </li>
               );
             })}
@@ -266,153 +705,346 @@ function VaultPage() {
         </aside>
 
         {/* Content */}
-        <section
-          className={`${mobileDetail ? "block" : "hidden md:block"} px-4 md:px-6 py-6`}
-        >
-          {isEmptyCategory ? (
-            <EmptyCategory />
+        <section className={`${mobileDetail ? "block" : "hidden md:block"} px-4 md:px-6 py-6`}>
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-sm font-bold tracking-wider text-muted-foreground">
+              {sortOrder === "recent" ? "MAIS RECENTES" : "MAIS ANTIGAS"}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Ordenar"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 rounded-2xl p-2">
+                <RadioRow label="Todo o tempo" active={timeRange === "all"} onClick={() => setTimeRange("all")} />
+                <RadioRow label="Data específica" active={timeRange === "specific"} onClick={() => setTimeRange("specific")} />
+                <div className="my-2 border-t border-border" />
+                <RadioRow label="Mais recentes" active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} />
+                <RadioRow label="Mais antigas" active={sortOrder === "oldest"} onClick={() => setSortOrder("oldest")} />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-6">
+            {MEDIA_FILTERS.map((f) => {
+              const isActive = f === mediaFilter;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setMediaFilter(f)}
+                  className={`px-4 py-2 rounded-md text-sm font-semibold tracking-wide transition-colors ${
+                    isActive
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  {f}
+                </button>
+              );
+            })}
+          </div>
+
+          {content.loading ? (
+            <div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>
+          ) : content.items.length === 0 ? (
+            activeTab.kind === "fixed" && activeTab.key === "conversas" ? (
+              <EmptyCategory message="Mídias das conversas em breve" />
+            ) : activeTab.kind === "fixed" && activeTab.key === "envios" ? (
+              <EnviosEmpty onUpload={() => fileInputRef.current?.click()} uploading={uploading} />
+            ) : (
+              <EmptyCategory message="Nenhuma mídia por aqui ainda." />
+            )
           ) : (
-            <>
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-sm font-bold tracking-wider text-muted-foreground">
-                  MAIS RECENTES
-                </span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      aria-label="Ordenar"
-                    >
-                      <SlidersHorizontal className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 rounded-2xl p-2">
-                    <RadioRow
-                      label="Todo o tempo"
-                      active={timeRange === "all"}
-                      onClick={() => setTimeRange("all")}
-                    />
-                    <RadioRow
-                      label="Data específica"
-                      active={timeRange === "specific"}
-                      onClick={() => setTimeRange("specific")}
-                    />
-                    <div className="my-2 border-t border-border" />
-                    <RadioRow
-                      label="Mais recentes"
-                      active={sortOrder === "recent"}
-                      onClick={() => setSortOrder("recent")}
-                    />
-                    <RadioRow
-                      label="Mais antigas"
-                      active={sortOrder === "oldest"}
-                      onClick={() => setSortOrder("oldest")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {MEDIA_FILTERS.map((f) => {
-                  const isActive = f === mediaFilter;
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setMediaFilter(f)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold tracking-wide transition-colors ${
-                        isActive
-                          ? "bg-primary/15 text-primary"
-                          : "bg-muted text-muted-foreground hover:bg-accent"
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="py-16 text-center text-sm text-muted-foreground">
-                Nenhuma mídia por aqui ainda.
-              </div>
-            </>
+            <MediaGrid
+              items={content.items}
+              selectionMode={selectionMode}
+              selectedKeys={selectedKeys}
+              onSelect={toggleSelect}
+              onOpen={(it) => {
+                if (selectionMode) toggleSelect(it.key);
+                else setPreview(it);
+              }}
+            />
           )}
         </section>
       </main>
 
+      {/* Add category dialog */}
       <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
-        <DialogContent className="sm:max-w-3xl rounded-3xl p-8 md:p-10">
-          <DialogTitle className="text-xl font-bold tracking-wide uppercase text-foreground">
-            Adicionar nova categoria
+        <DialogContent className="sm:max-w-md rounded-3xl p-6">
+          <DialogTitle className="text-lg font-bold tracking-wide uppercase text-foreground">
+            Nova categoria
           </DialogTitle>
-
-          <div className="relative mt-2">
-            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <div className="mt-4">
             <Input
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
-              placeholder="Envios"
-              className="h-12 pl-12 rounded-md text-base"
+              placeholder="Ex.: Favoritas, Verão, Ensaios..."
+              className="h-11 rounded-md text-base"
+              autoFocus
             />
           </div>
-
-          <div className="mt-6 min-h-[280px]">
-            <button
-              type="button"
-              className="h-56 w-56 rounded-2xl bg-muted hover:bg-muted/80 transition-colors grid place-items-center gap-2 text-foreground"
-            >
-              <Plus className="h-10 w-10" strokeWidth={2} />
-              <span className="text-lg font-bold">Adicionar mídia</span>
-            </button>
-          </div>
-
           <div className="mt-6 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setAddCategoryOpen(false)}
-              className="h-11 px-6 rounded-md border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
+              className="h-10 px-4 rounded-md border border-border text-foreground font-medium hover:bg-accent transition-colors"
             >
-              Confirmar
+              Cancelar
             </button>
             <button
               type="button"
-              onClick={() => setAddCategoryOpen(false)}
-              className="h-11 px-6 rounded-md border-2 border-foreground text-foreground font-semibold hover:bg-accent transition-colors"
+              disabled={!categoryName.trim() || createCatMut.isPending}
+              onClick={() => createCatMut.mutate(categoryName.trim())}
+              className="h-10 px-5 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
-              Cancelar
+              {createCatMut.isPending ? "Criando…" : "Criar"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Pick category for selected items */}
+      <Dialog open={pickCategoryOpen} onOpenChange={setPickCategoryOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-6">
+          <DialogTitle className="text-lg font-bold tracking-wide uppercase text-foreground">
+            Adicionar a uma categoria
+          </DialogTitle>
+          <div className="mt-4 max-h-72 overflow-y-auto space-y-1">
+            {(categoriesQ.data ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                Crie uma categoria primeiro no botão + do topo.
+              </p>
+            ) : (
+              (categoriesQ.data ?? []).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  disabled={addToCatMut.isPending}
+                  onClick={() =>
+                    addToCatMut.mutate({
+                      categoryId: c.id,
+                      items: selectedItems.map((i) => ({ source: i.source, id: i.id })),
+                    })
+                  }
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-accent transition-colors flex items-center justify-between"
+                >
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-xs text-muted-foreground">{c.itemCount}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview lightbox */}
+      <PreviewDialog item={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }
 
-function EmptyCategory() {
+function SidebarRow({
+  label,
+  count,
+  subtitle,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number | null;
+  subtitle: string | null;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors ${
+        active ? "bg-primary/10 text-foreground" : "hover:bg-accent text-foreground"
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-semibold truncate">{label}</p>
+        {count != null && count > 0 ? (
+          <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <ImageIcon className="h-4 w-4" />
+            <span>{count}</span>
+          </div>
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle ?? "Vazio"}</p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function MediaGrid({
+  items,
+  selectionMode,
+  selectedKeys,
+  onSelect,
+  onOpen,
+}: {
+  items: VaultMediaItem[];
+  selectionMode: boolean;
+  selectedKeys: Set<string>;
+  onSelect: (key: string) => void;
+  onOpen: (item: VaultMediaItem) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      {items.map((it) => {
+        const selected = selectedKeys.has(it.key);
+        return (
+          <button
+            key={it.key}
+            type="button"
+            onClick={() => onOpen(it)}
+            className={`relative aspect-square overflow-hidden rounded-lg bg-muted group ${
+              selected ? "ring-2 ring-primary" : ""
+            }`}
+          >
+            <MediaThumb item={it} />
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
+              {it.type === "video" && (
+                <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                  <Play className="h-3.5 w-3.5" />
+                </span>
+              )}
+              {it.type === "audio" && (
+                <span className="h-6 w-6 grid place-items-center rounded-md bg-black/60 text-white">
+                  <FileAudio className="h-3.5 w-3.5" />
+                </span>
+              )}
+              {it.type === "gif" && (
+                <span className="px-1.5 h-6 grid place-items-center rounded-md bg-black/60 text-white text-[10px] font-bold">
+                  GIF
+                </span>
+              )}
+            </div>
+            {selectionMode && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(it.key);
+                }}
+                className={`absolute top-1.5 right-1.5 h-6 w-6 grid place-items-center rounded-full border-2 ${
+                  selected ? "border-primary bg-primary" : "border-white bg-black/40"
+                }`}
+              >
+                {selected && <span className="h-2 w-2 rounded-full bg-primary-foreground" />}
+              </span>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 p-1.5 text-[10px] font-medium text-white bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              {dateFmt.format(new Date(it.createdAt))}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MediaThumb({ item }: { item: VaultMediaItem }) {
+  if (item.type === "image" || item.type === "gif") {
+    return (
+      <img
+        src={item.url}
+        alt=""
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    );
+  }
+  if (item.type === "video") {
+    return (
+      <video
+        src={item.url}
+        muted
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-cover"
+      />
+    );
+  }
+  // audio
+  return (
+    <div className="h-full w-full grid place-items-center bg-gradient-to-br from-primary/20 to-primary/5 text-primary">
+      <FileAudio className="h-10 w-10" />
+    </div>
+  );
+}
+
+function EmptyCategory({ message }: { message: string }) {
   return (
     <div className="min-h-[420px] grid place-items-center">
       <div className="flex flex-col items-center gap-4 text-muted-foreground/70">
-        <svg
-          width="180"
-          height="150"
-          viewBox="0 0 180 150"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
+        <svg width="180" height="150" viewBox="0 0 180 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
           <rect x="20" y="30" width="90" height="70" rx="8" fill="currentColor" opacity="0.25" />
           <circle cx="45" cy="55" r="8" fill="currentColor" opacity="0.5" />
           <path d="M25 95 L55 70 L85 90 L105 78 L105 100 L25 100 Z" fill="currentColor" opacity="0.5" />
           <rect x="95" y="15" width="70" height="55" rx="8" fill="currentColor" opacity="0.2" />
           <circle cx="145" cy="42" r="4" fill="currentColor" opacity="0.55" />
-          <path d="M138 34 a12 12 0 0 1 0 16 M148 30 a18 18 0 0 1 0 24" stroke="currentColor" strokeWidth="2" opacity="0.55" fill="none" />
           <rect x="80" y="70" width="75" height="60" rx="8" fill="currentColor" opacity="0.3" />
           <path d="M110 95 L135 108 L110 121 Z" fill="currentColor" opacity="0.55" />
         </svg>
-        <p className="text-base">Categoria vazia</p>
+        <p className="text-base">{message}</p>
       </div>
     </div>
+  );
+}
+
+function EnviosEmpty({ onUpload, uploading }: { onUpload: () => void; uploading: boolean }) {
+  return (
+    <div className="min-h-[420px] grid place-items-center">
+      <div className="flex flex-col items-center gap-4 text-muted-foreground">
+        <Film className="h-16 w-16 text-muted-foreground/40" />
+        <p className="text-base">Nenhum envio na sua biblioteca ainda.</p>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={onUpload}
+          className="h-10 px-4 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          {uploading ? "Enviando..." : "Enviar arquivos"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PreviewDialog({ item, onClose }: { item: VaultMediaItem | null; onClose: () => void }) {
+  const open = item !== null;
+  return (
+    <Dialog open={open} onOpenChange={(o) => (!o ? onClose() : null)}>
+      <DialogContent className="max-w-3xl p-0 bg-black border-none">
+        <VisuallyHidden>
+          <DialogTitle>Preview de mídia</DialogTitle>
+        </VisuallyHidden>
+        {item && (
+          <div className="w-full max-h-[80vh] grid place-items-center">
+            {item.type === "video" ? (
+              <video src={item.url} controls autoPlay className="max-h-[80vh] w-full" />
+            ) : item.type === "audio" ? (
+              <div className="p-12 w-full">
+                <audio src={item.url} controls className="w-full" />
+              </div>
+            ) : (
+              <img src={item.url} alt="" className="max-h-[80vh] w-auto" />
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -441,4 +1073,14 @@ function RadioRow({
       <span className="text-base font-semibold text-foreground">{label}</span>
     </button>
   );
+}
+
+function classifyFile(file: File): VaultMediaType | null {
+  const mime = file.type;
+  const name = file.name.toLowerCase();
+  if (mime === "image/gif" || name.endsWith(".gif")) return "gif";
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  if (mime.startsWith("audio/")) return "audio";
+  return null;
 }
