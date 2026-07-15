@@ -1025,7 +1025,14 @@ function SubscriptionOfferCard({
           Oferta de assinatura
         </h3>
       </div>
-      <p className="-mt-1 text-sm text-muted-foreground">{countdownText}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        {promotion.discountPct > 0 && (
+          <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-500/30">
+            Economize {Math.round(promotion.discountPct)}%
+          </span>
+        )}
+        <p className="text-sm text-muted-foreground">{countdownText}</p>
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-sm font-black text-white">
@@ -1036,20 +1043,13 @@ function SubscriptionOfferCard({
         </div>
       </div>
 
-      <div className="space-y-2">
-        {promotion.discountPct > 0 && (
-          <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-500/30">
-            Economize {Math.round(promotion.discountPct)}%
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={onSubscribe}
-          className="w-full h-11 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
-        >
-          Assinar agora {format(promotion.promoPrice)}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onSubscribe}
+        className="w-full h-11 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
+      >
+        Assinar agora {format(promotion.promoPrice)}
+      </button>
 
       {promotion.originalPrice > promotion.promoPrice && (
         <p className="text-right text-xs text-muted-foreground">

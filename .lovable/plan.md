@@ -1,14 +1,13 @@
-Diagnóstico:
+## Objetivo
+Mover a badge `Economize 5%` para a esquerda do texto do cronômetro (`Termina em Xh Ym Zs`) na seção de oferta de assinatura, economizando espaço vertical.
 
-- O perfil `monetisex` tem assinatura mensal configurada em `R$ 29,00`.
-- Os descontos de `3 meses` e `6 meses` estão como `0%` no banco.
-- Na tela do perfil, o app só mostra os planos de `3 meses` e `6 meses` dentro da seção “Promoções” quando existe desconto trimestral ou semestral maior que zero.
-- Por isso, na página individual aparece apenas `1 mês`.
-- A promoção ativa `teste` de `5%` é outra coisa: ela aparece no card de oferta e atualmente é aplicada somente ao plano mensal.
+## Alteração proposta
+No componente `ActivePromotionCard` em `src/routes/_authenticated/perfil.$username.tsx`:
 
-Se quiser ajustar, o plano é:
+1. Agrupar a badge e o countdown em uma única linha flexível (`flex items-center gap-2 justify-between` ou `flex items-center gap-2`).
+2. Manter a badge como pill verde (`rounded-full bg-emerald-500/15 ...`) e o texto do countdown com estilo `text-sm text-muted-foreground`.
+3. Remover o espaçamento vertical (`space-y-2`) entre badge e botão, pois a badge deixará de ocupar uma linha própria.
+4. Preservar o botão "Assinar agora" e o preço original abaixo.
 
-1. Alterar a regra visual da página de perfil para mostrar também `3 meses` e `6 meses` mesmo quando o desconto for `0%`.
-2. Deixar esses planos abaixo de “Assinaturas”, não dependentes da seção “Promoções”.
-3. Manter o card da promoção ativa separado, como oferta especial mensal.
-4. Garantir que ao clicar em qualquer plano, o diálogo de assinatura receba o plano correto: mensal, trimestral ou semestral.
+## Resultado esperado
+A seção de oferta fica mais compacta: título, linha com badge + cronômetro, botão e preço original.
