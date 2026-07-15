@@ -203,7 +203,7 @@ function CreatorGatedNotFound() {
 
           <Link
             to="/creator/onboarding/assinatura"
-            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
+            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
           >
             Criar perfil de creator
           </Link>
@@ -222,7 +222,7 @@ function CreatorGatedNotFound() {
 function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <li className="flex items-start gap-3 rounded-2xl border border-border bg-background/40 px-4 py-3">
-      <span className="h-8 w-8 shrink-0 rounded-full grid place-items-center bg-primary/10 text-primary">
+      <span className="h-8 w-8 shrink-0 rounded-md grid place-items-center bg-primary/10 text-primary">
         {icon}
       </span>
       <span className="text-sm text-foreground">{text}</span>
@@ -554,13 +554,13 @@ function PerfilPage() {
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40">
+            <div className="h-24 w-24 md:h-28 md:w-28 rounded-md border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40">
               {profile.username.slice(0, 1).toUpperCase()}
             </div>
           </div>
 
           {/* Stats */}
-          <div className="absolute right-4 md:right-6 bottom-4 hidden sm:flex items-center gap-4 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 text-xs">
+          <div className="absolute right-4 md:right-6 bottom-4 hidden sm:flex items-center gap-4 rounded-md bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 text-xs">
             <Stat icon={<ImageIcon className="h-4 w-4" />} value={stats.fotos} />
             <Stat icon={<Film className="h-4 w-4" />} value={stats.videos} />
             <Stat icon={<Lock className="h-4 w-4" />} value={stats.locked} />
@@ -605,7 +605,7 @@ function PerfilPage() {
                 }}
                 className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
+                <span className="h-7 w-7 rounded-md border border-black grid place-items-center">
                   <DollarSign className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Mimo
@@ -615,7 +615,7 @@ function PerfilPage() {
                 onClick={() => navigate({ to: "/chat" })}
                 className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
+                <span className="h-7 w-7 rounded-md border border-black grid place-items-center">
                   <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Chat
@@ -651,7 +651,7 @@ function PerfilPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="w-full h-12 rounded-full bg-card border border-border p-0 overflow-hidden">
+          <TabsList className="w-full h-12 rounded-md bg-card border border-border p-0 overflow-hidden">
             <TabsTrigger
               value="posts"
               className="flex-1 h-full gap-2 rounded-none bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
@@ -750,7 +750,7 @@ function PerfilPage() {
                           </div>
                         )}
                         {tile.type === "video" && !locked && (
-                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 grid place-items-center">
+                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-md bg-black/60 grid place-items-center">
                             <Film className="h-3.5 w-3.5 text-white" />
                           </div>
                         )}
@@ -907,7 +907,7 @@ function PlanPill({
     <button
       type="button"
       onClick={onClick}
-      className="w-full h-12 px-5 rounded-full flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
+      className="w-full h-12 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
     >
       <span>{label}</span>
       <span>{price}</span>

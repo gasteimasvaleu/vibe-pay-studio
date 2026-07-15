@@ -100,7 +100,7 @@ function TwoFactorSetupPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full bg-muted px-5 py-3">
+        <div className="flex items-center gap-2 rounded-md bg-muted px-5 py-3">
           <span className="flex-1 truncate text-sm text-foreground font-mono">
             {SECRET_CODE}
           </span>
@@ -121,14 +121,14 @@ function TwoFactorSetupPage() {
             type="button"
             variant="outline"
             onClick={copyCode}
-            className="h-12 rounded-full"
+            className="h-12 rounded-md"
           >
             Copiar Código
           </Button>
           <Button
             type="button"
             onClick={() => toast.info("Em breve")}
-            className="h-12 rounded-full bg-gradient-primary text-primary-foreground"
+            className="h-12 rounded-md bg-gradient-primary text-primary-foreground"
           >
             Avançar
           </Button>

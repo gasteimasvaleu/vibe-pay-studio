@@ -281,7 +281,7 @@ function LoginCard() {
               whileTap={{ scale: 0.99 }}
               className="relative w-full h-11 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium flex items-center justify-center gap-3 transition-colors disabled:opacity-70"
             >
-              <span className="h-5 w-5 rounded-full bg-white text-[#2a1250] font-black text-xs flex items-center justify-center">
+              <span className="h-5 w-5 rounded-md bg-white text-[#2a1250] font-black text-xs flex items-center justify-center">
                 G
               </span>
               {googleLoading ? "Redirecionando..." : "Entrar com Google"}

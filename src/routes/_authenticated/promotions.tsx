@@ -115,7 +115,7 @@ function PromotionsListPage() {
             {tab === "active" && (
               <button
                 onClick={() => navigate({ to: "/promotion" })}
-                className="px-6 py-3 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
+                className="px-6 py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
               >
                 Criar nova oferta
               </button>
@@ -134,7 +134,7 @@ function PromotionsListPage() {
             {tab === "active" && (
               <button
                 onClick={() => navigate({ to: "/promotion" })}
-                className="w-full py-3.5 rounded-full border border-border bg-background text-foreground font-semibold hover:bg-muted transition"
+                className="w-full py-3.5 rounded-md border border-border bg-background text-foreground font-semibold hover:bg-muted transition"
               >
                 Criar nova oferta
               </button>
@@ -225,7 +225,7 @@ function PromotionCard({
           type="button"
           onClick={onEnd}
           disabled={ending}
-          className="mt-4 w-full py-3 rounded-full border border-border bg-background text-foreground font-semibold hover:bg-muted transition disabled:opacity-50"
+          className="mt-4 w-full py-3 rounded-md border border-border bg-background text-foreground font-semibold hover:bg-muted transition disabled:opacity-50"
         >
           {ending ? "Encerrando..." : "Encerrar oferta"}
         </button>

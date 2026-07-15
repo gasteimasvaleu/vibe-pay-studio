@@ -111,7 +111,7 @@ function AccountStatusPage() {
                 >
                   <span
                     className={cn(
-                      "h-10 w-10 rounded-full grid place-items-center shrink-0",
+                      "h-10 w-10 rounded-md grid place-items-center shrink-0",
                       opt.iconWrap,
                     )}
                   >
@@ -123,7 +123,7 @@ function AccountStatusPage() {
                   </span>
                   <span
                     className={cn(
-                      "h-6 w-6 rounded-full grid place-items-center shrink-0 transition-colors",
+                      "h-6 w-6 rounded-md grid place-items-center shrink-0 transition-colors",
                       active
                         ? "bg-gradient-primary text-primary-foreground shadow-glow"
                         : "border border-border",
@@ -162,7 +162,7 @@ function AccountStatusPage() {
             type="button"
             variant="outline"
             onClick={goBack}
-            className="h-12 rounded-full border-foreground/20 text-foreground hover:bg-accent"
+            className="h-12 rounded-md border-foreground/20 text-foreground hover:bg-accent"
           >
             Cancelar
           </Button>
@@ -170,7 +170,7 @@ function AccountStatusPage() {
             type="button"
             onClick={handleSave}
             disabled={!selected}
-            className="h-12 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50"
+            className="h-12 rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50"
           >
             Definir status
           </Button>

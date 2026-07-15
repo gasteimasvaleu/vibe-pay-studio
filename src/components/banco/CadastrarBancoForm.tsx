@@ -157,7 +157,7 @@ export function CadastrarBancoForm({
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Sua chave de API Asaas"
-              className="pl-9 pr-10 h-12 rounded-full"
+              className="pl-9 pr-10 h-12 rounded-md"
             />
             <button
               type="button"
@@ -196,7 +196,7 @@ export function CadastrarBancoForm({
           <div className="relative">
             <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Select value={banco} onValueChange={setBanco}>
-              <SelectTrigger className="pl-9 h-12 rounded-full">
+              <SelectTrigger className="pl-9 h-12 rounded-md">
                 <SelectValue placeholder="Banco" />
               </SelectTrigger>
               <SelectContent>
@@ -217,7 +217,7 @@ export function CadastrarBancoForm({
           <div className="relative">
             <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Select value={tipoConta} onValueChange={setTipoConta}>
-              <SelectTrigger className="pl-9 h-12 rounded-full">
+              <SelectTrigger className="pl-9 h-12 rounded-md">
                 <SelectValue placeholder="Tipo de conta" />
               </SelectTrigger>
               <SelectContent>
@@ -258,7 +258,7 @@ export function CadastrarBancoForm({
                 setChavePix("");
               }}
             >
-              <SelectTrigger className="pl-9 h-12 rounded-full">
+              <SelectTrigger className="pl-9 h-12 rounded-md">
                 <SelectValue placeholder="Tipo de chave pix" />
               </SelectTrigger>
               <SelectContent>
@@ -287,7 +287,7 @@ export function CadastrarBancoForm({
                   : "Selecione o tipo de chave pix"
               }
               disabled={!tipoPix}
-              className="pl-9 h-12 rounded-full"
+              className="pl-9 h-12 rounded-md"
             />
           </div>
         </div>
@@ -297,7 +297,7 @@ export function CadastrarBancoForm({
         <Button
           type="button"
           variant="outline"
-          className="h-12 rounded-full"
+          className="h-12 rounded-md"
           onClick={onClose}
           disabled={loading}
         >
@@ -306,7 +306,7 @@ export function CadastrarBancoForm({
         <Button
           type="submit"
           disabled={loading || !kycVerified}
-          className="h-12 rounded-full bg-gradient-primary text-primary-foreground"
+          className="h-12 rounded-md bg-gradient-primary text-primary-foreground"
         >
           {loading ? "Salvando..." : "Salvar"}
         </Button>
@@ -347,7 +347,7 @@ function IconField({
           placeholder={placeholder}
           type={type}
           inputMode={inputMode}
-          className="pl-9 h-12 rounded-full"
+          className="pl-9 h-12 rounded-md"
         />
       </div>
     </div>

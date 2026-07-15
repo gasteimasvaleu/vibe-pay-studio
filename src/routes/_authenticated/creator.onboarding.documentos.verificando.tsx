@@ -154,7 +154,7 @@ function VerificandoPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/dashboard" })}
-                className="px-8 py-3 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
+                className="px-8 py-3 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
               >
                 Ir para o painel
               </button>
@@ -162,7 +162,7 @@ function VerificandoPage() {
                 <button
                   type="button"
                   onClick={() => navigate({ to: "/creator/onboarding/documentos" })}
-                  className="px-8 py-3 rounded-full border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition"
+                  className="px-8 py-3 rounded-md border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition"
                 >
                   Tentar novamente
                 </button>

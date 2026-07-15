@@ -48,7 +48,7 @@ function CommentRow({
     <div className="flex items-start gap-3">
       <div
         className={cn(
-          "shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white",
+          "shrink-0 rounded-md bg-primary grid place-items-center text-sm font-bold text-white",
           avatarSize,
         )}
       >
@@ -329,7 +329,7 @@ export function CommentsSheet({
           ) : roots.length === 0 ? (
             <div className="h-full grid place-items-center text-center">
               <div>
-                <div className="mx-auto h-12 w-12 rounded-full bg-muted grid place-items-center text-muted-foreground mb-4">
+                <div className="mx-auto h-12 w-12 rounded-md bg-muted grid place-items-center text-muted-foreground mb-4">
                   <MessageCircle className="h-6 w-6" />
                 </div>
                 <p className="text-xl font-semibold text-foreground leading-snug">
@@ -421,10 +421,10 @@ export function CommentsSheet({
               </div>
             )}
             <div className="px-4 py-3 flex items-center gap-2">
-              <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
+              <div className="h-9 w-9 shrink-0 rounded-md bg-primary grid place-items-center text-sm font-bold text-white">
                 {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
               </div>
-              <div className="flex-1 flex items-center gap-2 rounded-full bg-muted px-4 h-11">
+              <div className="flex-1 flex items-center gap-2 rounded-md bg-muted px-4 h-11">
                 <input
                   ref={inputRef}
                   value={text}

@@ -154,7 +154,7 @@ function CriarPerfilGratuitoPage() {
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="relative h-32 w-32 rounded-full bg-muted grid place-items-center overflow-hidden"
+                className="relative h-32 w-32 rounded-md bg-muted grid place-items-center overflow-hidden"
                 aria-label="Enviar foto de perfil"
               >
                 {avatarPreview ? (
@@ -162,7 +162,7 @@ function CriarPerfilGratuitoPage() {
                 ) : (
                   <span className="text-3xl font-bold text-foreground">{initials}</span>
                 )}
-                <span className="absolute bottom-1 right-1 h-9 w-9 rounded-full bg-card border border-border grid place-items-center shadow-card">
+                <span className="absolute bottom-1 right-1 h-9 w-9 rounded-md bg-card border border-border grid place-items-center shadow-card">
                   <Camera className="h-4 w-4 text-foreground" />
                 </span>
               </button>
@@ -174,14 +174,14 @@ function CriarPerfilGratuitoPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Nome de perfil"
-                className="rounded-full bg-muted/60 border-0 h-12 px-5 text-sm"
+                className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
               />
               <div className="relative">
                 <Input
                   value={handle}
                   onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
                   placeholder="monetisexy.com/(seu @)"
-                  className="rounded-full bg-muted/60 border-0 h-12 px-5 text-sm"
+                  className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
                 />
                 {handle.length > 0 && !handleValid && (
                   <p className="text-xs text-destructive mt-1 px-4">
@@ -206,7 +206,7 @@ function CriarPerfilGratuitoPage() {
                       <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                       {active && (
                         <span className="absolute inset-0 bg-black/40 grid place-items-center">
-                          <span className="h-10 w-10 rounded-full bg-white grid place-items-center">
+                          <span className="h-10 w-10 rounded-md bg-white grid place-items-center">
                             <Camera className="h-4 w-4 text-foreground" />
                           </span>
                         </span>
@@ -242,7 +242,7 @@ function CriarPerfilGratuitoPage() {
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="w-full rounded-full bg-primary text-primary-foreground py-4 font-semibold hover:opacity-90 transition"
+              className="w-full rounded-md bg-primary text-primary-foreground py-4 font-semibold hover:opacity-90 transition"
             >
               Avançar
             </button>
@@ -251,7 +251,7 @@ function CriarPerfilGratuitoPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full rounded-full bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center justify-center gap-2"
+              className="w-full rounded-md bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center justify-center gap-2"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {submitting ? "Criando..." : "Criar Conta"}

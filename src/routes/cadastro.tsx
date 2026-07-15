@@ -157,7 +157,7 @@ function CadastroPage() {
               <button
                 type="submit"
                 disabled={loading || !canSubmit}
-                className="w-full py-3 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Criando..." : "Confirmar"}
               </button>
@@ -215,7 +215,7 @@ function AccountTypeTabs({
     { id: "creator", label: "Seja creator" },
   ];
   return (
-    <div className="grid grid-cols-2 p-1 rounded-full border border-border bg-background">
+    <div className="grid grid-cols-2 p-1 rounded-md border border-border bg-background">
       {tabs.map((t) => {
         const active = value === t.id;
         return (
@@ -223,7 +223,7 @@ function AccountTypeTabs({
             key={t.id}
             type="button"
             onClick={() => onChange(t.id)}
-            className={`py-2.5 text-sm font-semibold rounded-full transition-colors ${
+            className={`py-2.5 text-sm font-semibold rounded-md transition-colors ${
               active
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -251,7 +251,7 @@ function PasswordRules({ rules }: { rules: Record<string, boolean> }) {
         return (
           <li key={i.key} className="flex items-center gap-2 text-xs">
             <span
-              className={`flex items-center justify-center w-4 h-4 rounded-full transition-colors ${
+              className={`flex items-center justify-center w-4 h-4 rounded-md transition-colors ${
                 ok ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}
             >
@@ -307,7 +307,7 @@ function SocialButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
+      className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
     >
       {label}
     </button>

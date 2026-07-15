@@ -63,7 +63,7 @@ function SobrePage() {
           <div className="relative border-l border-border pl-8 md:pl-12 space-y-16">
             {timeline.map((t) => (
               <div key={t.year} className="relative">
-                <span className="absolute -left-10 md:-left-14 top-1 w-4 h-4 rounded-full bg-gradient-primary shadow-glow" />
+                <span className="absolute -left-10 md:-left-14 top-1 w-4 h-4 rounded-md bg-gradient-primary shadow-glow" />
                 <div className="text-sm label-caps text-primary">{t.year}</div>
                 <h3 className="mt-2 text-lg font-black tracking-tight">{t.title}</h3>
                 <p className="mt-3 text-muted-foreground text-lg">{t.desc}</p>
@@ -123,7 +123,7 @@ function SobrePage() {
               <figure key={t.handle} className="p-6 rounded-2xl bg-background border border-border">
                 <blockquote className="text-base">"{t.quote}"</blockquote>
                 <figcaption className="mt-6 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold">
+                  <div className="w-10 h-10 rounded-md bg-gradient-primary flex items-center justify-center text-sm font-bold">
                     {t.name.charAt(0)}
                   </div>
                   <div>
@@ -172,7 +172,7 @@ function SobrePage() {
               </p>
               <Link
                 to="/cadastro"
-                className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
+                className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
               >
                 Criar minha conta grátis <ArrowRight className="w-4 h-4" />
               </Link>

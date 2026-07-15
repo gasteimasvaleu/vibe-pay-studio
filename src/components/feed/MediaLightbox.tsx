@@ -120,7 +120,7 @@ export function MediaLightbox({ item, onClose, onOpenPost }: Props) {
               <button
                 type="button"
                 onClick={() => onOpenPost(item.publication_id)}
-                className="rounded-full bg-white text-black px-5 py-2.5 text-sm font-semibold hover:bg-white/90 transition-colors"
+                className="rounded-md bg-white text-black px-5 py-2.5 text-sm font-semibold hover:bg-white/90 transition-colors"
               >
                 Abrir post
               </button>

@@ -90,7 +90,7 @@ function EntrarPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-full bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-60"
+                className="w-full py-3 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-60"
               >
                 {loading ? "Entrando..." : "Entrar"}
               </button>
@@ -110,7 +110,7 @@ function EntrarPage() {
                 type="button"
                 disabled={googleLoading}
                 onClick={handleGoogle}
-                className="w-full py-3 rounded-full border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
+                className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
               >
                 {googleLoading ? "Redirecionando..." : "Continuar com Google"}
               </button>

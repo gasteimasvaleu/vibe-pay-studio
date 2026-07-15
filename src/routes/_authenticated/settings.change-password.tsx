@@ -99,7 +99,7 @@ function ChangePasswordPage() {
             type="button"
             disabled={!canSubmit}
             onClick={handleSave}
-            className="w-full h-12 rounded-full bg-gradient-primary text-primary-foreground disabled:opacity-60"
+            className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground disabled:opacity-60"
           >
             {loading ? "Salvando..." : "Salvar"}
           </Button>

@@ -226,7 +226,7 @@ function PersonalPage() {
           <Button
             type="button"
             onClick={handleSave}
-            className="w-full h-12 rounded-full text-base font-semibold"
+            className="w-full h-12 rounded-md text-base font-semibold"
           >
             Salvar
           </Button>

@@ -118,7 +118,7 @@ export function PublicationCard({
   return (
     <article className="rounded-3xl overflow-hidden border border-primary/30 bg-white/[0.04] backdrop-blur-md">
       <header className="flex items-center gap-3 px-4 py-3">
-        <div className="h-9 w-9 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
+        <div className="h-9 w-9 rounded-md bg-primary grid place-items-center text-sm font-bold text-white">
           {(item.author_username ?? "?").slice(0, 1).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
@@ -156,7 +156,7 @@ export function PublicationCard({
       {!item.locked && item.audio_url && (
         <div className="px-4 pb-3">
           <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-3">
-            <div className="h-10 w-10 shrink-0 rounded-full bg-primary/20 grid place-items-center text-primary">
+            <div className="h-10 w-10 shrink-0 rounded-md bg-primary/20 grid place-items-center text-primary">
               <AudioLines className="h-5 w-5" />
             </div>
             <audio
@@ -357,7 +357,7 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
             <Layers className="h-5 w-5" />
           </div>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-md bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             <Images className="h-3.5 w-3.5" />
             {index + 1}/{total}
           </div>
@@ -388,7 +388,7 @@ function LockedOverlay({
 
   return (
     <>
-      <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
+      <div className="absolute top-3 right-3 h-9 w-9 rounded-md bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
         {isChallenge ? <Trophy className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
       </div>
 
@@ -396,7 +396,7 @@ function LockedOverlay({
         <button
           type="button"
           onClick={() => onUnlock?.(item)}
-          className="inline-flex items-center gap-2 px-6 h-11 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
+          className="inline-flex items-center gap-2 px-6 h-11 rounded-md bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
         >
           {label}
           {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
@@ -449,7 +449,7 @@ function ChallengeTiersPanel({
             key={amount}
             type="button"
             onClick={() => onSelectTier(amount)}
-            className="rounded-full border border-border/60 bg-background/60 py-2.5 text-sm font-medium text-foreground/90 hover:bg-background hover:border-primary/50 transition-colors"
+            className="rounded-md border border-border/60 bg-background/60 py-2.5 text-sm font-medium text-foreground/90 hover:bg-background hover:border-primary/50 transition-colors"
           >
             {brl.format(amount / 100)}
           </button>

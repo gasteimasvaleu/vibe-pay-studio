@@ -47,7 +47,7 @@ function TwoFactorPage() {
           </div>
           <Link
             to="/settings/two-factor/setup"
-            className="flex items-center justify-center w-full h-12 rounded-full bg-gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+            className="flex items-center justify-center w-full h-12 rounded-md bg-gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
           >
             Habilitar
           </Link>

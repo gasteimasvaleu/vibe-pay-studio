@@ -315,7 +315,7 @@ function BancoPage() {
                   </p>
                 )}
                 <Button
-                  className="mt-4 w-full rounded-full"
+                  className="mt-4 w-full rounded-md"
                   disabled={!canWithdraw || isRefreshingAfterWithdrawal}
                   title={
                     isRefreshingAfterWithdrawal
@@ -522,7 +522,7 @@ function BancoPage() {
         {/* Integração com Asaas (explicativo) */}
         <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center shrink-0">
+            <div className="h-10 w-10 rounded-md bg-primary/10 grid place-items-center shrink-0">
               <Wallet className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -828,7 +828,7 @@ function BancoPage() {
 
           <div className="space-y-5">
             <div className="flex gap-3">
-              <div className="h-9 w-9 shrink-0 rounded-full bg-primary/10 grid place-items-center">
+              <div className="h-9 w-9 shrink-0 rounded-md bg-primary/10 grid place-items-center">
                 <Banknote className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -842,7 +842,7 @@ function BancoPage() {
             </div>
 
             <div className="flex gap-3">
-              <div className="h-9 w-9 shrink-0 rounded-full bg-primary/10 grid place-items-center">
+              <div className="h-9 w-9 shrink-0 rounded-md bg-primary/10 grid place-items-center">
                 <Clock className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -885,7 +885,7 @@ function BancoPage() {
             </div>
 
             <Button
-              className="w-full rounded-full"
+              className="w-full rounded-md"
               variant="outline"
               onClick={() => setInfoOpen(false)}
             >

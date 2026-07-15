@@ -267,7 +267,7 @@ function ProfilePage() {
             <button
               type="button"
               onClick={() => navigate({ to: "/settings/myprofile" })}
-              className="mt-5 w-full rounded-full bg-muted py-3 text-base font-semibold text-foreground hover:bg-muted/80 transition-colors"
+              className="mt-5 w-full rounded-md bg-muted py-3 text-base font-semibold text-foreground hover:bg-muted/80 transition-colors"
             >
               Editar perfil
             </button>
@@ -434,7 +434,7 @@ function MediasSection({
                 key={f.id}
                 type="button"
                 onClick={() => onFilterChange(f.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
                   isActive
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground"

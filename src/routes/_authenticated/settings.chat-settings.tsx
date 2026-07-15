@@ -133,7 +133,7 @@ function ChatSettingsPage() {
           type="button"
           onClick={onSave}
           disabled={!canSave}
-          className="w-full rounded-full h-12 text-base"
+          className="w-full rounded-md h-12 text-base"
         >
           Salvar alterações
         </Button>

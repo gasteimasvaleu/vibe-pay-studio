@@ -60,7 +60,7 @@ export function PromotionProgress({
   const pct = Math.min(100, Math.max(0, (step / totalSteps) * 100));
   return (
     <div className="mb-6">
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+      <div className="h-1.5 rounded-md bg-muted overflow-hidden">
         <div
           className="h-full bg-gradient-primary transition-all duration-300"
           style={{ width: `${pct}%` }}

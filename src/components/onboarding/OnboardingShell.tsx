@@ -27,7 +27,7 @@ export function OnboardingShell({
           {backTo ? (
             <Link
               to={backTo}
-              className="p-2 -ml-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-700"
+              className="p-2 -ml-2 rounded-md hover:bg-neutral-100 transition-colors text-neutral-700"
               aria-label="Voltar"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -36,7 +36,7 @@ export function OnboardingShell({
             <button
               type="button"
               onClick={() => router.history.back()}
-              className="p-2 -ml-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-700"
+              className="p-2 -ml-2 rounded-md hover:bg-neutral-100 transition-colors text-neutral-700"
               aria-label="Voltar"
             >
               <ArrowLeft className="w-5 h-5" />

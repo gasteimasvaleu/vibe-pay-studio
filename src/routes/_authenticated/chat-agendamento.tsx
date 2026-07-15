@@ -392,7 +392,7 @@ function Composer({
               <Button
                 type="button"
                 disabled={activeFilters.size === 0}
-                className="w-full h-12 rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold"
+                className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold"
               >
                 Aplicar filtro
               </Button>
@@ -469,7 +469,7 @@ function Composer({
                   <Button
                     type="button"
                     disabled={!canContinue}
-                    className="rounded-full px-6 h-10 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
+                    className="rounded-md px-6 h-10 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
                   >
                     Continuar
                   </Button>
@@ -541,7 +541,7 @@ function DateDialog({
               dt.setHours(hour, minute, 0, 0);
               onConfirm(dt);
             }}
-            className="rounded-full px-6 border-primary text-primary hover:bg-primary/10"
+            className="rounded-md px-6 border-primary text-primary hover:bg-primary/10"
           >
             Confirmar
           </Button>
@@ -549,7 +549,7 @@ function DateDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-full px-6"
+            className="rounded-md px-6"
           >
             Cancelar
           </Button>

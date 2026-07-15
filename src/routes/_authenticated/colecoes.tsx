@@ -59,7 +59,7 @@ function ColecoesPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setActive(tab.key)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-colors ${
+                  className={`px-4 py-2 rounded-md text-xs font-bold tracking-wide transition-colors ${
                     isActive
                       ? "bg-primary/15 text-primary"
                       : "text-muted-foreground hover:text-foreground"

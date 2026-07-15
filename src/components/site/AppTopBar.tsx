@@ -53,7 +53,7 @@ export function AppTopBar() {
             <input
               type="search"
               placeholder="Buscar creators, tags, posts..."
-              className="w-full h-10 pl-10 pr-4 rounded-full bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:bg-accent transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-md bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:bg-accent transition-colors"
             />
           </label>
         </div>

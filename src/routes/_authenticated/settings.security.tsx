@@ -82,7 +82,7 @@ function SecurityPage() {
                 key={p.id}
                 type="button"
                 onClick={() => toast.info("Em breve")}
-                className="flex items-center justify-center gap-2 rounded-full bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors"
+                className="flex items-center justify-center gap-2 rounded-md bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors"
               >
                 {p.icon}
                 <span>

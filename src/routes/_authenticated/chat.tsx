@@ -297,7 +297,7 @@ function ThreadRow({
               {thread.lastMessage ?? "Sem mensagens"}
             </span>
             {thread.unreadCount > 0 && (
-              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-full bg-gradient-primary text-primary-foreground font-semibold">
+              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-md bg-gradient-primary text-primary-foreground font-semibold">
                 {thread.unreadCount}
               </span>
             )}
@@ -424,7 +424,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+        "rounded-md px-4 py-2 text-sm font-medium transition-colors",
         active
           ? "bg-gradient-primary text-primary-foreground shadow-glow"
           : "bg-muted text-foreground hover:bg-accent",
@@ -509,7 +509,7 @@ function FiltersSheet({
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="mt-4 w-full h-12 rounded-full border border-primary text-primary font-semibold hover:bg-primary/10 transition-colors"
+          className="mt-4 w-full h-12 rounded-md border border-primary text-primary font-semibold hover:bg-primary/10 transition-colors"
         >
           Aplicar filtros
         </button>

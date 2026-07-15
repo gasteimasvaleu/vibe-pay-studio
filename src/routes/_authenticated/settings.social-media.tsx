@@ -77,7 +77,7 @@ function SettingsSocialMediaPage() {
             type="button"
             disabled={!dirty}
             onClick={() => toast.info("Em breve")}
-            className="w-full h-12 rounded-full bg-gradient-primary text-primary-foreground disabled:opacity-60"
+            className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground disabled:opacity-60"
           >
             Salvar
           </Button>

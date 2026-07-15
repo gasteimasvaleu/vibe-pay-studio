@@ -48,7 +48,7 @@ export function OfertaCard({ item }: { item: OfertaItem }) {
       <img src={item.coverUrl} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       {item.discountLabel && (
-        <span className="absolute top-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
+        <span className="absolute top-2 right-2 rounded-md bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
           {item.discountLabel} OFF
         </span>
       )}
@@ -124,7 +124,7 @@ export function RumoAoTopoCard({ item, rank }: { item: RumoItem; rank: number })
       <div className="relative h-24 bg-muted">
         <img src={item.coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        <div className="absolute bottom-2 right-3 flex items-center gap-3 text-white text-xs bg-black/40 rounded-full px-2 py-1">
+        <div className="absolute bottom-2 right-3 flex items-center gap-3 text-white text-xs bg-black/40 rounded-md px-2 py-1">
           <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" />{item.photos}</span>
           <span className="flex items-center gap-1"><Video className="h-3 w-3" />{item.videos}</span>
         </div>
@@ -156,7 +156,7 @@ export function PostEmAltaCard({ item, rank }: { item: CreatorBase; rank: number
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
       <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 text-white">
-        <img src={item.avatarUrl} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" loading="lazy" />
+        <img src={item.avatarUrl} alt="" className="h-9 w-9 rounded-md border-2 border-white object-cover" loading="lazy" />
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <span className="font-bold text-sm truncate">{item.name}</span>
@@ -184,7 +184,7 @@ export function ChatBombandoCard({ item, rank }: { item: ChatItem; rank: number 
       <Link
         to="/perfil/$username"
         params={{ username: item.handle }}
-        className="text-xs font-semibold text-primary border border-primary rounded-full px-3 py-1.5 hover:bg-primary/10 transition-colors"
+        className="text-xs font-semibold text-primary border border-primary rounded-md px-3 py-1.5 hover:bg-primary/10 transition-colors"
       >
         Ver perfil
       </Link>
@@ -216,7 +216,7 @@ export function UmAUmCard({ item, rank }: { item: UmAUmItem; rank: number }) {
         <Link
           to="/perfil/$username"
           params={{ username: item.handle }}
-          className="inline-block text-xs font-semibold text-primary border border-primary rounded-full px-4 py-1.5 hover:bg-primary/10 transition-colors"
+          className="inline-block text-xs font-semibold text-primary border border-primary rounded-md px-4 py-1.5 hover:bg-primary/10 transition-colors"
         >
           Ver perfil
         </Link>
@@ -244,7 +244,7 @@ export function LiveCard({ item, rank }: { item: LiveItem; rank: number }) {
         <Link
           to="/perfil/$username"
           params={{ username: item.handle }}
-          className="inline-block text-xs font-semibold text-primary border border-primary rounded-full px-4 py-1.5 hover:bg-primary/10 transition-colors"
+          className="inline-block text-xs font-semibold text-primary border border-primary rounded-md px-4 py-1.5 hover:bg-primary/10 transition-colors"
         >
           Ver perfil
         </Link>

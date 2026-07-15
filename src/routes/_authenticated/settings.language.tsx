@@ -65,7 +65,7 @@ function LanguagePage() {
       </header>
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 md:px-6 py-6 flex flex-col">
-        <div className="rounded-full bg-muted/60 px-5 py-3">
+        <div className="rounded-md bg-muted/60 px-5 py-3">
           <p className="text-xs text-muted-foreground">Escolha seu idioma</p>
           <Select value={value} onValueChange={setValue}>
             <SelectTrigger className="border-0 shadow-none bg-transparent h-8 p-0 focus:ring-0 text-base font-medium">
@@ -87,7 +87,7 @@ function LanguagePage() {
             type="button"
             onClick={onSave}
             disabled={!canSave}
-            className="w-full rounded-full h-12 text-base"
+            className="w-full rounded-md h-12 text-base"
           >
             Salvar
           </Button>

@@ -114,7 +114,7 @@ function SettingsMyProfilePage() {
             type="button"
             variant="outline"
             onClick={handleCopyLink}
-            className="mt-2 h-11 px-6 rounded-full gap-2"
+            className="mt-2 h-11 px-6 rounded-md gap-2"
           >
             <Copy className="h-4 w-4" />
             Copiar meu link Monetisexy
@@ -153,10 +153,10 @@ function SettingsMyProfilePage() {
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent
-          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl [&>button]:top-4 [&>button]:right-4 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-full [&>button]:bg-muted [&>button]:grid [&>button]:place-items-center [&>button]:opacity-100"
+          className="max-w-sm rounded-3xl border-0 bg-card p-8 shadow-2xl [&>button]:top-4 [&>button]:right-4 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-md [&>button]:bg-muted [&>button]:grid [&>button]:place-items-center [&>button]:opacity-100"
         >
           <div className="flex flex-col items-center text-center pt-2">
-            <div className="h-16 w-16 rounded-full border-[3px] border-primary grid place-items-center mb-5">
+            <div className="h-16 w-16 rounded-md border-[3px] border-primary grid place-items-center mb-5">
               <AlertCircle className="h-9 w-9 text-primary" />
               <span className="sr-only">Atenção</span>
             </div>
@@ -172,14 +172,14 @@ function SettingsMyProfilePage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setDeleteOpen(false)}
-                className="h-12 px-6 rounded-full text-foreground hover:bg-accent"
+                className="h-12 px-6 rounded-md text-foreground hover:bg-accent"
               >
                 Cancelar
               </Button>
               <Button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="h-12 px-8 rounded-full bg-muted text-foreground hover:bg-accent"
+                className="h-12 px-8 rounded-md bg-muted text-foreground hover:bg-accent"
               >
                 Continuar
               </Button>

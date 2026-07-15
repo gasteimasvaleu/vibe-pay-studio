@@ -83,7 +83,7 @@ function MutedPage() {
             </ol>
           </div>
           <Button
-            className="w-full rounded-full"
+            className="w-full rounded-md"
             onClick={() => setOpen(false)}
           >
             Entendi
