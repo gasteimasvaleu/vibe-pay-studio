@@ -1036,7 +1036,7 @@ function SubscriptionOfferCard({
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl border border-primary/30 bg-primary/[0.04] p-5 md:p-6 shadow-card"
+      className="space-y-3"
     >
       <div className="flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" strokeWidth={2} />
@@ -1044,9 +1044,9 @@ function SubscriptionOfferCard({
           Oferta de assinatura
         </h3>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">{countdownText}</p>
+      <p className="-mt-1 text-sm text-muted-foreground">{countdownText}</p>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-sm font-black text-white">
           {avatarInitial}
         </div>
@@ -1055,23 +1055,23 @@ function SubscriptionOfferCard({
         </div>
       </div>
 
-      <div className="mt-5 relative">
+      <div className="space-y-2">
         {promotion.discountPct > 0 && (
-          <span className="absolute -top-3 left-3 z-10 inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-500/30">
+          <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-500/30">
             Economize {Math.round(promotion.discountPct)}%
           </span>
         )}
         <button
           type="button"
           onClick={onSubscribe}
-          className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-base font-bold shadow-lg shadow-primary/20 hover:opacity-95 transition-opacity"
+          className="w-full h-11 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
         >
           Assinar agora {format(promotion.promoPrice)}
         </button>
       </div>
 
       {promotion.originalPrice > promotion.promoPrice && (
-        <p className="mt-2 text-right text-xs text-muted-foreground">
+        <p className="text-right text-xs text-muted-foreground">
           Preço original{" "}
           <span className="line-through">{format(promotion.originalPrice)}</span>
         </p>
@@ -1079,3 +1079,4 @@ function SubscriptionOfferCard({
     </motion.section>
   );
 }
+
