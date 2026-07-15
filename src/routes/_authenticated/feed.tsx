@@ -60,6 +60,7 @@ function FeedPage() {
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
   const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
+  const [challengeTier, setChallengeTier] = useState<number | null>(null);
 
 
 
@@ -82,11 +83,18 @@ function FeedPage() {
   const handleUnlock = (item: FeedItem) => {
     if (unlocking) return;
     if (item.visibility === "challenge") {
+      setChallengeTier(null);
       setChallengeFor(item);
       return;
     }
     setPending(item);
   };
+
+  const handleChallengeTierSelect = (item: FeedItem, tierCents: number) => {
+    setChallengeTier(tierCents);
+    setChallengeFor(item);
+  };
+
 
 
   const confirmPayment = async (method: PaymentMethod) => {
@@ -170,7 +178,7 @@ function FeedPage() {
           ) : feedItems.length > 0 ? (
             <div className="space-y-4">
               {feedItems.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} onChallengeTierSelect={handleChallengeTierSelect} />
               ))}
               <div ref={sentinelRef} className="h-8" />
               {feedQuery.isFetchingNextPage && (
@@ -283,15 +291,23 @@ function FeedPage() {
         publicationId={challengeFor?.id ?? null}
         creatorName={challengeFor?.author_username}
         open={!!challengeFor}
-        onOpenChange={(v) => !v && setChallengeFor(null)}
+        onOpenChange={(v) => {
+          if (!v) {
+            setChallengeFor(null);
+            setChallengeTier(null);
+          }
+        }}
+        preselectedTierCents={challengeTier}
         onContributed={() => {
           void queryClient.invalidateQueries({ queryKey: ["feed"] });
         }}
       />
 
 
+
     </div>
   );
 }
+
 
 

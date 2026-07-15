@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Trophy, X } from "lucide-react";
@@ -35,6 +35,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onContributed?: () => void;
+  preselectedTierCents?: number | null;
 };
 
 export function ChallengeContributeSheet({
@@ -43,16 +44,24 @@ export function ChallengeContributeSheet({
   open,
   onOpenChange,
   onContributed,
+  preselectedTierCents,
 }: Props) {
   const queryClient = useQueryClient();
   const fetchTiers = useServerFn(getChallengeTiers);
   const fetchStatus = useServerFn(getChallengeStatus);
   const createContribution = useServerFn(createChallengeContributionPayment);
 
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(preselectedTierCents ?? null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && preselectedTierCents != null) {
+      setSelected(preselectedTierCents);
+    }
+  }, [open, preselectedTierCents]);
+
 
   const tiersQuery = useQuery({
     queryKey: ["challenge-tiers", publicationId],

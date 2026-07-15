@@ -150,6 +150,7 @@ export type FeedItem = {
   challenge_cents: number | null;
   challenge_raised_cents: number | null;
   challenge_contributor_count: number | null;
+  challenge_tiers_cents: number[] | null;
   pinned: boolean;
   comments_disabled: boolean;
   expires_at: string | null;
@@ -236,6 +237,7 @@ export const getFeed = createServerFn({ method: "POST" })
       { data: commentRows },
       { data: unlockRows },
       { data: challengeContribRows },
+      { data: challengeTierRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -277,6 +279,15 @@ export const getFeed = createServerFn({ method: "POST" })
             .in("publication_id", challengeIds)
             .eq("status", "paid")
         : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
+      challengeIds.length > 0
+        ? client
+            .from("publication_challenge_tiers")
+            .select("publication_id, amount_cents, position")
+            .in("publication_id", challengeIds)
+            .order("position", { ascending: true })
+        : Promise.resolve({
+            data: [] as Array<{ publication_id: string; amount_cents: number; position: number }>,
+          }),
     ]);
 
     const profileMap = new Map(
@@ -298,6 +309,12 @@ export const getFeed = createServerFn({ method: "POST" })
     (challengeContribRows ?? []).forEach((r) => {
       challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
       challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
+    });
+    const challengeTiers = new Map<string, number[]>();
+    (challengeTierRows ?? []).forEach((r) => {
+      const arr = challengeTiers.get(r.publication_id) ?? [];
+      arr.push(r.amount_cents);
+      challengeTiers.set(r.publication_id, arr);
     });
 
     const items: FeedItem[] = page.map((p) => {
@@ -322,6 +339,7 @@ export const getFeed = createServerFn({ method: "POST" })
         challenge_cents: p.challenge_cents,
         challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
         challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
+        challenge_tiers_cents: p.visibility === "challenge" ? challengeTiers.get(p.id) ?? [] : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
@@ -402,6 +420,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
       { data: commentRows },
       { data: unlockRows },
       { data: challengeContribRows },
+      { data: challengeTierRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -444,6 +463,15 @@ export const getUserPublications = createServerFn({ method: "POST" })
             .in("publication_id", challengeIds)
             .eq("status", "paid")
         : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
+      challengeIds.length > 0
+        ? client
+            .from("publication_challenge_tiers")
+            .select("publication_id, amount_cents, position")
+            .in("publication_id", challengeIds)
+            .order("position", { ascending: true })
+        : Promise.resolve({
+            data: [] as Array<{ publication_id: string; amount_cents: number; position: number }>,
+          }),
     ]);
 
     const authorUsername = authorRow?.username ?? null;
@@ -463,6 +491,12 @@ export const getUserPublications = createServerFn({ method: "POST" })
     (challengeContribRows ?? []).forEach((r) => {
       challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
       challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
+    });
+    const challengeTiers = new Map<string, number[]>();
+    (challengeTierRows ?? []).forEach((r) => {
+      const arr = challengeTiers.get(r.publication_id) ?? [];
+      arr.push(r.amount_cents);
+      challengeTiers.set(r.publication_id, arr);
     });
 
     const items: FeedItem[] = page.map((p) => {
@@ -487,6 +521,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
         challenge_cents: p.challenge_cents,
         challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
         challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
+        challenge_tiers_cents: p.visibility === "challenge" ? challengeTiers.get(p.id) ?? [] : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
@@ -1131,6 +1166,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           challenge_cents: p.challenge_cents,
           challenge_raised_cents: null,
           challenge_contributor_count: null,
+          challenge_tiers_cents: null,
 
           pinned: p.pinned,
           comments_disabled: p.comments_disabled,
