@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   CheckSquare,
+  Download,
   FileAudio,
   Film,
   Image as ImageIcon,
@@ -18,6 +19,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -574,56 +576,51 @@ function VaultPage() {
         </div>
       </header>
 
-      {/* Selection bar */}
+      {/* Selection pill (floating bottom center) */}
       {selectionMode && selectedKeys.size > 0 && (
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-2 flex items-center justify-between bg-primary/10 border-b border-primary/20">
-          <span className="text-sm font-medium text-foreground">
-            {selectedKeys.size} selecionado(s)
-          </span>
-          <div className="flex items-center gap-2">
-            {activeTab.kind === "category" && (
-              <button
-                type="button"
-                onClick={() => {
-                  selectedItems.forEach((it) => {
-                    if (it.joinId) removeFromCatMut.mutate(it.joinId);
-                  });
-                  setSelectionMode(false);
-                  setSelectedKeys(new Set());
-                }}
-                className="h-8 px-3 rounded-md border border-border text-sm font-medium hover:bg-accent transition-colors"
-              >
-                Remover da categoria
-              </button>
-            )}
-            {activeTab.kind === "fixed" && activeTab.key === "envios" && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!window.confirm(`Excluir ${selectedKeys.size} envio(s)?`)) return;
-                  selectedItems
-                    .filter((i) => i.source === "upload")
-                    .forEach((i) => deleteUploadMut.mutate(i.id));
-                  setSelectionMode(false);
-                  setSelectedKeys(new Set());
-                }}
-                className="h-8 px-3 rounded-md border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Trash2 className="h-4 w-4" /> Excluir
-                </span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setPickCategoryOpen(true)}
-              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Adicionar à categoria
-            </button>
-          </div>
-        </div>
+        <SelectionPill
+          selectedCount={selectedKeys.size}
+          totalCount={content.items.length}
+          onClose={() => {
+            setSelectionMode(false);
+            setSelectedKeys(new Set());
+          }}
+          canDelete={
+            (activeTab.kind === "fixed" && activeTab.key === "envios") ||
+            activeTab.kind === "category"
+          }
+          onDelete={() => {
+            if (activeTab.kind === "category") {
+              selectedItems.forEach((it) => {
+                if (it.joinId) removeFromCatMut.mutate(it.joinId);
+              });
+            } else if (activeTab.kind === "fixed" && activeTab.key === "envios") {
+              if (!window.confirm(`Excluir ${selectedKeys.size} envio(s)?`)) return;
+              selectedItems
+                .filter((i) => i.source === "upload")
+                .forEach((i) => deleteUploadMut.mutate(i.id));
+            }
+            setSelectionMode(false);
+            setSelectedKeys(new Set());
+          }}
+          onDownload={() => {
+            selectedItems.forEach((it, idx) => {
+              setTimeout(() => {
+                const a = document.createElement("a");
+                a.href = it.url;
+                a.download = it.storagePath?.split("/").pop() || `vault-${it.id}`;
+                a.target = "_blank";
+                a.rel = "noopener";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }, idx * 250);
+            });
+          }}
+          onAddToCategory={() => setPickCategoryOpen(true)}
+        />
       )}
+
 
       <main className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
         {/* Sidebar */}
@@ -666,6 +663,15 @@ function VaultPage() {
                   ? counts.uploads
                   : counts.chat
                 : null;
+              const previews = counts?.previews
+                ? t.key === "todas"
+                  ? counts.previews.all
+                  : t.key === "publicacoes"
+                  ? counts.previews.publications
+                  : t.key === "envios"
+                  ? counts.previews.uploads
+                  : counts.previews.chat
+                : [];
               return (
                 <li key={t.key}>
                   <SidebarRow
@@ -673,6 +679,7 @@ function VaultPage() {
                     count={count}
                     subtitle={count === 0 ? "Vazio" : null}
                     active={isActive}
+                    previewUrls={previews}
                     onClick={() => selectTab({ kind: "fixed", key: t.key })}
                   />
                 </li>
@@ -693,12 +700,14 @@ function VaultPage() {
                     count={c.itemCount}
                     subtitle={c.itemCount === 0 ? "Vazio" : null}
                     active={isActive}
+                    previewUrls={c.previews}
                     onClick={() => selectTab({ kind: "category", id: c.id, name: c.name })}
                   />
                 </li>
               );
             })}
           </ul>
+
         </aside>
 
         {/* Content */}
@@ -847,19 +856,83 @@ function VaultPage() {
   );
 }
 
+function SelectionPill({
+  selectedCount,
+  totalCount,
+  canDelete,
+  onClose,
+  onDelete,
+  onDownload,
+  onAddToCategory,
+}: {
+  selectedCount: number;
+  totalCount: number;
+  canDelete: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+  onDownload: () => void;
+  onAddToCategory: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full bg-neutral-800 text-white shadow-2xl px-2 py-2">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fechar seleção"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <span className="px-3 text-sm font-medium whitespace-nowrap">
+        {selectedCount} / {totalCount} selecionado
+      </span>
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={!canDelete}
+        aria-label="Excluir"
+        title={canDelete ? "Excluir selecionados" : "Só é possível excluir na aba Envios ou em Categorias"}
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+      >
+        <Trash2 className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={onDownload}
+        aria-label="Baixar"
+        title="Baixar selecionados"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+      >
+        <Download className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={onAddToCategory}
+        className="ml-1 h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+      >
+        Adicionar à categoria
+      </button>
+    </div>
+  );
+}
+
+
 function SidebarRow({
   label,
   count,
   subtitle,
   active,
+  previewUrls,
   onClick,
 }: {
   label: string;
   count: number | null;
   subtitle: string | null;
   active: boolean;
+  previewUrls?: string[];
   onClick: () => void;
 }) {
+  const previews = (previewUrls ?? []).slice(0, 3);
   return (
     <button
       type="button"
@@ -879,9 +952,23 @@ function SidebarRow({
           <p className="mt-1 text-sm text-muted-foreground">{subtitle ?? "Vazio"}</p>
         )}
       </div>
+      {previews.length > 0 && (
+        <div className="relative shrink-0 h-12 w-[72px]">
+          {previews.map((url, i) => (
+            <div
+              key={`${url}-${i}`}
+              className="absolute top-0 h-12 w-12 overflow-hidden rounded-md ring-2 ring-background bg-muted"
+              style={{ left: `${i * 12}px`, zIndex: i + 1 }}
+            >
+              <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
     </button>
   );
 }
+
 
 function MediaGrid({
   items,

@@ -26,9 +26,11 @@ export type VaultCategory = {
   name: string;
   position: number;
   itemCount: number;
+  previews: string[];
   createdAt: string;
   updatedAt: string;
 };
+
 
 // ---------- Helpers ----------
 const mediaTypeSchema = z.enum(["all", "image", "video", "audio", "gif"]);
@@ -150,7 +152,7 @@ export const listVaultChatMedia = createServerFn({ method: "GET" })
 export const getVaultCounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ count: pubMediaCount }, { count: uploadsCount }] = await Promise.all([
+    const [{ count: pubMediaCount }, { count: uploadsCount }, pubMediaPrev, pubAudioPrev, uploadsPrev] = await Promise.all([
       context.supabase
         .from("publication_media")
         .select("id, publications!inner(author_id, archived_at)", { count: "exact", head: true })
@@ -160,16 +162,57 @@ export const getVaultCounts = createServerFn({ method: "GET" })
         .from("vault_uploads")
         .select("id", { count: "exact", head: true })
         .eq("user_id", context.userId),
+      context.supabase
+        .from("publication_media")
+        .select("url, created_at, publications!inner(author_id, archived_at)")
+        .eq("publications.author_id", context.userId)
+        .is("publications.archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(6),
+      context.supabase
+        .from("publications")
+        .select("preview_url, audio_url, published_at")
+        .eq("author_id", context.userId)
+        .is("archived_at", null)
+        .not("audio_url", "is", null)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .limit(3),
+      context.supabase
+        .from("vault_uploads")
+        .select("url, created_at, type")
+        .eq("user_id", context.userId)
+        .order("created_at", { ascending: false })
+        .limit(6),
     ]);
+
     const publications = pubMediaCount ?? 0;
     const uploads = uploadsCount ?? 0;
+
+    const pubPreviews = (pubMediaPrev.data ?? []).map((r) => r.url as string).slice(0, 3);
+    const audioCovers = (pubAudioPrev.data ?? [])
+      .map((r) => (r.preview_url ?? null) as string | null)
+      .filter((u): u is string => !!u);
+    const uploadPreviews = (uploadsPrev.data ?? [])
+      .filter((r) => r.type !== "audio")
+      .map((r) => r.url as string)
+      .slice(0, 3);
+
+    const allPreviews = [...pubPreviews, ...uploadPreviews].slice(0, 3);
+
     return {
       publications,
       uploads,
       chat: 0,
       all: publications + uploads,
+      previews: {
+        all: allPreviews,
+        publications: [...pubPreviews, ...audioCovers].slice(0, 3),
+        uploads: uploadPreviews,
+        chat: [] as string[],
+      },
     };
   });
+
 
 // ---------- Categories ----------
 export const listVaultCategories = createServerFn({ method: "GET" })
@@ -184,17 +227,33 @@ export const listVaultCategories = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const ids = (cats ?? []).map((c) => c.id);
-    let counts = new Map<string, number>();
+    const counts = new Map<string, number>();
+    const previews = new Map<string, string[]>();
     if (ids.length > 0) {
       const { data: items, error: itemsErr } = await context.supabase
         .from("vault_category_items")
-        .select("category_id")
-        .in("category_id", ids);
+        .select(
+          `category_id, source, created_at,
+           publication_media:publication_media_id(url, type),
+           vault_upload:vault_upload_id(url, type)`,
+        )
+        .in("category_id", ids)
+        .order("created_at", { ascending: false });
       if (itemsErr) throw new Error(itemsErr.message);
-      counts = (items ?? []).reduce((acc, row) => {
-        acc.set(row.category_id, (acc.get(row.category_id) ?? 0) + 1);
-        return acc;
-      }, new Map<string, number>());
+      for (const row of items ?? []) {
+        counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+        const list = previews.get(row.category_id) ?? [];
+        if (list.length >= 3) continue;
+        const pm = (row as unknown as { publication_media: { url: string; type: string } | null }).publication_media;
+        const up = (row as unknown as { vault_upload: { url: string; type: string } | null }).vault_upload;
+        const url = pm?.type !== "audio" ? pm?.url : null;
+        const upUrl = up?.type !== "audio" ? up?.url : null;
+        const chosen = url ?? upUrl ?? null;
+        if (chosen) {
+          list.push(chosen);
+          previews.set(row.category_id, list);
+        }
+      }
     }
 
     const result: VaultCategory[] = (cats ?? []).map((c) => ({
@@ -202,11 +261,13 @@ export const listVaultCategories = createServerFn({ method: "GET" })
       name: c.name,
       position: c.position,
       itemCount: counts.get(c.id) ?? 0,
+      previews: previews.get(c.id) ?? [],
       createdAt: c.created_at,
       updatedAt: c.updated_at,
     }));
     return result;
   });
+
 
 const createCategorySchema = z.object({ name: z.string().trim().min(1).max(60) });
 
