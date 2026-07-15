@@ -10,11 +10,13 @@ import {
   Gift,
   Heart,
   Images,
+  Info,
   Layers,
   Lock,
   MessageCircle,
   MoreVertical,
   Trophy,
+  Wallet,
 } from "lucide-react";
 import {
   toggleLike,
