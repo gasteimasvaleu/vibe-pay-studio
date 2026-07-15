@@ -148,6 +148,8 @@ export type FeedItem = {
   visibility: "public" | "paid" | "challenge";
   price_cents: number | null;
   challenge_cents: number | null;
+  challenge_raised_cents: number | null;
+  challenge_contributor_count: number | null;
   pinned: boolean;
   comments_disabled: boolean;
   expires_at: string | null;
@@ -162,6 +164,7 @@ export type FeedItem = {
   is_owner: boolean;
   archived_at: string | null;
 };
+
 
 
 const getFeedSchema = z.object({
