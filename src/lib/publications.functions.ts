@@ -225,6 +225,8 @@ export const getFeed = createServerFn({ method: "POST" })
     const ids = page.map((p) => p.id);
     const authorIds = Array.from(new Set(page.map((p) => p.author_id)));
 
+    const challengeIds = page.filter((p) => p.visibility === "challenge").map((p) => p.id);
+
     const [
       { data: mediaRows },
       { data: profileRows },
@@ -233,6 +235,7 @@ export const getFeed = createServerFn({ method: "POST" })
       { data: mySavedRows },
       { data: commentRows },
       { data: unlockRows },
+      { data: challengeContribRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -267,6 +270,13 @@ export const getFeed = createServerFn({ method: "POST" })
         .in("publication_id", ids)
         .eq("buyer_id", currentUserId)
         .eq("status", "paid"),
+      challengeIds.length > 0
+        ? client
+            .from("publication_unlocks")
+            .select("publication_id, amount_cents")
+            .in("publication_id", challengeIds)
+            .eq("status", "paid")
+        : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
     ]);
 
     const profileMap = new Map(
@@ -283,6 +293,12 @@ export const getFeed = createServerFn({ method: "POST" })
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
     const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
+    const challengeRaised = new Map<string, number>();
+    const challengeCount = new Map<string, number>();
+    (challengeContribRows ?? []).forEach((r) => {
+      challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
+      challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
+    });
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
@@ -304,6 +320,8 @@ export const getFeed = createServerFn({ method: "POST" })
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
+        challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
+        challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
@@ -323,6 +341,7 @@ export const getFeed = createServerFn({ method: "POST" })
 
     return { items, nextCursor };
   });
+
 
 const getUserPublicationsSchema = z.object({
   userId: z.string().uuid(),
