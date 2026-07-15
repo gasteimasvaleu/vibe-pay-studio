@@ -164,7 +164,7 @@ export function PublicationOptionsMenu({
     },
     {
       key: "archive",
-      label: "Arquivar post",
+      label: isArchived ? "Desarquivar post" : "Arquivar post",
       icon: <Archive className="h-6 w-6" strokeWidth={1.75} />,
       onClick: () => {
         close();
