@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -133,6 +134,7 @@ function VaultPage() {
   const [mobileDetail, setMobileDetail] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("TODAS");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
+  const [specificDate, setSpecificDate] = useState<Date | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
 
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
@@ -447,9 +449,22 @@ function VaultPage() {
     });
   };
 
+  const displayedItems = useMemo(() => {
+    if (timeRange === "specific" && specificDate) {
+      const y = specificDate.getFullYear();
+      const m = specificDate.getMonth();
+      const d = specificDate.getDate();
+      return content.items.filter((it) => {
+        const dt = new Date(it.createdAt);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      });
+    }
+    return content.items;
+  }, [content.items, timeRange, specificDate]);
+
   const selectedItems = useMemo(
-    () => content.items.filter((i) => selectedKeys.has(i.key)),
-    [content.items, selectedKeys],
+    () => displayedItems.filter((i) => selectedKeys.has(i.key)),
+    [displayedItems, selectedKeys],
   );
 
   return (
@@ -618,7 +633,7 @@ function VaultPage() {
       {selectionMode && selectedKeys.size > 0 && (
         <SelectionPill
           selectedCount={selectedKeys.size}
-          totalCount={content.items.length}
+          totalCount={displayedItems.length}
           onClose={() => {
             setSelectionMode(false);
             setSelectedKeys(new Set());
@@ -752,7 +767,11 @@ function VaultPage() {
         <section className={`${mobileDetail ? "block" : "hidden md:block"} px-4 md:px-6 py-6`}>
           <div className="flex items-center justify-between mb-4 px-1">
             <span className="text-sm font-bold tracking-wider text-muted-foreground">
-              {sortOrder === "recent" ? "MAIS RECENTES" : "MAIS ANTIGAS"}
+              {timeRange === "specific" && specificDate
+                ? dateFmt.format(specificDate)
+                : sortOrder === "recent"
+                ? "MAIS RECENTES"
+                : "MAIS ANTIGAS"}
             </span>
             <Popover>
               <PopoverTrigger asChild>
@@ -764,15 +783,42 @@ function VaultPage() {
                   <SlidersHorizontal className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 rounded-2xl p-2">
-                <RadioRow label="Todo o tempo" active={timeRange === "all"} onClick={() => setTimeRange("all")} />
-                <RadioRow label="Data específica" active={timeRange === "specific"} onClick={() => setTimeRange("specific")} />
+              <PopoverContent align="end" className="w-auto rounded-2xl p-2">
+                <div className="w-60">
+                  <RadioRow
+                    label="Todo o tempo"
+                    active={timeRange === "all"}
+                    onClick={() => {
+                      setTimeRange("all");
+                      setSpecificDate(undefined);
+                    }}
+                  />
+                  <RadioRow
+                    label="Data específica"
+                    active={timeRange === "specific"}
+                    onClick={() => setTimeRange("specific")}
+                  />
+                </div>
+                {timeRange === "specific" && (
+                  <div className="mt-1 border-t border-border pt-1">
+                    <Calendar
+                      mode="single"
+                      selected={specificDate}
+                      onSelect={(d: Date | undefined) => setSpecificDate(d)}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </div>
+                )}
                 <div className="my-2 border-t border-border" />
-                <RadioRow label="Mais recentes" active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} />
-                <RadioRow label="Mais antigas" active={sortOrder === "oldest"} onClick={() => setSortOrder("oldest")} />
+                <div className="w-60">
+                  <RadioRow label="Mais recentes" active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} />
+                  <RadioRow label="Mais antigas" active={sortOrder === "oldest"} onClick={() => setSortOrder("oldest")} />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
+
 
           <div className="flex flex-wrap gap-2 mb-6">
             {MEDIA_FILTERS.map((f) => {
@@ -796,8 +842,10 @@ function VaultPage() {
 
           {content.loading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>
-          ) : content.items.length === 0 ? (
-            activeTab.kind === "fixed" && activeTab.key === "conversas" ? (
+          ) : displayedItems.length === 0 ? (
+            content.items.length > 0 ? (
+              <EmptyCategory message="Nenhuma mídia nesta data." />
+            ) : activeTab.kind === "fixed" && activeTab.key === "conversas" ? (
               <EmptyCategory message="Mídias das conversas em breve" />
             ) : activeTab.kind === "fixed" && activeTab.key === "envios" ? (
               <EnviosEmpty onUpload={() => fileInputRef.current?.click()} uploading={uploading} />
@@ -806,7 +854,7 @@ function VaultPage() {
             )
           ) : (
             <MediaGrid
-              items={content.items}
+              items={displayedItems}
               selectionMode={selectionMode}
               selectedKeys={selectedKeys}
               onSelect={toggleSelect}
