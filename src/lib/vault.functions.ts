@@ -290,6 +290,7 @@ export const listVaultCategoryItems = createServerFn({ method: "GET" })
           key: `upload:${up.id}`,
           source: "upload",
           id: up.id,
+          joinId: row.id,
           publicationId: null,
           type: up.type as VaultMediaType,
           url: up.url,
