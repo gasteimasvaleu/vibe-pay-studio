@@ -804,7 +804,7 @@ function VaultPage() {
                     <Calendar
                       mode="single"
                       selected={specificDate}
-                      onSelect={(d) => setSpecificDate(d ?? undefined)}
+                      onSelect={(d: Date | undefined) => setSpecificDate(d)}
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
