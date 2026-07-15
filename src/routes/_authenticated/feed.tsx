@@ -59,6 +59,8 @@ function FeedPage() {
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
+  const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
+
 
 
   const feedQuery = useInfiniteQuery({
