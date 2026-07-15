@@ -204,7 +204,7 @@ function PublisherPage() {
   const [caption, setCaption] = useState("");
   const [toggles, setToggles] = useState<Toggles>({
     paid: { enabled: false, priceCents: null },
-    challenge: { enabled: false, priceCents: null },
+    challenge: { enabled: false, goalCents: null, tiersCents: [] },
     expires24h: false,
     schedule: { enabled: false, at: null },
     commentsDisabled: false,
@@ -226,6 +226,8 @@ function PublisherPage() {
 
   const [paidOpen, setPaidOpen] = useState(false);
   const [challengeOpen, setChallengeOpen] = useState(false);
+  const [challengeTiersOpen, setChallengeTiersOpen] = useState(false);
+  const [challengeDraftGoal, setChallengeDraftGoal] = useState<number>(5000);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
   const [preview, setPreview] = useState<PreviewMedia | null>(null);
@@ -674,7 +676,8 @@ function PublisherPage() {
         caption: caption.trim() || null,
         visibility,
         priceCents: toggles.paid.priceCents,
-        challengeCents: toggles.challenge.priceCents,
+        challengeCents: toggles.challenge.goalCents,
+        challengeTiersCents: toggles.challenge.tiersCents,
         expires24h: toggles.expires24h,
         scheduledAt: toggles.schedule.at,
         commentsDisabled: toggles.commentsDisabled,
@@ -717,7 +720,7 @@ function PublisherPage() {
     else
       setToggles((t) => ({
         ...t,
-        challenge: { enabled: false, priceCents: null },
+        challenge: { enabled: false, goalCents: null, tiersCents: [] },
       }));
   };
   const onScheduleChange = (v: boolean) => {
