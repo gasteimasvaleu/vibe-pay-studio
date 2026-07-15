@@ -1305,7 +1305,7 @@ function StepCompose({
                   <Plus className="h-8 w-8" />
                 </div>
               )}
-              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-primary text-primary-foreground text-[11px] font-semibold px-2 py-1 shadow-md">
+              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold px-2 py-1 shadow-md">
                 <ImageIcon className="h-3 w-3" />
                 Prévia
               </span>

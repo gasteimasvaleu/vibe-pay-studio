@@ -329,7 +329,7 @@ function ChatThreadView() {
                 {m.priceCents ? (
                   <div
                     className={cn(
-                      "mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium",
+                      "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                       mine
                         ? "bg-white/15 text-primary-foreground"
                         : "bg-emerald-500/15 text-emerald-500",
@@ -357,7 +357,7 @@ function ChatThreadView() {
         <div className="max-w-3xl mx-auto space-y-2">
           {priceLabel ? (
             <div className="flex items-center gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-3 py-1 font-medium">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">
                 <DollarSign className="h-3 w-3" />
                 Mensagem paga · {priceLabel}
               </span>

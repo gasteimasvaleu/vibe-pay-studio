@@ -297,7 +297,7 @@ function ThreadRow({
               {thread.lastMessage ?? "Sem mensagens"}
             </span>
             {thread.unreadCount > 0 && (
-              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-md bg-gradient-primary text-primary-foreground font-semibold">
+              <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-full bg-gradient-primary text-primary-foreground font-semibold">
                 {thread.unreadCount}
               </span>
             )}

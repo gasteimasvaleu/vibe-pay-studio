@@ -48,7 +48,7 @@ export function OfertaCard({ item }: { item: OfertaItem }) {
       <img src={item.coverUrl} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       {item.discountLabel && (
-        <span className="absolute top-2 right-2 rounded-md bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
+        <span className="absolute top-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
           {item.discountLabel} OFF
         </span>
       )}
@@ -124,7 +124,7 @@ export function RumoAoTopoCard({ item, rank }: { item: RumoItem; rank: number })
       <div className="relative h-24 bg-muted">
         <img src={item.coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
         <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        <div className="absolute bottom-2 right-3 flex items-center gap-3 text-white text-xs bg-black/40 rounded-md px-2 py-1">
+        <div className="absolute bottom-2 right-3 flex items-center gap-3 text-white text-xs bg-black/40 rounded-full px-2 py-1">
           <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" />{item.photos}</span>
           <span className="flex items-center gap-1"><Video className="h-3 w-3" />{item.videos}</span>
         </div>
@@ -199,11 +199,11 @@ export function UmAUmCard({ item, rank }: { item: UmAUmItem; rank: number }) {
         <img src={item.coverUrl} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
         <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
         {item.discountLabel && (
-          <span className="absolute top-2 left-2 rounded-md bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 leading-tight max-w-[60%]">
+          <span className="absolute top-2 left-2 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 leading-tight max-w-[60%]">
             {item.discountLabel}
           </span>
         )}
-        <span className="absolute bottom-2 right-2 rounded-md bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
+        <span className="absolute bottom-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
           um a um
         </span>
       </div>
