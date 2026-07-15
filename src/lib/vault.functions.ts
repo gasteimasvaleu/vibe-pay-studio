@@ -150,7 +150,7 @@ export const listVaultChatMedia = createServerFn({ method: "GET" })
 export const getVaultCounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ count: pubMediaCount }, { count: uploadsCount }] = await Promise.all([
+    const [{ count: pubMediaCount }, { count: uploadsCount }, pubMediaPrev, pubAudioPrev, uploadsPrev] = await Promise.all([
       context.supabase
         .from("publication_media")
         .select("id, publications!inner(author_id, archived_at)", { count: "exact", head: true })
@@ -160,16 +160,57 @@ export const getVaultCounts = createServerFn({ method: "GET" })
         .from("vault_uploads")
         .select("id", { count: "exact", head: true })
         .eq("user_id", context.userId),
+      context.supabase
+        .from("publication_media")
+        .select("url, created_at, publications!inner(author_id, archived_at)")
+        .eq("publications.author_id", context.userId)
+        .is("publications.archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(6),
+      context.supabase
+        .from("publications")
+        .select("preview_url, audio_url, published_at")
+        .eq("author_id", context.userId)
+        .is("archived_at", null)
+        .not("audio_url", "is", null)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .limit(3),
+      context.supabase
+        .from("vault_uploads")
+        .select("url, created_at, type")
+        .eq("user_id", context.userId)
+        .order("created_at", { ascending: false })
+        .limit(6),
     ]);
+
     const publications = pubMediaCount ?? 0;
     const uploads = uploadsCount ?? 0;
+
+    const pubPreviews = (pubMediaPrev.data ?? []).map((r) => r.url as string).slice(0, 3);
+    const audioCovers = (pubAudioPrev.data ?? [])
+      .map((r) => (r.preview_url ?? null) as string | null)
+      .filter((u): u is string => !!u);
+    const uploadPreviews = (uploadsPrev.data ?? [])
+      .filter((r) => r.type !== "audio")
+      .map((r) => r.url as string)
+      .slice(0, 3);
+
+    const allPreviews = [...pubPreviews, ...uploadPreviews].slice(0, 3);
+
     return {
       publications,
       uploads,
       chat: 0,
       all: publications + uploads,
+      previews: {
+        all: allPreviews,
+        publications: [...pubPreviews, ...audioCovers].slice(0, 3),
+        uploads: uploadPreviews,
+        chat: [] as string[],
+      },
     };
   });
+
 
 // ---------- Categories ----------
 export const listVaultCategories = createServerFn({ method: "GET" })
