@@ -1719,3 +1719,283 @@ function ScheduleDialog({
     </Dialog>
   );
 }
+
+const CHALLENGE_MIN_GOAL = 5000;
+const CHALLENGE_MAX_GOAL = 200000;
+const CHALLENGE_MIN_TIER = 500;
+const CHALLENGE_TIER_STEP = 50;
+const CHALLENGE_MAX_TIERS = 8;
+
+function roundToStep(v: number, step: number) {
+  return Math.round(v / step) * step;
+}
+
+function ChallengeGoalSheet({
+  open,
+  onOpenChange,
+  initialCents,
+  onNext,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  initialCents: number;
+  onNext: (cents: number) => void;
+}) {
+  const [cents, setCents] = useState(initialCents);
+  const stepCents = 100;
+
+  useEffect(() => {
+    if (open)
+      setCents(
+        Math.max(CHALLENGE_MIN_GOAL, Math.min(CHALLENGE_MAX_GOAL, initialCents)),
+      );
+  }, [open, initialCents]);
+
+  const clamp = (v: number) =>
+    Math.max(CHALLENGE_MIN_GOAL, Math.min(CHALLENGE_MAX_GOAL, v));
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="mx-auto w-full sm:max-w-[440px] rounded-t-3xl p-0 border-0"
+      >
+        <SheetHeader className="relative px-5 pt-5 pb-2">
+          <SheetTitle className="text-center text-base font-semibold">
+            Criando desafio
+          </SheetTitle>
+        </SheetHeader>
+        <div className="px-6 pb-6 pt-2">
+          <p className="text-center text-sm text-muted-foreground mb-2">
+            Valor do desafio
+          </p>
+          <div className="flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => setCents((c) => clamp(c - stepCents))}
+              className="h-11 w-11 grid place-items-center rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              aria-label="Diminuir"
+            >
+              <Minus className="h-5 w-5" />
+            </button>
+            <div className="flex-1 text-center text-3xl font-black tracking-tight">
+              {brl.format(cents / 100)}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCents((c) => clamp(c + stepCents))}
+              className="h-11 w-11 grid place-items-center rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              aria-label="Aumentar"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="mt-6 px-1">
+            <Slider
+              min={CHALLENGE_MIN_GOAL}
+              max={CHALLENGE_MAX_GOAL}
+              step={stepCents}
+              value={[cents]}
+              onValueChange={([v]) => setCents(clamp(v ?? CHALLENGE_MIN_GOAL))}
+            />
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            <span className="font-semibold">mínimo</span> :{" "}
+            {brl.format(CHALLENGE_MIN_GOAL / 100)} —{" "}
+            <span className="font-semibold">máximo</span> :{" "}
+            {brl.format(CHALLENGE_MAX_GOAL / 100)}
+          </p>
+          <Button
+            onClick={() => onNext(cents)}
+            className="w-full h-12 mt-6 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
+          >
+            Avançar
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+type TierRow = { id: string; value: string };
+
+function centsToInput(cents: number) {
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
+function parseInputCents(v: string): number | null {
+  const cleaned = v.replace(/[^\d,\.]/g, "").replace(",", ".");
+  if (!cleaned) return null;
+  const n = parseFloat(cleaned);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100);
+}
+
+function ChallengeTiersSheet({
+  open,
+  onOpenChange,
+  goalCents,
+  initialTiers,
+  onBack,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  goalCents: number;
+  initialTiers: number[];
+  onBack: () => void;
+  onConfirm: (tiers: number[]) => void;
+}) {
+  const [rows, setRows] = useState<TierRow[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialTiers.length > 0) {
+      setRows(
+        initialTiers.map((c, i) => ({ id: `t-${i}-${c}`, value: centsToInput(c) })),
+      );
+      return;
+    }
+    // sugestões: 25%, 50%, 75% da meta
+    const suggestions = [0.25, 0.5, 0.75].map((r) => {
+      const raw = Math.max(
+        CHALLENGE_MIN_TIER,
+        Math.min(goalCents, roundToStep(goalCents * r, CHALLENGE_TIER_STEP)),
+      );
+      return raw;
+    });
+    setRows(
+      suggestions.map((c, i) => ({ id: `s-${i}-${c}`, value: centsToInput(c) })),
+    );
+  }, [open, goalCents, initialTiers]);
+
+  const parsedRows = rows.map((r) => parseInputCents(r.value));
+  const baseTier = CHALLENGE_MIN_TIER;
+  const allTiers = [baseTier, ...parsedRows.filter((v): v is number => v !== null)];
+  const dupes = new Set(
+    allTiers.filter((v, i, arr) => arr.indexOf(v) !== i),
+  );
+  const rowErrors = parsedRows.map((v, i) => {
+    if (v === null) return "Valor inválido";
+    if (v <= 0) return "Valor inválido";
+    if (v > goalCents) return "Acima da meta";
+    if (v === baseTier || dupes.has(v)) return "Duplicada";
+    return null;
+  });
+  const valid =
+    parsedRows.every((v) => v !== null) && rowErrors.every((e) => e === null);
+
+  const addRow = () => {
+    if (rows.length + 1 >= CHALLENGE_MAX_TIERS) return; // +1 para a base fixa
+    setRows((r) => [...r, { id: `n-${Date.now()}`, value: "" }]);
+  };
+  const removeRow = (id: string) => {
+    setRows((r) => r.filter((row) => row.id !== id));
+  };
+  const updateRow = (id: string, value: string) => {
+    setRows((r) => r.map((row) => (row.id === id ? { ...row, value } : row)));
+  };
+
+  const handleConfirm = () => {
+    if (!valid) return;
+    const tiers = [
+      baseTier,
+      ...parsedRows.filter((v): v is number => v !== null),
+    ].sort((a, b) => a - b);
+    onConfirm(tiers);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="mx-auto w-full sm:max-w-[440px] rounded-t-3xl p-0 border-0 max-h-[90vh] overflow-y-auto"
+      >
+        <SheetHeader className="relative px-5 pt-5 pb-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="absolute left-4 top-4 h-9 w-9 grid place-items-center rounded-full hover:bg-accent"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <SheetTitle className="text-center text-base font-semibold">
+            Criando desafio
+          </SheetTitle>
+        </SheetHeader>
+        <div className="px-6 pb-6 pt-2 space-y-5">
+          <div>
+            <p className="text-sm text-muted-foreground">Valor do desafio</p>
+            <p className="text-3xl font-black tracking-tight">
+              {brl.format(goalCents / 100)}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {/* Faixa base fixa */}
+            <div className="flex items-center gap-2 rounded-full border border-border bg-muted/30 pl-4 pr-4 h-14">
+              <span className="text-muted-foreground text-sm mr-2">R$</span>
+              <span className="text-base font-medium text-foreground flex-1">
+                {centsToInput(baseTier)}
+              </span>
+            </div>
+
+            {rows.map((row, i) => {
+              const err = rowErrors[i];
+              return (
+                <div key={row.id} className="space-y-1">
+                  <div
+                    className={`flex items-center gap-2 rounded-full border pl-4 pr-1 h-14 bg-card ${
+                      err ? "border-destructive" : "border-border"
+                    }`}
+                  >
+                    <span className="text-muted-foreground text-sm mr-2">R$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={row.value}
+                      onChange={(e) => updateRow(row.id, e.target.value)}
+                      placeholder="0,00"
+                      className="flex-1 bg-transparent outline-none text-base font-medium text-foreground placeholder:text-muted-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeRow(row.id)}
+                      className="h-10 w-10 grid place-items-center rounded-full text-muted-foreground hover:bg-accent"
+                      aria-label="Remover faixa"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {err && (
+                    <p className="text-xs text-destructive pl-4">{err}</p>
+                  )}
+                </div>
+              );
+            })}
+
+            {rows.length + 1 < CHALLENGE_MAX_TIERS && (
+              <button
+                type="button"
+                onClick={addRow}
+                className="w-full flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar faixa
+              </button>
+            )}
+          </div>
+
+          <Button
+            onClick={handleConfirm}
+            disabled={!valid}
+            className="w-full h-12 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold disabled:opacity-50"
+          >
+            Confirmar
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
