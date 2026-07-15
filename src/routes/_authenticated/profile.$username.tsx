@@ -12,8 +12,6 @@ import {
   Archive,
   Settings,
   BadgeCheck,
-  Layers,
-  AudioLines,
   Loader2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,11 +24,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import {
-  getUserPostsGrid,
+  getUserPublications,
   getUserMediasGrid,
-  type GridPostItem,
+  type FeedItem,
   type GridMediaItem,
+  type GridMediaFilter,
 } from "@/lib/publications.functions";
+import { PublicationCard } from "@/components/feed/PublicationCard";
 
 type ProfileData = {
   userId: string;
@@ -96,26 +96,37 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"posts" | "medias">("posts");
+  const [mediaFilter, setMediaFilter] = useState<GridMediaFilter>("all");
   const { data: profile } = useSuspenseQuery(profileQueryOptions(username));
 
   const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
 
-  const fetchPosts = useServerFn(getUserPostsGrid);
+  const fetchUserPubs = useServerFn(getUserPublications);
   const fetchMedias = useServerFn(getUserMediasGrid);
 
+  const postsQueryKey = ["user-feed", profile.userId] as const;
   const postsQuery = useInfiniteQuery({
-    queryKey: ["user-posts-grid", profile.userId],
+    queryKey: postsQueryKey,
     queryFn: ({ pageParam }) =>
-      fetchPosts({ data: { userId: profile.userId, limit: 24, cursor: pageParam ?? undefined } }),
+      fetchUserPubs({
+        data: { userId: profile.userId, limit: 10, cursor: pageParam ?? undefined },
+      }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     enabled: activeTab === "posts",
   });
 
   const mediasQuery = useInfiniteQuery({
-    queryKey: ["user-medias-grid", profile.userId],
+    queryKey: ["user-medias-grid", profile.userId, mediaFilter],
     queryFn: ({ pageParam }) =>
-      fetchMedias({ data: { userId: profile.userId, limit: 24, cursor: pageParam ?? undefined } }),
+      fetchMedias({
+        data: {
+          userId: profile.userId,
+          limit: 24,
+          cursor: pageParam ?? undefined,
+          filter: mediaFilter,
+        },
+      }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     enabled: activeTab === "medias",
@@ -132,9 +143,8 @@ function ProfilePage() {
     fetchNextPage: mediasQuery.fetchNextPage,
   });
 
-  const postsItems: GridPostItem[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const postsItems: FeedItem[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const mediasItems: GridMediaItem[] = mediasQuery.data?.pages.flatMap((p) => p.items) ?? [];
-
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -270,18 +280,20 @@ function ProfilePage() {
           </div>
         </section>
 
-        {/* Grid */}
+        {/* Content */}
         {activeTab === "posts" ? (
-          <PostsGrid
-            username={profile.username}
+          <PostsList
             items={postsItems}
+            queryKey={postsQueryKey}
             isLoading={postsQuery.isLoading}
             isFetchingNextPage={postsQuery.isFetchingNextPage}
             hasNextPage={!!postsQuery.hasNextPage}
             sentinelRef={postsSentinel}
           />
         ) : (
-          <MediasGrid
+          <MediasSection
+            filter={mediaFilter}
+            onFilterChange={setMediaFilter}
             username={profile.username}
             items={mediasItems}
             isLoading={mediasQuery.isLoading}
@@ -295,16 +307,6 @@ function ProfilePage() {
   );
 }
 
-function GridSkeleton() {
-  return (
-    <div className="grid grid-cols-3 gap-1">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className="aspect-square bg-muted animate-pulse rounded-sm" />
-      ))}
-    </div>
-  );
-}
-
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
@@ -313,60 +315,36 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-type GridProps<T> = {
-  username: string;
-  items: T[];
+function PostsList({
+  items,
+  queryKey,
+  isLoading,
+  isFetchingNextPage,
+  hasNextPage,
+  sentinelRef,
+}: {
+  items: FeedItem[];
+  queryKey: readonly unknown[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   sentinelRef: React.RefObject<HTMLDivElement | null>;
-};
-
-function PostsGrid({ username, items, isLoading, isFetchingNextPage, hasNextPage, sentinelRef }: GridProps<GridPostItem>) {
-  if (isLoading && items.length === 0) return <GridSkeleton />;
-  if (!isLoading && items.length === 0) return <EmptyState message="Nenhuma postagem ainda." />;
-  return (
-    <div>
-      <div className="grid grid-cols-3 gap-1">
-        {items.map((post) => (
-          <Link
-            key={post.id}
-            to="/perfil/$username"
-            params={{ username }}
-            className="relative aspect-square overflow-hidden bg-muted group"
-          >
-            {post.cover_type === "video" && post.cover_url ? (
-              <video
-                src={post.cover_url}
-                preload="metadata"
-                muted
-                playsInline
-                className="h-full w-full object-cover"
-              />
-            ) : post.cover_url ? (
-              <img
-                src={post.cover_url}
-                alt=""
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
-            ) : post.has_audio ? (
-              <div className="h-full w-full grid place-items-center bg-gradient-to-br from-fuchsia-500/20 to-purple-600/20 text-fuchsia-300">
-                <AudioLines className="h-8 w-8" />
-              </div>
-            ) : (
-              <div className="h-full w-full grid place-items-center text-muted-foreground text-xs">
-                —
-              </div>
-            )}
-            <div className="absolute top-1.5 right-1.5 flex gap-1 text-white drop-shadow">
-              {post.media_count > 1 && <Layers className="h-4 w-4" />}
-              {post.cover_type === "video" && <Film className="h-4 w-4" />}
-              {post.has_audio && post.cover_url && <AudioLines className="h-4 w-4" />}
-            </div>
-          </Link>
+}) {
+  if (isLoading && items.length === 0) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="rounded-3xl border border-border bg-card h-80 animate-pulse" />
         ))}
       </div>
+    );
+  }
+  if (!isLoading && items.length === 0) return <EmptyState message="Nenhuma postagem ainda." />;
+  return (
+    <div className="space-y-4">
+      {items.map((item) => (
+        <PublicationCard key={item.id} item={item} queryKey={queryKey} />
+      ))}
       <div ref={sentinelRef} className="h-8" />
       {isFetchingNextPage && (
         <div className="flex justify-center py-4 text-muted-foreground">
@@ -380,44 +358,102 @@ function PostsGrid({ username, items, isLoading, isFetchingNextPage, hasNextPage
   );
 }
 
-function MediasGrid({ username, items, isLoading, isFetchingNextPage, hasNextPage, sentinelRef }: GridProps<GridMediaItem>) {
-  if (isLoading && items.length === 0) return <GridSkeleton />;
-  if (!isLoading && items.length === 0) return <EmptyState message="Nenhuma mídia ainda." />;
+const FILTERS: Array<{ id: GridMediaFilter; label: string; empty: string }> = [
+  { id: "all", label: "Todos", empty: "Nenhuma mídia ainda." },
+  { id: "photos", label: "Fotos", empty: "Nenhuma foto ainda." },
+  { id: "videos", label: "Vídeos", empty: "Nenhum vídeo ainda." },
+  { id: "paid", label: "Pagos", empty: "Nenhuma mídia paga ainda." },
+];
+
+function MediasSection({
+  filter,
+  onFilterChange,
+  username,
+  items,
+  isLoading,
+  isFetchingNextPage,
+  hasNextPage,
+  sentinelRef,
+}: {
+  filter: GridMediaFilter;
+  onFilterChange: (f: GridMediaFilter) => void;
+  username: string;
+  items: GridMediaItem[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const active = FILTERS.find((f) => f.id === filter) ?? FILTERS[0]!;
   return (
-    <div>
-      <div className="grid grid-cols-3 gap-1">
-        {items.map((m) => (
-          <Link
-            key={m.id}
-            to="/perfil/$username"
-            params={{ username }}
-            className="relative aspect-square overflow-hidden bg-muted"
-          >
-            {m.type === "video" ? (
-              <>
-                <video
-                  src={m.url}
-                  preload="metadata"
-                  muted
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
-                <Film className="absolute top-1.5 right-1.5 h-4 w-4 text-white drop-shadow" />
-              </>
-            ) : (
-              <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-            )}
-          </Link>
-        ))}
-      </div>
-      <div ref={sentinelRef} className="h-8" />
-      {isFetchingNextPage && (
-        <div className="flex justify-center py-4 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+    <div className="space-y-3">
+      <section className="rounded-2xl border border-border bg-card px-3 py-3">
+        <div className="flex items-center justify-center gap-2 sm:gap-6 overflow-x-auto">
+          {FILTERS.map((f) => {
+            const isActive = f.id === filter;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onFilterChange(f.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  isActive
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
-      )}
-      {!hasNextPage && items.length > 0 && (
-        <p className="text-center text-xs text-muted-foreground py-4">Fim das mídias.</p>
+      </section>
+
+      {isLoading && items.length === 0 ? (
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-1">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="aspect-square bg-muted animate-pulse rounded-sm" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <EmptyState message={active.empty} />
+      ) : (
+        <div>
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-1">
+            {items.map((m) => (
+              <Link
+                key={m.id}
+                to="/perfil/$username"
+                params={{ username }}
+                className="relative aspect-square overflow-hidden bg-muted"
+              >
+                {m.type === "video" ? (
+                  <>
+                    <video
+                      src={m.url}
+                      preload="metadata"
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                    <Film className="absolute top-1.5 right-1.5 h-4 w-4 text-white drop-shadow" />
+                  </>
+                ) : (
+                  <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                )}
+              </Link>
+            ))}
+          </div>
+          <div ref={sentinelRef} className="h-8" />
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-4 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+          )}
+          {!hasNextPage && items.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-4">Fim das mídias.</p>
+          )}
+        </div>
       )}
     </div>
   );

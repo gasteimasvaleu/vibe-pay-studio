@@ -49,18 +49,20 @@ export function PublicationCard({
   onUnlock,
   onComment,
   onTip,
+  queryKey = ["feed"],
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
   onComment?: (item: FeedItem) => void;
   onTip?: (item: FeedItem) => void;
+  queryKey?: readonly unknown[];
 }) {
   const queryClient = useQueryClient();
   const likeFn = useServerFn(toggleLike);
   const bookmarkFn = useServerFn(toggleBookmark);
 
   const patchItem = (patch: Partial<FeedItem>) => {
-    queryClient.setQueryData<InfiniteData<FeedData>>(["feed"], (prev) => {
+    queryClient.setQueryData<InfiniteData<FeedData>>(queryKey, (prev) => {
       if (!prev) return prev;
       return {
         ...prev,
