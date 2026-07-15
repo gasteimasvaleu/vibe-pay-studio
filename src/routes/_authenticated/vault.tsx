@@ -292,11 +292,31 @@ function VaultPage() {
     return list.filter((c) => c.name.toLowerCase().includes(q));
   }, [categoriesQ.data, sidebarSort, sidebarDirection, searchQuery]);
 
+  const countsData = countsQ.data;
   const filteredFixedTabs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return FIXED_TABS;
-    return FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q));
-  }, [searchQuery]);
+    const base = q ? FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q)) : [...FIXED_TABS];
+    const getCount = (key: FixedTabKey): number => {
+      if (!countsData) return 0;
+      if (key === "todas") return countsData.all;
+      if (key === "publicacoes") return countsData.publications;
+      if (key === "envios") return countsData.uploads;
+      return countsData.chat;
+    };
+    const originalIndex = (key: FixedTabKey) => FIXED_TABS.findIndex((t) => t.key === key);
+    const dir = sidebarDirection === "asc" ? 1 : -1;
+    if (sidebarSort === "padrao") {
+      base.sort((a, b) => (originalIndex(a.key) - originalIndex(b.key)) * dir);
+      return base;
+    }
+    base.sort((a, b) => {
+      if (sidebarSort === "nome") return a.label.localeCompare(b.label, "pt-BR") * dir;
+      if (sidebarSort === "midias" || sidebarSort === "recentes")
+        return (getCount(b.key) - getCount(a.key)) * dir;
+      return 0;
+    });
+    return base;
+  }, [searchQuery, sidebarSort, sidebarDirection, countsData]);
 
   const counts = countsQ.data;
 
@@ -681,7 +701,15 @@ function VaultPage() {
           className={`${mobileDetail ? "hidden md:block" : "block"} md:border-r md:border-border px-4 md:px-6 py-6`}
         >
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-sm font-bold tracking-wider text-muted-foreground">PADRÃO</span>
+            <span className="text-sm font-bold tracking-wider text-muted-foreground">
+              {(sidebarSort === "padrao"
+                ? "PADRÃO"
+                : sidebarSort === "nome"
+                ? "NOME"
+                : sidebarSort === "recentes"
+                ? "RECENTES"
+                : "MÍDIAS") + (sidebarSort === "padrao" ? "" : sidebarDirection === "asc" ? " ↑" : " ↓")}
+            </span>
             <Popover>
               <PopoverTrigger asChild>
                 <button
