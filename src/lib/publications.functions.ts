@@ -492,6 +492,12 @@ export const getUserPublications = createServerFn({ method: "POST" })
       challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
       challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
     });
+    const challengeTiers = new Map<string, number[]>();
+    (challengeTierRows ?? []).forEach((r) => {
+      const arr = challengeTiers.get(r.publication_id) ?? [];
+      arr.push(r.amount_cents);
+      challengeTiers.set(r.publication_id, arr);
+    });
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
