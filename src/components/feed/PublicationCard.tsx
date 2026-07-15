@@ -51,12 +51,14 @@ export function PublicationCard({
   onUnlock,
   onComment,
   onTip,
+  onChallengeTierSelect,
   queryKey = ["feed"],
 }: {
   item: FeedItem;
   onUnlock?: (item: FeedItem) => void;
   onComment?: (item: FeedItem) => void;
   onTip?: (item: FeedItem) => void;
+  onChallengeTierSelect?: (item: FeedItem, tierCents: number) => void;
   queryKey?: readonly unknown[];
 }) {
   const queryClient = useQueryClient();
