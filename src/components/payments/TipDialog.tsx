@@ -160,7 +160,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <button
                 type="button"
                 onClick={() => setAmount((a) => Math.max(5, a - 5))}
-                className="h-10 w-10 rounded-md bg-primary text-primary-foreground grid place-items-center"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center"
                 aria-label="Diminuir"
               >
                 <Minus className="h-5 w-5" />
@@ -171,7 +171,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <button
                 type="button"
                 onClick={() => setAmount((a) => a + 5)}
-                className="h-10 w-10 rounded-md bg-primary text-primary-foreground grid place-items-center"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center"
                 aria-label="Aumentar"
               >
                 <Plus className="h-5 w-5" />

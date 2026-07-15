@@ -81,7 +81,7 @@ function ArchivedPostsPage() {
           </>
         ) : (
           <div className="mt-10 grid place-items-center px-4 text-center">
-            <div className="h-14 w-14 rounded-md bg-primary/10 grid place-items-center text-primary">
+            <div className="h-14 w-14 rounded-full bg-primary/10 grid place-items-center text-primary">
               <Archive className="h-6 w-6" />
             </div>
             <p className="mt-4 text-base md:text-lg font-medium text-foreground">

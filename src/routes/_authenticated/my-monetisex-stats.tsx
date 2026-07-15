@@ -476,7 +476,7 @@ function TopBadgeCard() {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-5">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-md bg-primary/15 text-primary grid place-items-center">
+        <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
           <MessageCircle className="h-5 w-5" />
         </div>
         <span className="font-semibold">Meu banco</span>
@@ -600,7 +600,7 @@ function MeuBancoCard({ today, released, pending, loading }: { today: number; re
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-5">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-md bg-primary/15 text-primary grid place-items-center">
+        <div className="h-9 w-9 rounded-full bg-primary/15 text-primary grid place-items-center">
           <MessageCircle className="h-5 w-5" />
         </div>
         <span className="font-semibold">Meu banco</span>
@@ -1160,7 +1160,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 function ResumoItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-md bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
+      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-base font-bold">{value}</p>
@@ -1344,7 +1344,7 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
             <div key={t.buyerId} className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
               <span className="font-bold text-muted-foreground w-6">#{i + 1}</span>
               {t.avatarUrl ? <img src={t.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> :
-                <div className="h-9 w-9 rounded-md bg-muted grid place-items-center"><Users className="h-4 w-4 text-muted-foreground" /></div>}
+                <div className="h-9 w-9 rounded-full bg-muted grid place-items-center"><Users className="h-4 w-4 text-muted-foreground" /></div>}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{t.displayName ?? t.username ?? "Usuário"}</p>
                 {t.username && <p className="text-xs text-muted-foreground truncate">@{t.username}</p>}

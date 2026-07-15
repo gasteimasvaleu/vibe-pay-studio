@@ -222,7 +222,7 @@ function CreatorGatedNotFound() {
 function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <li className="flex items-start gap-3 rounded-2xl border border-border bg-background/40 px-4 py-3">
-      <span className="h-8 w-8 shrink-0 rounded-md grid place-items-center bg-primary/10 text-primary">
+      <span className="h-8 w-8 shrink-0 rounded-full grid place-items-center bg-primary/10 text-primary">
         {icon}
       </span>
       <span className="text-sm text-foreground">{text}</span>
@@ -605,7 +605,7 @@ function PerfilPage() {
                 }}
                 className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-7 w-7 rounded-md border border-black grid place-items-center">
+                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <DollarSign className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Mimo
@@ -615,7 +615,7 @@ function PerfilPage() {
                 onClick={() => navigate({ to: "/chat" })}
                 className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                <span className="h-7 w-7 rounded-md border border-black grid place-items-center">
+                <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 Chat
@@ -750,7 +750,7 @@ function PerfilPage() {
                           </div>
                         )}
                         {tile.type === "video" && !locked && (
-                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-md bg-black/60 grid place-items-center">
+                          <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 grid place-items-center">
                             <Film className="h-3.5 w-3.5 text-white" />
                           </div>
                         )}

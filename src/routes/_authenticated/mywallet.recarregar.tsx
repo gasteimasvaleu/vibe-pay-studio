@@ -107,7 +107,7 @@ function RecarregarPage() {
                 onClick={dec}
                 disabled={amount <= MIN}
                 aria-label="Diminuir"
-                className="h-10 w-10 rounded-md bg-primary text-primary-foreground grid place-items-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
               >
                 <Minus className="h-5 w-5" />
               </button>
@@ -119,7 +119,7 @@ function RecarregarPage() {
                 onClick={inc}
                 disabled={amount >= MAX}
                 aria-label="Aumentar"
-                className="h-10 w-10 rounded-md bg-primary text-primary-foreground grid place-items-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground grid place-items-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
               >
                 <Plus className="h-5 w-5" />
               </button>

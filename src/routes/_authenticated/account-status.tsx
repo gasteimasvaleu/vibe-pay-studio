@@ -111,7 +111,7 @@ function AccountStatusPage() {
                 >
                   <span
                     className={cn(
-                      "h-10 w-10 rounded-md grid place-items-center shrink-0",
+                      "h-10 w-10 rounded-full grid place-items-center shrink-0",
                       opt.iconWrap,
                     )}
                   >
@@ -123,7 +123,7 @@ function AccountStatusPage() {
                   </span>
                   <span
                     className={cn(
-                      "h-6 w-6 rounded-md grid place-items-center shrink-0 transition-colors",
+                      "h-6 w-6 rounded-full grid place-items-center shrink-0 transition-colors",
                       active
                         ? "bg-gradient-primary text-primary-foreground shadow-glow"
                         : "border border-border",

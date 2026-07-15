@@ -315,7 +315,7 @@ export function PublicationOptionsMenu({
         <AlertDialog open={confirmArchive} onOpenChange={setConfirmArchive}>
           <AlertDialogContent className="rounded-3xl border-border max-w-md">
             <AlertDialogHeader className="items-center text-center gap-3">
-              <div className="h-14 w-14 rounded-md bg-amber-100 grid place-items-center text-amber-500">
+              <div className="h-14 w-14 rounded-full bg-amber-100 grid place-items-center text-amber-500">
                 <AlertTriangle className="h-7 w-7" strokeWidth={2} />
               </div>
               <AlertDialogTitle className="text-center">

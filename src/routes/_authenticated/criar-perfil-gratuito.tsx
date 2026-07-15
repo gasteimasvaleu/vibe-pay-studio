@@ -154,7 +154,7 @@ function CriarPerfilGratuitoPage() {
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="relative h-32 w-32 rounded-md bg-muted grid place-items-center overflow-hidden"
+                className="relative h-32 w-32 rounded-full bg-muted grid place-items-center overflow-hidden"
                 aria-label="Enviar foto de perfil"
               >
                 {avatarPreview ? (
@@ -162,7 +162,7 @@ function CriarPerfilGratuitoPage() {
                 ) : (
                   <span className="text-3xl font-bold text-foreground">{initials}</span>
                 )}
-                <span className="absolute bottom-1 right-1 h-9 w-9 rounded-md bg-card border border-border grid place-items-center shadow-card">
+                <span className="absolute bottom-1 right-1 h-9 w-9 rounded-full bg-card border border-border grid place-items-center shadow-card">
                   <Camera className="h-4 w-4 text-foreground" />
                 </span>
               </button>
@@ -206,7 +206,7 @@ function CriarPerfilGratuitoPage() {
                       <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                       {active && (
                         <span className="absolute inset-0 bg-black/40 grid place-items-center">
-                          <span className="h-10 w-10 rounded-md bg-white grid place-items-center">
+                          <span className="h-10 w-10 rounded-full bg-white grid place-items-center">
                             <Camera className="h-4 w-4 text-foreground" />
                           </span>
                         </span>

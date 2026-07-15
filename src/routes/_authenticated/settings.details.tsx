@@ -58,7 +58,7 @@ function SettingsDetailsPage() {
           className="relative w-full h-40 md:h-48 rounded-2xl bg-gradient-to-b from-muted to-foreground/70 grid place-items-center overflow-hidden"
           aria-label="Alterar foto de capa"
         >
-          <span className="h-14 w-14 rounded-md bg-foreground text-background grid place-items-center shadow-md">
+          <span className="h-14 w-14 rounded-full bg-foreground text-background grid place-items-center shadow-md">
             <Camera className="h-6 w-6" />
           </span>
         </button>

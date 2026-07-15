@@ -421,7 +421,7 @@ export function CommentsSheet({
               </div>
             )}
             <div className="px-4 py-3 flex items-center gap-2">
-              <div className="h-9 w-9 shrink-0 rounded-md bg-primary grid place-items-center text-sm font-bold text-white">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
                 {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1 flex items-center gap-2 rounded-md bg-muted px-4 h-11">

@@ -432,7 +432,7 @@ function RadioRow({
       className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-accent transition-colors text-left"
     >
       <span
-        className={`h-5 w-5 rounded-md grid place-items-center border-2 ${
+        className={`h-5 w-5 rounded-full grid place-items-center border-2 ${
           active ? "border-primary bg-primary" : "border-muted-foreground/40"
         }`}
       >

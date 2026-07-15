@@ -120,7 +120,7 @@ export function ChallengeContributeSheet({
         >
           <SheetHeader className="px-5 pt-5 pb-3 space-y-0">
             <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-md bg-primary/10 border border-primary/30 grid place-items-center text-primary">
+              <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/30 grid place-items-center text-primary">
                 <Trophy className="h-4 w-4" />
               </div>
               <div className="text-left">

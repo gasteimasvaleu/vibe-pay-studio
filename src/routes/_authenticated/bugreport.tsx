@@ -165,7 +165,7 @@ function BugReportPage() {
                 <button
                   type="button"
                   onClick={() => removeMedia(m.id)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-md bg-background/90 text-foreground grid place-items-center shadow-sm hover:bg-background"
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/90 text-foreground grid place-items-center shadow-sm hover:bg-background"
                   aria-label="Remover mídia"
                 >
                   <X className="h-3.5 w-3.5" />
