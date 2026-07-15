@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -25,6 +25,7 @@ import {
   Smartphone,
   Twitter,
   UserPlus,
+  Sparkles,
   VolumeX,
 } from "lucide-react";
 
@@ -106,14 +107,15 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
-    const [{ data: activeSub }, { data: followRow }] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("id")
         .eq("subscriber_id", user.id)
         .eq("creator_id", profile.user_id)
         .eq("status", "active")
-        .gt("current_period_end", new Date().toISOString())
+        .gt("current_period_end", nowIso)
         .maybeSingle(),
       supabase
         .from("follows")
@@ -121,7 +123,31 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("follower_id", user.id)
         .eq("followee_id", profile.user_id)
         .maybeSingle(),
+      supabase
+        .from("promotions")
+        .select("id, name, promo_price, monthly_price_snapshot, discount_pct, ends_at, max_subscriptions, subscriptions_used")
+        .eq("creator_id", profile.user_id)
+        .eq("status", "active")
+        .lte("starts_at", nowIso)
+        .gt("ends_at", nowIso)
+        .order("promo_price", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+    const promotion =
+      promotionRow &&
+      (promotionRow.max_subscriptions == null ||
+        (promotionRow.subscriptions_used ?? 0) < promotionRow.max_subscriptions)
+        ? {
+            id: promotionRow.id as string,
+            name: (promotionRow.name as string) ?? "",
+            promoPrice: Number(promotionRow.promo_price ?? 0),
+            originalPrice: Number(promotionRow.monthly_price_snapshot ?? 0),
+            discountPct: Number(promotionRow.discount_pct ?? 0),
+            endsAt: promotionRow.ends_at as string,
+          }
+        : null;
 
     return {
       viewerId: user.id,
@@ -135,6 +161,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
+      promotion,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
@@ -232,7 +259,7 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
     Route.useLoaderData();
   const router = useRouter();
   const navigate = useNavigate();
@@ -636,6 +663,16 @@ function PerfilPage() {
           )}
         </div>
 
+        {/* Oferta ativa */}
+        {!isOwner && !isSubscribed && promotion && (
+          <SubscriptionOfferCard
+            promotion={promotion}
+            avatarInitial={profile.username.slice(0, 1).toUpperCase()}
+            onSubscribe={() => setSubscribeOpen(true)}
+            format={(v) => brl.format(v)}
+          />
+        )}
+
         {/* Assinaturas */}
         {!isOwner && monthlyPrice > 0 && (
           <SubscriptionPlansCard
@@ -945,5 +982,97 @@ function SocialButton({ children, label }: { children: React.ReactNode; label: s
     >
       {children}
     </button>
+  );
+}
+
+type OfferPromotion = {
+  id: string;
+  name: string;
+  promoPrice: number;
+  originalPrice: number;
+  discountPct: number;
+  endsAt: string;
+};
+
+function useCountdown(endsAt: string) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const target = new Date(endsAt).getTime();
+  const diff = Math.max(0, target - now);
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { diff, days, hours, minutes, seconds };
+}
+
+function SubscriptionOfferCard({
+  promotion,
+  avatarInitial,
+  onSubscribe,
+  format,
+}: {
+  promotion: OfferPromotion;
+  avatarInitial: string;
+  onSubscribe: () => void;
+  format: (v: number) => string;
+}) {
+  const { diff, days, hours, minutes, seconds } = useCountdown(promotion.endsAt);
+  if (diff <= 0) return null;
+
+  const countdownText =
+    days > 0
+      ? `Termina em ${days} dia${days > 1 ? "s" : ""}, ${hours}h ${minutes}m ${seconds}s`
+      : `Termina em ${hours}h ${minutes}m ${seconds}s`;
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl border border-primary/30 bg-primary/[0.04] p-5 md:p-6 shadow-card"
+    >
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-5 w-5 text-primary" strokeWidth={2} />
+        <h3 className="text-lg font-black tracking-tight text-foreground">
+          Oferta de assinatura
+        </h3>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{countdownText}</p>
+
+      <div className="mt-4 flex items-center gap-3">
+        <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-sm font-black text-white">
+          {avatarInitial}
+        </div>
+        <div className="flex-1 h-11 rounded-2xl border border-border bg-background px-4 flex items-center text-sm font-medium text-foreground truncate">
+          {promotion.name || "Oferta"}
+        </div>
+      </div>
+
+      <div className="mt-5 relative">
+        {promotion.discountPct > 0 && (
+          <span className="absolute -top-3 left-3 z-10 inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-500/30">
+            Economize {Math.round(promotion.discountPct)}%
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onSubscribe}
+          className="w-full h-14 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-base font-bold shadow-lg shadow-primary/20 hover:opacity-95 transition-opacity"
+        >
+          Assinar agora {format(promotion.promoPrice)}
+        </button>
+      </div>
+
+      {promotion.originalPrice > promotion.promoPrice && (
+        <p className="mt-2 text-right text-xs text-muted-foreground">
+          Preço original{" "}
+          <span className="line-through">{format(promotion.originalPrice)}</span>
+        </p>
+      )}
+    </motion.section>
   );
 }

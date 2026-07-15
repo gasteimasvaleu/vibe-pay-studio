@@ -1,61 +1,72 @@
 ## Objetivo
 
-Fechar as duas lacunas atuais de `/promotions`:
-
-1. `subscriptions_used` nunca é incrementado quando alguém assina — fica sempre em `0/N`.
-2. Não há job que marque `status='ended'` quando `ends_at` vence; hoje só é derivado em memória na listagem.
+Mostrar a oferta ativa do criador na sua página de perfil (`/perfil/$username`), dentro do card do perfil, logo abaixo da bio/social e acima da seção "Assinaturas", exatamente como no screenshot.
 
 ## Escopo
 
-Só backend (Supabase + server functions). A UI de `/promotions` já lê os campos certos — vai passar a mostrar dados reais sem alterações.
+Só a página `/perfil/$username`. Sem alterar o `/promotion` (criação), o `/promotions` (gestão) ou o `SubscribeDialog`.
 
-## 1. Contador de participantes (`subscriptions_used`)
+## Comportamento
 
-Fazer via **trigger no banco** para funcionar em todos os caminhos de pagamento (Asaas via webhook, `pay_with_wallet`, futuros gateways) sem depender do código de aplicação lembrar de incrementar.
+- Exibir apenas quando **não é o dono** do perfil (`!isOwner`) e existe uma promoção ativa com vaga disponível.
+- Se o viewer já é assinante ativo, também esconder (não faz sentido oferecer promo).
+- Clicar no botão "Assinar agora R$ X,XX" abre o `SubscribeDialog` existente. A cobrança promocional já é aplicada automaticamente no server para o plano mensal (mudança anterior).
 
-Migration:
+## Implementação
 
-- Adicionar coluna `subscriptions.promotion_id uuid` (nullable, FK para `promotions.id`, `ON DELETE SET NULL`) + índice.
-- Trigger `AFTER INSERT OR UPDATE OF status ON public.subscriptions`:
-  - Quando a assinatura passa a `status='active'` e `promotion_id IS NOT NULL`, faz `UPDATE promotions SET subscriptions_used = subscriptions_used + 1` atomicamente.
-  - Se o incremento fizer `subscriptions_used >= max_subscriptions`, encerra a promoção (`status='ended'`) no mesmo `UPDATE`.
-  - Idempotência: só incrementa quando `(TG_OP='INSERT' AND NEW.status='active')` ou `(TG_OP='UPDATE' AND OLD.status <> 'active' AND NEW.status='active')`.
+### 1. Loader (`src/routes/_authenticated/perfil.$username.tsx`)
 
-Server function (`pay_with_wallet` e checkout Asaas de assinatura):
+Adicionar uma consulta em paralelo às existentes:
 
-- Quando o comprador está numa promoção ativa do criador, aplicar `promo_price` no cálculo e gravar `promotion_id` na linha de `subscriptions`.
-- Validar no servidor (não confiar em input do cliente): reconsultar `getActivePromotionForCreator` para o `creatorId`, aplicar preço promocional se existir promoção com vaga.
-- Bloquear a assinatura quando a promoção "vencer no meio do caminho" (checar `subscriptions_used < max_subscriptions` dentro da mesma transação; a trigger acima é a garantia final).
-
-## 2. Encerramento automático quando `ends_at` vence
-
-Usar `pg_cron` puro (Opção 1 do knowledge — só SQL, sem endpoint externo):
-
-```sql
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
-SELECT cron.schedule(
-  'promotions-auto-end',
-  '*/15 * * * *',
-  $$
-  UPDATE public.promotions
-     SET status = 'ended', updated_at = now()
-   WHERE status = 'active'
-     AND ends_at <= now();
-  $$
-);
+```ts
+supabase
+  .from("promotions")
+  .select("id, name, promo_price, monthly_price_snapshot, discount_pct, ends_at, max_subscriptions, subscriptions_used")
+  .eq("creator_id", profile.user_id)
+  .eq("status", "active")
+  .lte("starts_at", nowIso)
+  .gt("ends_at", nowIso)
+  .order("promo_price", { ascending: true })
+  .limit(1)
+  .maybeSingle()
 ```
 
-Roda a cada 15 minutos. O campo `is_active` derivado em `listMyPromotions` continua funcionando como "segurança em tempo real" no intervalo entre execuções.
+RLS já permite (`Authenticated can view active promotions`). Retornar `promotion` no `loader` result (ou `null`), filtrando fora quando `subscriptions_used >= max_subscriptions`.
+
+### 2. Novo componente `SubscriptionOfferCard` (dentro do mesmo arquivo)
+
+Props: `promotion` (dados acima), `avatarInitial`, `onSubscribe`, `format` (Intl brl).
+
+Estrutura visual replicando o screenshot:
+
+- Container: `rounded-3xl border border-primary/30 bg-primary/[0.03] p-5 md:p-6`
+- Header: ícone Sparkles (lucide) em laranja + título "Oferta de assinatura" (font-bold).
+- Linha de countdown: `Termina em Xd, Yh Zm Ws` — hook `useCountdown(endsAt)` com `setInterval(1000)` e cleanup, formatando dias/horas/minutos/segundos; some quando chega a zero (nesse caso não renderizar o card).
+- Linha do nome: avatar circular pequeno à esquerda + campo estilizado (não editável — usar `<div>` com aparência de input arredondado) mostrando `promotion.name`.
+- Pill "Economize N%": pequeno badge verde arredondado, offset acima do CTA.
+- CTA gradient: botão largura total, altura ~56px, `bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200` (ou usar `bg-gradient-primary` do design system se existir laranja), texto preto bold: `Assinar agora {format(promo_price)}`.
+- Abaixo à direita: `Preço original` + valor com `line-through text-muted-foreground`.
+
+Todas as cores por tokens semânticos (nada hardcoded); usar `text-primary`/`bg-primary/10` para o pill quando o design system permitir e um `--gradient-offer` novo em `src/styles.css` para o CTA se necessário.
+
+### 3. Placement
+
+No JSX (`perfil.$username.tsx`), inserir **antes** do bloco `<SubscriptionPlansCard>` (linha ~640):
+
+```tsx
+{!isOwner && promotion && !isSubscribed && (
+  <SubscriptionOfferCard
+    promotion={promotion}
+    avatarInitial={profile.username.slice(0,1).toUpperCase()}
+    onSubscribe={() => setSubscribeOpen(true)}
+    format={(v) => brl.format(v)}
+  />
+)}
+```
 
 ## Fora de escopo
 
-- Notificar o criador quando a promoção encerra (nem por vagas nem por tempo).
-- Histórico de "quem assinou pela promoção" na UI (dados já ficam em `subscriptions.promotion_id` para futuro).
-- Mudanças visuais em `/promotions` ou `/promotion`.
-
-## Detalhes técnicos
-
-- Migration única com: nova coluna `promotion_id`, índice, função de trigger, trigger, e `cron.schedule`. Extensão `pg_cron` já pode estar habilitada — o `CREATE EXTENSION IF NOT EXISTS` é seguro.
-- RLS de `promotions` continua igual; a trigger roda como `SECURITY DEFINER` para poder atualizar `subscriptions_used` mesmo quando o `UPDATE` da assinatura vem de um contexto autenticado que não é o criador.
-- Ajustar `src/lib/wallet-pay.functions.ts` e o caminho do checkout Asaas de assinatura para: (a) buscar promoção ativa do criador, (b) usar `promo_price*100` como `price_cents_paid`, (c) preencher `promotion_id`.
+- Owner ver a própria oferta no seu perfil (ele já usa `/promotions`).
+- Aplicar promo em planos trimestral/semestral (mantém regra atual: promo só para mensal).
+- Atualização em tempo real (Realtime) do countdown de vagas.
+- Novo dialog dedicado; reaproveita o `SubscribeDialog` existente.
