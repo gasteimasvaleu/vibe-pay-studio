@@ -406,21 +406,21 @@ const FILTERS: Array<{ id: GridMediaFilter; label: string; empty: string }> = [
 function MediasSection({
   filter,
   onFilterChange,
-  username,
   items,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
   sentinelRef,
+  onOpen,
 }: {
   filter: GridMediaFilter;
   onFilterChange: (f: GridMediaFilter) => void;
-  username: string;
   items: GridMediaItem[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   sentinelRef: React.RefObject<HTMLDivElement | null>;
+  onOpen: (item: GridMediaItem) => void;
 }) {
   const active = FILTERS.find((f) => f.id === filter) ?? FILTERS[0]!;
   return (
