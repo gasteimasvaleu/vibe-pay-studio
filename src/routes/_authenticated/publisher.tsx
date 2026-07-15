@@ -1466,8 +1466,8 @@ function StepCompose({
           icon={<Wallet className="h-5 w-5" />}
           label="Desafio"
           hint={
-            toggles.challenge.enabled && toggles.challenge.priceCents != null
-              ? brl.format(toggles.challenge.priceCents / 100)
+            toggles.challenge.enabled && toggles.challenge.goalCents != null
+              ? brl.format(toggles.challenge.goalCents / 100)
               : undefined
           }
           checked={toggles.challenge.enabled}
