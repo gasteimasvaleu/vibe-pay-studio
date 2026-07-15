@@ -54,7 +54,9 @@ export function PublicationOptionsMenu({
   const invalidateFeeds = () => {
     queryClient.invalidateQueries({ queryKey: ["feed"] });
     queryClient.invalidateQueries({ queryKey: ["user-publications"] });
+    queryClient.invalidateQueries({ queryKey: ["archived-posts"] });
   };
+
 
   const close = () => setOpen(false);
 
@@ -87,15 +89,19 @@ export function PublicationOptionsMenu({
       showTopBanner(e instanceof Error ? e.message : "Erro ao atualizar"),
   });
 
+  const isArchived = !!item.archived_at;
+
   const archiveMutation = useMutation({
-    mutationFn: () => archiveFn({ data: { id: item.id, archived: true } }),
+    mutationFn: () =>
+      archiveFn({ data: { id: item.id, archived: !isArchived } }),
     onSuccess: () => {
-      showTopBanner("Post arquivado");
+      showTopBanner(isArchived ? "Post desarquivado" : "Post arquivado");
       invalidateFeeds();
     },
     onError: (e: unknown) =>
       showTopBanner(e instanceof Error ? e.message : "Erro ao arquivar"),
   });
+
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteFn({ data: { id: item.id } }),
@@ -158,7 +164,7 @@ export function PublicationOptionsMenu({
     },
     {
       key: "archive",
-      label: "Arquivar post",
+      label: isArchived ? "Desarquivar post" : "Arquivar post",
       icon: <Archive className="h-6 w-6" strokeWidth={1.75} />,
       onClick: () => {
         close();

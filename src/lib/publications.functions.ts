@@ -140,7 +140,9 @@ export type FeedItem = {
   liked_by_me: boolean;
   saved_by_me: boolean;
   is_owner: boolean;
+  archived_at: string | null;
 };
+
 
 const getFeedSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
@@ -291,7 +293,9 @@ export const getFeed = createServerFn({ method: "POST" })
         liked_by_me: likedSet.has(p.id),
         saved_by_me: savedSet.has(p.id),
         is_owner: isOwner,
+        archived_at: null,
       };
+
     });
 
     return { items, nextCursor };
@@ -314,8 +318,9 @@ export const getUserPublications = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url",
+        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at",
       )
+
       .eq("author_id", data.userId)
       .lte("published_at", new Date().toISOString())
       .order("pinned", { ascending: false })
@@ -436,7 +441,9 @@ export const getUserPublications = createServerFn({ method: "POST" })
         liked_by_me: likedSet.has(p.id),
         saved_by_me: savedSet.has(p.id),
         is_owner: isOwner,
+        archived_at: (p as { archived_at: string | null }).archived_at ?? null,
       };
+
     });
 
     return { items, nextCursor };
@@ -951,3 +958,134 @@ export const deletePublication = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+// ============================================================================
+// Posts arquivados: apenas do próprio usuário logado.
+// ============================================================================
+
+const getArchivedSchema = z.object({
+  limit: z.number().int().min(1).max(50).optional(),
+  cursor: z.string().datetime().optional(),
+});
+
+export const getArchivedPublications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => getArchivedSchema.parse(d ?? {}))
+  .handler(
+    async ({ data, context }): Promise<{ items: FeedItem[]; nextCursor: string | null }> => {
+      const limit = data.limit ?? 10;
+      const client = context.supabase;
+      const currentUserId = context.userId;
+
+      let query = client
+        .from("publications")
+        .select(
+          "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at",
+        )
+        .eq("author_id", currentUserId)
+        .not("archived_at", "is", null)
+        .order("archived_at", { ascending: false })
+        .limit(limit + 1);
+
+      if (data.cursor) query = query.lt("archived_at", data.cursor);
+
+      const { data: pubs, error } = await query;
+      if (error) throw new Error(error.message);
+      const rows = pubs ?? [];
+
+      const page = rows.slice(0, limit);
+      const nextCursor =
+        rows.length > limit
+          ? (page[page.length - 1] as { archived_at: string | null }).archived_at ?? null
+          : null;
+
+      if (page.length === 0) return { items: [], nextCursor: null };
+
+      const ids = page.map((p) => p.id);
+
+      const [
+        { data: mediaRows },
+        { data: profileRow },
+        { data: likeRows },
+        { data: myLikeRows },
+        { data: mySavedRows },
+        { data: commentRows },
+      ] = await Promise.all([
+        client
+          .from("publication_media")
+          .select("id, publication_id, url, type, position")
+          .in("publication_id", ids)
+          .order("position", { ascending: true }),
+        client
+          .from("profiles")
+          .select("user_id, username")
+          .eq("user_id", currentUserId)
+          .maybeSingle(),
+        client
+          .from("publication_likes")
+          .select("publication_id")
+          .in("publication_id", ids),
+        client
+          .from("publication_likes")
+          .select("publication_id")
+          .in("publication_id", ids)
+          .eq("user_id", currentUserId),
+        client
+          .from("publication_bookmarks")
+          .select("publication_id")
+          .in("publication_id", ids)
+          .eq("user_id", currentUserId),
+        client
+          .from("publication_comments")
+          .select("publication_id")
+          .in("publication_id", ids),
+      ]);
+
+      const authorUsername = profileRow?.username ?? null;
+      const likeCounts = new Map<string, number>();
+      (likeRows ?? []).forEach((r) => {
+        likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
+      });
+      const commentCounts = new Map<string, number>();
+      (commentRows ?? []).forEach((r) => {
+        commentCounts.set(r.publication_id, (commentCounts.get(r.publication_id) ?? 0) + 1);
+      });
+      const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
+      const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
+
+      const items: FeedItem[] = page.map((p) => {
+        const media = (mediaRows ?? [])
+          .filter((m) => m.publication_id === p.id)
+          .map((m) => ({
+            id: m.id,
+            url: m.url,
+            type: m.type as "image" | "video",
+            position: m.position,
+          }));
+        return {
+          id: p.id,
+          author_id: p.author_id,
+          author_username: authorUsername,
+          caption: p.caption,
+          visibility: p.visibility as FeedItem["visibility"],
+          price_cents: p.price_cents,
+          challenge_cents: p.challenge_cents,
+          pinned: p.pinned,
+          comments_disabled: p.comments_disabled,
+          expires_at: p.expires_at,
+          published_at: p.published_at!,
+          locked: false,
+          audio_url: (p as { audio_url: string | null }).audio_url ?? null,
+          media,
+          like_count: likeCounts.get(p.id) ?? 0,
+          comment_count: commentCounts.get(p.id) ?? 0,
+          liked_by_me: likedSet.has(p.id),
+          saved_by_me: savedSet.has(p.id),
+          is_owner: true,
+          archived_at: (p as { archived_at: string | null }).archived_at ?? null,
+        };
+      });
+
+      return { items, nextCursor };
+    },
+  );
