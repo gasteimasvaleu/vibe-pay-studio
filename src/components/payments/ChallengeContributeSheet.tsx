@@ -51,10 +51,17 @@ export function ChallengeContributeSheet({
   const fetchStatus = useServerFn(getChallengeStatus);
   const createContribution = useServerFn(createChallengeContributionPayment);
 
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(preselectedTierCents ?? null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && preselectedTierCents != null) {
+      setSelected(preselectedTierCents);
+    }
+  }, [open, preselectedTierCents]);
+
 
   const tiersQuery = useQuery({
     queryKey: ["challenge-tiers", publicationId],
