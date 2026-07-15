@@ -1151,3 +1151,67 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
       return { items, nextCursor };
     },
   );
+
+// ============================================================================
+// Desafio: faixas de contribuição e status agregado
+// ============================================================================
+
+export type ChallengeTier = { amountCents: number; position: number };
+
+export const getChallengeTiers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ publicationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<ChallengeTier[]> => {
+    const { data: rows, error } = await context.supabase
+      .from("publication_challenge_tiers")
+      .select("amount_cents, position")
+      .eq("publication_id", data.publicationId)
+      .order("position", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => ({ amountCents: r.amount_cents, position: r.position }));
+  });
+
+export type ChallengeStatus = {
+  goalCents: number;
+  raisedCents: number;
+  contributorCount: number;
+  myContributionCents: number | null;
+  reached: boolean;
+};
+
+export const getChallengeStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ publicationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<ChallengeStatus> => {
+    const { supabase, userId } = context;
+    const { data: pub, error } = await supabase
+      .from("publications")
+      .select("challenge_cents, visibility")
+      .eq("id", data.publicationId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!pub) throw new Error("publicação não encontrada");
+    const goalCents = pub.challenge_cents ?? 0;
+
+    const { data: contribRows, error: contribErr } = await supabase
+      .from("publication_unlocks")
+      .select("buyer_id, amount_cents")
+      .eq("publication_id", data.publicationId)
+      .eq("status", "paid");
+    if (contribErr) throw new Error(contribErr.message);
+
+    let raisedCents = 0;
+    let myContributionCents: number | null = null;
+    for (const r of contribRows ?? []) {
+      raisedCents += r.amount_cents ?? 0;
+      if (r.buyer_id === userId) myContributionCents = (myContributionCents ?? 0) + (r.amount_cents ?? 0);
+    }
+    return {
+      goalCents,
+      raisedCents,
+      contributorCount: (contribRows ?? []).length,
+      myContributionCents,
+      reached: goalCents > 0 && raisedCents >= goalCents,
+    };
+  });
+
