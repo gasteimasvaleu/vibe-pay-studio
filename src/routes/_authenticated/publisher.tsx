@@ -923,38 +923,60 @@ function PublisherPage() {
           setToggles((t) => ({
             ...t,
             paid: { enabled: true, priceCents: cents },
-            challenge: { enabled: false, priceCents: null },
+            challenge: { enabled: false, goalCents: null, tiersCents: [] },
           }));
           setPaidOpen(false);
           setPreviewSheetOpen(true);
         }}
       />
 
-      <PriceDialog
+      <ChallengeGoalSheet
         open={challengeOpen}
         onOpenChange={(v) => {
           setChallengeOpen(v);
           if (!v && !toggles.challenge.enabled) {
             setToggles((t) => ({
               ...t,
-              challenge: { enabled: false, priceCents: null },
+              challenge: { enabled: false, goalCents: null, tiersCents: [] },
             }));
           }
         }}
-        title="Desafio"
-        subtitle="Valor do desafio"
-        minCents={5000}
-        maxCents={200000}
-        initialCents={toggles.challenge.priceCents ?? 5000}
-        onConfirm={(cents) => {
-          setToggles((t) => ({
-            ...t,
-            challenge: { enabled: true, priceCents: cents },
-            paid: { enabled: false, priceCents: null },
-          }));
+        initialCents={toggles.challenge.goalCents ?? challengeDraftGoal}
+        onNext={(cents) => {
+          setChallengeDraftGoal(cents);
           setChallengeOpen(false);
+          setChallengeTiersOpen(true);
         }}
       />
+
+      <ChallengeTiersSheet
+        open={challengeTiersOpen}
+        onOpenChange={(v) => {
+          setChallengeTiersOpen(v);
+          if (!v && !toggles.challenge.enabled) {
+            setToggles((t) => ({
+              ...t,
+              challenge: { enabled: false, goalCents: null, tiersCents: [] },
+            }));
+          }
+        }}
+        goalCents={challengeDraftGoal}
+        initialTiers={toggles.challenge.tiersCents}
+        onBack={() => {
+          setChallengeTiersOpen(false);
+          setChallengeOpen(true);
+        }}
+        onConfirm={(tiers) => {
+          setToggles((t) => ({
+            ...t,
+            challenge: { enabled: true, goalCents: challengeDraftGoal, tiersCents: tiers },
+            paid: { enabled: false, priceCents: null },
+          }));
+          setChallengeTiersOpen(false);
+          setPreviewSheetOpen(true);
+        }}
+      />
+
 
       <ScheduleDialog
         open={scheduleOpen}
