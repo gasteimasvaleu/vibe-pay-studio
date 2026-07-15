@@ -420,6 +420,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
       { data: commentRows },
       { data: unlockRows },
       { data: challengeContribRows },
+      { data: challengeTierRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -462,6 +463,15 @@ export const getUserPublications = createServerFn({ method: "POST" })
             .in("publication_id", challengeIds)
             .eq("status", "paid")
         : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
+      challengeIds.length > 0
+        ? client
+            .from("publication_challenge_tiers")
+            .select("publication_id, amount_cents, position")
+            .in("publication_id", challengeIds)
+            .order("position", { ascending: true })
+        : Promise.resolve({
+            data: [] as Array<{ publication_id: string; amount_cents: number; position: number }>,
+          }),
     ]);
 
     const authorUsername = authorRow?.username ?? null;
