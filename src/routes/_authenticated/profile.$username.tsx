@@ -324,15 +324,21 @@ function ProfilePage() {
           <MediasSection
             filter={mediaFilter}
             onFilterChange={setMediaFilter}
-            username={profile.username}
             items={mediasItems}
             isLoading={mediasQuery.isLoading}
             isFetchingNextPage={mediasQuery.isFetchingNextPage}
             hasNextPage={!!mediasQuery.hasNextPage}
             sentinelRef={mediasSentinel}
+            onOpen={setOpenMedia}
           />
         )}
       </div>
+
+      <MediaLightbox
+        item={openMedia}
+        onClose={() => setOpenMedia(null)}
+        onOpenPost={handleOpenPost}
+      />
     </div>
   );
 }
