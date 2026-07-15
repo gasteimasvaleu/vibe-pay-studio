@@ -825,26 +825,15 @@ function PublisherPage() {
       <footer className="fixed bottom-16 inset-x-0 z-30 bg-background/95 backdrop-blur border-t border-border pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-3xl mx-auto px-4 py-3">
           {step === 1 ? (
-            <div className="space-y-3">
-              {uploadingCount > 0 && (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                    <span>Enviando mídia</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="h-1.5" />
-                </div>
-              )}
-              <Button
-                className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
-                disabled={!canContinue}
-                onClick={() => setStep(2)}
-              >
-                {uploadingCount > 0
-                  ? `Enviando (${uploadingCount})...`
-                  : "Continuar"}
-              </Button>
-            </div>
+            <Button
+              className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+              disabled={!canContinue}
+              onClick={() => setStep(2)}
+            >
+              {uploadingCount > 0
+                ? `Enviando (${uploadingCount})...`
+                : "Continuar"}
+            </Button>
           ) : (
             <Button
               className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"

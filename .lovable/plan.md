@@ -1,20 +1,23 @@
-## Problema
+## Objetivo
+Remover a barra de carregamento global do footer na tela de publisher, pois cada mídia já exibe sua própria barra de progresso individual sobre o preview.
 
-No `MediaLightbox`, o ícone de lupa (`Search`) no header está sem ação — era um placeholder visual. O usuário espera que ele funcione como um botão de **zoom** na mídia.
+## Alteração
+**Arquivo:** `src/routes/_authenticated/publisher.tsx`
 
-## Correção
+Na seção do `<footer>` fixo (linhas ~825–858), remover apenas o bloco que exibe:
+- rótulo "Enviando mídia"
+- percentual global (`uploadProgress`%)
+- `<Progress value={uploadProgress} />`
 
-**`src/components/feed/MediaLightbox.tsx`**
-
-1. Adicionar estado local `zoom` (número, começando em `1`). Passos: `1x → 1.5x → 2x → 3x` e volta para `1x` ao passar de `3x` (clique cíclico). Reset para `1` sempre que `item` mudar (nova mídia aberta).
-2. O botão da lupa passa a chamar `setZoom(next)`. Título do botão vira "Aumentar zoom (Nx)".
-3. Aplicar zoom apenas para imagens: envolver a `<img>` em um wrapper `overflow-auto` (permite pan quando ampliada) e aplicar `style={{ transform: 'scale(zoom)', transformOrigin: 'center center', transition: 'transform 200ms ease' }}` na imagem.
-4. Para vídeos, o botão fica desabilitado (`opacity-50 cursor-not-allowed`) — zoom não faz sentido em `<video controls>`.
-5. Indicador sutil ao lado da lupa quando `zoom > 1`: badge com o valor atual (ex.: "2x") em texto pequeno.
-
-Também aproveitar para silenciar o warning do Radix adicionando `<DialogDescription>` visualmente escondido ("Mídia em tela cheia com opções de zoom e ação para abrir o post relacionado.").
+Manter:
+- botão "Continuar" / "Postar"
+- texto dinâmico "Enviando (N)..." quando houver uploads em andamento
+- cálculo de `uploadProgress` e `uploadingCount` (ainda usados para habilitar/desabilitar o botão e o texto)
 
 ## Fora de escopo
+- Não alterar a barra de progresso individual dentro de cada card de mídia (`MediaGridItem`).
+- Não alterar a barra de progresso da prévia paga nem a de áudio.
 
-- Pinch-to-zoom em mobile / arrastar para pan avançado (o `overflow-auto` já dá pan por scroll).
-- Zoom em vídeos.
+## Validação
+- Verificar visualmente que o footer não mostra mais a barra global durante upload.
+- Confirmar que o botão "Continuar" ainda fica desabilitado enquanto houver uploads pendentes.
