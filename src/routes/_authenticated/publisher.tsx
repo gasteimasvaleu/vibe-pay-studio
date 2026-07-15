@@ -245,13 +245,6 @@ function PublisherPage() {
 
   const uploadingCount = media.filter((m) => m.status === "uploading").length;
   const errorCount = media.filter((m) => m.status === "error").length;
-  const uploadProgress =
-    media.length > 0
-      ? Math.round(
-          media.reduce((total, item) => total + item.uploadProgress, 0) /
-            media.length,
-        )
-      : 0;
   const audioBusy = audio.status === "recording" || audio.status === "uploading";
   const previewBusy = preview?.status === "uploading";
   const previewMissing = toggles.paid.enabled && (!preview || preview.status !== "ready");
