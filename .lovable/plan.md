@@ -2,21 +2,22 @@ Ajustes visuais no card de oferta de assinatura em `src/routes/_authenticated/pe
 
 ## Mudanças
 
-### 1. Mover o card da oferta para dentro do card de identidade do perfil
-- Hoje o `<SubscriptionOfferCard />` é renderizado fora do bloco de identidade (linhas 666–674), como uma seção irmã com borda/sombra próprias — por isso aparece "solto" abaixo do perfil.
-- Mover essa renderização para dentro do `<div>` do card de identidade (linhas 599–664), logo após o bloco de botões "Mimo / Chat" (após a linha 651), de modo que o conteúdo apareça abaixo do bio, ainda dentro da mesma "folha" do perfil, como no primeiro screenshot de referência.
-- Adicionar padding direito ao container (`pr-4 md:pr-6`) para casar com o padding esquerdo já existente.
+### 1. Card de promoção como card aninhado dentro do card de perfil
+- O `SubscriptionOfferCard` hoje é renderizado como um bloco sem borda/background próprio (`space-y-3`) dentro do card de identidade.
+- Envolver o conteúdo interno do `SubscriptionOfferCard` em um container com aparência de card: `rounded-2xl` (ou `rounded-3xl`), borda sutil, background diferenciado (`bg-background` ou tom mais claro que o `bg-card` do perfil) e padding interno (`p-4 md:p-5`).
+- Manter o wrapper externo no card de identidade com `pr-4 md:pr-6 pt-2`, para que o card de promoção fique alinhado ao conteúdo do perfil.
 
-### 2. Ajustar o `SubscriptionOfferCard` para viver dentro do card do perfil
-- Remover o wrapper externo com borda/sombra/background próprios (`rounded-3xl border border-primary/30 bg-primary/[0.04] p-5 md:p-6 shadow-card`) — passa a ser apenas um bloco com espaçamento vertical (`pt-2 space-y-3`), sem cartão duplicado.
-- Manter a estrutura interna: cabeçalho com `Sparkles` + "Oferta de assinatura", countdown, avatar + campo com o nome da oferta, botão CTA e "Preço original" riscado.
+### 2. Manter posição da badge "Economize X%" conforme screenshot
+- A badge já está como pill inline acima do botão (`inline-flex rounded-full bg-emerald-500/15 ...`).
+- Garantir que fique alinhada à esquerda, acima do botão, sem `absolute` ou sobreposição.
 
-### 3. Ajustar a badge "Economize X%"
-- Hoje está posicionada com `absolute -top-3 left-3` sobrepondo o botão — no primeiro screenshot ela é um pill inline acima do botão, alinhado à esquerda, sem sobreposição.
-- Trocar por um pill inline (`inline-flex` num container acima do botão), sem `absolute`, mantendo cores emerald atuais.
+### 3. Manter botão "Assinar agora" mais fino
+- O botão já está ajustado para `h-11 text-sm` com `shadow-sm` e gradiente.
+- Manter `rounded-2xl` e o estilo de gradiente atual.
 
-### 4. Afinar o botão "Assinar agora"
-- Reduzir de `h-14 text-base` para algo mais próximo dos demais botões do perfil (`h-11 text-sm`), remover `shadow-lg` deixando apenas `shadow-sm`, manter o gradient e o `rounded-2xl`.
+### 4. Preservar estrutura interna
+- Manter cabeçalho com `Sparkles` + "Oferta de assinatura".
+- Manter countdown, avatar + campo com nome da oferta, botão CTA e "Preço original" riscado.
 
 ## Fora de escopo
 - Nenhuma mudança em lógica de negócio, loader, tipos ou tabelas.

@@ -1036,7 +1036,7 @@ function SubscriptionOfferCard({
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-3"
+      className="rounded-2xl border border-border bg-background p-4 md:p-5 space-y-3"
     >
       <div className="flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" strokeWidth={2} />
