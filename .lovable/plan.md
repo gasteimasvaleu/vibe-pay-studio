@@ -1,13 +1,14 @@
-## Problema
+## Correções em `ChallengeContributeSheet.tsx`
 
-O slot da prévia no compositor (`StepCompose`, `publisher.tsx` linha 1282) só é renderizado quando `toggles.paid.enabled`. Com desafio ativo (`toggles.challenge.enabled`), a prévia é enviada e salva, mas o thumbnail nunca aparece ao lado da primeira mídia.
+1. **Remover X duplicado**: `SheetContent` já renderiza um botão de fechar interno. Excluir o `<button>` custom (linhas 135–142) e o import não usado de `X`.
+2. **Usar tokens do design system** no lugar de cores fixas (`bg-[#12071e]`, `text-white`, `border-white/10`, `bg-white/[0.04]`, `text-white/60`, `border-orange-*`, `bg-orange-500/15`, `text-orange-300`, `text-emerald-300`, gradiente laranja→rosa):
+   - Container do sheet: `bg-background text-foreground border-border`.
+   - Cartões/superfícies internas: `bg-card border-border` (ou `bg-muted`).
+   - Textos secundários: `text-muted-foreground`.
+   - Ícone do troféu: `bg-primary/10 border-primary/30 text-primary`.
+   - Faixa selecionada: `border-primary bg-primary/10`; não selecionada: `border-border bg-card hover:bg-accent`.
+   - Meta atingida: `text-primary` (removendo verde específico).
+   - Botão principal: `Button` padrão (variant default) usando `bg-primary text-primary-foreground`, mantendo `rounded-full h-11 w-full`.
+   - `Progress`: usar classe padrão (sem override).
 
-## Correção
-
-`src/routes/_authenticated/publisher.tsx`
-
-- Trocar a condição do bloco do slot de prévia de
-  `{toggles.paid.enabled && (` para
-  `{(toggles.paid.enabled || toggles.challenge.enabled) && (`.
-
-Nada mais muda; a lógica de upload, exibição e `onEditPreview` já funciona igual para os dois modos.
+Nada de lógica muda.
