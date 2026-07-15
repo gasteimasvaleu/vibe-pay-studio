@@ -249,7 +249,9 @@ function PublisherPage() {
   const errorCount = media.filter((m) => m.status === "error").length;
   const audioBusy = audio.status === "recording" || audio.status === "uploading";
   const previewBusy = preview?.status === "uploading";
-  const previewMissing = toggles.paid.enabled && (!preview || preview.status !== "ready");
+  const previewMissing =
+    (toggles.paid.enabled || toggles.challenge.enabled) &&
+    (!preview || preview.status !== "ready");
   const canContinue =
     media.length > 0 &&
     uploadingCount === 0 &&
@@ -666,7 +668,10 @@ function PublisherPage() {
       : toggles.challenge.enabled
         ? "challenge"
         : "public";
-    if (visibility === "paid" && (!preview || preview.status !== "ready")) {
+    if (
+      (visibility === "paid" || visibility === "challenge") &&
+      (!preview || preview.status !== "ready")
+    ) {
       toast.error("Adicione uma mídia de prévia");
       setPreviewSheetOpen(true);
       return;
@@ -692,7 +697,7 @@ function PublisherPage() {
             ? { storagePath: audio.storagePath, url: audio.publicUrl }
             : null,
         preview:
-          visibility === "paid" &&
+          (visibility === "paid" || visibility === "challenge") &&
           preview &&
           preview.status === "ready" &&
           preview.storagePath &&
@@ -717,11 +722,13 @@ function PublisherPage() {
   };
   const onChallengeChange = (v: boolean) => {
     if (v) setChallengeOpen(true);
-    else
+    else {
       setToggles((t) => ({
         ...t,
         challenge: { enabled: false, goalCents: null, tiersCents: [] },
       }));
+      void clearPreview();
+    }
   };
   const onScheduleChange = (v: boolean) => {
     if (v) setScheduleOpen(true);
