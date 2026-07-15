@@ -30,6 +30,7 @@ const createPublicationSchema = z.object({
   visibility: z.enum(["public", "paid", "challenge"]),
   priceCents: z.number().int().min(0).nullable().optional(),
   challengeCents: z.number().int().min(0).nullable().optional(),
+  challengeTiersCents: z.array(z.number().int().min(100)).max(8).optional(),
   expires24h: z.boolean(),
   scheduledAt: z.string().nullable().optional(),
   commentsDisabled: z.boolean(),
@@ -38,6 +39,7 @@ const createPublicationSchema = z.object({
   audio: audioSchema,
   preview: previewSchema,
 });
+
 
 export const createPublication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
