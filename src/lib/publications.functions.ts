@@ -150,6 +150,7 @@ export type FeedItem = {
   challenge_cents: number | null;
   challenge_raised_cents: number | null;
   challenge_contributor_count: number | null;
+  challenge_tiers_cents: number[] | null;
   pinned: boolean;
   comments_disabled: boolean;
   expires_at: string | null;
