@@ -81,8 +81,13 @@ function FeedPage() {
 
   const handleUnlock = (item: FeedItem) => {
     if (unlocking) return;
+    if (item.visibility === "challenge") {
+      setChallengeFor(item);
+      return;
+    }
     setPending(item);
   };
+
 
   const confirmPayment = async (method: PaymentMethod) => {
     if (!pending) return;
