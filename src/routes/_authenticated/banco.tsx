@@ -811,7 +811,7 @@ function BancoPage() {
               Veja seu saldo, gerencie suas formas de pagamento e acompanhe suas
               transações
             </p>
-            <Button variant="outline" className="mt-4 rounded-full">
+            <Button variant="outline" className="mt-4 rounded-md">
               Acessar carteira
             </Button>
           </div>
