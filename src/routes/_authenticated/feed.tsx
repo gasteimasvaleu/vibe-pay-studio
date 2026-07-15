@@ -291,10 +291,6 @@ function FeedPage() {
         publicationId={challengeFor?.id ?? null}
         creatorName={challengeFor?.author_username}
         open={!!challengeFor}
-      <ChallengeContributeSheet
-        publicationId={challengeFor?.id ?? null}
-        creatorName={challengeFor?.author_username}
-        open={!!challengeFor}
         onOpenChange={(v) => {
           if (!v) {
             setChallengeFor(null);
@@ -306,6 +302,7 @@ function FeedPage() {
           void queryClient.invalidateQueries({ queryKey: ["feed"] });
         }}
       />
+
 
 
     </div>
