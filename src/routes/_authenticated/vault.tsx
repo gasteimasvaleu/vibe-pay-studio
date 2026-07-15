@@ -294,9 +294,28 @@ function VaultPage() {
 
   const filteredFixedTabs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return FIXED_TABS;
-    return FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q));
-  }, [searchQuery]);
+    const base = q ? FIXED_TABS.filter((t) => t.label.toLowerCase().includes(q)) : [...FIXED_TABS];
+    const getCount = (key: FixedTabKey): number => {
+      if (!counts) return 0;
+      if (key === "todas") return counts.all;
+      if (key === "publicacoes") return counts.publications;
+      if (key === "envios") return counts.uploads;
+      return counts.chat;
+    };
+    const originalIndex = (key: FixedTabKey) => FIXED_TABS.findIndex((t) => t.key === key);
+    const dir = sidebarDirection === "asc" ? 1 : -1;
+    if (sidebarSort === "padrao") {
+      base.sort((a, b) => (originalIndex(a.key) - originalIndex(b.key)) * dir);
+      return base;
+    }
+    base.sort((a, b) => {
+      if (sidebarSort === "nome") return a.label.localeCompare(b.label, "pt-BR") * dir;
+      if (sidebarSort === "midias" || sidebarSort === "recentes")
+        return (getCount(b.key) - getCount(a.key)) * dir;
+      return 0;
+    });
+    return base;
+  }, [searchQuery, sidebarSort, sidebarDirection, counts]);
 
   const counts = countsQ.data;
 
