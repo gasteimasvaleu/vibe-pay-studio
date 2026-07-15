@@ -156,6 +156,7 @@ export type FeedItem = {
   expires_at: string | null;
   published_at: string;
   locked: boolean;
+  preview_url: string | null;
   audio_url: string | null;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
   like_count: number;
