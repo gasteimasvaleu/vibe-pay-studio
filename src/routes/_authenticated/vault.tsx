@@ -9,6 +9,7 @@ import {
   Download,
   FileAudio,
   Film,
+  FolderPlus,
   Image as ImageIcon,
   MoreVertical,
   Play,
