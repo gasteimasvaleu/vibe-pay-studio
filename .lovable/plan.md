@@ -1,43 +1,37 @@
-## Objetivo
+## Página /postsarquivados (somente dono)
 
-Na página `/profile/$username`:
-- **Aba Postagens**: substituir o grid 3×3 por cards completos (mesmo componente do feed), com infinite scroll.
-- **Aba Mídias**: manter grid, mas 3 colunas no mobile e 4 colunas no desktop, adicionando barra de filtros **Todos / Fotos / Vídeos / Pagos**.
+Nova página autenticada que lista apenas os posts do próprio usuário que foram arquivados via popover. Arquivar/desarquivar continua restrito ao dono (a opção só aparece em `ownerOptions` e o filtro server-side usa `author_id = context.userId`).
 
-## Aba Postagens — cards inteiros
+### 1. Server function
 
-1. Em `src/lib/publications.functions.ts`, adicionar `getUserFeed({ userId, cursor?, limit=10 })` — mesma forma de retorno de `getFeed` (`{ items: FeedItem[]; nextCursor: string|null }`), reutilizando o pipeline atual de `getFeed` mas filtrando `author_id = userId` (sem restrição de "seguindo/próprios"). Inclui contagens, mídias, unlock state, etc.
-2. Em `profile.$username.tsx`, remover `getUserPostsGrid` do fluxo da aba Postagens. Trocar `useInfiniteQuery` de posts para `getUserFeed` com `queryKey: ["user-feed", userId]`.
-3. Renderizar cada item com `<PublicationCard item={...} queryKey={["user-feed", userId]} />` — mesmo componente usado em `/feed`. Ele já cuida de curtir, comentar, desbloquear e atualização de cache via `patchItem` (que já suporta `InfiniteData`).
-4. Manter sentinel + loader com `useInfiniteScrollSentinel`. Empty state "Nenhuma postagem ainda." Skeleton simples (2 cards placeholder).
-5. `getUserPostsGrid` continua existindo mas deixa de ser usado aqui; pode ser removido se não houver outro consumidor (checar antes de deletar).
+Em `src/lib/publications.functions.ts`, adicionar `getArchivedPublications({ cursor?, limit=10 })`:
+- Middleware `requireSupabaseAuth`.
+- Filtro: `author_id = context.userId` e `archived_at IS NOT NULL`.
+- Ordenação: `archived_at DESC` (cursor por `archived_at`).
+- Mesma pipeline de enriquecimento de `getFeed` (mídia, likes, bookmarks, contagens, is_owner=true), retornando `FeedItem[]` + `archived_at`.
+- Retorno: `{ items: (FeedItem & { archived_at: string })[]; nextCursor: string | null }`.
 
-## Aba Mídias — grid + filtros
+Nenhuma mutação nova. Reutiliza `setPublicationArchived` para desarquivar (já filtra por `author_id`, então só o dono consegue).
 
-1. Adicionar barra de filtros acima do grid, no mesmo card branco arredondado do screenshot:
-   - Estado local `mediaFilter: "all" | "photos" | "videos" | "paid"`.
-   - Botões pill: **Todos** (destacado com fundo `bg-primary/15 text-primary`), **Fotos**, **Vídeos**, **Pagos** (inativos: `text-muted-foreground`). Layout `flex justify-center gap-6 py-3`.
-2. Atualizar `getUserMediasGrid` em `src/lib/publications.functions.ts`:
-   - Aceitar `filter: "all" | "photos" | "videos" | "paid"` no `inputValidator`.
-   - `photos` → `type = 'image'`; `videos` → `type = 'video'`; `paid` → join a publicações com `visibility = 'paid'` e `price_cents > 0` (retornar também campo `is_paid` para overlay opcional).
-   - Cursor continua sendo `published_at|position`; paginação por filtro (cada filtro tem sua própria query).
-3. Em `profile.$username.tsx`:
-   - Trocar `queryKey` para `["user-medias-grid", userId, mediaFilter]`.
-   - Passar `filter` no `queryFn`. `enabled` continua condicionado a `activeTab === "medias"`.
-   - Grid: `grid-cols-3 md:grid-cols-4 gap-1`.
-   - Manter clique navegando para publicação (rota atual permanece — sem mudanças em navegação).
-   - Ao clicar num filtro, o `useInfiniteQuery` refaz fetch da primeira página automaticamente (chave nova).
-4. Empty states por filtro ("Nenhuma foto ainda.", "Nenhum vídeo ainda.", "Nenhuma mídia paga ainda.").
+### 2. Rota
 
-## Detalhes técnicos
+Criar `src/routes/_authenticated/postsarquivados.tsx`:
+- `createFileRoute("/_authenticated/postsarquivados")` com `head()` "Posts arquivados".
+- Header simples: voltar + título.
+- `useInfiniteQuery({ queryKey: ["archived-posts"] })` chamando a nova server fn.
+- Renderiza `<PublicationCard item={...} queryKey={["archived-posts"]} />`.
+- `useInfiniteScrollSentinel` para paginação.
+- Skeletons no primeiro load e estado vazio "Nenhum post arquivado".
 
-- `getUserFeed` reaproveita helpers internos de `getFeed` (montagem de `FeedItem`); se hoje a lógica está inline em `getFeed`, extrair para função privada `buildFeedItems(rows, viewerId)` no mesmo arquivo e chamar dos dois server fns.
-- Sem novas tabelas nem migrações. Sem mudanças nas mutações (curtir/comentar/desbloquear).
-- Sem alterações no `/feed`, no `PublicationCard`, no `useInfiniteScrollSentinel`, nem em outras rotas.
-- Type-safe: exportar tipos novos (`GridMediaFilter`) de `publications.functions.ts`.
+### 3. Popover — opção "Desarquivar" (apenas dono)
 
-## Escopo fora
+Em `src/components/feed/PublicationOptionsMenu.tsx`:
+- Expor `archived_at` no `FeedItem` (default `null`) e mapear nas server fns que já retornam `FeedItem` (getFeed, getUserFeed, getUserPostsGrid, getArchivedPublications).
+- Em `ownerOptions`: se `item.archived_at` estiver setado, mostrar "Desarquivar post" chamando `setPublicationArchived({ id, archived: false })`; caso contrário manter "Arquivar post".
+- `archiveMutation.onSuccess`: invalidar também `["archived-posts"]`.
+- Como `ownerOptions` só é usado quando `item.is_owner`, viewers nunca veem arquivar/desarquivar — garante que só o dono pode arquivar/desarquivar.
 
-- Filtro "Pagos" na aba Postagens (não pedido).
-- Contadores por filtro na barra (não pedido).
-- Alteração do layout visual da barra de tabs Postagens/Mídias.
+### Fora de escopo
+- Link para /postsarquivados em nav/menu (acessível por URL).
+- Bulk actions, busca ou filtros dentro dos arquivados.
+- Mudanças no feed/perfil além da adição do campo `archived_at` no tipo.
