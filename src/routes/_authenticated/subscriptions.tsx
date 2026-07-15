@@ -186,7 +186,7 @@ function SubscriptionsPage() {
                       <span className="font-medium">{o.label}</span>
                       <span
                         className={cn(
-                          "grid h-5 w-5 place-items-center rounded-md border-2",
+                          "grid h-5 w-5 place-items-center rounded-full border-2",
                           active ? "border-primary" : "border-muted-foreground/40",
                         )}
                       >
