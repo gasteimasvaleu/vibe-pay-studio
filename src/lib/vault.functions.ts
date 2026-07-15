@@ -227,17 +227,33 @@ export const listVaultCategories = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const ids = (cats ?? []).map((c) => c.id);
-    let counts = new Map<string, number>();
+    const counts = new Map<string, number>();
+    const previews = new Map<string, string[]>();
     if (ids.length > 0) {
       const { data: items, error: itemsErr } = await context.supabase
         .from("vault_category_items")
-        .select("category_id")
-        .in("category_id", ids);
+        .select(
+          `category_id, source, created_at,
+           publication_media:publication_media_id(url, type),
+           vault_upload:vault_upload_id(url, type)`,
+        )
+        .in("category_id", ids)
+        .order("created_at", { ascending: false });
       if (itemsErr) throw new Error(itemsErr.message);
-      counts = (items ?? []).reduce((acc, row) => {
-        acc.set(row.category_id, (acc.get(row.category_id) ?? 0) + 1);
-        return acc;
-      }, new Map<string, number>());
+      for (const row of items ?? []) {
+        counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+        const list = previews.get(row.category_id) ?? [];
+        if (list.length >= 3) continue;
+        const pm = (row as unknown as { publication_media: { url: string; type: string } | null }).publication_media;
+        const up = (row as unknown as { vault_upload: { url: string; type: string } | null }).vault_upload;
+        const url = pm?.type !== "audio" ? pm?.url : null;
+        const upUrl = up?.type !== "audio" ? up?.url : null;
+        const chosen = url ?? upUrl ?? null;
+        if (chosen) {
+          list.push(chosen);
+          previews.set(row.category_id, list);
+        }
+      }
     }
 
     const result: VaultCategory[] = (cats ?? []).map((c) => ({
@@ -245,11 +261,13 @@ export const listVaultCategories = createServerFn({ method: "GET" })
       name: c.name,
       position: c.position,
       itemCount: counts.get(c.id) ?? 0,
+      previews: previews.get(c.id) ?? [],
       createdAt: c.created_at,
       updatedAt: c.updated_at,
     }));
     return result;
   });
+
 
 const createCategorySchema = z.object({ name: z.string().trim().min(1).max(60) });
 
