@@ -1,71 +1,61 @@
-## Novo diálogo "Adicionar nova categoria"
+## Objetivo
 
-Substituir o diálogo atual (linhas 785–817 de `src/routes/_authenticated/vault.tsx`) por um layout fiel ao screenshot e funcional (criar categoria + associar mídias em uma única ação).
+Fechar as duas lacunas atuais de `/promotions`:
 
-### Layout (uma tela de dialog)
+1. `subscriptions_used` nunca é incrementado quando alguém assina — fica sempre em `0/N`.
+2. Não há job que marque `status='ended'` quando `ends_at` vence; hoje só é derivado em memória na listagem.
 
-- **Container**: `Dialog` largo (`sm:max-w-3xl`, `rounded-3xl`, `p-6`), fundo branco.
-- **Header**: título `ADICIONAR NOVA CATEGORIA` (bold, uppercase, tracking-wide) à esquerda + botão `X` (fechar) no canto superior direito.
-- **Campo nome**: input pill (`rounded-full`, borda sutil, `h-12`) com:
-  - Ícone à esquerda (`FolderPlus` do lucide-react — proxy do ícone do screenshot).
-  - Placeholder `Nome da categoria`.
-  - Contador `N / 64` fixo à direita, atualizando conforme o usuário digita.
-  - Cap client-side em 64 chars; schema server-side ajustado de 60 → 64 (`createCategorySchema` em `src/lib/vault.functions.ts`).
-- **Grid de mídias** (`grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3`, `max-h-[420px] overflow-y-auto`):
-  - **Primeiro tile** sempre visível: quadrado cinza arredondado (`bg-muted rounded-2xl aspect-square`) com `+` grande e texto `Adicionar mídia` centralizados. Clique abre o **modo picker** (segunda visão do mesmo dialog).
-  - **Demais tiles**: miniaturas de `pickedItems` (reusa `MediaThumb`), com badge de tipo (vídeo/áudio/gif) e botão `X` no canto superior direito para remover do array.
-- **Rodapé** (flex justify-end gap-3):
-  - `Confirmar` (pill, `bg-primary text-primary-foreground`; desabilitado quando `!categoryName.trim() || createCatMut.isPending`, com estilo esmaecido igual ao screenshot).
-  - `Cancelar` (pill outline `border-2 border-foreground/70`).
+## Escopo
 
-### Modo picker (segunda visão do mesmo dialog)
+Só backend (Supabase + server functions). A UI de `/promotions` já lê os campos certos — vai passar a mostrar dados reais sem alterações.
 
-Estado local `dialogView: "form" | "picker"`.
+## 1. Contador de participantes (`subscriptions_used`)
 
-- Header: botão voltar `←` + título `SELECIONAR MÍDIAS` + `X` fechar.
-- Grid `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2` com **todas** as mídias do usuário (publicações + envios), com bolinha de seleção no canto superior direito de cada item (mesmo estilo do MediaGrid principal). Áudios ficam disponíveis.
-- Dados: nova query `["vault","picker","all"]` com `enabled: addCategoryOpen && dialogView === "picker"` que faz `Promise.all([fnPublications, fnUploads])` (`mediaType: "all"`, `sort: "recent"`, `limit: 300`) e mescla por `createdAt desc`.
-- Estado `pickerSelected: Set<string>` (por `item.key`). Clique em qualquer área do tile alterna.
-- Rodapé: `Concluído (N)` (primary, desabilitado quando `pickerSelected.size === 0` está OK — permite voltar sem adicionar) + `Cancelar` (outline, volta ao form sem alterar `pickedItems`).
-- Ao "Concluído": mescla `pickerSelected` em `pickedItems` (dedup por `key`) e volta ao form.
+Fazer via **trigger no banco** para funcionar em todos os caminhos de pagamento (Asaas via webhook, `pay_with_wallet`, futuros gateways) sem depender do código de aplicação lembrar de incrementar.
 
-### Confirmar (funcional)
+Migration:
 
-Refatorar `createCatMut`:
+- Adicionar coluna `subscriptions.promotion_id uuid` (nullable, FK para `promotions.id`, `ON DELETE SET NULL`) + índice.
+- Trigger `AFTER INSERT OR UPDATE OF status ON public.subscriptions`:
+  - Quando a assinatura passa a `status='active'` e `promotion_id IS NOT NULL`, faz `UPDATE promotions SET subscriptions_used = subscriptions_used + 1` atomicamente.
+  - Se o incremento fizer `subscriptions_used >= max_subscriptions`, encerra a promoção (`status='ended'`) no mesmo `UPDATE`.
+  - Idempotência: só incrementa quando `(TG_OP='INSERT' AND NEW.status='active')` ou `(TG_OP='UPDATE' AND OLD.status <> 'active' AND NEW.status='active')`.
 
-```ts
-mutationFn: async ({ name, items }) => {
-  const cat = await fnCreateCat({ data: { name } });
-  if (items.length > 0) {
-    await fnAddToCat({
-      data: { categoryId: cat.id, items: items.map(i => ({ source: i.source, id: i.id })) },
-    });
-  }
-  return cat;
-},
-onSuccess: (cat) => {
-  toast.success("Categoria criada");
-  setAddCategoryOpen(false);
-  resetDialog();
-  qc.invalidateQueries({ queryKey: ["vault"] });
-  // opcional: navegar direto para a categoria recém-criada via setActiveTab
-},
-onError: (e) => toast.error(e.message),
+Server function (`pay_with_wallet` e checkout Asaas de assinatura):
+
+- Quando o comprador está numa promoção ativa do criador, aplicar `promo_price` no cálculo e gravar `promotion_id` na linha de `subscriptions`.
+- Validar no servidor (não confiar em input do cliente): reconsultar `getActivePromotionForCreator` para o `creatorId`, aplicar preço promocional se existir promoção com vaga.
+- Bloquear a assinatura quando a promoção "vencer no meio do caminho" (checar `subscriptions_used < max_subscriptions` dentro da mesma transação; a trigger acima é a garantia final).
+
+## 2. Encerramento automático quando `ends_at` vence
+
+Usar `pg_cron` puro (Opção 1 do knowledge — só SQL, sem endpoint externo):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+SELECT cron.schedule(
+  'promotions-auto-end',
+  '*/15 * * * *',
+  $$
+  UPDATE public.promotions
+     SET status = 'ended', updated_at = now()
+   WHERE status = 'active'
+     AND ends_at <= now();
+  $$
+);
 ```
 
-`resetDialog()`: zera `categoryName`, `pickedItems`, `pickerSelected`, `dialogView = "form"`. Também disparado por `onOpenChange(false)` e pelo `X`/`Cancelar`.
+Roda a cada 15 minutos. O campo `is_active` derivado em `listMyPromotions` continua funcionando como "segurança em tempo real" no intervalo entre execuções.
 
-`onClick` do Confirmar: `createCatMut.mutate({ name: categoryName.trim(), items: pickedItems.map(i => ({ source: i.source, id: i.id })) })`.
+## Fora de escopo
 
-### Validação
+- Notificar o criador quando a promoção encerra (nem por vagas nem por tempo).
+- Histórico de "quem assinou pela promoção" na UI (dados já ficam em `subscriptions.promotion_id` para futuro).
+- Mudanças visuais em `/promotions` ou `/promotion`.
 
-- Nome: trim, obrigatório, ≤ 64 (bloqueado no `maxLength` do input e no schema).
-- Itens: filtrados para `source in ("publication","upload")` — `chat` não é selecionável no picker (não existe hoje).
-- Duplicatas: `addItemsToCategory` já ignora conflitos via `onConflict` — sem tratamento extra necessário.
+## Detalhes técnicos
 
-### Fora do escopo
-
-- Bolinha de seleção sempre visível no grid principal do Acervo (será tratada em outra iteração).
-- Busca/filtros dentro do picker (grid simples com scroll).
-- Reordenar mídias dentro da categoria.
-- Preview de mídia dentro do picker (clique é apenas seleção).
+- Migration única com: nova coluna `promotion_id`, índice, função de trigger, trigger, e `cron.schedule`. Extensão `pg_cron` já pode estar habilitada — o `CREATE EXTENSION IF NOT EXISTS` é seguro.
+- RLS de `promotions` continua igual; a trigger roda como `SECURITY DEFINER` para poder atualizar `subscriptions_used` mesmo quando o `UPDATE` da assinatura vem de um contexto autenticado que não é o criador.
+- Ajustar `src/lib/wallet-pay.functions.ts` e o caminho do checkout Asaas de assinatura para: (a) buscar promoção ativa do criador, (b) usar `promo_price*100` como `price_cents_paid`, (c) preencher `promotion_id`.
