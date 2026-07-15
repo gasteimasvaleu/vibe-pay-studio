@@ -766,7 +766,11 @@ function VaultPage() {
         <section className={`${mobileDetail ? "block" : "hidden md:block"} px-4 md:px-6 py-6`}>
           <div className="flex items-center justify-between mb-4 px-1">
             <span className="text-sm font-bold tracking-wider text-muted-foreground">
-              {sortOrder === "recent" ? "MAIS RECENTES" : "MAIS ANTIGAS"}
+              {timeRange === "specific" && specificDate
+                ? dateFmt.format(specificDate)
+                : sortOrder === "recent"
+                ? "MAIS RECENTES"
+                : "MAIS ANTIGAS"}
             </span>
             <Popover>
               <PopoverTrigger asChild>
@@ -778,15 +782,42 @@ function VaultPage() {
                   <SlidersHorizontal className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 rounded-2xl p-2">
-                <RadioRow label="Todo o tempo" active={timeRange === "all"} onClick={() => setTimeRange("all")} />
-                <RadioRow label="Data específica" active={timeRange === "specific"} onClick={() => setTimeRange("specific")} />
+              <PopoverContent align="end" className="w-auto rounded-2xl p-2">
+                <div className="w-60">
+                  <RadioRow
+                    label="Todo o tempo"
+                    active={timeRange === "all"}
+                    onClick={() => {
+                      setTimeRange("all");
+                      setSpecificDate(undefined);
+                    }}
+                  />
+                  <RadioRow
+                    label="Data específica"
+                    active={timeRange === "specific"}
+                    onClick={() => setTimeRange("specific")}
+                  />
+                </div>
+                {timeRange === "specific" && (
+                  <div className="mt-1 border-t border-border pt-1">
+                    <Calendar
+                      mode="single"
+                      selected={specificDate}
+                      onSelect={(d) => setSpecificDate(d ?? undefined)}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </div>
+                )}
                 <div className="my-2 border-t border-border" />
-                <RadioRow label="Mais recentes" active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} />
-                <RadioRow label="Mais antigas" active={sortOrder === "oldest"} onClick={() => setSortOrder("oldest")} />
+                <div className="w-60">
+                  <RadioRow label="Mais recentes" active={sortOrder === "recent"} onClick={() => setSortOrder("recent")} />
+                  <RadioRow label="Mais antigas" active={sortOrder === "oldest"} onClick={() => setSortOrder("oldest")} />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
+
 
           <div className="flex flex-wrap gap-2 mb-6">
             {MEDIA_FILTERS.map((f) => {
