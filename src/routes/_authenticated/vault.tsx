@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   CheckSquare,
+  Download,
   FileAudio,
   Film,
   Image as ImageIcon,
@@ -18,6 +19,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
