@@ -1,54 +1,43 @@
 ## Objetivo
 
-Carregar mais publicações gradualmente no feed e nas abas "Postagens" e "Mídias" do perfil, usando infinite scroll (rolagem infinita) com `IntersectionObserver` e `useInfiniteQuery`.
+Na página `/profile/$username`:
+- **Aba Postagens**: substituir o grid 3×3 por cards completos (mesmo componente do feed), com infinite scroll.
+- **Aba Mídias**: manter grid, mas 3 colunas no mobile e 4 colunas no desktop, adicionando barra de filtros **Todos / Fotos / Vídeos / Pagos**.
 
-## Feed (`/feed`)
+## Aba Postagens — cards inteiros
 
-`getFeed` já retorna `nextCursor`. Migrar `src/routes/_authenticated/feed.tsx`:
+1. Em `src/lib/publications.functions.ts`, adicionar `getUserFeed({ userId, cursor?, limit=10 })` — mesma forma de retorno de `getFeed` (`{ items: FeedItem[]; nextCursor: string|null }`), reutilizando o pipeline atual de `getFeed` mas filtrando `author_id = userId` (sem restrição de "seguindo/próprios"). Inclui contagens, mídias, unlock state, etc.
+2. Em `profile.$username.tsx`, remover `getUserPostsGrid` do fluxo da aba Postagens. Trocar `useInfiniteQuery` de posts para `getUserFeed` com `queryKey: ["user-feed", userId]`.
+3. Renderizar cada item com `<PublicationCard item={...} queryKey={["user-feed", userId]} />` — mesmo componente usado em `/feed`. Ele já cuida de curtir, comentar, desbloquear e atualização de cache via `patchItem` (que já suporta `InfiniteData`).
+4. Manter sentinel + loader com `useInfiniteScrollSentinel`. Empty state "Nenhuma postagem ainda." Skeleton simples (2 cards placeholder).
+5. `getUserPostsGrid` continua existindo mas deixa de ser usado aqui; pode ser removido se não houver outro consumidor (checar antes de deletar).
 
-- Trocar `useQuery` por `useInfiniteQuery`:
-  - `queryKey: ["feed"]`
-  - `queryFn: ({ pageParam }) => fetchFeed({ data: { limit: 20, cursor: pageParam } })`
-  - `initialPageParam: undefined`
-  - `getNextPageParam: (last) => last.nextCursor ?? undefined`
-- Renderizar `data.pages.flatMap(p => p.items)`.
-- Sentinela ao final da lista (`<div ref={sentinelRef} />`) com `IntersectionObserver` que chama `fetchNextPage()` quando visível e `hasNextPage && !isFetchingNextPage`.
-- Mostrar loader pequeno enquanto `isFetchingNextPage`; "Fim do feed" quando não houver mais.
-- Ajustar as chamadas que hoje fazem `setQueryData(["feed"], ...)` para atualizar todas as páginas (`{ pages: prev.pages.map(...), pageParams }`). Nas mutações destrutivas (delete/edit), continuar usando `invalidateQueries(["feed"])`.
+## Aba Mídias — grid + filtros
 
-## Perfil — abas "Postagens" e "Mídias"
+1. Adicionar barra de filtros acima do grid, no mesmo card branco arredondado do screenshot:
+   - Estado local `mediaFilter: "all" | "photos" | "videos" | "paid"`.
+   - Botões pill: **Todos** (destacado com fundo `bg-primary/15 text-primary`), **Fotos**, **Vídeos**, **Pagos** (inativos: `text-muted-foreground`). Layout `flex justify-center gap-6 py-3`.
+2. Atualizar `getUserMediasGrid` em `src/lib/publications.functions.ts`:
+   - Aceitar `filter: "all" | "photos" | "videos" | "paid"` no `inputValidator`.
+   - `photos` → `type = 'image'`; `videos` → `type = 'video'`; `paid` → join a publicações com `visibility = 'paid'` e `price_cents > 0` (retornar também campo `is_paid` para overlay opcional).
+   - Cursor continua sendo `published_at|position`; paginação por filtro (cada filtro tem sua própria query).
+3. Em `profile.$username.tsx`:
+   - Trocar `queryKey` para `["user-medias-grid", userId, mediaFilter]`.
+   - Passar `filter` no `queryFn`. `enabled` continua condicionado a `activeTab === "medias"`.
+   - Grid: `grid-cols-3 md:grid-cols-4 gap-1`.
+   - Manter clique navegando para publicação (rota atual permanece — sem mudanças em navegação).
+   - Ao clicar num filtro, o `useInfiniteQuery` refaz fetch da primeira página automaticamente (chave nova).
+4. Empty states por filtro ("Nenhuma foto ainda.", "Nenhum vídeo ainda.", "Nenhuma mídia paga ainda.").
 
-Criar dois `createServerFn` em `src/lib/publications.functions.ts` (protegidos, mas aceitando `userId` do dono do perfil consultado):
+## Detalhes técnicos
 
-1. `getUserPostsGrid({ userId, cursor?, limit=24 })` → `{ items: GridPostItem[]; nextCursor: string | null }`
-   - `publications` do autor, `archived_at IS NULL`, `published_at <= now()`, `order by published_at desc`, `limit+1` para calcular cursor.
-   - Junta primeira mídia (`position asc`) para `cover_url`/`cover_type` + `media_count` + flag `has_audio`.
-   - `GridPostItem = { id, cover_url, cover_type: 'image'|'video'|null, media_count, has_audio, published_at }`.
+- `getUserFeed` reaproveita helpers internos de `getFeed` (montagem de `FeedItem`); se hoje a lógica está inline em `getFeed`, extrair para função privada `buildFeedItems(rows, viewerId)` no mesmo arquivo e chamar dos dois server fns.
+- Sem novas tabelas nem migrações. Sem mudanças nas mutações (curtir/comentar/desbloquear).
+- Sem alterações no `/feed`, no `PublicationCard`, no `useInfiniteScrollSentinel`, nem em outras rotas.
+- Type-safe: exportar tipos novos (`GridMediaFilter`) de `publications.functions.ts`.
 
-2. `getUserMediasGrid({ userId, cursor?, limit=24 })` → `{ items: GridMediaItem[]; nextCursor: string | null }`
-   - `publication_media` join `publications` do autor com filtros de publicação.
-   - Cursor composto `published_at|position` (ordenar por `published_at desc, position asc`); serializado como string.
-   - `GridMediaItem = { id, publication_id, url, type: 'image'|'video' }`.
+## Escopo fora
 
-Atualizar `src/routes/_authenticated/profile.$username.tsx`:
-
-- Adicionar `useInfiniteQuery` para cada aba:
-  - `["user-posts-grid", userId]` — sempre habilitado.
-  - `["user-medias-grid", userId]` — `enabled: activeTab === "medias"`.
-- Renderizar grade `grid-cols-3 gap-1` com células `aspect-square`:
-  - Postagens: capa (img ou `<video preload="metadata">`), ícone `Layers` se `media_count > 1`, `Film` se vídeo, `AudioLines` se `has_audio` sem mídia visual.
-  - Mídias: cada arquivo individual (img/video).
-  - Clique → `navigate({ to: "/publicacao/$id", params: { id } })` (rota existente do feed/publicação).
-- Skeleton grid 9 células enquanto `isLoading`.
-- Empty state ("Nenhuma postagem ainda" / "Nenhuma mídia ainda").
-- Sentinela ao final de cada grade com o mesmo padrão de `IntersectionObserver` para `fetchNextPage`.
-
-## Utilitário compartilhado
-
-Criar `src/hooks/useInfiniteScrollSentinel.ts` — hook que recebe `{ hasNextPage, isFetchingNextPage, fetchNextPage }` e retorna um `ref` para colocar num `<div>` sentinela. Usado no feed e nas duas grades.
-
-## Escopo
-
-- Sem mudanças de layout/visual além do loader e sentinela.
-- Sem mudanças nas mutações de curtir/comentar/desbloquear.
-- Migração do `feed.tsx` mantém todas as sheets/dialogs existentes.
+- Filtro "Pagos" na aba Postagens (não pedido).
+- Contadores por filtro na barra (não pedido).
+- Alteração do layout visual da barra de tabs Postagens/Mídias.
