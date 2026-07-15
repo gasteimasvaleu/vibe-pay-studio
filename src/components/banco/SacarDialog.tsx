@@ -220,7 +220,7 @@ export function SacarDialog({
             type="button"
             onClick={() => mutation.mutate()}
             disabled={disabled}
-            className="rounded-full"
+            className="rounded-md"
           >
             {mutation.isPending ? (
               <>
