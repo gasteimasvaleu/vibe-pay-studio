@@ -10,6 +10,7 @@ export type VaultMediaItem = {
   key: string; // stable client key = `${source}:${id}`
   source: VaultItemSource;
   id: string; // publication_media.id OR vault_uploads.id
+  joinId?: string | null; // vault_category_items.id when listed from a category
   publicationId: string | null;
   type: VaultMediaType;
   url: string;
