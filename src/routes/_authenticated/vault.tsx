@@ -202,6 +202,21 @@ function VaultPage() {
     enabled: activeTab.kind === "category",
   });
 
+  // Picker: todas as mídias (publicações + envios) para o dialog de categoria
+  const pickerMediaQ = useQuery({
+    queryKey: ["vault", "picker", "all"],
+    queryFn: async () => {
+      const [pubs, ups] = await Promise.all([
+        fnPublications({ data: { mediaType: "all", sort: "recent", limit: 300 } }),
+        fnUploads({ data: { mediaType: "all", sort: "recent", limit: 300 } }),
+      ]);
+      return [...pubs, ...ups].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    },
+    enabled: addCategoryOpen && dialogView === "picker",
+  });
+
   // Derive content list for current tab
   const content: { items: VaultMediaItem[]; loading: boolean } = (() => {
     if (activeTab.kind === "category") {
