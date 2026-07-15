@@ -54,7 +54,7 @@ export const listVaultPublicationMedia = createServerFn({ method: "GET" })
     const { data: pubs, error } = await context.supabase
       .from("publications")
       .select(
-        "id, caption, created_at, published_at, publication_media(id, url, storage_path, type, position, created_at)",
+        "id, caption, created_at, published_at, audio_url, audio_storage_path, publication_media(id, url, storage_path, type, position, created_at)",
       )
       .eq("author_id", context.userId)
       .is("archived_at", null)
@@ -64,24 +64,51 @@ export const listVaultPublicationMedia = createServerFn({ method: "GET" })
 
     const items: VaultMediaItem[] = [];
     for (const p of pubs ?? []) {
-      const medias = ((p as unknown as { publication_media: Array<{ id: string; url: string; storage_path: string; type: string; position: number; created_at: string }> }).publication_media) ?? [];
+      const pub = p as unknown as {
+        id: string;
+        caption: string | null;
+        created_at: string;
+        published_at: string | null;
+        audio_url: string | null;
+        audio_storage_path: string | null;
+        publication_media: Array<{ id: string; url: string; storage_path: string; type: string; position: number; created_at: string }>;
+      };
+      const medias = pub.publication_media ?? [];
       const ordered = [...medias].sort((a, b) => a.position - b.position);
       for (const m of ordered) {
-        const t: VaultMediaType = m.type === "video" ? "video" : "image";
+        const t: VaultMediaType =
+          m.type === "video" ? "video"
+          : m.type === "audio" ? "audio"
+          : m.type === "gif" ? "gif"
+          : "image";
         items.push({
           key: `publication:${m.id}`,
           source: "publication",
           id: m.id,
-          publicationId: p.id,
+          publicationId: pub.id,
           type: t,
           url: m.url,
           storagePath: m.storage_path,
           createdAt: m.created_at,
-          caption: (p as unknown as { caption: string | null }).caption,
+          caption: pub.caption,
+        });
+      }
+      if (pub.audio_url) {
+        items.push({
+          key: `publication-audio:${pub.id}`,
+          source: "publication",
+          id: `audio:${pub.id}`,
+          publicationId: pub.id,
+          type: "audio",
+          url: pub.audio_url,
+          storagePath: pub.audio_storage_path ?? "",
+          createdAt: pub.published_at ?? pub.created_at,
+          caption: pub.caption,
         });
       }
     }
     return applyTypeFilter(items, data.mediaType);
+
   });
 
 // ---------- Uploads: standalone user library ----------
