@@ -135,7 +135,7 @@ function formatAudioTime(sec: number) {
 
 type Toggles = {
   paid: { enabled: boolean; priceCents: number | null };
-  challenge: { enabled: boolean; priceCents: number | null };
+  challenge: { enabled: boolean; goalCents: number | null; tiersCents: number[] };
   expires24h: boolean;
   schedule: { enabled: boolean; at: string | null };
   commentsDisabled: boolean;
