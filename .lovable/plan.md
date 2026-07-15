@@ -1,29 +1,71 @@
-## Mudanças
+## Novo diálogo "Adicionar nova categoria"
 
-### 1. Miniaturas na sidebar (até 3 por linha)
+Substituir o diálogo atual (linhas 785–817 de `src/routes/_authenticated/vault.tsx`) por um layout fiel ao screenshot e funcional (criar categoria + associar mídias em uma única ação).
 
-**`src/lib/vault.functions.ts`**
-- Estender `getVaultCounts` para também retornar `previews: { all: string[]; publications: string[]; uploads: string[]; chat: string[] }` — até 3 URLs de `publication_media` (mais recentes por `created_at`) + `vault_uploads`. Para "todas" e "publicações" pegar top 3 imagens/gifs/vídeos (evitando áudio). Para "uploads" idem em `vault_uploads`. Chat continua vazio.
-- Estender `listVaultCategories` para incluir `previews: string[]` (até 3 URLs) por categoria, resolvendo via join entre `vault_category_items` → `publication_media`/`vault_uploads` limitando a 3 por categoria (single query com `.limit()` client-side por categoria).
+### Layout (uma tela de dialog)
 
-**`src/routes/_authenticated/vault.tsx`**
-- Adicionar prop opcional `previewUrls?: string[]` em `SidebarRow` e renderizar um cluster de até 3 miniaturas empilhadas à direita (semelhante ao screenshot: 3 quadradinhos sobrepostos com leve rotação/offset, arredondamento sutil coerente com o tema atual).
-- Fallback: quando `previewUrls` estiver vazio, não renderiza o cluster (mantém layout atual).
+- **Container**: `Dialog` largo (`sm:max-w-3xl`, `rounded-3xl`, `p-6`), fundo branco.
+- **Header**: título `ADICIONAR NOVA CATEGORIA` (bold, uppercase, tracking-wide) à esquerda + botão `X` (fechar) no canto superior direito.
+- **Campo nome**: input pill (`rounded-full`, borda sutil, `h-12`) com:
+  - Ícone à esquerda (`FolderPlus` do lucide-react — proxy do ícone do screenshot).
+  - Placeholder `Nome da categoria`.
+  - Contador `N / 64` fixo à direita, atualizando conforme o usuário digita.
+  - Cap client-side em 64 chars; schema server-side ajustado de 60 → 64 (`createCategorySchema` em `src/lib/vault.functions.ts`).
+- **Grid de mídias** (`grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3`, `max-h-[420px] overflow-y-auto`):
+  - **Primeiro tile** sempre visível: quadrado cinza arredondado (`bg-muted rounded-2xl aspect-square`) com `+` grande e texto `Adicionar mídia` centralizados. Clique abre o **modo picker** (segunda visão do mesmo dialog).
+  - **Demais tiles**: miniaturas de `pickedItems` (reusa `MediaThumb`), com badge de tipo (vídeo/áudio/gif) e botão `X` no canto superior direito para remover do array.
+- **Rodapé** (flex justify-end gap-3):
+  - `Confirmar` (pill, `bg-primary text-primary-foreground`; desabilitado quando `!categoryName.trim() || createCatMut.isPending`, com estilo esmaecido igual ao screenshot).
+  - `Cancelar` (pill outline `border-2 border-foreground/70`).
 
-### 2. Ações da barra de seleção: Excluir + Baixar
+### Modo picker (segunda visão do mesmo dialog)
 
-**`src/routes/_authenticated/vault.tsx`** — barra inferior de seleção (linhas 578–625) redesenhada como pill flutuante centralizada (como screenshot: `X` fechar · "N/total selecionado" · lixeira · download):
+Estado local `dialogView: "form" | "picker"`.
 
-- **Fechar (X)**: sai do modo seleção, limpa `selectedKeys`.
-- **Contador**: `N / total selecionado` (total = `content.items.length`).
-- **Excluir (lixeira)**:
-  - Aba `envios`: mantém o comportamento atual (deleta `vault_uploads`).
-  - Aba `categoria`: remove do vínculo (`removeFromCategory` para cada `joinId`) — igual ao botão "Remover da categoria" atual, agora consolidado no ícone.
-  - Aba `publicações`/`todas`/`conversas`: desabilitar o botão (não é possível excluir mídia de publicação pelo vault) com `title` explicativo.
-- **Download (ícone)**: dispara download de cada item selecionado via `<a href={item.url} download>` em loop (com pequeno `setTimeout` entre eles para o navegador aceitar múltiplos). Funciona para qualquer aba e qualquer tipo (usa a URL já retornada pelo servidor, seja pública do bucket `criativos` ou signed URL do `publications`).
-- Botão "Adicionar à categoria" continua existindo, movido para dentro do mesmo pill (à direita da lixeira/download) para preservar a funcionalidade.
+- Header: botão voltar `←` + título `SELECIONAR MÍDIAS` + `X` fechar.
+- Grid `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2` com **todas** as mídias do usuário (publicações + envios), com bolinha de seleção no canto superior direito de cada item (mesmo estilo do MediaGrid principal). Áudios ficam disponíveis.
+- Dados: nova query `["vault","picker","all"]` com `enabled: addCategoryOpen && dialogView === "picker"` que faz `Promise.all([fnPublications, fnUploads])` (`mediaType: "all"`, `sort: "recent"`, `limit: 300`) e mescla por `createdAt desc`.
+- Estado `pickerSelected: Set<string>` (por `item.key`). Clique em qualquer área do tile alterna.
+- Rodapé: `Concluído (N)` (primary, desabilitado quando `pickerSelected.size === 0` está OK — permite voltar sem adicionar) + `Cancelar` (outline, volta ao form sem alterar `pickedItems`).
+- Ao "Concluído": mescla `pickerSelected` em `pickedItems` (dedup por `key`) e volta ao form.
+
+### Confirmar (funcional)
+
+Refatorar `createCatMut`:
+
+```ts
+mutationFn: async ({ name, items }) => {
+  const cat = await fnCreateCat({ data: { name } });
+  if (items.length > 0) {
+    await fnAddToCat({
+      data: { categoryId: cat.id, items: items.map(i => ({ source: i.source, id: i.id })) },
+    });
+  }
+  return cat;
+},
+onSuccess: (cat) => {
+  toast.success("Categoria criada");
+  setAddCategoryOpen(false);
+  resetDialog();
+  qc.invalidateQueries({ queryKey: ["vault"] });
+  // opcional: navegar direto para a categoria recém-criada via setActiveTab
+},
+onError: (e) => toast.error(e.message),
+```
+
+`resetDialog()`: zera `categoryName`, `pickedItems`, `pickerSelected`, `dialogView = "form"`. Também disparado por `onOpenChange(false)` e pelo `X`/`Cancelar`.
+
+`onClick` do Confirmar: `createCatMut.mutate({ name: categoryName.trim(), items: pickedItems.map(i => ({ source: i.source, id: i.id })) })`.
+
+### Validação
+
+- Nome: trim, obrigatório, ≤ 64 (bloqueado no `maxLength` do input e no schema).
+- Itens: filtrados para `source in ("publication","upload")` — `chat` não é selecionável no picker (não existe hoje).
+- Duplicatas: `addItemsToCategory` já ignora conflitos via `onConflict` — sem tratamento extra necessário.
 
 ### Fora do escopo
-- Bulk-download como zip (usa downloads individuais nativos do browser).
-- Reordenação de miniaturas.
-- Miniaturas para "Conversas" (segue vazio até chat ganhar anexos).
+
+- Bolinha de seleção sempre visível no grid principal do Acervo (será tratada em outra iteração).
+- Busca/filtros dentro do picker (grid simples com scroll).
+- Reordenar mídias dentro da categoria.
+- Preview de mídia dentro do picker (clique é apenas seleção).
