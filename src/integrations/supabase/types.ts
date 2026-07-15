@@ -1247,6 +1247,127 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vault_category_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          position: number
+          publication_media_id: string | null
+          source: string
+          vault_upload_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          publication_media_id?: string | null
+          source: string
+          vault_upload_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          publication_media_id?: string | null
+          source?: string
+          vault_upload_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_category_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vault_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_category_items_publication_media_id_fkey"
+            columns: ["publication_media_id"]
+            isOneToOne: false
+            referencedRelation: "publication_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_category_items_vault_upload_id_fkey"
+            columns: ["vault_upload_id"]
+            isOneToOne: false
+            referencedRelation: "vault_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_uploads: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          mime: string | null
+          size_bytes: number | null
+          storage_path: string
+          type: string
+          url: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          mime?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          type: string
+          url: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          mime?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          type?: string
+          url?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       video_calls: {
         Row: {
           created_at: string
