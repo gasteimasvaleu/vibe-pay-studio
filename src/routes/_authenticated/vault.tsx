@@ -133,6 +133,7 @@ function VaultPage() {
   const [mobileDetail, setMobileDetail] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("TODAS");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
+  const [specificDate, setSpecificDate] = useState<Date | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
 
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
