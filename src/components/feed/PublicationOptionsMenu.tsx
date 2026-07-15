@@ -6,11 +6,14 @@ import {
   MessageSquareOff,
   MessageSquare,
   Archive,
+  ArchiveRestore,
+  AlertTriangle,
   Trash2,
   VolumeX,
   EyeOff,
   Flag,
 } from "lucide-react";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -45,8 +48,10 @@ export function PublicationOptionsMenu({
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   const queryClient = useQueryClient();
+
   const toggleCommentsFn = useServerFn(setPublicationCommentsDisabled);
   const archiveFn = useServerFn(setPublicationArchived);
   const deleteFn = useServerFn(deletePublication);
@@ -97,7 +102,9 @@ export function PublicationOptionsMenu({
     onSuccess: () => {
       showTopBanner(isArchived ? "Post desarquivado" : "Post arquivado");
       invalidateFeeds();
+      setConfirmArchive(false);
     },
+
     onError: (e: unknown) =>
       showTopBanner(e instanceof Error ? e.message : "Erro ao arquivar"),
   });
@@ -165,12 +172,17 @@ export function PublicationOptionsMenu({
     {
       key: "archive",
       label: isArchived ? "Desarquivar post" : "Arquivar post",
-      icon: <Archive className="h-6 w-6" strokeWidth={1.75} />,
+      icon: isArchived ? (
+        <ArchiveRestore className="h-6 w-6" strokeWidth={1.75} />
+      ) : (
+        <Archive className="h-6 w-6" strokeWidth={1.75} />
+      ),
       onClick: () => {
         close();
-        archiveMutation.mutate();
+        setConfirmArchive(true);
       },
     },
+
   ];
 
   const viewerOptions: Array<{
@@ -298,6 +310,45 @@ export function PublicationOptionsMenu({
           </AlertDialogContent>
         </AlertDialog>
       )}
+
+      {isOwner && (
+        <AlertDialog open={confirmArchive} onOpenChange={setConfirmArchive}>
+          <AlertDialogContent className="rounded-3xl border-border max-w-md">
+            <AlertDialogHeader className="items-center text-center gap-3">
+              <div className="h-14 w-14 rounded-full bg-amber-100 grid place-items-center text-amber-500">
+                <AlertTriangle className="h-7 w-7" strokeWidth={2} />
+              </div>
+              <AlertDialogTitle className="text-center">
+                {isArchived ? "Desarquivar postagem" : "Arquivar postagem"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
+                {isArchived
+                  ? "Tem certeza que deseja desarquivar esta postagem? Ela voltará a aparecer na sua timeline."
+                  : "Tem certeza que deseja arquivar esta postagem? Ela ficará oculta da sua timeline."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row gap-3 sm:justify-center">
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  archiveMutation.mutate();
+                }}
+                disabled={archiveMutation.isPending}
+                className="flex-1 h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-white font-semibold shadow-lg shadow-orange-500/30 hover:opacity-95"
+              >
+                {archiveMutation.isPending ? "Aguarde…" : "Confirmar"}
+              </AlertDialogAction>
+              <AlertDialogCancel
+                disabled={archiveMutation.isPending}
+                className="flex-1 h-12 mt-0 rounded-full border-2 border-foreground/80 bg-transparent font-semibold hover:bg-foreground/5"
+              >
+                Cancelar
+              </AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
+
 }
