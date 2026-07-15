@@ -540,23 +540,28 @@ export const getUserPostsGrid = createServerFn({ method: "POST" })
 
 export const getUserMediasGrid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => gridSchema.parse(d))
+  .inputValidator((d: unknown) => mediaGridSchema.parse(d))
   .handler(
     async ({ data, context }): Promise<{ items: GridMediaItem[]; nextCursor: string | null }> => {
       const limit = data.limit ?? 24;
       const client = context.supabase;
+      const filter = data.filter ?? "all";
 
       // Estratégia: paginação por publicações. Cada página retorna todas as
       // mídias das próximas `limit` publicações do autor. O cursor é o
       // published_at da última publicação consumida.
       let pubQuery = client
         .from("publications")
-        .select("id, published_at")
+        .select("id, published_at, visibility, price_cents")
         .eq("author_id", data.userId)
         .is("archived_at", null)
         .lte("published_at", new Date().toISOString())
         .order("published_at", { ascending: false })
         .limit(limit);
+
+      if (filter === "paid") {
+        pubQuery = pubQuery.eq("visibility", "paid").gt("price_cents", 0);
+      }
 
       if (data.cursor) pubQuery = pubQuery.lt("published_at", data.cursor);
 
@@ -566,10 +571,15 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
       if (pubRows.length === 0) return { items: [], nextCursor: null };
 
       const ids = pubRows.map((p) => p.id);
-      const { data: mediaRows, error: mErr } = await client
+      let mediaQuery = client
         .from("publication_media")
         .select("id, publication_id, url, type, position")
         .in("publication_id", ids);
+
+      if (filter === "photos") mediaQuery = mediaQuery.eq("type", "image");
+      else if (filter === "videos") mediaQuery = mediaQuery.eq("type", "video");
+
+      const { data: mediaRows, error: mErr } = await mediaQuery;
       if (mErr) throw new Error(mErr.message);
 
       const pubOrder = new Map(pubRows.map((p, i) => [p.id, i]));
