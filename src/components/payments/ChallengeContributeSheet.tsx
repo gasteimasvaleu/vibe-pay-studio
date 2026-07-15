@@ -44,6 +44,7 @@ export function ChallengeContributeSheet({
   open,
   onOpenChange,
   onContributed,
+  preselectedTierCents,
 }: Props) {
   const queryClient = useQueryClient();
   const fetchTiers = useServerFn(getChallengeTiers);
