@@ -1,24 +1,14 @@
-Ajustes visuais no card de oferta de assinatura em `src/routes/_authenticated/perfil.$username.tsx`.
+Diagnóstico:
 
-## Mudanças
+- O perfil `monetisex` tem assinatura mensal configurada em `R$ 29,00`.
+- Os descontos de `3 meses` e `6 meses` estão como `0%` no banco.
+- Na tela do perfil, o app só mostra os planos de `3 meses` e `6 meses` dentro da seção “Promoções” quando existe desconto trimestral ou semestral maior que zero.
+- Por isso, na página individual aparece apenas `1 mês`.
+- A promoção ativa `teste` de `5%` é outra coisa: ela aparece no card de oferta e atualmente é aplicada somente ao plano mensal.
 
-### 1. Card de promoção como card aninhado dentro do card de perfil
-- O `SubscriptionOfferCard` hoje é renderizado como um bloco sem borda/background próprio (`space-y-3`) dentro do card de identidade.
-- Envolver o conteúdo interno do `SubscriptionOfferCard` em um container com aparência de card: `rounded-2xl` (ou `rounded-3xl`), borda sutil, background diferenciado (`bg-background` ou tom mais claro que o `bg-card` do perfil) e padding interno (`p-4 md:p-5`).
-- Manter o wrapper externo no card de identidade com `pr-4 md:pr-6 pt-2`, para que o card de promoção fique alinhado ao conteúdo do perfil.
+Se quiser ajustar, o plano é:
 
-### 2. Manter posição da badge "Economize X%" conforme screenshot
-- A badge já está como pill inline acima do botão (`inline-flex rounded-full bg-emerald-500/15 ...`).
-- Garantir que fique alinhada à esquerda, acima do botão, sem `absolute` ou sobreposição.
-
-### 3. Manter botão "Assinar agora" mais fino
-- O botão já está ajustado para `h-11 text-sm` com `shadow-sm` e gradiente.
-- Manter `rounded-2xl` e o estilo de gradiente atual.
-
-### 4. Preservar estrutura interna
-- Manter cabeçalho com `Sparkles` + "Oferta de assinatura".
-- Manter countdown, avatar + campo com nome da oferta, botão CTA e "Preço original" riscado.
-
-## Fora de escopo
-- Nenhuma mudança em lógica de negócio, loader, tipos ou tabelas.
-- Nenhuma mudança no `SubscriptionPlansCard` ("Assinaturas") logo abaixo.
+1. Alterar a regra visual da página de perfil para mostrar também `3 meses` e `6 meses` mesmo quando o desconto for `0%`.
+2. Deixar esses planos abaixo de “Assinaturas”, não dependentes da seção “Promoções”.
+3. Manter o card da promoção ativa separado, como oferta especial mensal.
+4. Garantir que ao clicar em qualquer plano, o diálogo de assinatura receba o plano correto: mensal, trimestral ou semestral.
