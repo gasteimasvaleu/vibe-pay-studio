@@ -1,20 +1,13 @@
 ## Problema
 
-No fluxo de criação de desafio o sheet de prévia até abre depois da tela de faixas, mas a mídia selecionada nunca é obrigatória nem é enviada junto com a publicação. As três verificações que forçam/enviam a prévia hoje só olham para `toggles.paid.enabled`.
+O slot da prévia no compositor (`StepCompose`, `publisher.tsx` linha 1282) só é renderizado quando `toggles.paid.enabled`. Com desafio ativo (`toggles.challenge.enabled`), a prévia é enviada e salva, mas o thumbnail nunca aparece ao lado da primeira mídia.
 
 ## Correção
 
 `src/routes/_authenticated/publisher.tsx`
 
-1. `previewMissing`: exigir prévia também quando `toggles.challenge.enabled`.
-   `const previewMissing = (toggles.paid.enabled || toggles.challenge.enabled) && (!preview || preview.status !== "ready");`
-2. `onPost`: bloquear envio e reabrir o `PreviewSheet` quando `visibility === "paid" || visibility === "challenge"` e não houver prévia pronta (mesma mensagem "Adicione uma mídia de prévia").
-3. `onPost` payload: mudar a condição do campo `preview` para `(visibility === "paid" || visibility === "challenge") && preview?.status === "ready" && preview.storagePath && preview.publicUrl`, mantendo o restante igual.
-4. `onChallengeChange(false)`: chamar `void clearPreview();` ao desligar o toggle de desafio, espelhando o comportamento de `onPaidChange`, para não deixar prévia órfã ao trocar de modo.
+- Trocar a condição do bloco do slot de prévia de
+  `{toggles.paid.enabled && (` para
+  `{(toggles.paid.enabled || toggles.challenge.enabled) && (`.
 
-Nada mais precisa mudar: o `createPublication` no backend já aceita `preview` para qualquer visibility, e o sheet de prévia já é aberto ao confirmar as faixas.
-
-## Fora de escopo
-
-- Layout/UX do sheet de prévia.
-- Exibição da prévia dentro do card do desafio no feed.
+Nada mais muda; a lógica de upload, exibição e `onEditPreview` já funciona igual para os dois modos.

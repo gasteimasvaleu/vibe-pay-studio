@@ -1279,7 +1279,7 @@ function StepCompose({
         </DndContext>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-          {toggles.paid.enabled && (
+          {(toggles.paid.enabled || toggles.challenge.enabled) && (
             <button
               type="button"
               onClick={onEditPreview}
