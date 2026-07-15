@@ -83,11 +83,18 @@ function FeedPage() {
   const handleUnlock = (item: FeedItem) => {
     if (unlocking) return;
     if (item.visibility === "challenge") {
+      setChallengeTier(null);
       setChallengeFor(item);
       return;
     }
     setPending(item);
   };
+
+  const handleChallengeTierSelect = (item: FeedItem, tierCents: number) => {
+    setChallengeTier(tierCents);
+    setChallengeFor(item);
+  };
+
 
 
   const confirmPayment = async (method: PaymentMethod) => {
