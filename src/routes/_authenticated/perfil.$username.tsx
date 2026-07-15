@@ -106,14 +106,15 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("publications.author_id", profile.user_id),
     ]);
 
-    const [{ data: activeSub }, { data: followRow }] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("id")
         .eq("subscriber_id", user.id)
         .eq("creator_id", profile.user_id)
         .eq("status", "active")
-        .gt("current_period_end", new Date().toISOString())
+        .gt("current_period_end", nowIso)
         .maybeSingle(),
       supabase
         .from("follows")
@@ -121,7 +122,31 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .eq("follower_id", user.id)
         .eq("followee_id", profile.user_id)
         .maybeSingle(),
+      supabase
+        .from("promotions")
+        .select("id, name, promo_price, monthly_price_snapshot, discount_pct, ends_at, max_subscriptions, subscriptions_used")
+        .eq("creator_id", profile.user_id)
+        .eq("status", "active")
+        .lte("starts_at", nowIso)
+        .gt("ends_at", nowIso)
+        .order("promo_price", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+    const promotion =
+      promotionRow &&
+      (promotionRow.max_subscriptions == null ||
+        (promotionRow.subscriptions_used ?? 0) < promotionRow.max_subscriptions)
+        ? {
+            id: promotionRow.id as string,
+            name: (promotionRow.name as string) ?? "",
+            promoPrice: Number(promotionRow.promo_price ?? 0),
+            originalPrice: Number(promotionRow.monthly_price_snapshot ?? 0),
+            discountPct: Number(promotionRow.discount_pct ?? 0),
+            endsAt: promotionRow.ends_at as string,
+          }
+        : null;
 
     return {
       viewerId: user.id,
@@ -135,6 +160,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
+      promotion,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
       photosCount: photosCount ?? 0,
