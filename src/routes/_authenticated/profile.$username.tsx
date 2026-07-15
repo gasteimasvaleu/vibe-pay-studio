@@ -459,10 +459,10 @@ function MediasSection({
         <div>
           <div className="grid grid-cols-3 md:grid-cols-4 gap-1">
             {items.map((m) => (
-              <Link
+              <button
                 key={m.id}
-                to="/perfil/$username"
-                params={{ username }}
+                type="button"
+                onClick={() => onOpen(m)}
                 className="relative aspect-square overflow-hidden bg-muted"
               >
                 {m.type === "video" ? (
@@ -479,7 +479,7 @@ function MediasSection({
                 ) : (
                   <img src={m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
                 )}
-              </Link>
+              </button>
             ))}
           </div>
           <div ref={sentinelRef} className="h-8" />
