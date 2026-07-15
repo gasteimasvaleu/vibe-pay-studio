@@ -701,7 +701,15 @@ function VaultPage() {
           className={`${mobileDetail ? "hidden md:block" : "block"} md:border-r md:border-border px-4 md:px-6 py-6`}
         >
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-sm font-bold tracking-wider text-muted-foreground">PADRÃO</span>
+            <span className="text-sm font-bold tracking-wider text-muted-foreground">
+              {(sidebarSort === "padrao"
+                ? "PADRÃO"
+                : sidebarSort === "nome"
+                ? "NOME"
+                : sidebarSort === "recentes"
+                ? "RECENTES"
+                : "MÍDIAS") + (sidebarSort === "padrao" ? "" : sidebarDirection === "asc" ? " ↑" : " ↓")}
+            </span>
             <Popover>
               <PopoverTrigger asChild>
                 <button
