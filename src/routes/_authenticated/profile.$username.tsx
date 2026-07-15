@@ -170,7 +170,10 @@ function ProfilePage() {
               <CalendarCheck className="h-5 w-5" />
               Posts agendados
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 rounded-xl py-3 text-base">
+            <DropdownMenuItem
+              className="gap-3 rounded-xl py-3 text-base"
+              onSelect={() => navigate({ to: "/postsarquivados" })}
+            >
               <Archive className="h-5 w-5" />
               Arquivados
             </DropdownMenuItem>
