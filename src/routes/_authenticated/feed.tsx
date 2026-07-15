@@ -178,7 +178,7 @@ function FeedPage() {
           ) : feedItems.length > 0 ? (
             <div className="space-y-4">
               {feedItems.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} />
+                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} onChallengeTierSelect={handleChallengeTierSelect} />
               ))}
               <div ref={sentinelRef} className="h-8" />
               {feedQuery.isFetchingNextPage && (
