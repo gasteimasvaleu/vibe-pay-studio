@@ -98,6 +98,8 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"posts" | "medias">("posts");
   const [mediaFilter, setMediaFilter] = useState<GridMediaFilter>("all");
+  const [openMedia, setOpenMedia] = useState<GridMediaItem | null>(null);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const { data: profile } = useSuspenseQuery(profileQueryOptions(username));
 
   const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
