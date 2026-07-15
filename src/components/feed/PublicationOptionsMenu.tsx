@@ -48,8 +48,10 @@ export function PublicationOptionsMenu({
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   const queryClient = useQueryClient();
+
   const toggleCommentsFn = useServerFn(setPublicationCommentsDisabled);
   const archiveFn = useServerFn(setPublicationArchived);
   const deleteFn = useServerFn(deletePublication);
