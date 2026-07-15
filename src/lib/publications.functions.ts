@@ -532,6 +532,10 @@ export const getUserPublications = createServerFn({ method: "POST" })
         expires_at: p.expires_at,
         published_at: p.published_at!,
         locked: isLocked,
+        preview_url:
+          p.visibility === "paid" || p.visibility === "challenge"
+            ? (p as { preview_url: string | null }).preview_url ?? null
+            : null,
         audio_url: (p as { audio_url: string | null }).audio_url ?? null,
         media: isLocked && media.length === 0 ? [] : media,
         like_count: likeCounts.get(p.id) ?? 0,
