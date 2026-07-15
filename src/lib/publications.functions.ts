@@ -1129,6 +1129,9 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           visibility: p.visibility as FeedItem["visibility"],
           price_cents: p.price_cents,
           challenge_cents: p.challenge_cents,
+          challenge_raised_cents: null,
+          challenge_contributor_count: null,
+
           pinned: p.pinned,
           comments_disabled: p.comments_disabled,
           expires_at: p.expires_at,
