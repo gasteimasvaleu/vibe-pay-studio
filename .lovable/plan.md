@@ -1,48 +1,137 @@
 
-## Objetivo
-
-Refatorar o fluxo do "Desafio" no publisher para usar bottom sheets em vez de dialog centralizado, adicionar uma segunda etapa para definir as faixas de contribuição, e depois abrir automaticamente o sheet de prévia (obrigatório para toda mídia paga).
-
 ## Escopo
 
-Apenas UI/estado no frontend do publisher. Nada muda em backend/tipos de submissão além de expandir o payload local do toggle `challenge` para carregar as faixas.
+Implementar as três frentes que restaram do Desafio:
 
-## Alterações
+1. Persistir as faixas do desafio no banco.
+2. Fluxo de contribuição via Pix por faixa (Asaas), reaproveitando `publication_unlocks` para dar acesso ao contribuinte.
+3. Tela pública do desafio com barra de progresso da meta.
 
-### 1. `src/routes/_authenticated/publisher.tsx` — sheet 1 (meta do desafio)
+Sem cartão de crédito, sem carteira interna (não reembolsáveis), sem alterar o esquema de `publications` (já tem `visibility='challenge'` e `challenge_cents` como meta).
 
-- Trocar o `<Dialog>` do `PriceDialog` interno (linhas 1517–1601) por um `<Sheet side="bottom">` **apenas quando usado para o desafio** (o mesmo componente é usado para "Paid", então introduzir um novo componente `ChallengeGoalSheet` em vez de mudar o `PriceDialog` genérico).
-- Largura preservada via `className="mx-auto w-full sm:max-w-[420px] rounded-t-3xl"` no `SheetContent`, mesmo visual que hoje (contador com − / +, slider, min/máx, botão "Avançar").
-- Título "Criando desafio", com botão back (seta) à esquerda e X à direita conforme o screenshot.
-- Ao clicar em "Avançar", fechar este sheet e abrir o sheet 2 (faixas), passando `goalCents`.
+## 1. Banco (migration)
 
-### 2. `src/routes/_authenticated/publisher.tsx` — sheet 2 (faixas de contribuição)
+Nova tabela `public.publication_challenge_tiers`:
 
-Novo componente `ChallengeTiersSheet` (bottom sheet, mesma largura).
+- `id uuid pk default gen_random_uuid()`
+- `publication_id uuid not null references publications(id) on delete cascade`
+- `amount_cents integer not null check (amount_cents > 0)`
+- `position integer not null default 0`
+- `created_at timestamptz not null default now()`
+- `unique (publication_id, amount_cents)`
 
-- Header: seta voltar (reabre sheet 1 mantendo valor), título "Criando desafio", X (fecha tudo e desmarca o toggle).
-- Bloco superior: "Valor do desafio" + `R$ XX,XX` em destaque (readonly, vindo da etapa anterior).
-- Lista de faixas:
-  - Primeira faixa fixa (R$ 5,00), sem botão de remover, readonly.
-  - 3 faixas sugeridas automaticamente ao abrir: `goal * 0.25`, `goal * 0.5`, `goal * 0.75`, arredondadas para múltiplos de R$ 0,50 e limitadas ao intervalo [R$ 5,00, goal]. Cada uma é editável (input com máscara R$) e removível (X à direita).
-  - Botão discreto "Adicionar faixa" abaixo da lista (limite 8 no total; cada nova entra vazia para o usuário digitar).
-- Validação: valores > 0, ≤ meta, sem duplicatas; botão "Confirmar" desabilitado se inválido.
-- Botão "Confirmar" (largura total, gradiente): salva `{ enabled: true, goalCents, tiersCents: number[] }` em `toggles.challenge`, fecha o sheet e abre imediatamente `previewSheetOpen = true` (já existe — reutilizar).
+Grants: `SELECT` para `anon` e `authenticated` (as faixas são públicas, mesma visibilidade que o card do desafio); `INSERT/UPDATE/DELETE` só para `authenticated`; `ALL` para `service_role`.
 
-### 3. Estado / payload do toggle
+RLS:
+- `SELECT` permitido para todos (`USING (true)`).
+- `INSERT/UPDATE/DELETE` só quando `EXISTS (SELECT 1 FROM publications p WHERE p.id = publication_id AND p.author_id = auth.uid())`.
 
-- Ampliar `toggles.challenge` de `{ enabled, priceCents }` para `{ enabled, goalCents, tiersCents }`.
-- Renomear referências locais (`priceCents` → `goalCents`) e atualizar o resumo mostrado no `ActionRow` "Desafio" (usa `goalCents` como valor exibido, igual a hoje).
-- No `handleSubmit`, manter `challengeCents: goalCents` (chave já existente) e adicionar `challengeTiersCents: number[]` no payload — o backend hoje ignora o campo extra; a persistência real das faixas fica como próximo passo.
+Índice simples `(publication_id, position)`.
 
-### 4. Reaproveitar o sheet de prévia existente
+Reaproveitamento do restante:
+- Contribuições vão na tabela existente `publication_unlocks` com `amount_cents = valor da faixa`, `provider = 'asaas_pix'` — a trigger `publication_unlocks_sync_transaction` já cria a transação de kind `publication_unlock`, credita a wallet do criador via split e evita self-purchase.
+- Constraint `UNIQUE(publication_id, buyer_id)` já garante uma contribuição por fã (segunda tentativa é bloqueada) — coerente com "contribuiu, destravou".
+- Total arrecadado = `SUM(amount_cents) FILTER (status='paid')` em `publication_unlocks` para a publicação. Nada precisa mudar no schema.
 
-Não criar novo componente: após "Confirmar" no sheet de faixas, chamar `setPreviewSheetOpen(true)`. Mesma lógica que já é feita para o toggle "Paid" (linha 926).
+## 2. Backend — persistir faixas
 
-## Fora de escopo
+### 2.1 `createPublication` (`src/lib/publications.functions.ts`)
 
-- Persistência das faixas no banco / edge function (backend do desafio).
-- Fluxo de contribuição/pagamento em Pix por faixa.
-- Tela pública do desafio com barra de progresso da meta.
+- Ampliar o input schema com `challengeTiersCents: z.array(z.number().int().min(100)).max(8).optional()`.
+- Quando `visibility === 'challenge'` e a lista vier populada:
+  - inserir em `publication_challenge_tiers` linhas ordenadas por valor com `position = índice`.
+  - falha na inserção faz rollback do `publications` já criado (padrão atual do arquivo).
 
-Depois de aprovado, implemento apenas as três mudanças de UI acima.
+### 2.2 Publisher (`src/routes/_authenticated/publisher.tsx`)
+
+- O payload já envia `challengeTiersCents`; sem mudanças de UI.
+
+### 2.3 Leitura das faixas
+
+Novo server fn `getChallengeTiers({ publicationId }): Array<{ amount_cents, position }>` — usado pela tela pública e pelo checkout. Sem `requireSupabaseAuth`: usa o client servidor publishable (fetch shim para chaves `sb_`) e a política pública de SELECT.
+
+## 3. Contribuição via Pix
+
+### 3.1 Server fn `createChallengeContributionPayment`
+
+Arquivo: `src/lib/payments.functions.ts`.
+
+Input: `{ publicationId: string; tierCents: number }`. Método fixo `PIX` (sem cartão).
+
+Fluxo (espelho de `createUnlockPayment`, com adaptações):
+
+1. Buscar publicação: precisa ter `visibility='challenge'`, `challenge_cents` (meta) > 0 e autor ≠ comprador.
+2. Validar que existe uma linha em `publication_challenge_tiers` com `(publication_id, amount_cents=tierCents)`.
+3. Bloquear se já existe `publication_unlocks` desse buyer com `status='paid'` para essa publicação.
+4. `upsert` em `publication_unlocks` (`insert` novo ou `update` de pendente) com `amount_cents = tierCents`, `provider = 'asaas_pix'`, `status = 'pending'`.
+5. Calcular `netCreatorCents` via `computeCreatorNetCents(tierCents, 'PIX')`, criar `Payment` no Asaas com split para o wallet do criador, gravar `provider_ref`.
+6. `getPixQrCode` e `recordIntent` (metadata `referenceTable='publication_unlocks'`) — reutiliza o pipeline atual: webhook Asaas e o poller `getPaymentIntentStatus` já reconciliam via `applyPaidIntent` → marca unlock como `paid` → trigger `publication_unlocks_sync_transaction` cria a `transactions` e o gatilho de wallet credita o criador.
+7. Retornar `{ paymentIntentId, pixQrCode, pixCopyPaste, invoiceUrl }` para o `PaymentModal` existente.
+
+Nada muda no webhook (`src/routes/api/public/webhooks/asaas.ts`) nem no reconcile — a contribuição é apenas um `publication_unlock` a mais.
+
+### 3.2 Server fn `getChallengeStatus`
+
+`{ publicationId } → { goalCents, raisedCents, contributorCount, myContributionCents | null, reached: boolean }`.
+
+- Server publishable client para os dois primeiros (agregado de `publication_unlocks` com `status='paid'`), autenticado (`requireSupabaseAuth` opcional — usar cliente autenticado se houver bearer) para `myContributionCents`.
+- Simplificação: expor uma única fn `getChallengeStatus` com middleware auth e devolver `myContributionCents=null` quando o usuário não contribuiu.
+
+## 4. UI — tela pública do desafio
+
+### 4.1 `ChallengeContributeSheet` (novo)
+
+`src/components/payments/ChallengeContributeSheet.tsx`. Bottom sheet, mesma largura dos outros checkouts.
+
+Conteúdo:
+- Header "Aceitar desafio" com X.
+- Bloco de meta: "Meta do desafio" `R$ X` e barra de progresso `raised/goal` (usa `Progress` do shadcn). Texto secundário "Arrecadado R$ Y · N contribuições" e badge "Meta atingida — conteúdo liberado" quando `raised ≥ goal`.
+- Aviso curto: "Contribuições não são reembolsáveis."
+- Lista de faixas (`getChallengeTiers`) como cartões-rádio; cada card mostra `R$ X` grande.
+- Botão "Contribuir com Pix · R$ X" (desabilitado até escolher uma faixa). Ao clicar → `createChallengeContributionPayment` → abre `PaymentModal` no fluxo Pix já existente.
+
+Estados de loading e erro tratados via `toast` (`translatePaymentError`).
+
+### 4.2 `PublicationCard` — overlay de desafio
+
+Editar `LockedOverlay` em `src/components/feed/PublicationCard.tsx` para o caso `isChallenge`:
+
+- Ícone Trophy + título "Desafio".
+- Meta `R$ X` e barra de progresso pequena com `raised/goal` (usa `challenge_raised_cents` que virá do feed — ver 4.4).
+- Texto "N contribuiu(íram) até agora".
+- Botão "Aceitar desafio" (mantém).
+
+Quando `raised ≥ goal`: badge "Meta atingida", botão vira "Contribuir mesmo assim".
+
+### 4.3 Integração no feed e no perfil
+
+- `feed.tsx` e `profile.$username.tsx`: quando `handleUnlock` recebe item com `visibility='challenge'`, abre `ChallengeContributeSheet` em vez de `PaymentMethodDialog`. Um novo state `challengeFor: FeedItem | null` guarda o item.
+- Após pagamento confirmado (`onPaid` do `PaymentModal`), invalida `["feed"]` e `["challenge-status", publicationId]`.
+
+### 4.4 Feed data — expor progresso
+
+Em `getFeed` e `getUserPublications` (`src/lib/publications.functions.ts`):
+
+- Para os `ids` da página com `visibility='challenge'`, buscar em paralelo `publication_unlocks` (`select publication_id, amount_cents, buyer_id`, `status='paid'`) e agregar por publicação.
+- Adicionar em `FeedItem`:
+  - `challenge_raised_cents: number | null`
+  - `challenge_contributor_count: number | null`
+
+O overlay usa esses campos direto; o sheet ainda chama `getChallengeStatus` para dados frescos + `myContributionCents`.
+
+## 5. Fora de escopo
+
+- Cartão de crédito para contribuições (spec pede só Pix).
+- Reembolso/estorno de contribuições (por design, não são reembolsáveis).
+- Notificação em massa ao atingir a meta (só a UI atualiza no próximo fetch/realtime).
+- Página dedicada `/desafio/$id` — o desafio vive dentro do card da publicação; o sheet cobre a experiência de contribuir.
+
+## Ordem de execução
+
+1. Migration (tabela + grants + RLS + índice).
+2. Ampliar `createPublication` para gravar faixas; adicionar `getChallengeTiers` e `getChallengeStatus`.
+3. Adicionar agregados `challenge_raised_cents` / `challenge_contributor_count` em `getFeed` e `getUserPublications`, e no tipo `FeedItem`.
+4. Criar `createChallengeContributionPayment` em `payments.functions.ts`.
+5. Criar `ChallengeContributeSheet`; ajustar `LockedOverlay` no `PublicationCard`.
+6. Rotear o `handleUnlock` de `feed.tsx` e do perfil para o novo sheet quando `visibility='challenge'`.
+7. Rodar typecheck e validar fluxo via preview (contribuir com valor de teste em ambiente sandbox do Asaas).
