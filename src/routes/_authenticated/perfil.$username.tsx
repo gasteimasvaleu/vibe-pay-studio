@@ -8,7 +8,6 @@ import {
   AlertCircle,
   ArrowLeft,
   BadgeCheck,
-  ChevronDown,
   Clapperboard,
   DollarSign,
   Film,
@@ -996,6 +995,8 @@ type OfferPromotion = {
   discountPct: number;
   endsAt: string;
 };
+
+type SubscriptionPlan = "monthly" | "quarterly" | "semiannual";
 
 function useCountdown(endsAt: string) {
   const [now, setNow] = useState(() => Date.now());
