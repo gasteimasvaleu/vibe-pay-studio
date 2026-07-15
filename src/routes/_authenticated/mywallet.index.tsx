@@ -423,7 +423,7 @@ function MyWalletPage() {
                 variant="ghost"
                 onClick={() => setRechargeCard(null)}
                 disabled={rechargeMut.isPending}
-                className="rounded-full"
+                className="rounded-md"
               >
                 Cancelar
               </Button>

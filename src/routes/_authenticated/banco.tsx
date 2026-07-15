@@ -731,7 +731,7 @@ function BancoPage() {
               <Button
                 type="button"
                 onClick={() => setCadastroOpen(true)}
-                className="mt-3 rounded-full"
+                className="mt-3 rounded-md"
               >
                 Configurar recebimento
               </Button>
