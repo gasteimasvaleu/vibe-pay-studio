@@ -137,6 +137,16 @@ function VaultPage() {
 
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [dialogView, setDialogView] = useState<"form" | "picker">("form");
+  const [pickedItems, setPickedItems] = useState<VaultMediaItem[]>([]);
+  const [pickerSelected, setPickerSelected] = useState<Set<string>>(new Set());
+
+  const resetAddDialog = () => {
+    setCategoryName("");
+    setPickedItems([]);
+    setPickerSelected(new Set());
+    setDialogView("form");
+  };
 
   const [sidebarSort, setSidebarSort] = useState<"padrao" | "nome" | "recentes" | "midias">("padrao");
   const [sidebarDirection, setSidebarDirection] = useState<"asc" | "desc">("asc");
