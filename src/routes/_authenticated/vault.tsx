@@ -633,7 +633,7 @@ function VaultPage() {
       {selectionMode && selectedKeys.size > 0 && (
         <SelectionPill
           selectedCount={selectedKeys.size}
-          totalCount={content.items.length}
+          totalCount={displayedItems.length}
           onClose={() => {
             setSelectionMode(false);
             setSelectedKeys(new Set());
