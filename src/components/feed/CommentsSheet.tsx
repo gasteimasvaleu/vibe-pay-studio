@@ -48,7 +48,7 @@ function CommentRow({
     <div className="flex items-start gap-3">
       <div
         className={cn(
-          "shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white",
+          "shrink-0 rounded-md bg-primary grid place-items-center text-sm font-bold text-white",
           avatarSize,
         )}
       >
@@ -424,7 +424,7 @@ export function CommentsSheet({
               <div className="h-9 w-9 shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
                 {(currentUserName ?? "?").slice(0, 1).toUpperCase()}
               </div>
-              <div className="flex-1 flex items-center gap-2 rounded-full bg-muted px-4 h-11">
+              <div className="flex-1 flex items-center gap-2 rounded-md bg-muted px-4 h-11">
                 <input
                   ref={inputRef}
                   value={text}

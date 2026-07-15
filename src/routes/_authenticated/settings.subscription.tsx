@@ -180,7 +180,7 @@ function SubscriptionPage() {
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full h-12 rounded-full text-base font-semibold"
+            className="w-full h-12 rounded-md text-base font-semibold"
           >
             {saving ? "Salvando..." : "Salvar"}
           </Button>

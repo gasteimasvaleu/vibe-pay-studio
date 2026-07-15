@@ -50,13 +50,13 @@ export function Navbar() {
           </button>
           <Link
             to="/entrar"
-            className="px-4 py-2 text-sm font-semibold rounded-full border border-border hover:border-foreground transition-colors"
+            className="px-4 py-2 text-sm font-semibold rounded-md border border-border hover:border-foreground transition-colors"
           >
             Entrar
           </Link>
           <Link
             to="/cadastro"
-            className="px-5 py-2 text-sm font-semibold rounded-full bg-gradient-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-glow"
+            className="px-5 py-2 text-sm font-semibold rounded-md bg-gradient-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-glow"
           >
             Criar conta
           </Link>
@@ -88,14 +88,14 @@ export function Navbar() {
               <Link
                 to="/entrar"
                 onClick={() => setOpen(false)}
-                className="flex-1 py-2 text-center text-sm font-semibold rounded-full border border-border"
+                className="flex-1 py-2 text-center text-sm font-semibold rounded-md border border-border"
               >
                 Entrar
               </Link>
               <Link
                 to="/cadastro"
                 onClick={() => setOpen(false)}
-                className="flex-1 py-2 text-center text-sm font-semibold rounded-full bg-gradient-primary"
+                className="flex-1 py-2 text-center text-sm font-semibold rounded-md bg-gradient-primary"
               >
                 Criar conta
               </Link>

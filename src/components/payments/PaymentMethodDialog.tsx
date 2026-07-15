@@ -49,7 +49,7 @@ export function PaymentMethodDialog({
           <Button
             onClick={() => onConfirm(method)}
             disabled={loading}
-            className="w-full h-11 rounded-full bg-gradient-primary text-primary-foreground"
+            className="w-full h-11 rounded-md bg-gradient-primary text-primary-foreground"
           >
             {loading ? (
               <>

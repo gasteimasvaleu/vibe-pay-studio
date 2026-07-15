@@ -110,7 +110,7 @@ function RedesSociaisPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-3.5 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
           >
             {saving ? "Salvando..." : "Avançar"}
           </button>
@@ -143,7 +143,7 @@ function SocialField({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-full border bg-white px-4 py-3 transition-colors ${
+      className={`flex items-center gap-2 rounded-md border bg-white px-4 py-3 transition-colors ${
         invalid ? "border-red-500" : "border-neutral-200 focus-within:border-fuchsia-500"
       }`}
     >

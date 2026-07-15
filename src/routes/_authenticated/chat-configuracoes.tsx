@@ -87,7 +87,7 @@ function ChatSettingsPage() {
             type="button"
             disabled={!canSave}
             className={cn(
-              "w-full h-12 rounded-full font-semibold",
+              "w-full h-12 rounded-md font-semibold",
               "bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95",
             )}
           >

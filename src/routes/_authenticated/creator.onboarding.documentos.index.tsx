@@ -87,7 +87,7 @@ function DocumentosPage() {
           type="button"
           onClick={handleStart}
           disabled={loading}
-          className="mt-10 w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
+          className="mt-10 w-full py-3.5 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
         >
           {loading ? "Preparando..." : "Iniciar verificação"}
         </button>

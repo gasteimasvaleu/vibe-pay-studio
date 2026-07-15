@@ -315,7 +315,7 @@ function BancoPage() {
                   </p>
                 )}
                 <Button
-                  className="mt-4 w-full rounded-full"
+                  className="mt-4 w-full rounded-md"
                   disabled={!canWithdraw || isRefreshingAfterWithdrawal}
                   title={
                     isRefreshingAfterWithdrawal
@@ -731,7 +731,7 @@ function BancoPage() {
               <Button
                 type="button"
                 onClick={() => setCadastroOpen(true)}
-                className="mt-3 rounded-full"
+                className="mt-3 rounded-md"
               >
                 Configurar recebimento
               </Button>
@@ -811,7 +811,7 @@ function BancoPage() {
               Veja seu saldo, gerencie suas formas de pagamento e acompanhe suas
               transações
             </p>
-            <Button variant="outline" className="mt-4 rounded-full">
+            <Button variant="outline" className="mt-4 rounded-md">
               Acessar carteira
             </Button>
           </div>
@@ -885,7 +885,7 @@ function BancoPage() {
             </div>
 
             <Button
-              className="w-full rounded-full"
+              className="w-full rounded-md"
               variant="outline"
               onClick={() => setInfoOpen(false)}
             >

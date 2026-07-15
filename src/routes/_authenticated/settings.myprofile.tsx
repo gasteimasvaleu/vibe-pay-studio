@@ -114,7 +114,7 @@ function SettingsMyProfilePage() {
             type="button"
             variant="outline"
             onClick={handleCopyLink}
-            className="mt-2 h-11 px-6 rounded-full gap-2"
+            className="mt-2 h-11 px-6 rounded-md gap-2"
           >
             <Copy className="h-4 w-4" />
             Copiar meu link Monetisexy
@@ -172,14 +172,14 @@ function SettingsMyProfilePage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setDeleteOpen(false)}
-                className="h-12 px-6 rounded-full text-foreground hover:bg-accent"
+                className="h-12 px-6 rounded-md text-foreground hover:bg-accent"
               >
                 Cancelar
               </Button>
               <Button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="h-12 px-8 rounded-full bg-muted text-foreground hover:bg-accent"
+                className="h-12 px-8 rounded-md bg-muted text-foreground hover:bg-accent"
               >
                 Continuar
               </Button>

@@ -203,7 +203,7 @@ function CreatorGatedNotFound() {
 
           <Link
             to="/creator/onboarding/assinatura"
-            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
+            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
           >
             Criar perfil de creator
           </Link>
@@ -651,7 +651,7 @@ function PerfilPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="w-full h-12 rounded-full bg-card border border-border p-0 overflow-hidden">
+          <TabsList className="w-full h-12 rounded-md bg-card border border-border p-0 overflow-hidden">
             <TabsTrigger
               value="posts"
               className="flex-1 h-full gap-2 rounded-none bg-transparent text-sm font-semibold text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors"
@@ -907,7 +907,7 @@ function PlanPill({
     <button
       type="button"
       onClick={onClick}
-      className="w-full h-12 px-5 rounded-full flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
+      className="w-full h-12 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
     >
       <span>{label}</span>
       <span>{price}</span>

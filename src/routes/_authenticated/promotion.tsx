@@ -94,9 +94,9 @@ function PromotionPage() {
   };
 
   const primaryBtn =
-    "w-full py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed";
+    "w-full py-3.5 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed";
   const outlineBtn =
-    "w-full py-3.5 rounded-full border border-border bg-background text-foreground font-semibold hover:bg-muted transition";
+    "w-full py-3.5 rounded-md border border-border bg-background text-foreground font-semibold hover:bg-muted transition";
 
   if (loadingPrice) {
     return (
@@ -384,8 +384,8 @@ function PromotionPage() {
           <p className="text-sm font-semibold text-foreground truncate">{name || "Sua oferta"}</p>
         </div>
         <div className="mt-4 space-y-2">
-          <div className="h-3 rounded-full bg-muted w-2/3" />
-          <div className="h-3 rounded-full bg-muted w-1/2" />
+          <div className="h-3 rounded-md bg-muted w-2/3" />
+          <div className="h-3 rounded-md bg-muted w-1/2" />
         </div>
         <div className="mt-6">
           <div className="flex justify-center mb-2">
@@ -393,7 +393,7 @@ function PromotionPage() {
               Economize {discountPct ?? 0}%
             </span>
           </div>
-          <div className="rounded-full bg-gradient-primary text-primary-foreground text-center py-3 px-4 font-bold text-sm sm:text-base">
+          <div className="rounded-md bg-gradient-primary text-primary-foreground text-center py-3 px-4 font-bold text-sm sm:text-base">
             Assinar agora R$ {formatBRL(promoValue)}
           </div>
           <p className="mt-3 text-right text-xs text-muted-foreground">
@@ -421,7 +421,7 @@ function PillInput({
   autoFocus?: boolean;
 }) {
   return (
-    <div className="rounded-full border border-border bg-card px-6 py-3 focus-within:border-primary transition-colors">
+    <div className="rounded-md border border-border bg-card px-6 py-3 focus-within:border-primary transition-colors">
       <label className="block text-xs text-muted-foreground">{label}</label>
       <input
         type="text"
@@ -459,7 +459,7 @@ function PillSelect<T extends string | number>({
       <button
         type="button"
         onClick={() => updateOpen(!open)}
-        className="w-full rounded-full border border-border bg-card px-6 py-3 focus:border-primary transition-colors flex items-center"
+        className="w-full rounded-md border border-border bg-card px-6 py-3 focus:border-primary transition-colors flex items-center"
       >
         <div className="flex-1 text-left">
           <span className="block text-xs text-muted-foreground">{label}</span>

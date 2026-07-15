@@ -223,7 +223,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName }: 
                 <Button
                   onClick={submit}
                   disabled={loading || totals[plan].cents <= 0}
-                  className="w-full h-11 rounded-full bg-gradient-primary text-primary-foreground"
+                  className="w-full h-11 rounded-md bg-gradient-primary text-primary-foreground"
                 >
                   {loading ? (
                     <>

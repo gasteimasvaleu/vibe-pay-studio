@@ -334,13 +334,13 @@ export function PublicationOptionsMenu({
                   archiveMutation.mutate();
                 }}
                 disabled={archiveMutation.isPending}
-                className="flex-1 h-12 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-white font-semibold shadow-lg shadow-orange-500/30 hover:opacity-95"
+                className="flex-1 h-12 rounded-md bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-white font-semibold shadow-lg shadow-orange-500/30 hover:opacity-95"
               >
                 {archiveMutation.isPending ? "Aguarde…" : "Confirmar"}
               </AlertDialogAction>
               <AlertDialogCancel
                 disabled={archiveMutation.isPending}
-                className="flex-1 h-12 mt-0 rounded-full border-2 border-foreground/80 bg-transparent font-semibold hover:bg-foreground/5"
+                className="flex-1 h-12 mt-0 rounded-md border-2 border-foreground/80 bg-transparent font-semibold hover:bg-foreground/5"
               >
                 Cancelar
               </AlertDialogCancel>

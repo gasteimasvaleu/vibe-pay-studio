@@ -36,7 +36,7 @@
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 0.75rem;
   /* Light theme: white + soft lilac + light gray */
   --background: oklch(1 0 0);
   --foreground: oklch(0.2 0.02 280);

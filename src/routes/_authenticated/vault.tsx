@@ -130,7 +130,7 @@ function VaultPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar"
-                    className="h-10 pr-10 rounded-full border-2 border-primary bg-background text-foreground placeholder:text-muted-foreground"
+                    className="h-10 pr-10 rounded-md border-2 border-primary bg-background text-foreground placeholder:text-muted-foreground"
                   />
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                 </div>
@@ -181,7 +181,7 @@ function VaultPage() {
               {activeTab === "publicacoes" && (
                 <button
                   type="button"
-                  className="h-9 w-9 grid place-items-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="h-9 w-9 grid place-items-center rounded-full border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                   aria-label="Selecionar"
                 >
                   <CheckSquare className="h-5 w-5" />
@@ -321,7 +321,7 @@ function VaultPage() {
                       key={f}
                       type="button"
                       onClick={() => setMediaFilter(f)}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold tracking-wide transition-colors ${
+                      className={`px-4 py-2 rounded-md text-sm font-semibold tracking-wide transition-colors ${
                         isActive
                           ? "bg-primary/15 text-primary"
                           : "bg-muted text-muted-foreground hover:bg-accent"
@@ -353,7 +353,7 @@ function VaultPage() {
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="Envios"
-              className="h-12 pl-12 rounded-full text-base"
+              className="h-12 pl-12 rounded-md text-base"
             />
           </div>
 
@@ -371,14 +371,14 @@ function VaultPage() {
             <button
               type="button"
               onClick={() => setAddCategoryOpen(false)}
-              className="h-11 px-6 rounded-full border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
+              className="h-11 px-6 rounded-md border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
             >
               Confirmar
             </button>
             <button
               type="button"
               onClick={() => setAddCategoryOpen(false)}
-              className="h-11 px-6 rounded-full border-2 border-foreground text-foreground font-semibold hover:bg-accent transition-colors"
+              className="h-11 px-6 rounded-md border-2 border-foreground text-foreground font-semibold hover:bg-accent transition-colors"
             >
               Cancelar
             </button>

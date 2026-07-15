@@ -244,7 +244,7 @@ function RangeSelector({ range, onChange }: { range: { from: string; to: string 
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground hover:bg-accent transition-colors"
+            className="px-4 py-2 rounded-md border border-border bg-card text-sm text-foreground hover:bg-accent transition-colors"
           >
             {rangeLabel(range.from, range.to)}
           </button>
@@ -277,7 +277,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors border ${
         active ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
       }`}
     >{label}</button>
@@ -305,13 +305,13 @@ function CardMenu({ items }: { items: { label: string; onSelect?: () => void }[]
 
 function TabsRow<T extends string>({ tabs, active, onChange }: { tabs: readonly T[]; active: T; onChange: (t: T) => void }) {
   return (
-    <div className="rounded-full border border-border bg-card p-1 flex overflow-x-auto">
+    <div className="rounded-md border border-border bg-card p-1 flex overflow-x-auto">
       {tabs.map(t => (
         <button
           key={t}
           type="button"
           onClick={() => onChange(t)}
-          className={`flex-1 min-w-fit whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-fit whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             t === active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
           }`}
         >{t}</button>
@@ -328,7 +328,7 @@ function SubTabsRow<T extends string>({ tabs, active, onChange }: { tabs: readon
           key={t}
           type="button"
           onClick={() => onChange(t)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
             t === active ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
           }`}
         >{t}</button>
@@ -502,7 +502,7 @@ function TopBadgeCard() {
         </div>
       </div>
 
-      <Link to="/dashboard" className="block text-center rounded-full border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
+      <Link to="/dashboard" className="block text-center rounded-md border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
         Acessar Meu Banco
       </Link>
     </div>
@@ -621,7 +621,7 @@ function MeuBancoCard({ today, released, pending, loading }: { today: number; re
           </p>
         </div>
       </div>
-      <Link to="/dashboard" className="block text-center rounded-full border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
+      <Link to="/dashboard" className="block text-center rounded-md border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
         Acessar Meu Banco
       </Link>
     </div>
@@ -743,14 +743,14 @@ function ExtratosPanel({ range }: { range: { from: string; to: string } }) {
             key={t}
             type="button"
             onClick={() => setExtratoTab(t)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
               t === extratoTab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
             }`}
           >{t}</button>
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-card text-foreground border border-border hover:bg-accent transition-colors">
+            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-card text-foreground border border-border hover:bg-accent transition-colors">
               {produtoFilter}<ChevronDown className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
@@ -1040,7 +1040,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="flex flex-wrap items-center gap-2">
         {ENGAJAMENTO_TABS.map(t => (
           <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
               t === tab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
             }`}>{t}</button>
         ))}
@@ -1271,7 +1271,7 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
       <div className="flex flex-wrap items-center gap-2">
         {ASSINANTES_TABS.map(t => (
           <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
               t === tab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
             }`}>{t}</button>
         ))}

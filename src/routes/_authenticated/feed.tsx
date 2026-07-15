@@ -208,7 +208,7 @@ function FeedPage() {
               </p>
               <Link
                 to="/em-alta"
-                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
+                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
               >
                 Explorar creators
               </Link>

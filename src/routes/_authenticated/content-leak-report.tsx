@@ -166,7 +166,7 @@ function ContentLeakReportPage() {
                 <button
                   type="button"
                   onClick={() => removeFile(i)}
-                  className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-background/90 text-foreground shadow"
+                  className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/90 text-foreground shadow"
                   aria-label="Remover mídia"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -198,7 +198,7 @@ function ContentLeakReportPage() {
         <Button
           type="submit"
           disabled={!canSubmit}
-          className="h-12 w-full rounded-full text-base"
+          className="h-12 w-full rounded-md text-base"
         >
           Enviar
         </Button>

@@ -159,7 +159,7 @@ function ComoFuncionaPage() {
         <div className="max-w-3xl mx-auto px-4 text-center">
           <Link
             to="/cadastro"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
           >
             Criar minha conta grátis <ArrowRight className="w-4 h-4" />
           </Link>

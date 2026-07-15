@@ -357,7 +357,7 @@ function MediaCarousel({ media }: { media: FeedItem["media"] }) {
             <Layers className="h-5 w-5" />
           </div>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-md bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             <Images className="h-3.5 w-3.5" />
             {index + 1}/{total}
           </div>
@@ -396,7 +396,7 @@ function LockedOverlay({
         <button
           type="button"
           onClick={() => onUnlock?.(item)}
-          className="inline-flex items-center gap-2 px-6 h-11 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
+          className="inline-flex items-center gap-2 px-6 h-11 rounded-md bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
         >
           {label}
           {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
@@ -449,7 +449,7 @@ function ChallengeTiersPanel({
             key={amount}
             type="button"
             onClick={() => onSelectTier(amount)}
-            className="rounded-full border border-border/60 bg-background/60 py-2.5 text-sm font-medium text-foreground/90 hover:bg-background hover:border-primary/50 transition-colors"
+            className="rounded-md border border-border/60 bg-background/60 py-2.5 text-sm font-medium text-foreground/90 hover:bg-background hover:border-primary/50 transition-colors"
           >
             {brl.format(amount / 100)}
           </button>

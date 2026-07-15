@@ -829,7 +829,7 @@ function PublisherPage() {
         <div className="max-w-3xl mx-auto px-4 py-3">
           {step === 1 ? (
             <Button
-              className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+              className="w-full h-12 rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
               disabled={!canContinue}
               onClick={() => setStep(2)}
             >
@@ -839,7 +839,7 @@ function PublisherPage() {
             </Button>
           ) : (
             <Button
-              className="w-full h-12 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+              className="w-full h-12 rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
               disabled={mutation.isPending || !canContinue}
               onClick={onPost}
             >
@@ -1016,7 +1016,7 @@ function PickerOption({
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-4 rounded-full bg-muted hover:bg-muted/80 transition-colors text-left"
+      className="w-full flex items-center gap-3 px-4 py-4 rounded-md bg-muted hover:bg-muted/80 transition-colors text-left"
     >
       <span className="text-foreground">{icon}</span>
       <span className="font-medium">{label}</span>
@@ -1109,7 +1109,7 @@ function StepMedia({
               variant="outline"
               onClick={onOpenPicker}
               disabled={media.length >= MAX_MEDIA || reorderMode}
-              className="h-12 rounded-full bg-card"
+              className="h-12 rounded-md bg-card"
             >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar mídia
@@ -1118,7 +1118,7 @@ function StepMedia({
               variant={reorderMode ? "default" : "outline"}
               onClick={() => setReorderMode(!reorderMode)}
               disabled={media.length < 2}
-              className="h-12 rounded-full"
+              className="h-12 rounded-md"
             >
               {reorderMode ? (
                 <>
@@ -1349,7 +1349,7 @@ function StepCompose({
             variant="outline"
             onClick={onStartAudio}
             disabled={audio.status !== "idle" && audio.status !== "error"}
-            className="h-12 rounded-full bg-card"
+            className="h-12 rounded-md bg-card"
           >
             <Mic className="h-4 w-4 mr-2" />
             Gravar áudio
@@ -1358,7 +1358,7 @@ function StepCompose({
             variant={reorderMode ? "default" : "outline"}
             disabled={media.length < 2}
             onClick={() => setReorderMode(!reorderMode)}
-            className="h-12 rounded-full"
+            className="h-12 rounded-md"
           >
             {reorderMode ? (
               <>
@@ -1375,7 +1375,7 @@ function StepCompose({
         </div>
 
         {audio.status === "recording" && (
-          <div className="flex items-center justify-between gap-3 h-12 pl-4 pr-2 rounded-full bg-muted/60">
+          <div className="flex items-center justify-between gap-3 h-12 pl-4 pr-2 rounded-md bg-muted/60">
             <div className="flex items-center gap-2 text-sm font-medium">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
@@ -1388,7 +1388,7 @@ function StepCompose({
                 type="button"
                 aria-label="Cancelar gravação"
                 onClick={onCancelAudio}
-                className="h-9 w-9 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+                className="h-9 w-9 rounded-md bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1396,7 +1396,7 @@ function StepCompose({
                 type="button"
                 aria-label="Confirmar gravação"
                 onClick={onConfirmAudio}
-                className="h-9 w-9 rounded-full bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 flex items-center justify-center transition-colors"
+                className="h-9 w-9 rounded-md bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 flex items-center justify-center transition-colors"
               >
                 <Check className="h-4 w-4" />
               </button>
@@ -1418,13 +1418,13 @@ function StepCompose({
         )}
 
         {audio.status === "ready" && audio.previewUrl && (
-          <div className="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full bg-muted/60">
+          <div className="flex items-center gap-2 pl-2 pr-2 py-1 rounded-md bg-muted/60">
             <audio src={audio.previewUrl} controls className="flex-1 h-9" />
             <button
               type="button"
               aria-label="Remover áudio"
               onClick={onRemoveAudio}
-              className="h-9 w-9 shrink-0 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+              className="h-9 w-9 shrink-0 rounded-md bg-red-500/15 text-red-500 hover:bg-red-500/25 flex items-center justify-center transition-colors"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -1450,7 +1450,7 @@ function StepCompose({
             <button
               type="button"
               onClick={onEditPrice}
-              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+              className="h-12 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               <Pencil className="h-4 w-4" />
               {toggles.paid.priceCents != null
@@ -1460,7 +1460,7 @@ function StepCompose({
             <button
               type="button"
               onClick={onEditPreview}
-              className="h-12 rounded-full bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+              className="h-12 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               <Pencil className="h-4 w-4" />
               {preview?.status === "uploading"
@@ -1622,7 +1622,7 @@ function PriceDialog({
           </p>
           <Button
             onClick={() => onConfirm(cents)}
-            className="w-full h-12 mt-6 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
+            className="w-full h-12 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
@@ -1718,7 +1718,7 @@ function ScheduleDialog({
         </Tabs>
         <Button
           onClick={handleApply}
-          className="w-full h-12 mt-4 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className="w-full h-12 mt-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Aplicar
         </Button>
@@ -1814,7 +1814,7 @@ function ChallengeGoalSheet({
           </p>
           <Button
             onClick={() => onNext(cents)}
-            className="w-full h-12 mt-6 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
+            className="w-full h-12 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
@@ -1940,7 +1940,7 @@ function ChallengeTiersSheet({
 
           <div className="space-y-3">
             {/* Faixa base fixa */}
-            <div className="flex items-center gap-2 rounded-full border border-border bg-muted/30 pl-4 pr-4 h-14">
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 pl-4 pr-4 h-14">
               <span className="text-muted-foreground text-sm mr-2">R$</span>
               <span className="text-base font-medium text-foreground flex-1">
                 {centsToInput(baseTier)}
@@ -1952,7 +1952,7 @@ function ChallengeTiersSheet({
               return (
                 <div key={row.id} className="space-y-1">
                   <div
-                    className={`flex items-center gap-2 rounded-full border pl-4 pr-1 h-14 bg-card ${
+                    className={`flex items-center gap-2 rounded-md border pl-4 pr-1 h-14 bg-card ${
                       err ? "border-destructive" : "border-border"
                     }`}
                   >
@@ -1996,7 +1996,7 @@ function ChallengeTiersSheet({
           <Button
             onClick={handleConfirm}
             disabled={!valid}
-            className="w-full h-12 rounded-full bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold disabled:opacity-50"
+            className="w-full h-12 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold disabled:opacity-50"
           >
             Confirmar
           </Button>

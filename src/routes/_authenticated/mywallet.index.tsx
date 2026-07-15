@@ -237,7 +237,7 @@ function MyWalletPage() {
               </Link>
               <Button
                 asChild
-                className="mt-4 h-11 px-6 rounded-full bg-gradient-primary text-primary-foreground"
+                className="mt-4 h-11 px-6 rounded-md bg-gradient-primary text-primary-foreground"
               >
                 <Link to="/mywallet/recarregar">Recarregar</Link>
               </Button>
@@ -336,20 +336,20 @@ function MyWalletPage() {
                     placeholder="NÚMERO DO CARTÃO"
                     value={number}
                     onChange={(e) => setNumber(formatNumber(e.target.value))}
-                    className="h-12 rounded-full bg-muted border-0 px-5"
+                    className="h-12 rounded-md bg-muted border-0 px-5"
                   />
                   <Input
                     placeholder="NOME (COMO ESCRITO NO CARTÃO)"
                     value={name}
                     onChange={(e) => setName(e.target.value.toUpperCase())}
-                    className="h-12 rounded-full bg-muted border-0 px-5"
+                    className="h-12 rounded-md bg-muted border-0 px-5"
                   />
                   <Input
                     inputMode="numeric"
                     placeholder="CPF DO TITULAR"
                     value={cpf}
                     onChange={(e) => setCpf(formatCpf(e.target.value))}
-                    className="h-12 rounded-full bg-muted border-0 px-5"
+                    className="h-12 rounded-md bg-muted border-0 px-5"
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <Input
@@ -357,7 +357,7 @@ function MyWalletPage() {
                       placeholder="VALIDADE MM/AA"
                       value={validity}
                       onChange={(e) => setValidity(formatValidity(e.target.value))}
-                      className="h-12 rounded-full bg-muted border-0 px-5"
+                      className="h-12 rounded-md bg-muted border-0 px-5"
                     />
                     <Input
                       inputMode="numeric"
@@ -366,14 +366,14 @@ function MyWalletPage() {
                       onChange={(e) =>
                         setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
                       }
-                      className="h-12 rounded-full bg-muted border-0 px-5"
+                      className="h-12 rounded-md bg-muted border-0 px-5"
                     />
                   </div>
                   <div className="flex justify-end pt-2">
                     <Button
                       onClick={() => addCardMut.mutate()}
                       disabled={addCardMut.isPending}
-                      className="h-11 px-8 rounded-full bg-gradient-primary text-primary-foreground"
+                      className="h-11 px-8 rounded-md bg-gradient-primary text-primary-foreground"
                     >
                       {addCardMut.isPending ? (
                         <>
@@ -414,7 +414,7 @@ function MyWalletPage() {
                 step={10}
                 value={rechargeAmount}
                 onChange={(e) => setRechargeAmount(Number(e.target.value) || 0)}
-                className="h-12 rounded-full bg-muted border-0 px-5"
+                className="h-12 rounded-md bg-muted border-0 px-5"
               />
               <p className="text-xs text-muted-foreground">Valor mínimo R$ 10,00.</p>
             </div>
@@ -423,7 +423,7 @@ function MyWalletPage() {
                 variant="ghost"
                 onClick={() => setRechargeCard(null)}
                 disabled={rechargeMut.isPending}
-                className="rounded-full"
+                className="rounded-md"
               >
                 Cancelar
               </Button>
@@ -436,7 +436,7 @@ function MyWalletPage() {
                   })
                 }
                 disabled={rechargeMut.isPending || rechargeAmount < 10}
-                className="rounded-full bg-gradient-primary text-primary-foreground"
+                className="rounded-md bg-gradient-primary text-primary-foreground"
               >
                 {rechargeMut.isPending ? (
                   <>
@@ -500,7 +500,7 @@ function MyWalletPage() {
           <Button
             asChild
             variant="outline"
-            className="rounded-full text-primary border-primary hover:text-primary hover:bg-primary/10"
+            className="rounded-md text-primary border-primary hover:text-primary hover:bg-primary/10"
           >
             <Link to="/mywallet/extrato">Ver todas as transações</Link>
           </Button>

@@ -144,7 +144,7 @@ function AssinaturaPage() {
           <button
             type="submit"
             disabled={!valid || saving}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "Salvando..." : "Avançar"}
           </button>

@@ -128,7 +128,7 @@ function SubscriptionsPage() {
                   type="button"
                   onClick={() => setFilter(f.key)}
                   className={cn(
-                    "rounded-full border px-4 py-1.5 text-sm transition-colors",
+                    "rounded-md border px-4 py-1.5 text-sm transition-colors",
                     active
                       ? "border-primary text-primary"
                       : "border-border text-foreground hover:bg-accent",
@@ -144,7 +144,7 @@ function SubscriptionsPage() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-1.5 text-sm hover:bg-accent"
+                className="inline-flex items-center gap-1 rounded-md border border-border px-4 py-1.5 text-sm hover:bg-accent"
               >
                 {sortButtonLabel}
                 <ChevronDown

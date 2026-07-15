@@ -44,7 +44,7 @@ function FollowPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Busca"
-            className="pl-11 h-12 rounded-full"
+            className="pl-11 h-12 rounded-md"
           />
         </div>
 

@@ -156,7 +156,7 @@ function ExtratoPage() {
             type="button"
             onClick={() => onPick(opt === "Todos" ? null : opt)}
             className={cn(
-              "h-9 px-4 rounded-full text-sm font-semibold transition-colors",
+              "h-9 px-4 rounded-md text-sm font-semibold transition-colors",
               active
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -196,7 +196,7 @@ function ExtratoPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-12 rounded-full justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
+                  "h-12 rounded-md justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
                   !tipoItem && "text-muted-foreground",
                 )}
               >
@@ -217,7 +217,7 @@ function ExtratoPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-12 rounded-full justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
+                  "h-12 rounded-md justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
                   !tipoPagamento && "text-muted-foreground",
                 )}
               >
@@ -238,7 +238,7 @@ function ExtratoPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-12 rounded-full justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
+                  "h-12 rounded-md justify-between px-5 font-normal bg-secondary hover:bg-secondary/80 border-0",
                   !status && "text-muted-foreground",
                 )}
               >
@@ -258,7 +258,7 @@ function ExtratoPage() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-12 rounded-full px-5 font-normal justify-start gap-3 bg-secondary hover:bg-secondary/80 border-0"
+                className="h-12 rounded-md px-5 font-normal justify-start gap-3 bg-secondary hover:bg-secondary/80 border-0"
               >
                 <CalendarIcon className="h-4 w-4 opacity-70 shrink-0" />
                 <span className={cn(!range?.from && "text-muted-foreground")}>
