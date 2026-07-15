@@ -864,14 +864,17 @@ function SidebarRow({
   count,
   subtitle,
   active,
+  previewUrls,
   onClick,
 }: {
   label: string;
   count: number | null;
   subtitle: string | null;
   active: boolean;
+  previewUrls?: string[];
   onClick: () => void;
 }) {
+  const previews = (previewUrls ?? []).slice(0, 3);
   return (
     <button
       type="button"
@@ -891,9 +894,23 @@ function SidebarRow({
           <p className="mt-1 text-sm text-muted-foreground">{subtitle ?? "Vazio"}</p>
         )}
       </div>
+      {previews.length > 0 && (
+        <div className="relative shrink-0 h-12 w-[72px]">
+          {previews.map((url, i) => (
+            <div
+              key={`${url}-${i}`}
+              className="absolute top-0 h-12 w-12 overflow-hidden rounded-md ring-2 ring-background bg-muted"
+              style={{ left: `${i * 12}px`, zIndex: i + 1 }}
+            >
+              <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
     </button>
   );
 }
+
 
 function MediaGrid({
   items,
