@@ -140,7 +140,9 @@ export type FeedItem = {
   liked_by_me: boolean;
   saved_by_me: boolean;
   is_owner: boolean;
+  archived_at: string | null;
 };
+
 
 const getFeedSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
