@@ -26,9 +26,11 @@ export type VaultCategory = {
   name: string;
   position: number;
   itemCount: number;
+  previews: string[];
   createdAt: string;
   updatedAt: string;
 };
+
 
 // ---------- Helpers ----------
 const mediaTypeSchema = z.enum(["all", "image", "video", "audio", "gif"]);
