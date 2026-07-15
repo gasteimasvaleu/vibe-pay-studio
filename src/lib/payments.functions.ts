@@ -530,8 +530,27 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
         : data.plan === "semiannual"
           ? creator.discount_semiannual
           : 0;
-    const amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
+    let amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
+    let promotionId: string | null = null;
 
+    // Apply active promotion only for monthly plan
+    if (data.plan === "monthly") {
+      const nowIso = new Date().toISOString();
+      const { data: promo } = await supabase
+        .from("promotions")
+        .select("id, promo_price, max_subscriptions, subscriptions_used")
+        .eq("creator_id", data.creatorId)
+        .eq("status", "active")
+        .lte("starts_at", nowIso)
+        .gt("ends_at", nowIso)
+        .order("promo_price", { ascending: true })
+        .limit(1);
+      const p = promo?.[0];
+      if (p && p.subscriptions_used < p.max_subscriptions) {
+        promotionId = p.id;
+        amountCents = Math.round(Number(p.promo_price) * 100);
+      }
+    }
 
     const customerId = await ensureCustomerId(supabase, userId);
     const periodEnd = new Date(Date.now() + months * 30 * 86400_000).toISOString();
@@ -550,6 +569,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
         current_period_end: periodEnd,
         provider: providerTag,
         status: "pending",
+        promotion_id: promotionId,
       })
       .select("id")
       .single();
