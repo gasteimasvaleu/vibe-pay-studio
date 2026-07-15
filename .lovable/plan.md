@@ -1,68 +1,34 @@
-## Objetivo
-Transformar `/vault` em uma biblioteca de mídia real do criador, com 4 abas fixas (Todas, Publicações, Conversas, Envios), categorias personalizadas do usuário, filtros de tipo, ordenação e busca funcionando.
+## Problema
 
-## Escopo confirmado
-- **Publicações**: lê `publication_media` das publicações do usuário logado.
-- **Conversas**: hoje `chat_messages` não tem coluna de mídia — a aba fica com estado vazio ("Sem mídias nas conversas ainda") até chat ganhar suporte a anexos. Sem migração agora.
-- **Envios**: uploads avulsos no bucket `publications` sob prefixo `vault/<user_id>/…`, com registro em nova tabela `vault_uploads`.
-- **Categorias do usuário**: nova tabela `vault_categories` + `vault_category_items` (poliformo: aponta para `publication_media.id` ou `vault_uploads.id`).
+A aba **Áudios** do Vault não mostra os áudios das publicações porque a função `listVaultPublications` só lê `publication_media`, que armazena apenas `image` e `video`. Áudios ficam nas colunas `audio_url` / `audio_storage_path` da própria tabela `publications` (hoje há 2 publicações com áudio no banco).
 
-## Banco (migração única)
+Além disso, o mapeamento atual força todo item de `publication_media` como `"image"` ou `"video"` (nada vira `"audio"` nem `"gif"`), então mesmo que houvesse, seriam classificados errado.
 
-```text
-vault_uploads
-  id, user_id, storage_path, url, type (image|video|audio|gif),
-  mime, size_bytes, width, height, duration_seconds, created_at
-  RLS: dono lê/escreve; service_role total
+## Mudanças
 
-vault_categories
-  id, user_id, name, position, created_at, updated_at
-  UNIQUE (user_id, lower(name))
-  RLS: dono lê/escreve
+**`src/lib/vault.functions.ts` — `listVaultPublications`**
 
-vault_category_items
-  id, category_id, source ('publication'|'upload'),
-  publication_media_id (fk), vault_upload_id (fk),
-  position, created_at
-  CHECK: exatamente um dos dois FKs preenchido
-  RLS: acesso pelo dono da categoria
-```
+1. Selecionar também `audio_url, audio_storage_path` da tabela `publications`.
+2. Para cada publicação com `audio_url`, emitir um `VaultMediaItem` extra com:
+   - `source: "publication"`
+   - `id`: id da publicação (prefixado, ex.: `audio:<pub_id>`, para não colidir com ids de `publication_media`)
+   - `type: "audio"`
+   - `url`: `audio_url`
+   - `storagePath`: `audio_storage_path`
+3. Corrigir o mapeamento de `publication_media.type` para respeitar `audio` e `gif` caso passem a existir (fallback continua `image`).
+4. Aplicar o `applyTypeFilter` normalmente — agora "Áudios" retorna os itens de áudio das publicações.
 
-GRANTs `authenticated` + `service_role` em todas.
+**Categorias (`vault_category_items`)**
 
-## Backend (server functions em `src/lib/vault.functions.ts`)
-Todas com `requireSupabaseAuth`:
-- `listVaultPublications({ mediaType?, sort, limit, offset })` — join `publications` + `publication_media` do próprio usuário.
-- `listVaultChatMedia()` — retorna `[]` por ora (documentado).
-- `listVaultUploads({ mediaType?, sort })`
-- `listVaultCategories()` e `listVaultCategoryItems(categoryId, filtros)`
-- `createVaultCategory(name)`, `renameVaultCategory`, `deleteVaultCategory`, `reorderVaultCategories`
-- `addItemsToCategory(categoryId, items[])` / `removeItemFromCategory`
-- `createVaultUpload({ storagePath, url, type, mime, size, ... })` — grava após upload direto ao Storage.
-- `deleteVaultUpload(id)` — apaga do Storage e da tabela.
+O id de áudio de publicação (`audio:<pub_id>`) não existe em `publication_media`, então:
+- Bloquear no `addVaultItemsToCategory` a tentativa de anexar item de áudio-publicação a uma categoria (validação com mensagem clara), OU
+- Manter simples: permitir apenas categorizar itens de `publication_media` e de `vault_uploads` (comportamento atual). O UI já usa `joinId` de `vault_category_items`, então basta a validação server-side impedir o `source: "publication"` quando o id começa com `audio:`.
 
-Contadores de mídia por aba/categoria vêm de counts agregados.
+**Frontend (`src/routes/_authenticated/vault.tsx`)**
 
-## Frontend (`src/routes/_authenticated/vault.tsx`)
-Refactor completo do mock para consumir React Query + server functions:
+Nenhuma mudança de UI necessária — a grid já renderiza `type === "audio"` com player. Apenas garantir que a chave (`item.key`) usada na seleção não colida (usar `source + id` como já é feito).
 
-1. **Loader** com `ensureQueryData` para contagens das 4 abas + categorias do usuário.
-2. **Sidebar**: 4 abas fixas com contagens reais + lista de categorias do usuário (ordenação por Padrão/Nome/Recentes/Mídias respeitando `sidebarDirection`).
-3. **Conteúdo da aba ativa**: grid responsivo de mídia (thumb, badge de tipo, hover com data). Filtro `TODAS/FOTO/VÍDEO/ÁUDIO/GIF` e ordenação recentes/antigas passam para o server fn via `loaderDeps`+search params. Busca (`Search`) filtra por caption/nome.
-4. **Modo seleção** (ícone `CheckSquare` já existe): permite selecionar várias mídias e "Adicionar a uma categoria".
-5. **Aba Envios**: botão de upload real (drag-and-drop + input) → sobe arquivo para `publications/vault/<uid>/<uuid>.<ext>` via `supabase.storage`, obtém signed URL, chama `createVaultUpload`. Suporta imagem, vídeo, gif, áudio. Preview/lightbox reaproveitando `MediaLightbox`. Exclusão com confirmação.
-6. **Diálogo "Adicionar nova categoria"**: passa a criar categoria real via `createVaultCategory`; o botão "Adicionar mídia" abre picker das minhas mídias (publicações + envios) para popular a categoria na hora.
-7. **Estados vazios** reais por aba.
-8. **Aba Conversas**: mostra o `EmptyCategory` atual com legenda "Em breve" (comentário no código explicando o motivo).
+## Fora do escopo
 
-## Fora de escopo
-- Adicionar mídia em `chat_messages` (exige mudança de schema/UX própria).
-- Reordenação drag-and-drop dentro da categoria (ordenação por criação por enquanto).
-- Compartilhamento/uso direto do envio dentro do publisher (podemos ligar em outra tarefa).
-
-## Passos de implementação
-1. Migração: `vault_uploads`, `vault_categories`, `vault_category_items` (+ grants + RLS + triggers de `updated_at`).
-2. `src/lib/vault.functions.ts` com todos os server fns.
-3. Refactor de `src/routes/_authenticated/vault.tsx` para consumir os dados reais, mantendo o layout/estilo atual.
-4. Componentes auxiliares em `src/components/vault/` (MediaGrid, UploadDropzone, CategoryPickerDialog).
-5. Verificação: build limpo + smoke test no preview (upload, criar categoria, filtro, ordenação).
+- Adicionar suporte a áudio no `publication_media` (schema atual mantém áudio na `publications`).
+- Permitir anexar áudio de publicação a categorias personalizadas.
