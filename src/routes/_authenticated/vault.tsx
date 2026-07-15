@@ -574,56 +574,51 @@ function VaultPage() {
         </div>
       </header>
 
-      {/* Selection bar */}
+      {/* Selection pill (floating bottom center) */}
       {selectionMode && selectedKeys.size > 0 && (
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-2 flex items-center justify-between bg-primary/10 border-b border-primary/20">
-          <span className="text-sm font-medium text-foreground">
-            {selectedKeys.size} selecionado(s)
-          </span>
-          <div className="flex items-center gap-2">
-            {activeTab.kind === "category" && (
-              <button
-                type="button"
-                onClick={() => {
-                  selectedItems.forEach((it) => {
-                    if (it.joinId) removeFromCatMut.mutate(it.joinId);
-                  });
-                  setSelectionMode(false);
-                  setSelectedKeys(new Set());
-                }}
-                className="h-8 px-3 rounded-md border border-border text-sm font-medium hover:bg-accent transition-colors"
-              >
-                Remover da categoria
-              </button>
-            )}
-            {activeTab.kind === "fixed" && activeTab.key === "envios" && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!window.confirm(`Excluir ${selectedKeys.size} envio(s)?`)) return;
-                  selectedItems
-                    .filter((i) => i.source === "upload")
-                    .forEach((i) => deleteUploadMut.mutate(i.id));
-                  setSelectionMode(false);
-                  setSelectedKeys(new Set());
-                }}
-                className="h-8 px-3 rounded-md border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Trash2 className="h-4 w-4" /> Excluir
-                </span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setPickCategoryOpen(true)}
-              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Adicionar à categoria
-            </button>
-          </div>
-        </div>
+        <SelectionPill
+          selectedCount={selectedKeys.size}
+          totalCount={content.items.length}
+          onClose={() => {
+            setSelectionMode(false);
+            setSelectedKeys(new Set());
+          }}
+          canDelete={
+            (activeTab.kind === "fixed" && activeTab.key === "envios") ||
+            activeTab.kind === "category"
+          }
+          onDelete={() => {
+            if (activeTab.kind === "category") {
+              selectedItems.forEach((it) => {
+                if (it.joinId) removeFromCatMut.mutate(it.joinId);
+              });
+            } else if (activeTab.kind === "fixed" && activeTab.key === "envios") {
+              if (!window.confirm(`Excluir ${selectedKeys.size} envio(s)?`)) return;
+              selectedItems
+                .filter((i) => i.source === "upload")
+                .forEach((i) => deleteUploadMut.mutate(i.id));
+            }
+            setSelectionMode(false);
+            setSelectedKeys(new Set());
+          }}
+          onDownload={() => {
+            selectedItems.forEach((it, idx) => {
+              setTimeout(() => {
+                const a = document.createElement("a");
+                a.href = it.url;
+                a.download = it.storagePath?.split("/").pop() || `vault-${it.id}`;
+                a.target = "_blank";
+                a.rel = "noopener";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }, idx * 250);
+            });
+          }}
+          onAddToCategory={() => setPickCategoryOpen(true)}
+        />
       )}
+
 
       <main className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
         {/* Sidebar */}
