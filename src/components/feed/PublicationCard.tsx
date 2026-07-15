@@ -457,7 +457,7 @@ function ChallengeTiersPanel({
 
       <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden mx-1">
         <div
-          className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 transition-all"
+          className="h-full bg-primary transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>
