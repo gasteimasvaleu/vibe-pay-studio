@@ -17,6 +17,8 @@ import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/component
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
+import { ChallengeContributeSheet } from "@/components/payments/ChallengeContributeSheet";
+
 
 
 
@@ -57,6 +59,8 @@ function FeedPage() {
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
   const [tipFor, setTipFor] = useState<FeedItem | null>(null);
+  const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
+
 
 
   const feedQuery = useInfiniteQuery({
@@ -77,8 +81,13 @@ function FeedPage() {
 
   const handleUnlock = (item: FeedItem) => {
     if (unlocking) return;
+    if (item.visibility === "challenge") {
+      setChallengeFor(item);
+      return;
+    }
     setPending(item);
   };
+
 
   const confirmPayment = async (method: PaymentMethod) => {
     if (!pending) return;
@@ -270,8 +279,19 @@ function FeedPage() {
         publicationId={tipFor?.id}
       />
 
+      <ChallengeContributeSheet
+        publicationId={challengeFor?.id ?? null}
+        creatorName={challengeFor?.author_username}
+        open={!!challengeFor}
+        onOpenChange={(v) => !v && setChallengeFor(null)}
+        onContributed={() => {
+          void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        }}
+      />
+
 
     </div>
   );
 }
+
 

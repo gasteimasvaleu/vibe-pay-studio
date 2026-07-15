@@ -301,7 +301,125 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     };
   });
 
+// ---------------- Challenge contribution (PIX only) ----------------
+
+export const createChallengeContributionPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { publicationId: string; tierCents: number }) => {
+    if (!data?.publicationId) throw new Error("publicationId obrigatório");
+    if (!Number.isInteger(data.tierCents) || data.tierCents < 100) {
+      throw new Error("valor de faixa inválido");
+    }
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<CheckoutResult> => {
+    const { supabase, userId } = context;
+
+    const { data: pub, error } = await supabase
+      .from("publications")
+      .select("id, author_id, visibility, challenge_cents")
+      .eq("id", data.publicationId)
+      .single();
+    if (error || !pub) throw new Error("publicação não encontrada");
+    if (pub.visibility !== "challenge") throw new Error("publicação não é um desafio");
+    if (pub.author_id === userId) throw new Error("não é possível contribuir na sua própria publicação");
+
+    const { data: tier, error: tierErr } = await supabase
+      .from("publication_challenge_tiers")
+      .select("amount_cents")
+      .eq("publication_id", pub.id)
+      .eq("amount_cents", data.tierCents)
+      .maybeSingle();
+    if (tierErr) throw new Error(tierErr.message);
+    if (!tier) throw new Error("faixa de contribuição inválida");
+
+    const walletId = await getCreatorWallet(supabase, pub.author_id);
+    const customerId = await ensureCustomerId(supabase, userId);
+
+    const asaas = await loadAsaas();
+    const method: Method = "PIX";
+    const { netCreatorCents } = asaas.computeCreatorNetCents(data.tierCents, method);
+    const providerTag = providerForMethod(method);
+
+    const { data: existing } = await supabase
+      .from("publication_unlocks")
+      .select("id, status")
+      .eq("publication_id", pub.id)
+      .eq("buyer_id", userId)
+      .maybeSingle();
+
+    let unlockId: string;
+    if (existing) {
+      if (existing.status === "paid") {
+        throw new Error("você já contribuiu com este desafio");
+      }
+      const { error: updErr } = await supabase
+        .from("publication_unlocks")
+        .update({
+          amount_cents: data.tierCents,
+          provider: providerTag,
+          status: "pending",
+          provider_ref: null,
+        })
+        .eq("id", existing.id);
+      if (updErr) throw new Error(updErr.message);
+      unlockId = existing.id;
+    } else {
+      const { data: inserted, error: uErr } = await supabase
+        .from("publication_unlocks")
+        .insert({
+          publication_id: pub.id,
+          buyer_id: userId,
+          amount_cents: data.tierCents,
+          provider: providerTag,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (uErr) throw new Error(uErr.message);
+      unlockId = inserted.id;
+    }
+
+    const payment = await asaas.createPayment({
+      customerId,
+      billingType: method,
+      amountCents: data.tierCents,
+      description: `Contribuição desafio ${pub.id.slice(0, 8)}`,
+      externalReference: `publication_unlock:${unlockId}`,
+      creatorWalletId: walletId,
+      netCreatorCents,
+    });
+
+    await supabase
+      .from("publication_unlocks")
+      .update({ provider_ref: payment.id })
+      .eq("id", unlockId);
+
+    const pixQr = await asaas.getPixQrCode(payment.id);
+
+    const intentId = await recordIntent(supabase, {
+      asaasPayment: payment,
+      method,
+      referenceTable: "publication_unlocks",
+      referenceId: unlockId,
+      pixQr,
+      metadata: { challenge: true, tierCents: data.tierCents },
+    });
+
+    return {
+      paymentIntentId: intentId,
+      asaasPaymentId: payment.id,
+      status: payment.status,
+      method,
+      invoiceUrl: payment.invoiceUrl ?? null,
+      pixQrCode: pixQr?.encodedImage ?? null,
+      pixCopyPaste: pixQr?.payload ?? null,
+    };
+  });
+
 // ---------------- Tip ----------------
+
+
 
 export const createTipPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

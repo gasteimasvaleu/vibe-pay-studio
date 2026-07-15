@@ -356,10 +356,19 @@ function LockedOverlay({
 }) {
   const isChallenge = item.visibility === "challenge";
   const cents = isChallenge ? item.challenge_cents : item.price_cents;
-  const label = isChallenge ? "Aceitar desafio" : "Desbloquear";
+  const raised = item.challenge_raised_cents ?? 0;
+  const goal = item.challenge_cents ?? 0;
+  const progress = isChallenge && goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+  const reached = isChallenge && goal > 0 && raised >= goal;
+  const label = isChallenge
+    ? reached
+      ? "Contribuir mesmo assim"
+      : "Aceitar desafio"
+    : "Desbloquear";
+
   return (
     <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-black/70 via-black/60 to-black/80">
-      <div className="text-center px-6">
+      <div className="text-center px-6 w-full max-w-xs">
         <div className="mx-auto h-14 w-14 rounded-full bg-white/10 border border-white/20 grid place-items-center text-white">
           {isChallenge ? (
             <Trophy className="h-6 w-6" />
@@ -370,14 +379,42 @@ function LockedOverlay({
         <p className="mt-4 text-sm text-white/80">
           {isChallenge ? "Publicação de desafio" : "Publicação exclusiva"}
         </p>
+
+        {isChallenge && (
+          <div className="mt-4 space-y-1.5">
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-white/70">
+              <span>
+                {brl.format(raised / 100)} / {brl.format(goal / 100)}
+              </span>
+              <span>
+                {item.challenge_contributor_count ?? 0} contribuiç
+                {item.challenge_contributor_count === 1 ? "ão" : "ões"}
+              </span>
+            </div>
+            {reached && (
+              <p className="text-[11px] font-semibold text-emerald-300">
+                Meta atingida
+              </p>
+            )}
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => onUnlock?.(item)}
           className="mt-4 inline-flex items-center gap-2 px-6 h-11 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 hover:opacity-95"
         >
-          {label} · {cents != null ? brl.format(cents / 100) : ""}
+          {label}
+          {!isChallenge && cents != null ? ` · ${brl.format(cents / 100)}` : ""}
         </button>
       </div>
     </div>
   );
 }
+

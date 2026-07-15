@@ -30,6 +30,7 @@ const createPublicationSchema = z.object({
   visibility: z.enum(["public", "paid", "challenge"]),
   priceCents: z.number().int().min(0).nullable().optional(),
   challengeCents: z.number().int().min(0).nullable().optional(),
+  challengeTiersCents: z.array(z.number().int().min(100)).max(8).optional(),
   expires24h: z.boolean(),
   scheduledAt: z.string().nullable().optional(),
   commentsDisabled: z.boolean(),
@@ -38,6 +39,7 @@ const createPublicationSchema = z.object({
   audio: audioSchema,
   preview: previewSchema,
 });
+
 
 export const createPublication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -97,10 +99,28 @@ export const createPublication = createServerFn({ method: "POST" })
       throw new Error(mediaErr.message);
     }
 
-    // TODO(Mercado Pago): quando visibility === 'paid' | 'challenge',
-    // criar preferência de pagamento e retornar init_point para o front.
+    // Faixas de contribuição do desafio
+    if (data.visibility === "challenge" && data.challengeTiersCents && data.challengeTiersCents.length > 0) {
+      const uniqueSorted = Array.from(new Set(data.challengeTiersCents.map((v) => Math.floor(v)))).sort(
+        (a, b) => a - b,
+      );
+      const tierRows = uniqueSorted.map((amount, index) => ({
+        publication_id: pub.id,
+        amount_cents: amount,
+        position: index,
+      }));
+      const { error: tierErr } = await context.supabase
+        .from("publication_challenge_tiers")
+        .insert(tierRows);
+      if (tierErr) {
+        await context.supabase.from("publications").delete().eq("id", pub.id);
+        throw new Error(tierErr.message);
+      }
+    }
+
     return { ok: true as const, publicationId: pub.id };
   });
+
 
 const deleteDraftSchema = z.object({ storagePath: z.string().min(1) });
 
@@ -128,6 +148,8 @@ export type FeedItem = {
   visibility: "public" | "paid" | "challenge";
   price_cents: number | null;
   challenge_cents: number | null;
+  challenge_raised_cents: number | null;
+  challenge_contributor_count: number | null;
   pinned: boolean;
   comments_disabled: boolean;
   expires_at: string | null;
@@ -142,6 +164,7 @@ export type FeedItem = {
   is_owner: boolean;
   archived_at: string | null;
 };
+
 
 
 const getFeedSchema = z.object({
@@ -202,6 +225,8 @@ export const getFeed = createServerFn({ method: "POST" })
     const ids = page.map((p) => p.id);
     const authorIds = Array.from(new Set(page.map((p) => p.author_id)));
 
+    const challengeIds = page.filter((p) => p.visibility === "challenge").map((p) => p.id);
+
     const [
       { data: mediaRows },
       { data: profileRows },
@@ -210,6 +235,7 @@ export const getFeed = createServerFn({ method: "POST" })
       { data: mySavedRows },
       { data: commentRows },
       { data: unlockRows },
+      { data: challengeContribRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -244,6 +270,13 @@ export const getFeed = createServerFn({ method: "POST" })
         .in("publication_id", ids)
         .eq("buyer_id", currentUserId)
         .eq("status", "paid"),
+      challengeIds.length > 0
+        ? client
+            .from("publication_unlocks")
+            .select("publication_id, amount_cents")
+            .in("publication_id", challengeIds)
+            .eq("status", "paid")
+        : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
     ]);
 
     const profileMap = new Map(
@@ -260,6 +293,12 @@ export const getFeed = createServerFn({ method: "POST" })
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
     const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
+    const challengeRaised = new Map<string, number>();
+    const challengeCount = new Map<string, number>();
+    (challengeContribRows ?? []).forEach((r) => {
+      challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
+      challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
+    });
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
@@ -281,6 +320,8 @@ export const getFeed = createServerFn({ method: "POST" })
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
+        challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
+        challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
@@ -300,6 +341,7 @@ export const getFeed = createServerFn({ method: "POST" })
 
     return { items, nextCursor };
   });
+
 
 const getUserPublicationsSchema = z.object({
   userId: z.string().uuid(),
@@ -349,6 +391,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
     if (page.length === 0) return { items: [], nextCursor: null };
 
     const ids = page.map((p) => p.id);
+    const challengeIds = page.filter((p) => p.visibility === "challenge").map((p) => p.id);
 
     const [
       { data: mediaRows },
@@ -358,6 +401,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
       { data: mySavedRows },
       { data: commentRows },
       { data: unlockRows },
+      { data: challengeContribRows },
     ] = await Promise.all([
       client
         .from("publication_media")
@@ -393,6 +437,13 @@ export const getUserPublications = createServerFn({ method: "POST" })
         .in("publication_id", ids)
         .eq("buyer_id", currentUserId)
         .eq("status", "paid"),
+      challengeIds.length > 0
+        ? client
+            .from("publication_unlocks")
+            .select("publication_id, amount_cents")
+            .in("publication_id", challengeIds)
+            .eq("status", "paid")
+        : Promise.resolve({ data: [] as Array<{ publication_id: string; amount_cents: number }> }),
     ]);
 
     const authorUsername = authorRow?.username ?? null;
@@ -407,6 +458,12 @@ export const getUserPublications = createServerFn({ method: "POST" })
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
     const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
+    const challengeRaised = new Map<string, number>();
+    const challengeCount = new Map<string, number>();
+    (challengeContribRows ?? []).forEach((r) => {
+      challengeRaised.set(r.publication_id, (challengeRaised.get(r.publication_id) ?? 0) + (r.amount_cents ?? 0));
+      challengeCount.set(r.publication_id, (challengeCount.get(r.publication_id) ?? 0) + 1);
+    });
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
@@ -428,6 +485,8 @@ export const getUserPublications = createServerFn({ method: "POST" })
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
+        challenge_raised_cents: p.visibility === "challenge" ? challengeRaised.get(p.id) ?? 0 : null,
+        challenge_contributor_count: p.visibility === "challenge" ? challengeCount.get(p.id) ?? 0 : null,
         pinned: p.pinned,
         comments_disabled: p.comments_disabled,
         expires_at: p.expires_at,
@@ -447,6 +506,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
 
     return { items, nextCursor };
   });
+
 
 
 // ============================================================================
@@ -1069,6 +1129,9 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           visibility: p.visibility as FeedItem["visibility"],
           price_cents: p.price_cents,
           challenge_cents: p.challenge_cents,
+          challenge_raised_cents: null,
+          challenge_contributor_count: null,
+
           pinned: p.pinned,
           comments_disabled: p.comments_disabled,
           expires_at: p.expires_at,
@@ -1088,3 +1151,67 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
       return { items, nextCursor };
     },
   );
+
+// ============================================================================
+// Desafio: faixas de contribuição e status agregado
+// ============================================================================
+
+export type ChallengeTier = { amountCents: number; position: number };
+
+export const getChallengeTiers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ publicationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<ChallengeTier[]> => {
+    const { data: rows, error } = await context.supabase
+      .from("publication_challenge_tiers")
+      .select("amount_cents, position")
+      .eq("publication_id", data.publicationId)
+      .order("position", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => ({ amountCents: r.amount_cents, position: r.position }));
+  });
+
+export type ChallengeStatus = {
+  goalCents: number;
+  raisedCents: number;
+  contributorCount: number;
+  myContributionCents: number | null;
+  reached: boolean;
+};
+
+export const getChallengeStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ publicationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<ChallengeStatus> => {
+    const { supabase, userId } = context;
+    const { data: pub, error } = await supabase
+      .from("publications")
+      .select("challenge_cents, visibility")
+      .eq("id", data.publicationId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!pub) throw new Error("publicação não encontrada");
+    const goalCents = pub.challenge_cents ?? 0;
+
+    const { data: contribRows, error: contribErr } = await supabase
+      .from("publication_unlocks")
+      .select("buyer_id, amount_cents")
+      .eq("publication_id", data.publicationId)
+      .eq("status", "paid");
+    if (contribErr) throw new Error(contribErr.message);
+
+    let raisedCents = 0;
+    let myContributionCents: number | null = null;
+    for (const r of contribRows ?? []) {
+      raisedCents += r.amount_cents ?? 0;
+      if (r.buyer_id === userId) myContributionCents = (myContributionCents ?? 0) + (r.amount_cents ?? 0);
+    }
+    return {
+      goalCents,
+      raisedCents,
+      contributorCount: (contribRows ?? []).length,
+      myContributionCents,
+      reached: goalCents > 0 && raisedCents >= goalCents,
+    };
+  });
+
