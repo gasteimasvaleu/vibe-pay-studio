@@ -379,7 +379,9 @@ function PostsList({
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <PublicationCard key={item.id} item={item} queryKey={queryKey} />
+        <div key={item.id} id={`pub-${item.id}`} className="transition-all">
+          <PublicationCard item={item} queryKey={queryKey} />
+        </div>
       ))}
       <div ref={sentinelRef} className="h-8" />
       {isFetchingNextPage && (
