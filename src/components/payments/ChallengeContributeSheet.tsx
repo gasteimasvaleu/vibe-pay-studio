@@ -35,6 +35,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onContributed?: () => void;
+  preselectedTierCents?: number | null;
 };
 
 export function ChallengeContributeSheet({
