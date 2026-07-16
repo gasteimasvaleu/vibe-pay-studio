@@ -43,6 +43,7 @@ type ProfileData = {
   coverUrl: string | null;
   postsCount: number;
   mediasCount: number;
+  accountType: AccountType;
 };
 
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
