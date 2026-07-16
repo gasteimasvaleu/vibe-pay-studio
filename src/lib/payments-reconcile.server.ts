@@ -112,6 +112,20 @@ export async function applyPaidIntent(
       meta.referenceId,
       providerRef,
     );
+
+    // Fire-and-forget email notifications (never blocks reconcile).
+    try {
+      const events = await import("./email-events.server");
+      if (meta.referenceTable === "publication_unlocks") {
+        await events.notifyPublicationUnlock(meta.referenceId);
+      } else if (meta.referenceTable === "chat_message_unlocks") {
+        await events.notifyChatUnlock(meta.referenceId);
+      } else if (meta.referenceTable === "subscriptions") {
+        await events.notifySubscriptionActive(meta.referenceId);
+      }
+    } catch (err) {
+      console.error("[reconcile] email dispatch failed", err);
+    }
   }
 
   await supabaseAdmin

@@ -229,7 +229,17 @@ export const getKycStatus = createServerFn({ method: "GET" })
                   .from("profiles")
                   .update(update)
                   .eq("user_id", context.userId);
-                if (!upErr) status = next;
+                if (!upErr) {
+                  status = next;
+                  if (next === "verified") {
+                    try {
+                      const events = await import("./email-events.server");
+                      await events.notifyFreeToPaid(context.userId);
+                    } catch (err) {
+                      console.error("[onboarding] notifyFreeToPaid failed", err);
+                    }
+                  }
+                }
               }
             }
           } else {
