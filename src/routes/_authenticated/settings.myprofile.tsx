@@ -116,13 +116,21 @@ function SettingsMyProfilePage() {
         <section className="flex flex-col items-center gap-3">
           <div className="relative">
             <Avatar className="h-28 w-28 ring-4 ring-card shadow-card">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-primary/10 text-primary text-3xl font-semibold">
                 {displayName.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
             <button
               type="button"
-              onClick={() => toast.info("Em breve")}
+              onClick={handlePickFile}
               aria-label="Alterar foto"
               className="absolute bottom-1 right-1 h-9 w-9 grid place-items-center rounded-full bg-foreground text-background shadow-md hover:opacity-90 transition-opacity"
             >
