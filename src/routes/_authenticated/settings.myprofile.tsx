@@ -92,9 +92,23 @@ function SettingsMyProfilePage() {
     }
   };
 
-  const handleConfirmDelete = () => {
-    setDeleteOpen(false);
-    toast.info("Em breve");
+  const handleConfirmDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteFn({});
+    } catch {
+      toast.error("Não foi possível excluir a conta");
+      setDeleting(false);
+      return;
+    }
+    toast.success("Conta excluída");
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* ignore — usuário já não existe */
+    }
+    window.location.replace("/");
   };
 
   return (
