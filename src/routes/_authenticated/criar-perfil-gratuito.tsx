@@ -206,7 +206,7 @@ function CriarPerfilGratuitoPage() {
                       <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                       {active && (
                         <span className="absolute inset-0 bg-black/40 grid place-items-center">
-                          <span className="h-10 w-10 rounded-full bg-white grid place-items-center">
+                          <span className="h-10 w-10 rounded-full bg-card grid place-items-center">
                             <Camera className="h-4 w-4 text-foreground" />
                           </span>
                         </span>

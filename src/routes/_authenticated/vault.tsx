@@ -500,7 +500,7 @@ function VaultPage() {
         }}
       />
 
-      <header className="border-b border-border bg-white">
+      <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
           {/* Left header */}
           <div
@@ -1216,7 +1216,7 @@ function SelectionPill({
         type="button"
         onClick={onClose}
         aria-label="Fechar seleção"
-        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-card/10 transition-colors"
       >
         <X className="h-5 w-5" />
       </button>
@@ -1229,7 +1229,7 @@ function SelectionPill({
         disabled={!canDelete}
         aria-label="Excluir"
         title={canDelete ? "Excluir selecionados" : "Só é possível excluir na aba Envios ou em Categorias"}
-        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-card/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
       >
         <Trash2 className="h-5 w-5" />
       </button>
@@ -1238,7 +1238,7 @@ function SelectionPill({
         onClick={onDownload}
         aria-label="Baixar"
         title="Baixar selecionados"
-        className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+        className="h-9 w-9 grid place-items-center rounded-full hover:bg-card/10 transition-colors"
       >
         <Download className="h-5 w-5" />
       </button>

@@ -117,8 +117,8 @@ function MyMonetisexyStatsPage() {
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
-      <div className="absolute inset-0 bg-white" />
-      <header className="sticky top-0 z-20 border-b border-border bg-white">
+      <div className="absolute inset-0 bg-card" />
+      <header className="sticky top-0 z-20 border-b border-border bg-card">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             onClick={() => router.history.back()}

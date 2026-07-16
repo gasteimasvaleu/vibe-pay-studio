@@ -198,7 +198,7 @@ function CreatorGatedNotFound() {
       <div className="absolute inset-0 opacity-70" style={{ background: "var(--gradient-radial)" }} />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
 
-      <header className="relative z-10 border-b border-black/10 bg-white">
+      <header className="relative z-10 border-b border-black/10 bg-card">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 text-black">
           <button
             onClick={() => router.history.back()}
@@ -386,7 +386,7 @@ function PerfilPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
 
       {/* Topbar */}
-      <header className="relative z-10 border-b border-black/10 bg-white">
+      <header className="relative z-10 border-b border-black/10 bg-card">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 text-black">
           <button
             onClick={() => router.history.back()}
@@ -759,7 +759,7 @@ function PerfilPage() {
 
           <TabsContent value="posts" className="mt-6 space-y-4">
             {pubsQuery.isLoading ? (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+              <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
                 Carregando publicações...
               </div>
             ) : pubsQuery.data && pubsQuery.data.items.length > 0 ? (
@@ -776,7 +776,7 @@ function PerfilPage() {
                 />
               ))
             ) : (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+              <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
                 {isOwner
                   ? "Você ainda não publicou nada."
                   : "Este creator ainda não publicou nada."}
@@ -792,14 +792,14 @@ function PerfilPage() {
               );
               if (pubsQuery.isLoading) {
                 return (
-                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                  <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
                     Carregando mídias...
                   </div>
                 );
               }
               if (tiles.length === 0) {
                 return (
-                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+                  <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
                     Nenhuma mídia disponível ainda.
                   </div>
                 );

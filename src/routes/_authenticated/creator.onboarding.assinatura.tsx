@@ -195,7 +195,7 @@ function MoneyField({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white px-5 py-3 transition-colors ${
+      className={`rounded-2xl border bg-card px-5 py-3 transition-colors ${
         invalid ? "border-red-500" : "border-neutral-200 focus-within:border-fuchsia-500"
       }`}
     >
@@ -226,7 +226,7 @@ function PercentField({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
+    <div className="rounded-2xl border border-neutral-200 bg-card px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
       <label className="block text-xs text-neutral-500">{label}</label>
       <div className="flex items-center gap-2">
         <input

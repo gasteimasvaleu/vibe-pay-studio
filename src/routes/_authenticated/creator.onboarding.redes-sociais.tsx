@@ -143,7 +143,7 @@ function SocialField({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-md border bg-white px-4 py-3 transition-colors ${
+      className={`flex items-center gap-2 rounded-md border bg-card px-4 py-3 transition-colors ${
         invalid ? "border-red-500" : "border-neutral-200 focus-within:border-fuchsia-500"
       }`}
     >
