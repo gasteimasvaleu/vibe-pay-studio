@@ -1,8 +1,14 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import {
+  getEmailPreferences,
+  updateEmailPreference,
+  type EmailPreferences,
+} from "@/lib/privacy.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/privacy-mail")({
   head: () => ({
@@ -11,14 +17,13 @@ export const Route = createFileRoute("/_authenticated/settings/privacy-mail")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.user) throw redirect({ to: "/entrar" });
-  },
+  loader: () => getEmailPreferences(),
   component: PrivacyMailPage,
 });
 
-const OPTIONS: { id: string; label: string; description: string }[] = [
+type OptionId = keyof EmailPreferences;
+
+const OPTIONS: { id: OptionId; label: string; description: string }[] = [
   {
     id: "free_to_paid",
     label: "Perfil gratuito que se tornou pago",
@@ -51,9 +56,37 @@ const OPTIONS: { id: string; label: string; description: string }[] = [
   },
 ];
 
+// UI copy: switch ON = "não receber". DB stores opted-in (true = receive).
+const uiToDb = (uiOn: boolean) => !uiOn;
+const dbToUi = (dbOn: boolean) => !dbOn;
+
 function PrivacyMailPage() {
   const router = useRouter();
-  const [state, setState] = useState<Record<string, boolean>>({});
+  const initialDb = Route.useLoaderData();
+  const [state, setState] = useState<EmailPreferences>(initialDb);
+  const [pending, setPending] = useState<Set<OptionId>>(new Set());
+  const update = useServerFn(updateEmailPreference);
+
+  const onToggle = async (id: OptionId, uiNext: boolean) => {
+    const dbNext = uiToDb(uiNext);
+    const previous = state[id];
+    setState((s) => ({ ...s, [id]: dbNext }));
+    setPending((p) => new Set(p).add(id));
+    try {
+      await update({ data: { key: id, value: dbNext } });
+    } catch (e) {
+      setState((s) => ({ ...s, [id]: previous }));
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível salvar. Tente novamente.",
+      );
+    } finally {
+      setPending((p) => {
+        const n = new Set(p);
+        n.delete(id);
+        return n;
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,10 +117,9 @@ function PrivacyMailPage() {
               </p>
             </div>
             <Switch
-              checked={!!state[o.id]}
-              onCheckedChange={(v) =>
-                setState((s) => ({ ...s, [o.id]: v }))
-              }
+              checked={dbToUi(state[o.id])}
+              disabled={pending.has(o.id)}
+              onCheckedChange={(v) => onToggle(o.id, v)}
               aria-label={o.label}
             />
           </div>

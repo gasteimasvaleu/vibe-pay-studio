@@ -1,8 +1,14 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import {
+  getPrivacySettings,
+  updatePrivacySetting,
+  type PrivacySettings,
+} from "@/lib/privacy.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/privacy-options")({
   head: () => ({
@@ -11,14 +17,13 @@ export const Route = createFileRoute("/_authenticated/settings/privacy-options")
       { name: "robots", content: "noindex" },
     ],
   }),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.user) throw redirect({ to: "/entrar" });
-  },
+  loader: () => getPrivacySettings(),
   component: PrivacyOptionsPage,
 });
 
-const OPTIONS: { id: string; label: string; description: string }[] = [
+type OptionId = keyof PrivacySettings;
+
+const OPTIONS: { id: OptionId; label: string; description: string }[] = [
   {
     id: "restrict_search",
     label: "Restringir perfil das pesquisas",
@@ -55,7 +60,7 @@ const OPTIONS: { id: string; label: string; description: string }[] = [
       "Esta opção restringirá que seu perfil apareça como amigo em outros perfis.",
   },
   {
-    id: "email_sending",
+    id: "emails_enabled",
     label: "Configuração de envio de e-mails",
     description: "Ao desativar, a Monetisexy não enviará mais e-mails.",
   },
@@ -63,7 +68,30 @@ const OPTIONS: { id: string; label: string; description: string }[] = [
 
 function PrivacyOptionsPage() {
   const router = useRouter();
-  const [state, setState] = useState<Record<string, boolean>>({});
+  const initial = Route.useLoaderData();
+  const [state, setState] = useState<PrivacySettings>(initial);
+  const [pending, setPending] = useState<Set<OptionId>>(new Set());
+  const update = useServerFn(updatePrivacySetting);
+
+  const onToggle = async (id: OptionId, next: boolean) => {
+    const previous = state[id];
+    setState((s) => ({ ...s, [id]: next }));
+    setPending((p) => new Set(p).add(id));
+    try {
+      await update({ data: { key: id, value: next } });
+    } catch (e) {
+      setState((s) => ({ ...s, [id]: previous }));
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível salvar. Tente novamente.",
+      );
+    } finally {
+      setPending((p) => {
+        const n = new Set(p);
+        n.delete(id);
+        return n;
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,10 +122,9 @@ function PrivacyOptionsPage() {
               </p>
             </div>
             <Switch
-              checked={!!state[o.id]}
-              onCheckedChange={(v) =>
-                setState((s) => ({ ...s, [o.id]: v }))
-              }
+              checked={state[o.id]}
+              disabled={pending.has(o.id)}
+              onCheckedChange={(v) => onToggle(o.id, v)}
               aria-label={o.label}
             />
           </div>

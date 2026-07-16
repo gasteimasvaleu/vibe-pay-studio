@@ -295,6 +295,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_preferences: {
+        Row: {
+          content_purchase: boolean
+          creator_referrals: boolean
+          free_to_paid: boolean
+          post_sales: boolean
+          subscription_sales: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_purchase?: boolean
+          creator_referrals?: boolean
+          free_to_paid?: boolean
+          post_sales?: boolean
+          subscription_sales?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_purchase?: boolean
+          creator_referrals?: boolean
+          free_to_paid?: boolean
+          post_sales?: boolean
+          subscription_sales?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -501,6 +531,7 @@ export type Database = {
           discount_quarterly: number
           discount_semiannual: number
           display_name: string | null
+          emails_enabled: boolean
           full_name: string | null
           id: string
           instagram_handle: string | null
@@ -512,6 +543,12 @@ export type Database = {
           onboarding_completed_at: string | null
           phone: string | null
           price_monthly: number | null
+          restrict_friendships: boolean
+          restrict_mentions: boolean
+          restrict_search: boolean
+          restrict_search_br: boolean
+          restrict_search_country: boolean
+          show_followers: boolean
           tiktok_handle: string | null
           updated_at: string
           user_id: string
@@ -545,6 +582,7 @@ export type Database = {
           discount_quarterly?: number
           discount_semiannual?: number
           display_name?: string | null
+          emails_enabled?: boolean
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
@@ -556,6 +594,12 @@ export type Database = {
           onboarding_completed_at?: string | null
           phone?: string | null
           price_monthly?: number | null
+          restrict_friendships?: boolean
+          restrict_mentions?: boolean
+          restrict_search?: boolean
+          restrict_search_br?: boolean
+          restrict_search_country?: boolean
+          show_followers?: boolean
           tiktok_handle?: string | null
           updated_at?: string
           user_id: string
@@ -589,6 +633,7 @@ export type Database = {
           discount_quarterly?: number
           discount_semiannual?: number
           display_name?: string | null
+          emails_enabled?: boolean
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
@@ -600,6 +645,12 @@ export type Database = {
           onboarding_completed_at?: string | null
           phone?: string | null
           price_monthly?: number | null
+          restrict_friendships?: boolean
+          restrict_mentions?: boolean
+          restrict_search?: boolean
+          restrict_search_br?: boolean
+          restrict_search_country?: boolean
+          show_followers?: boolean
           tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
@@ -1615,6 +1666,10 @@ export type Database = {
       }
       can_see_publication: {
         Args: { _publication_id: string }
+        Returns: boolean
+      }
+      can_send_email: {
+        Args: { _kind: string; _user_id: string }
         Returns: boolean
       }
       ensure_creator_wallet: { Args: { _user_id: string }; Returns: undefined }
