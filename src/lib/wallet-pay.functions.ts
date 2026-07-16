@@ -52,5 +52,22 @@ export const payWithWallet = createServerFn({ method: "POST" })
       // Postgres RAISE EXCEPTION vem como "insufficient_funds" etc.
       throw new Error(raw);
     }
-    return result as WalletPayResult;
+    const walletResult = result as WalletPayResult;
+
+    // Fire-and-forget: envia emails transacionais (gated pelos switches).
+    try {
+      const events = await import("./email-events.server");
+      if (data.kind === "publication_unlock") {
+        await events.notifyPublicationUnlock(walletResult.referenceId);
+      } else if (data.kind === "chat_unlock") {
+        await events.notifyChatUnlock(walletResult.referenceId);
+      } else if (data.kind === "subscription") {
+        await events.notifySubscriptionActive(walletResult.referenceId);
+      }
+      // tip: sem categoria de switch dedicada — nenhum envio por design.
+    } catch (err) {
+      console.error("[wallet-pay] email dispatch failed", err);
+    }
+
+    return walletResult;
   });
