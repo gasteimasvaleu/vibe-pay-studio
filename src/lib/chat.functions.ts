@@ -12,6 +12,14 @@ export type ThreadListItem = {
   unreadCount: number;
 };
 
+export type ChatWelcomeMedia = {
+  path: string;
+  mime: string;
+  kind: "image" | "video" | "audio";
+  durationSec?: number | null;
+  url?: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -21,8 +29,12 @@ export type ChatMessage = {
   createdAt: string;
   priceCents: number | null;
   unlocked: boolean;
+  metadata?: {
+    welcome?: boolean;
+    tag?: string | null;
+    media?: ChatWelcomeMedia[];
+  } | null;
 };
-
 
 export type PartnerProfile = {
   userId: string;
