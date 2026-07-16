@@ -403,9 +403,24 @@ function ChatSettingsPage() {
           {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </main>
+
+      <PriceDialog
+        open={priceDialogOpen}
+        initialCents={priceCents}
+        onClose={() => setPriceDialogOpen(false)}
+        onSave={(cents) => {
+          setPriceCents(cents);
+          markDirty();
+          setPriceDialogOpen(false);
+          if (cents > 0 && media.length === 0) {
+            toast.message("Adicione uma mídia para desbloquear a precificação.");
+          }
+        }}
+      />
     </div>
   );
 }
+
 
 function IconButton({
   label,
