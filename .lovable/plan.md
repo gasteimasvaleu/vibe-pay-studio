@@ -1,30 +1,33 @@
 ## Objetivo
 
-Tornar `/settings/social-media` funcional: carregar handles atuais, salvar em `profiles`, e vincular os ícones do card de perfil (`perfil/$username`) aos links reais.
+Nos inputs de Redes Sociais, exibir o prefixo fixo (`instagram.com/`, `tiktok.com/`, `x.com/`) bloqueado dentro do campo, permitindo que o usuário edite apenas o handle depois da "/", como no screenshot.
 
-## Mudanças
+## Alterações
 
-### 1. Migração — adicionar `profiles.x_handle`
-- Já existem `instagram_handle` e `tiktok_handle`.
-- Nova coluna `x_handle text` com check de tamanho ≤ 30.
+**`src/routes/_authenticated/settings.social-media.tsx`**
 
-### 2. Server function `updateSocialLinks` em `src/lib/profile.functions.ts`
-- Middleware `requireSupabaseAuth`.
-- Input: `{ instagram: string; tiktok: string; x: string }`.
-- Sanitiza cada valor (`[^a-z0-9_.]` removido, ≤ 30 chars, lowercase); vazio → `null`.
-- `update({ instagram_handle, tiktok_handle, x_handle })` no perfil do usuário.
+- Refatorar `SocialField` para renderizar uma "linha" clicável estilo input (mesmo container arredondado atual) contendo:
+  - Ícone da rede à esquerda.
+  - Texto fixo `instagram.com/` / `tiktok.com/` / `x.com/` (não editável, `select-none`, cor levemente esmaecida).
+  - `<input>` transparente, sem borda, `flex-1`, que contém apenas o handle. Placeholder = `seuusuario`.
+- O clique em qualquer parte da linha foca o `<input>` (usar `<label>` envolvendo tudo).
+- Manter sanitização (`sanitize`) apenas sobre o handle digitado.
+- Estado `dirty`, botões Salvar/Cancelar e chamada a `updateSocialLinks` permanecem iguais.
+- Nenhuma mudança de schema, server function ou card de perfil.
 
-### 3. `settings.social-media.tsx`
-- `beforeLoad`: carregar `instagram_handle`, `tiktok_handle`, `x_handle` e passar como context.
-- Estados iniciam com os valores atuais; `dirty` compara com iniciais.
-- Substituir a barra fixa inferior por dois botões em fluxo (mesmo padrão de `settings.details.tsx`):
-  - **Salvar** — `w-full bg-primary text-primary-foreground hover:bg-primary/90`, `disabled={!dirty || saving}`. Chama `updateSocialLinks`, `toast.success`, atualiza iniciais, `router.invalidate()`.
-  - **Cancelar** — mesmo estilo, `disabled={!dirty || saving}`, restaura valores iniciais.
-- Remover `pb-28`.
+## Detalhes técnicos
 
-### 4. Card do perfil (`perfil.$username.tsx`)
-- Loader: incluir `instagram_handle`, `tiktok_handle`, `x_handle` no `.select` e expor como `instagram`, `tiktok`, `x` em `profile`.
-- `SocialButton` passa a aceitar `href` opcional: quando presente, renderiza `<a target="_blank" rel="noopener noreferrer">`; quando ausente, renderiza `<button disabled>` com `opacity-50`.
-- URLs: `https://instagram.com/{handle}`, `https://www.tiktok.com/@{handle}`, `https://x.com/{handle}`.
-
-Sem outras mudanças.
+- Estrutura por campo:
+  ```tsx
+  <label className="[classes do input atual] flex items-center gap-2 cursor-text">
+    <Icon />
+    <span className="text-muted-foreground select-none">{prefix}</span>
+    <input
+      className="flex-1 bg-transparent outline-none border-0 p-0"
+      value={value}
+      onChange={(e) => onChange(sanitize(e.target.value))}
+      placeholder="seuusuario"
+    />
+  </label>
+  ```
+- Prefixos: `instagram.com/`, `tiktok.com/`, `x.com/` (o handle do TikTok continua salvo sem `@`; a URL final do card segue usando `tiktok.com/@{handle}`).
