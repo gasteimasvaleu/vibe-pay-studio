@@ -1,18 +1,21 @@
-## Problema
+## Objetivo
+Diminuir o espaço entre o conteúdo do carrossel de passos (`CircularSteps`) e a borda do card pai na tela de feed vazio.
 
-Os tokens no `src/styles.css` são `oklch(...)`, não HSL. Envolver com `hsl(var(--foreground))` gera um valor CSS inválido, que os navegadores descartam — por isso os textos do carrossel continuam invisíveis.
+## Alterações propostas
 
-## Correção
+1. **Reduzir o padding do card pai** em `src/routes/_authenticated/feed.tsx`:
+   - Local: `<motion.section>` que envolve o `<CircularSteps>` (linha ~199).
+   - Atual: `p-6 md:p-10`
+   - Novo: `p-4 md:p-6`
 
-Em `src/components/feed/CircularSteps.tsx`, trocar `hsl(var(--token))` por `var(--token)` direto (o valor já é uma cor completa):
+2. **Reduzir o gap interno do carrossel** em `src/components/feed/CircularSteps.tsx`:
+   - Local: grid principal do componente (linha ~159).
+   - Atual: `gap-8`
+   - Novo: `gap-4 md:gap-6`
 
-- `colorTitle`: `hsl(var(--foreground))` → `var(--foreground)`
-- `colorSubtitle`: `hsl(var(--primary))` → `var(--primary)`
-- `colorDescription`: `hsl(var(--muted-foreground))` → `var(--muted-foreground)`
-- `colorArrowBg`: `hsl(var(--muted))` → `var(--muted)`
-- `colorArrowFg`: `hsl(var(--foreground))` → `var(--foreground)`
-- Borda das imagens: `1px solid hsl(var(--border))` → `1px solid var(--border)`
-- Ponto inativo: `hsl(var(--muted-foreground) / 0.3)` → `color-mix(in oklab, var(--muted-foreground) 30%, transparent)`
+## Resultado esperado
+O card fica mais compacto, com menos espaço em branco entre a borda e o conteúdo do carrossel, deixando a interface mais limpa sem quebrar o layout responsivo.
 
-## Fora de escopo
-Nenhuma outra mudança — só substituir a sintaxe inválida.
+## Arquivos que serão alterados
+- `src/routes/_authenticated/feed.tsx`
+- `src/components/feed/CircularSteps.tsx`
