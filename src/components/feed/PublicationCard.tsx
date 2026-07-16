@@ -116,7 +116,7 @@ export function PublicationCard({
   });
 
   return (
-    <article className="rounded-3xl overflow-hidden border border-primary/30 bg-white/[0.04] backdrop-blur-md">
+    <article className="rounded-3xl overflow-hidden border border-primary/30 bg-card/[0.04] backdrop-blur-md">
       <header className="flex items-center gap-3 px-4 py-3">
         <div className="h-9 w-9 rounded-full bg-primary grid place-items-center text-sm font-bold text-white">
           {(item.author_username ?? "?").slice(0, 1).toUpperCase()}

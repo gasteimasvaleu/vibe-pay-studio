@@ -83,7 +83,7 @@ function TwoFactorSetupPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative z-10 border-b border-border bg-white">
+      <header className="relative z-10 border-b border-border bg-card">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
@@ -119,7 +119,7 @@ function TwoFactorSetupPage() {
         </div>
 
         <div className="flex justify-center">
-          <div className="bg-white p-4 rounded-2xl shadow-card">
+          <div className="bg-card p-4 rounded-2xl shadow-card">
             {qrSvg ? (
               <img
                 src={qrSvg}

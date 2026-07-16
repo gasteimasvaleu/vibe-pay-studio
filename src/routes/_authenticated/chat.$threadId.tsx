@@ -375,7 +375,7 @@ function ChatThreadView() {
                     className={cn(
                       "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                       mine
-                        ? "bg-white/15 text-primary-foreground"
+                        ? "bg-card/15 text-primary-foreground"
                         : "bg-emerald-500/15 text-emerald-500",
                     )}
                   >

@@ -77,7 +77,7 @@ function SubscriptionsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Pesquisar"
-            className="h-12 rounded-2xl border-transparent bg-white pl-11 text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/40"
+            className="h-12 rounded-2xl border-transparent bg-card pl-11 text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/40"
           />
         </div>
 

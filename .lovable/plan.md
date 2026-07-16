@@ -1,50 +1,35 @@
-## Assinantes restritos — funcionalidade real
+## Objetivo
+Fazer o toggle de "Modo noturno" em `/settings/theme` realmente aplicar tema escuro em toda a aplicação, sem flash na carga inicial.
 
-### Como a restrição funciona (regras)
+## Situação atual
+- `settings.theme.tsx` já grava `localStorage.theme` e alterna a classe `.dark` no `<html>`.
+- `ThemeInit` aplica a classe no mount.
+- `src/styles.css` define **apenas tokens do tema claro** — não há bloco `.dark { ... }`, então ativar o toggle hoje não muda nada visualmente.
+- Vários headers/containers usam `bg-white` hardcoded (inclusive o header desta própria página), o que quebra o dark mode mesmo quando os tokens existirem.
 
-Ao restringir um assinante, o creator (dono do perfil) sinaliza no banco que aquele usuário está silenciado para ele. Efeitos:
+## Escopo da mudança (apenas UI/tema)
 
-1. **Chat** — mensagens novas enviadas pelo assinante restrito não aparecem para o creator (filtradas em `listThreads` e `listMessages`). O creator continua vendo o histórico anterior apenas se quiser; por padrão a thread some da caixa. O assinante NÃO é notificado (ele continua vendo a conversa normalmente do lado dele; sua mensagem é aceita mas invisível para o creator).
-2. **Comentários** — comentários do assinante restrito nas publicações do creator ficam ocultos para o creator e para os demais visitantes (policy de SELECT), sem avisar o autor.
-3. **Assinatura** — permanece ativa (não cancela nem estorna). A restrição é reversível a qualquer momento.
-4. **Sem notificação** — nenhum evento/email é disparado para o assinante restrito.
+### 1. Tokens de tema escuro em `src/styles.css`
+Adicionar bloco `.dark { ... }` sobrescrevendo os mesmos tokens do `:root` (background, foreground, card, popover, primary, secondary, muted, accent, border, input, ring, surface, surface-2, destructive, success, gradientes e sombras) com uma paleta escura coerente com a identidade lilás atual (fundo quase preto com leve tint roxo, superfícies elevadas em cinza-arroxeado, primary mantido/ajustado para contraste AA).
 
-### Onde o creator pode restringir
+### 2. Anti-flash na primeira renderização
+Injetar um pequeno script inline no `<head>` (via `head()` de `src/routes/__root.tsx`) que, antes do React montar, lê `localStorage.theme` e adiciona `dark` em `document.documentElement` — evita flash claro→escuro em usuários que já escolheram dark. `ThemeInit` permanece como fallback.
 
-- No header do chat individual (`/chat/$threadId`) — menu com "Restringir assinante".
-- Na própria página `/settings/restrictions` — botão "Restringir assinante" abre dialog com busca por @username entre os assinantes ativos (query em `subscriptions` + `profiles`).
+### 3. Trocar `bg-white` hardcoded por token semântico
+Substituir `bg-white` por `bg-card` (ou `bg-background`, conforme o caso) nos headers/superfícies que precisam responder ao tema. Alvos com maior impacto visual em todas as páginas autenticadas:
+- `src/routes/_authenticated/settings.theme.tsx` (header)
+- `src/routes/_authenticated/settings.restrictions.tsx` (header — mesmo padrão)
+- Demais arquivos de `settings.*.tsx`, `chat.*.tsx`, `subscriptions.tsx`, `vault.tsx`, `bugreport.tsx`, `criar-perfil-gratuito.tsx`, `creator.onboarding.redes-sociais.tsx`, `settings.two-factor.*` — mesma troca `bg-white` → `bg-card`.
+- `src/components/onboarding/OnboardingShell.tsx`, `src/components/feed/PublicationCard.tsx`, `src/components/feed/MediaLightbox.tsx` (o lightbox mantém `bg-black`; ajustar só onde `bg-white` estiver como superfície de UI).
+- `src/routes/index.tsx` (landing pública) fica **fora do escopo** — landing continua com fundo claro fixo.
 
-### Como aparecem na página
+### 4. Feedback imediato no próprio toggle
+`settings.theme.tsx` já reflete o estado no texto; nenhum trabalho extra além da troca `bg-white` → `bg-card` no header.
 
-Lista de cards com avatar, nome de exibição, `@username` e botão "Desrestringir" (ação imediata com `toast` de confirmação). Empty state mantido quando a lista está vazia. Header ganha botão "＋" para adicionar restrição via busca.
+## Fora de escopo
+- Nenhuma alteração em regras de negócio, tabelas, RLS, server functions ou fluxo de restrições.
+- Não vamos revisar todas as páginas públicas/marketing; foco é a área logada, onde vive o toggle.
+- Modo "sistema" (prefers-color-scheme automático) — mantém apenas claro/escuro manual.
 
----
-
-### Implementação técnica
-
-**1. Migration** — nova tabela `public.subscriber_restrictions`:
-- `creator_id uuid` (referencia `auth.users`, não FK), `subscriber_id uuid`, `created_at timestamptz default now()`.
-- PK composta `(creator_id, subscriber_id)`, check `creator_id <> subscriber_id`.
-- GRANT `SELECT, INSERT, DELETE` para `authenticated`; `ALL` para `service_role`.
-- RLS: creator (`auth.uid() = creator_id`) faz SELECT/INSERT/DELETE das próprias.
-- Função `SECURITY DEFINER` `public.is_restricted(_creator uuid, _subscriber uuid) returns boolean`.
-- Atualizar policies:
-  - `chat_messages` SELECT: adicionar `AND NOT (auth.uid() <> sender_id AND public.is_restricted(auth.uid(), sender_id))` — o creator não vê msgs de restritos; o assinante ainda vê as próprias.
-  - `publication_comments` SELECT: adicionar `AND NOT public.is_restricted(<author da publication>, comments.author_id)`. Como o autor da publication varia por linha, usa subquery: `NOT EXISTS (SELECT 1 FROM public.publications p JOIN public.subscriber_restrictions r ON r.creator_id = p.author_id AND r.subscriber_id = publication_comments.author_id WHERE p.id = publication_comments.publication_id)`.
-
-**2. Server functions** (`src/lib/restrictions.functions.ts`, com `requireSupabaseAuth`):
-- `listRestrictedSubscribers()` → `Array<{ userId, username, displayName, avatarUrl, restrictedAt }>` (join com `profiles`).
-- `restrictSubscriber({ subscriberId })` → valida que existe assinatura ativa (opcional, aceita qualquer user) e faz upsert.
-- `unrestrictSubscriber({ subscriberId })` → delete.
-- `searchSubscribersToRestrict({ q })` → lista assinantes ativos do creator filtrando por `username ILIKE %q%`, excluindo já restritos.
-
-**3. UI — `src/routes/_authenticated/settings.restrictions.tsx`**:
-- Substituir empty state estático por `useQuery(listRestrictedSubscribers)`.
-- Renderizar lista de `RestrictedRow` (avatar, nome, @username, botão "Desrestringir" com `useMutation`, invalidação de query e `toast`).
-- Empty state atual quando a lista está vazia.
-- Header: botão "＋" que abre `AddRestrictionDialog` com input de busca (debounced) usando `searchSubscribersToRestrict`; ao clicar num resultado, dispara `restrictSubscriber` + invalidação + fecha dialog.
-- Dialog "Info" existente mantido.
-
-**4. Integração no chat** — em `src/routes/_authenticated/chat.$threadId.tsx`, adicionar botão de menu no header ("Restringir/Desrestringir assinante") que chama as mesmas mutations. Filtro de mensagens vindas de restritos já será garantido pela RLS, então nenhum ajuste em `listMessages` é necessário.
-
-**5. Sem alterações** em: emails, transactions, subscriptions (mantidas ativas), notificações. Restrição é 100% reversível.
+## Resultado esperado
+Ao ativar o switch em `/settings/theme`, toda a área autenticada muda para tema escuro imediatamente, a preferência persiste em `localStorage`, e recargas não mostram flash de tema claro antes do dark ser aplicado.

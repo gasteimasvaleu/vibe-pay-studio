@@ -21,8 +21,8 @@ export function OnboardingShell({
   const progress = Math.min(100, Math.round((step / totalSteps) * 100));
 
   return (
-    <div className="relative min-h-screen bg-white text-neutral-900">
-      <header className="relative z-10 border-b border-neutral-200 backdrop-blur-md bg-white/80">
+    <div className="relative min-h-screen bg-card text-neutral-900">
+      <header className="relative z-10 border-b border-neutral-200 backdrop-blur-md bg-card/80">
         <div className="max-w-3xl mx-auto flex items-center gap-4 px-4 md:px-6 h-14">
           {backTo ? (
             <Link
