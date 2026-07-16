@@ -75,6 +75,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
     coverUrl: profile.cover_url,
     postsCount: postsCount ?? 0,
     mediasCount: mediasCount ?? 0,
+    accountType: ((profile as any).account_type ?? "subscriber") as AccountType,
   };
 }
 
