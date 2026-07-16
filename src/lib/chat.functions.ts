@@ -362,7 +362,7 @@ export const updateChatWelcome = createServerFn({ method: "POST" })
       .update({
         chat_welcome_enabled: data.enabled,
         chat_welcome_message: msg || null,
-        chat_welcome_media: media as unknown as object,
+        chat_welcome_media: media as unknown as never,
         chat_welcome_tag: data.tag?.trim() || null,
       })
       .eq("user_id", userId);
