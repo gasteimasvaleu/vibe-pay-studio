@@ -288,3 +288,106 @@ export const markThreadRead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---- Welcome message settings ----
+
+const welcomeMediaSchema = z.object({
+  path: z.string().min(1).max(500),
+  mime: z.string().min(1).max(120),
+  kind: z.enum(["image", "video", "audio"]),
+  durationSec: z.number().nonnegative().max(60 * 60).nullable().optional(),
+});
+
+export type ChatWelcomeSettings = {
+  enabled: boolean;
+  message: string;
+  media: ChatWelcomeMedia[];
+  tag: string | null;
+};
+
+export const getChatWelcome = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ChatWelcomeSettings> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("chat_welcome_enabled, chat_welcome_message, chat_welcome_media, chat_welcome_tag")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = (data?.chat_welcome_media ?? []) as ChatWelcomeMedia[];
+    const paths = raw.map((r) => r.path).filter(Boolean);
+    const urlByPath = new Map<string, string>();
+    if (paths.length) {
+      const { data: signed } = await supabase.storage
+        .from("publications")
+        .createSignedUrls(paths, 60 * 60);
+      for (const s of signed ?? []) {
+        if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+      }
+    }
+    return {
+      enabled: !!data?.chat_welcome_enabled,
+      message: data?.chat_welcome_message ?? "",
+      tag: data?.chat_welcome_tag ?? null,
+      media: raw.map((m) => ({ ...m, url: urlByPath.get(m.path) ?? null })),
+    };
+  });
+
+export const updateChatWelcome = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        enabled: z.boolean(),
+        message: z.string().max(4000).optional(),
+        media: z.array(welcomeMediaSchema).max(10).default([]),
+        tag: z.string().trim().max(40).nullable().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const msg = (data.message ?? "").trim();
+    const media = data.media ?? [];
+    if (data.enabled && msg.length < 3 && media.length === 0) {
+      throw new Error("Adicione uma mensagem (mín. 3 caracteres) ou uma mídia");
+    }
+    const prefix = `chat-welcome/${userId}/`;
+    for (const m of media) {
+      if (!m.path.startsWith(prefix)) throw new Error("Caminho de mídia inválido");
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        chat_welcome_enabled: data.enabled,
+        chat_welcome_message: msg || null,
+        chat_welcome_media: media as unknown as object,
+        chat_welcome_tag: data.tag?.trim() || null,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const createChatWelcomeUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        filename: z.string().min(1).max(200),
+        mime: z.string().min(1).max(120),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+    const path = `chat-welcome/${userId}/${crypto.randomUUID()}-${safe}`;
+    const { data: signed, error } = await supabase.storage
+      .from("publications")
+      .createSignedUploadUrl(path);
+    if (error || !signed) throw new Error(error?.message ?? "upload_url_failed");
+    return { path, token: signed.token, signedUrl: signed.signedUrl };
+  });
+
