@@ -176,7 +176,7 @@ function CreatorCard({ creator }: { creator: CreatorRow }) {
           @{creator.username}
         </p>
       </div>
-      <Avatar className="absolute left-4 top-14 h-24 w-24 border-4 border-card">
+      <Avatar className="absolute left-4 top-16 h-24 w-24 border-4 border-card z-10">
         <AvatarImage src={creator.avatar_url ?? undefined} alt={displayName} />
         <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
           {initials}
