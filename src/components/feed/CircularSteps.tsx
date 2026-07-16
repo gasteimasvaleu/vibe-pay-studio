@@ -255,7 +255,7 @@ export function CircularSteps({
                     background:
                       i === activeIndex
                         ? "linear-gradient(90deg,#d946ef,#9333ea)"
-                        : "rgba(255,255,255,0.2)",
+                        : "hsl(var(--muted-foreground) / 0.3)",
                   }}
                 />
               ))}
