@@ -91,3 +91,29 @@ export async function sendTransactionalEmail(
     return { ok: false, skipped: false, error: msg };
   }
 }
+
+/**
+ * Look up a user's primary email via Supabase Auth Admin.
+ * Returns null when the user has no email (edge: phone-only signups) or when
+ * the admin lookup fails — caller should log & skip in that case.
+ */
+export async function resolveUserEmail(userId: string): Promise<string | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabaseAdmin as any).auth.admin.getUserById(userId);
+    if (error) {
+      console.warn("[email] resolveUserEmail failed", userId, error.message);
+      return null;
+    }
+    const email = data?.user?.email as string | undefined;
+    return email && email.length > 0 ? email : null;
+  } catch (err) {
+    console.warn("[email] resolveUserEmail threw", userId, err);
+    return null;
+  }
+}
+
+// TODO(creator_referrals): dispara quando um perfil indicado (referred_by)
+// se torna criador. Aguardando coluna `profiles.referred_by` para acionar via
+// `sendTransactionalEmail({ kind: "creator_referrals", ... })`.
