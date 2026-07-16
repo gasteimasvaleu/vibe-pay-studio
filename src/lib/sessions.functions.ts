@@ -16,18 +16,24 @@ function currentSessionId(claims: Record<string, unknown>): string | null {
   return typeof v === "string" ? v : null;
 }
 
+async function authSchema() {
+  const { supabaseAdmin } = await import(
+    "@/integrations/supabase/client.server"
+  );
+  // The generated Database types only cover the public schema; cast to any
+  // so we can reach auth.sessions with the service-role client.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (supabaseAdmin as any).schema("auth");
+}
+
 export const listMySessions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<DeviceSession[]> => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
     const current = currentSessionId(
       context.claims as Record<string, unknown>,
     );
-    const { data, error } = await supabaseAdmin
-      .schema("auth")
-      // @ts-expect-error auth schema is not in generated Database types
+    const auth = await authSchema();
+    const { data, error } = await auth
       .from("sessions")
       .select("id, created_at, updated_at, refreshed_at, user_agent, ip")
       .eq("user_id", context.userId)
@@ -62,12 +68,8 @@ export const revokeSession = createServerFn({ method: "POST" })
     if (current && data.sessionId === current) {
       throw new Error("Não é possível remover o acesso atual por aqui.");
     }
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    const { error } = await supabaseAdmin
-      .schema("auth")
-      // @ts-expect-error auth schema is not in generated Database types
+    const auth = await authSchema();
+    const { error } = await auth
       .from("sessions")
       .delete()
       .eq("id", data.sessionId)
@@ -82,15 +84,8 @@ export const revokeAllOtherSessions = createServerFn({ method: "POST" })
     const current = currentSessionId(
       context.claims as Record<string, unknown>,
     );
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    let q = supabaseAdmin
-      .schema("auth")
-      // @ts-expect-error auth schema is not in generated Database types
-      .from("sessions")
-      .delete()
-      .eq("user_id", context.userId);
+    const auth = await authSchema();
+    let q = auth.from("sessions").delete().eq("user_id", context.userId);
     if (current) q = q.neq("id", current);
     const { error } = await q;
     if (error) throw new Error(error.message);
