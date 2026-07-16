@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import {
   AlertCircle,
@@ -11,11 +11,10 @@ import {
   Lock,
   Trash2,
   User,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +22,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AvatarCropDialog } from "@/components/settings/AvatarCropDialog";
 
 export const Route = createFileRoute("/_authenticated/settings/myprofile")({
   head: () => ({
@@ -37,23 +37,46 @@ export const Route = createFileRoute("/_authenticated/settings/myprofile")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
     const username =
       profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    return { username };
+    return { username, avatarUrl: profile?.avatar_url ?? null };
   },
   component: SettingsMyProfilePage,
 });
 
 function SettingsMyProfilePage() {
   const router = useRouter();
-  const { username } = Route.useRouteContext();
+  const { username, avatarUrl: initialAvatarUrl } = Route.useRouteContext();
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePickFile = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 10MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.onerror = () => toast.error("Não foi possível ler o arquivo");
+    reader.readAsDataURL(file);
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -93,13 +116,21 @@ function SettingsMyProfilePage() {
         <section className="flex flex-col items-center gap-3">
           <div className="relative">
             <Avatar className="h-28 w-28 ring-4 ring-card shadow-card">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-primary/10 text-primary text-3xl font-semibold">
                 {displayName.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
             <button
               type="button"
-              onClick={() => toast.info("Em breve")}
+              onClick={handlePickFile}
               aria-label="Alterar foto"
               className="absolute bottom-1 right-1 h-9 w-9 grid place-items-center rounded-full bg-foreground text-background shadow-md hover:opacity-90 transition-opacity"
             >
@@ -187,6 +218,18 @@ function SettingsMyProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {cropSrc && (
+        <AvatarCropDialog
+          imageSrc={cropSrc}
+          onCancel={() => setCropSrc(null)}
+          onSuccess={(url) => {
+            setAvatarUrl(url);
+            setCropSrc(null);
+            router.invalidate();
+          }}
+        />
+      )}
     </div>
   );
 }
