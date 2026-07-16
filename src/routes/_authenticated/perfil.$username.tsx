@@ -1005,11 +1005,36 @@ function Stat({
   );
 }
 
-function SocialButton({ children, label }: { children: React.ReactNode; label: string }) {
+function SocialButton({
+  children,
+  label,
+  href,
+}: {
+  children: React.ReactNode;
+  label: string;
+  href?: string | null;
+}) {
+  const cls =
+    "h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors";
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className={cls}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
     <button
+      type="button"
       aria-label={label}
-      className="h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
+      disabled
+      className={`${cls} opacity-50 cursor-not-allowed`}
     >
       {children}
     </button>
