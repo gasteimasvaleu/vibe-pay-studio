@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { CircularSteps } from "@/components/feed/CircularSteps";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -195,24 +196,41 @@ function FeedPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 md:p-12 text-center"
+              className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-6 md:p-10"
             >
-              <div className="mx-auto h-14 w-14 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/30 grid place-items-center text-fuchsia-300">
-                <Sparkles className="h-6 w-6" />
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white">
+                  Seu feed está vazio
+                </h2>
+                <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
+                  Veja como aproveitar a Monetisexy enquanto você assina seus creators.
+                </p>
               </div>
-              <h2 className="mt-5 text-xl md:text-2xl font-bold text-white">
-                Seu feed está vazio
-              </h2>
-              <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
-                Assine creators para ver as publicações deles aqui.
-              </p>
-              <Link
-                to="/em-alta"
-                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-sm font-semibold shadow-lg shadow-purple-500/30 hover:opacity-90 transition-opacity"
-              >
-                Explorar creators
-              </Link>
-
+              <CircularSteps
+                steps={[
+                  {
+                    subtitle: "Passo 1",
+                    title: "Descubra creators",
+                    description:
+                      "Explore perfis em alta e encontre quem combina com você.",
+                    src: "/placeholder.svg",
+                  },
+                  {
+                    subtitle: "Passo 2",
+                    title: "Assine e desbloqueie",
+                    description:
+                      "Assinaturas, PPV, tips e chat privado num só lugar.",
+                    src: "/placeholder.svg",
+                  },
+                  {
+                    subtitle: "Passo 3",
+                    title: "Interaja de verdade",
+                    description:
+                      "Comente, mande tips e participe de desafios exclusivos.",
+                    src: "/placeholder.svg",
+                  },
+                ]}
+              />
             </motion.section>
           )}
       </main>
