@@ -1,38 +1,51 @@
 ## Objetivo
-Reorganizar a tela `/settings/social` para que os botões de ação fiquem abaixo do campo de identificador, ao lado do status "Este é seu identificador atual", e adicionar um botão **Cancelar** junto ao **Salvar**. Ambos devem usar a cor roxa primária do app.
 
-## Alterações propostas
+No botão da foto de capa em `/settings/details`, abrir um dialog preto (como o do avatar) para recortar a imagem em formato horizontal. Após confirmar o recorte, abrir um segundo dialog de pré-visualização mostrando o banner + avatar. O usuário decide entre **Salvar** (persiste) ou **Cancelar** (descarta).
 
-### 1. Remover o botão "Salvar" do header
-- No `<header>` da página, manter apenas o botão de voltar e o título.
-- Remover o botão `<button>Salvar</button>` que hoje ocupa a terceira coluna do flex do header.
+## O que será construído
 
-### 2. Adicionar botões "Cancelar" e "Salvar" abaixo do status
-- Logo após a `<div>` que exibe o status do identificador (linha ~206), adicionar uma nova seção com os dois botões.
-- Usar o componente `<Button>` do projeto (`src/components/ui/button.tsx`) com a variante primária (`variant="default"`), que aplica o roxo padrão do app (`bg-primary text-primary-foreground`).
-- Layout: flex com gap, alinhado à direita ou em coluna em mobile, conforme padrão existente.
+### 1. Novo bucket de storage `covers` (privado)
+- Criado via `supabase--storage_create_bucket` (privado, como `avatars`).
+- Policies RLS em `storage.objects`: usuário só faz upload/leitura/delete dentro da própria pasta `{userId}/...`.
 
-### 3. Implementar ação do botão "Cancelar"
-- Ao clicar em **Cancelar**, restaurar os valores iniciais:
-  - `setDisplayName(initialDisplayName)`
-  - `setHandle(initialUsername)`
-  - `setStatus({ kind: "self" })`
-- O botão pode ficar desabilitado quando não houver alterações (`!hasChanges`).
+### 2. Server function `updateCoverUrl` em `src/lib/profile.functions.ts`
+- Middleware `requireSupabaseAuth`, valida URL, faz `update` em `profiles.cover_url`.
 
-### 4. Preservar lógica do "Salvar"
-- Manter a função `onSave()` existente.
-- O botão **Salvar** continua desabilitado quando `!canSave || saving`.
-- Texto de loading continua "Salvando…".
+### 3. Novo componente `src/components/settings/CoverCropDialog.tsx`
+- Baseado no `AvatarCropDialog`, mas:
+  - `aspect={3}` (banner horizontal ~ 3:1, mesma proporção usada no perfil/search).
+  - `cropShape="rect"`, sem grid.
+  - Saída em canvas ~1500×500 JPEG q0.9.
+  - Ao confirmar o recorte, **NÃO** faz upload ainda — apenas retorna o blob/dataURL via `onCropped(previewDataUrl)`.
 
-### 5. Ajustes de importação
-- Adicionar import do componente `Button` em `src/routes/_authenticated/settings.social.tsx`.
-- Verificar se o ícone `ArrowLeft` continua necessário (sim, para o botão voltar).
+### 4. Novo componente `src/components/settings/CoverPreviewDialog.tsx`
+- Dialog (shadcn `Dialog`) com card claro reproduzindo o layout do segundo screenshot:
+  - Título "Pré-visualização".
+  - Banner recortado (`3:1`) com botão câmera central (reabre o recorte).
+  - Avatar atual sobreposto na base do banner, com botão câmera (reabre o `AvatarCropDialog`).
+- Botões **Salvar** (faz upload no bucket `covers`, gera signed URL e chama `updateCoverUrl`) e **Cancelar** (fecha e descarta).
 
-## Resultado esperado
-- Header limpo com título centralizado e botão de voltar.
-- Abaixo do campo `@`, o status "Este é seu identificador atual" continua aparecendo.
-- Em seguida, os botões **Cancelar** e **Salvar** lado a lado, ambos na cor roxa primária do app.
-- Cancelar descarta as alterações; Salvar persiste normalmente.
+### 5. Integração em `src/routes/_authenticated/settings.details.tsx`
+- `beforeLoad` passa a carregar `cover_url` e `avatar_url` do perfil para preencher pré-visualização.
+- Substitui o `onClick={() => toast.info("Em breve")}` do botão de capa por:
+  1. Abre file picker (`accept="image/*"`, limite 10MB).
+  2. Abre `CoverCropDialog` com o arquivo lido.
+  3. Ao confirmar recorte → abre `CoverPreviewDialog` com o dataURL recortado.
+  4. Em "Salvar" no preview → upload + persistência; atualiza banner exibido e `router.invalidate()`.
+- Estado local mantém `coverUrl` atual (usado como fundo do próprio botão, substituindo o gradiente quando existe).
 
-## Arquivos alterados
-- `src/routes/_authenticated/settings.social.tsx`
+## Fluxo resumido
+
+```text
+[botão capa] → file picker → CoverCropDialog (3:1, preto)
+   → ok → CoverPreviewDialog (banner + avatar) → Salvar → upload+update
+                                                → Cancelar → descarta
+```
+
+## Detalhes técnicos
+
+- Aspect ratio: **3:1** (consistente com o card usado em `search.tsx` e no perfil).
+- Bucket: `covers`, privado, signed URL de longa duração (mesmo padrão do `avatars`).
+- Nomeação: `covers/{userId}/{uuid}.jpg`.
+- Sem mudança em outras telas; apenas o botão da capa nesta rota é afetado.
+- Reutiliza `react-easy-crop` já instalado.
