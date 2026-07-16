@@ -66,7 +66,11 @@ function SubscriptionPage() {
   const monthlyValid = monthly >= MIN && monthly <= MAX;
   const discountsValid =
     discountQ >= 0 && discountQ <= 100 && discountS >= 0 && discountS <= 100;
-  const canSave = monthlyValid && discountsValid && !saving;
+  const dirty =
+    monthly !== initial.monthly ||
+    discountQ !== initial.discountQ ||
+    discountS !== initial.discountS;
+  const canSave = monthlyValid && discountsValid && dirty && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -86,6 +90,12 @@ function SubscriptionPage() {
     }
     toast.success("Assinatura atualizada");
     router.history.back();
+  };
+
+  const handleCancel = () => {
+    setMonthly(initial.monthly);
+    setDiscountQ(initial.discountQ);
+    setDiscountS(initial.discountS);
   };
 
   return (
