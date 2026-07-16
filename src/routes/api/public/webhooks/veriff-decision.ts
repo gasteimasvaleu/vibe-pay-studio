@@ -52,6 +52,14 @@ export const Route = createFileRoute("/api/public/webhooks/veriff-decision")({
               status?: string;
               code?: number;
               vendorData?: string;
+              person?: {
+                firstName?: string | null;
+                lastName?: string | null;
+                dateOfBirth?: string | null;
+              } | null;
+              document?: {
+                number?: string | null;
+              } | null;
             };
           };
           try {
@@ -99,6 +107,9 @@ export const Route = createFileRoute("/api/public/webhooks/veriff-decision")({
             kyc_verified_at?: string;
             account_type?: string;
             onboarding_completed_at?: string;
+            full_name?: string;
+            birth_date?: string;
+            cpf?: string;
           } = {
             kyc_status: nextStatus,
             veriff_session_id: verification.id,
@@ -108,7 +119,29 @@ export const Route = createFileRoute("/api/public/webhooks/veriff-decision")({
             update.kyc_verified_at = now;
             update.account_type = "creator";
             update.onboarding_completed_at = now;
+
+            const first = verification.person?.firstName?.trim() ?? "";
+            const last = verification.person?.lastName?.trim() ?? "";
+            const fullName = [first, last].filter(Boolean).join(" ").trim();
+            if (fullName) update.full_name = fullName;
+
+            const dob = verification.person?.dateOfBirth?.trim();
+            if (dob && /^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+              update.birth_date = dob;
+            }
+
+            const cpfDigits = verification.document?.number?.replace(/\D/g, "") ?? "";
+            if (cpfDigits.length === 11 && verification.vendorData) {
+              // Only fill CPF if not already set, to avoid overwriting existing data.
+              const { data: existing } = await supabaseAdmin
+                .from("profiles")
+                .select("cpf")
+                .eq("user_id", verification.vendorData)
+                .maybeSingle();
+              if (!existing?.cpf) update.cpf = cpfDigits;
+            }
           }
+
 
           // Prefer matching by vendorData (userId); fall back to veriff_session_id.
           let query = supabaseAdmin.from("profiles").update(update).select("user_id");
