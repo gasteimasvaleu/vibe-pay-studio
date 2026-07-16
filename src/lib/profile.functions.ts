@@ -51,6 +51,29 @@ export const updateProfileDetails = createServerFn({ method: "POST" })
     return { ok: true, bio: bioTrimmed, location: locTrimmed } as const;
   });
 
+const sanitizeHandle = (v: string) =>
+  v.toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 30);
+
+export const updateSocialLinks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { instagram: string; tiktok: string; x: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const ig = sanitizeHandle(data.instagram);
+    const tk = sanitizeHandle(data.tiktok);
+    const xh = sanitizeHandle(data.x);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        instagram_handle: ig.length ? ig : null,
+        tiktok_handle: tk.length ? tk : null,
+        x_handle: xh.length ? xh : null,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, instagram: ig, tiktok: tk, x: xh } as const;
+  });
+
 const RESERVED_USERNAMES = new Set([
   "admin", "api", "auth", "settings", "perfil", "profile", "monetisexy",
   "monetisex", "root", "support", "help", "about", "login", "logout",

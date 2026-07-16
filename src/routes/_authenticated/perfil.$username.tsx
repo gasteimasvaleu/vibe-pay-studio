@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, account_type, price_monthly, discount_quarterly, discount_semiannual")
+      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -158,6 +158,9 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         location: (profile.location as string | null) ?? null,
         avatarUrl: (profile.avatar_url as string | null) ?? null,
         coverUrl: (profile.cover_url as string | null) ?? null,
+        instagram: (profile.instagram_handle as string | null) ?? null,
+        tiktok: (profile.tiktok_handle as string | null) ?? null,
+        x: (profile.x_handle as string | null) ?? null,
         accountType: profile.account_type,
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
@@ -648,10 +651,26 @@ function PerfilPage() {
           )}
 
           <div className="flex items-center gap-2 pt-1">
-            <SocialButton label="Instagram"><Instagram className="h-4 w-4" /></SocialButton>
-            <SocialButton label="X"><Twitter className="h-4 w-4" /></SocialButton>
-            <SocialButton label="TikTok"><Music2 className="h-4 w-4" /></SocialButton>
+            <SocialButton
+              label="Instagram"
+              href={profile.instagram ? `https://instagram.com/${profile.instagram}` : null}
+            >
+              <Instagram className="h-4 w-4" />
+            </SocialButton>
+            <SocialButton
+              label="X"
+              href={profile.x ? `https://x.com/${profile.x}` : null}
+            >
+              <Twitter className="h-4 w-4" />
+            </SocialButton>
+            <SocialButton
+              label="TikTok"
+              href={profile.tiktok ? `https://www.tiktok.com/@${profile.tiktok}` : null}
+            >
+              <Music2 className="h-4 w-4" />
+            </SocialButton>
           </div>
+
 
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
@@ -986,11 +1005,36 @@ function Stat({
   );
 }
 
-function SocialButton({ children, label }: { children: React.ReactNode; label: string }) {
+function SocialButton({
+  children,
+  label,
+  href,
+}: {
+  children: React.ReactNode;
+  label: string;
+  href?: string | null;
+}) {
+  const cls =
+    "h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors";
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className={cls}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
     <button
+      type="button"
       aria-label={label}
-      className="h-9 w-9 grid place-items-center rounded-full bg-secondary border border-border text-secondary-foreground hover:bg-muted hover:text-foreground transition-colors"
+      disabled
+      className={`${cls} opacity-50 cursor-not-allowed`}
     >
       {children}
     </button>
