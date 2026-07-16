@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, account_type, price_monthly, discount_quarterly, discount_semiannual")
+      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, account_type, price_monthly, discount_quarterly, discount_semiannual")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -153,6 +153,11 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       profile: {
         userId: profile.user_id,
         username: profile.username,
+        displayName: (profile.display_name as string | null) ?? null,
+        bio: (profile.bio as string | null) ?? null,
+        location: (profile.location as string | null) ?? null,
+        avatarUrl: (profile.avatar_url as string | null) ?? null,
+        coverUrl: (profile.cover_url as string | null) ?? null,
         accountType: profile.account_type,
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
@@ -356,10 +361,11 @@ function PerfilPage() {
     likes: formatCompact(likesCount),
   };
 
-  const displayName = profile.username
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
-  const location = "São Paulo - BRA";
+  const displayName =
+    profile.displayName?.trim() ||
+    profile.username
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
   const monthlyPrice = profile.priceMonthly > 0 ? profile.priceMonthly : 0;
   const quarterlyPrice = monthlyPrice * 3 * (1 - (profile.discountQuarterly ?? 0) / 100);
@@ -577,13 +583,29 @@ function PerfilPage() {
           className="relative"
         >
           <div className="relative h-44 md:h-56 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-fuchsia-500 via-purple-600 to-indigo-700">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
+            {profile.coverUrl ? (
+              <img
+                src={profile.coverUrl}
+                alt="Capa do perfil"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
+            )}
           </div>
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40">
-              {profile.username.slice(0, 1).toUpperCase()}
+            <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                profile.username.slice(0, 1).toUpperCase()
+              )}
             </div>
           </div>
 
@@ -612,10 +634,18 @@ function PerfilPage() {
             <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} variant="light" />
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
-            <span>{location}</span>
-          </div>
+          {profile.bio && (
+            <p className="text-sm text-foreground whitespace-pre-wrap pr-4 md:pr-6">
+              {profile.bio}
+            </p>
+          )}
+
+          {profile.location && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{profile.location}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 pt-1">
             <SocialButton label="Instagram"><Instagram className="h-4 w-4" /></SocialButton>
