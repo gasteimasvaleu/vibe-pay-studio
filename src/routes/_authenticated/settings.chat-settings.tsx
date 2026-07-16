@@ -559,6 +559,83 @@ function AudioRecorderButton({
   );
 }
 
+function PriceDialog({
+  open,
+  initialCents,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  initialCents: number;
+  onClose: () => void;
+  onSave: (cents: number) => void;
+}) {
+  const [raw, setRaw] = useState("");
+
+  useEffect(() => {
+    if (open) setRaw(initialCents > 0 ? String(initialCents) : "");
+  }, [open, initialCents]);
+
+  const cents = useMemo(() => {
+    const n = parseInt(raw || "0", 10);
+    return Number.isFinite(n) ? Math.min(50000, Math.max(0, n)) : 0;
+  }, [raw]);
+
+  const display = useMemo(() => formatBRL(cents), [cents]);
+  const valid = cents >= 100 && cents <= 50000;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => (v ? null : onClose())}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Precificar mensagem de boas-vindas</DialogTitle>
+          <DialogDescription>
+            Defina um preço entre R$ 1,00 e R$ 500,00. A mídia enviada junto à
+            mensagem ficará bloqueada até o assinante desbloquear no chat.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-2">
+          <label className="text-sm font-medium text-foreground">Valor</label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+              R$
+            </span>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={display.replace(/^R\$\s*/, "")}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setRaw(digits);
+              }}
+              className="w-full h-11 rounded-md border border-border bg-background pl-10 pr-3 text-base font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+          {!valid && (
+            <p className="text-xs text-destructive">
+              O preço mínimo é R$ 1,00.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            disabled={!valid}
+            onClick={() => onSave(cents)}
+          >
+            Salvar preço
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Unused import safety
 void Play;
 void Pause;
