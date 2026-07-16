@@ -1,37 +1,25 @@
-# Finalizar Send Email Hook via Resend
+## Problema
 
-O código do hook já está pronto de mensagens anteriores:
-- `src/routes/api/public/auth/email-hook.ts` — route pública que verifica HMAC (Standard Webhooks) e envia via Resend gateway
-- `src/lib/auth-email-templates.server.ts` — templates HTML branded (signup, recovery, magic link, invite, email_change, reauthentication)
-- Secret `AUTH_EMAIL_HOOK_SECRET` já provisionado
+O link "Confirmar meu e-mail" está abrindo `https://<ref>.supabase.co/auth/confirm?...` e o Supabase responde `No API key found in request`.
 
-## O que falta (não é código — é config no Supabase)
+Causa: em `src/lib/auth-email-templates.server.ts`, o `confirmUrl` é montado usando `p.site_url` (o valor `site_url` vindo do payload do hook aponta para o domínio do projeto Supabase, não para o app). Também não existe uma rota `/auth/confirm` no app para consumir o `token_hash`.
 
-Como o Supabase é seu (não Lovable Cloud), a configuração do hook em `auth.config` só pode ser feita por você no Dashboard. Passos:
+## Correções
 
-1. **Gerar segredo base64** no terminal:
-   ```bash
-   openssl rand -base64 48
-   ```
+1. **`src/lib/auth-email-templates.server.ts`**
+   - Trocar a base do `confirmUrl` para sempre usar `APP_BASE_URL` (`https://monetisexy.com`), ignorando `p.site_url`.
+   - Manter `token_hash`, `type` e `next` como query params.
 
-2. **Atualizar `AUTH_EMAIL_HOOK_SECRET` no Lovable** com esse mesmo valor (só a parte base64, sem prefixo). Vou abrir o formulário seguro na próxima mensagem.
+2. **Novo `src/routes/auth.confirm.tsx`** (rota pública)
+   - Ler `token_hash`, `type` e `next` da URL.
+   - Chamar `supabase.auth.verifyOtp({ type, token_hash })` no cliente.
+   - Em caso de sucesso: `navigate({ to: next ?? "/feed" })`.
+   - Em caso de erro (link expirado/inválido): mostrar mensagem amigável com botão para voltar a `/entrar` ou reenviar.
+   - Para `type=recovery`: redirecionar para uma tela de nova senha (usar `/entrar` com aviso por enquanto, já que não existe página dedicada — confirmar com o usuário se quer que eu crie `/reset-password`).
 
-3. **Supabase Dashboard → Authentication → Hooks → Send Email Hook**:
-   - Enable
-   - Hook URL: `https://monetisexy.com/api/public/auth/email-hook`
-   - Secret: `v1,whsec_<mesmo_valor_base64>` (com prefixo)
+3. **Publicar** para o hook e a nova rota ficarem ativos em `monetisexy.com`.
 
-4. **Testar** com um cadastro novo — email deve chegar de `Equipe Monetisexy <no-reply@monetisexy.com>` via Resend (confere no dashboard do Resend em Logs).
+## Fora do escopo
 
-## Ajustes que faço em código quando aprovar
-
-- Chamar `update_secret` (formulário seguro) pro `AUTH_EMAIL_HOOK_SECRET` — assim você cola o valor gerado e ele fica sincronizado.
-- Verificar se o `AUTH_EMAIL_HOOK_SECRET` gerado antes ainda está lá e substituir pelo seu valor.
-
-Nenhum outro arquivo precisa mudar — o código já suporta secret em formato base64.
-
-## Notas
-
-- Não posso automatizar o passo 3 (dashboard Supabase) sem um Personal Access Token seu da Management API.
-- Uma vez configurado, funciona indefinidamente — não precisa refazer.
-- Rate limit do Supabase (`Authentication → Rate Limits → Emails per hour`) precisa estar alto o suficiente pro seu volume; default é bem baixo.
+- Não mexo em `email-hook.ts`, no segredo, nem no template visual.
+- Não crio página de reset de senha nova nesta rodada (a menos que você peça).
