@@ -120,7 +120,8 @@ function ChatSettingsPage() {
             kind,
             durationSec: durationSec ?? null,
           })),
-          tag,
+          tag: null,
+          priceCents,
         },
       }),
     onSuccess: () => {
