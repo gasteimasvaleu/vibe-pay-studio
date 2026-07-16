@@ -11,6 +11,17 @@ export type DeviceSession = {
   isCurrent: boolean;
 };
 
+export type RevokedSession = {
+  id: string;
+  sessionId: string;
+  userAgent: string | null;
+  ip: string | null;
+  sessionCreatedAt: string | null;
+  sessionLastActiveAt: string | null;
+  revokedAt: string;
+  reason: "user" | "user_all" | string;
+};
+
 function currentSessionId(claims: Record<string, unknown>): string | null {
   const v = claims["session_id"];
   return typeof v === "string" ? v : null;
