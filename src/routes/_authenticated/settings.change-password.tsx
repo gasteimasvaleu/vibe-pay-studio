@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Check } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -15,32 +15,59 @@ export const Route = createFileRoute("/_authenticated/settings/change-password")
   }),
   beforeLoad: async () => {
     const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.user) throw redirect({ to: "/entrar" });
-    return {};
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
+    return { email: user.email ?? "" };
   },
   component: ChangePasswordPage,
 });
 
 function ChangePasswordPage() {
   const router = useRouter();
+  const { email } = Route.useRouteContext();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const rules = useMemo(
+    () => ({
+      length: next.length >= 8,
+      number: /\d/.test(next),
+      case: /[a-z]/.test(next) && /[A-Z]/.test(next),
+      special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(next),
+    }),
+    [next],
+  );
+  const passwordValid = Object.values(rules).every(Boolean);
+
   const canSubmit =
     current.length > 0 &&
-    next.length >= 8 &&
+    passwordValid &&
     confirm === next &&
     !loading;
 
+  const canCancel =
+    !loading && (current.length > 0 || next.length > 0 || confirm.length > 0);
+
   const handleSave = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !email) return;
     setLoading(true);
     try {
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: current,
+      });
+      if (reauthError) {
+        toast.error("Senha atual incorreta");
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: next });
       if (error) throw error;
       toast.success("Senha alterada");
+      setCurrent("");
+      setNext("");
+      setConfirm("");
       router.history.back();
     } catch (err) {
       const message =
@@ -49,6 +76,12 @@ function ChangePasswordPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    setCurrent("");
+    setNext("");
+    setConfirm("");
   };
 
   return (
@@ -70,14 +103,14 @@ function ChangePasswordPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-28">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3">
         <PasswordField
           value={current}
           onChange={setCurrent}
           placeholder="Senha atual"
           autoComplete="current-password"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <PasswordField
             value={next}
             onChange={setNext}
@@ -91,20 +124,28 @@ function ChangePasswordPage() {
             autoComplete="new-password"
           />
         </div>
-      </main>
 
-      <div className="fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20">
-        <div className="max-w-3xl mx-auto">
+        <PasswordRules rules={rules} />
+
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
-            disabled={!canSubmit}
             onClick={handleSave}
-            className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground disabled:opacity-60"
+            disabled={!canSubmit}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {loading ? "Salvando..." : "Salvar"}
+            {loading ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={!canCancel}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -131,5 +172,33 @@ function PasswordField({
         className="border-0 bg-transparent p-0 h-auto text-base text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
       />
     </label>
+  );
+}
+
+function PasswordRules({ rules }: { rules: Record<string, boolean> }) {
+  const items = [
+    { key: "length", label: "Mínimo de 8 caracteres." },
+    { key: "number", label: "Incluir pelo menos um número." },
+    { key: "case", label: "Incluir pelo menos uma letra minúscula e uma maiúscula." },
+    { key: "special", label: "Incluir pelo menos um caractere especial (ex: !@#$%^&*)." },
+  ];
+  return (
+    <ul className="space-y-1.5 pt-1">
+      {items.map((i) => {
+        const ok = rules[i.key];
+        return (
+          <li key={i.key} className="flex items-center gap-2 text-xs">
+            <span
+              className={`flex items-center justify-center w-4 h-4 rounded-md transition-colors ${
+                ok ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Check className="w-3 h-3" strokeWidth={3} />
+            </span>
+            <span className={ok ? "text-foreground" : "text-muted-foreground"}>{i.label}</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
