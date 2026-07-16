@@ -12,6 +12,14 @@ export type ThreadListItem = {
   unreadCount: number;
 };
 
+export type ChatWelcomeMedia = {
+  path: string;
+  mime: string;
+  kind: "image" | "video" | "audio";
+  durationSec?: number | null;
+  url?: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -21,8 +29,12 @@ export type ChatMessage = {
   createdAt: string;
   priceCents: number | null;
   unlocked: boolean;
+  metadata?: {
+    welcome?: boolean;
+    tag?: string | null;
+    media?: ChatWelcomeMedia[];
+  } | null;
 };
-
 
 export type PartnerProfile = {
   userId: string;
@@ -151,7 +163,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: msgs, error: mErr } = await supabase
         .from("chat_messages")
-        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
+        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
@@ -171,15 +183,38 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
       }
 
+      // Collect media paths across messages and sign in one batch
+      const allPaths: string[] = [];
+      for (const m of msgs ?? []) {
+        const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
+        for (const it of media) if (it?.path) allPaths.push(it.path);
+      }
+      const urlByPath = new Map<string, string>();
+      if (allPaths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("publications")
+          .createSignedUrls(Array.from(new Set(allPaths)), 60 * 60);
+        for (const s of signed ?? []) {
+          if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+        }
+      }
+
       return {
         partner: {
           userId: partnerId,
           username: profile?.username ?? "usuário",
           avatarUrl: null,
         },
-        messages: (msgs ?? []).map((m) => {
+        messages: (msgs ?? []).map((m: any) => {
           const price = m.price_cents ?? 0;
           const mine = m.sender_id === userId;
+          const meta = m.metadata ?? null;
+          const media: ChatWelcomeMedia[] | undefined = meta?.media
+            ? (meta.media as ChatWelcomeMedia[]).map((it) => ({
+                ...it,
+                url: urlByPath.get(it.path) ?? null,
+              }))
+            : undefined;
           return {
             id: m.id,
             threadId: m.thread_id,
@@ -189,6 +224,9 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
             createdAt: m.created_at,
             priceCents: price > 0 ? price : null,
             unlocked: price <= 0 || mine || unlockedSet.has(m.id),
+            metadata: meta
+              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media }
+              : null,
           };
         }),
       };
@@ -250,3 +288,106 @@ export const markThreadRead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---- Welcome message settings ----
+
+const welcomeMediaSchema = z.object({
+  path: z.string().min(1).max(500),
+  mime: z.string().min(1).max(120),
+  kind: z.enum(["image", "video", "audio"]),
+  durationSec: z.number().nonnegative().max(60 * 60).nullable().optional(),
+});
+
+export type ChatWelcomeSettings = {
+  enabled: boolean;
+  message: string;
+  media: ChatWelcomeMedia[];
+  tag: string | null;
+};
+
+export const getChatWelcome = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ChatWelcomeSettings> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("chat_welcome_enabled, chat_welcome_message, chat_welcome_media, chat_welcome_tag")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = (data?.chat_welcome_media ?? []) as ChatWelcomeMedia[];
+    const paths = raw.map((r) => r.path).filter(Boolean);
+    const urlByPath = new Map<string, string>();
+    if (paths.length) {
+      const { data: signed } = await supabase.storage
+        .from("publications")
+        .createSignedUrls(paths, 60 * 60);
+      for (const s of signed ?? []) {
+        if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+      }
+    }
+    return {
+      enabled: !!data?.chat_welcome_enabled,
+      message: data?.chat_welcome_message ?? "",
+      tag: data?.chat_welcome_tag ?? null,
+      media: raw.map((m) => ({ ...m, url: urlByPath.get(m.path) ?? null })),
+    };
+  });
+
+export const updateChatWelcome = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        enabled: z.boolean(),
+        message: z.string().max(4000).optional(),
+        media: z.array(welcomeMediaSchema).max(10).default([]),
+        tag: z.string().trim().max(40).nullable().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const msg = (data.message ?? "").trim();
+    const media = data.media ?? [];
+    if (data.enabled && msg.length < 3 && media.length === 0) {
+      throw new Error("Adicione uma mensagem (mín. 3 caracteres) ou uma mídia");
+    }
+    const prefix = `chat-welcome/${userId}/`;
+    for (const m of media) {
+      if (!m.path.startsWith(prefix)) throw new Error("Caminho de mídia inválido");
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        chat_welcome_enabled: data.enabled,
+        chat_welcome_message: msg || null,
+        chat_welcome_media: media as unknown as never,
+        chat_welcome_tag: data.tag?.trim() || null,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const createChatWelcomeUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        filename: z.string().min(1).max(200),
+        mime: z.string().min(1).max(120),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+    const path = `chat-welcome/${userId}/${crypto.randomUUID()}-${safe}`;
+    const { data: signed, error } = await supabase.storage
+      .from("publications")
+      .createSignedUploadUrl(path);
+    if (error || !signed) throw new Error(error?.message ?? "upload_url_failed");
+    return { path, token: signed.token, signedUrl: signed.signedUrl };
+  });
+
