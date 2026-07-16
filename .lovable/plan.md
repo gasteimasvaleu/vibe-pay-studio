@@ -1,25 +1,24 @@
-## Problema
+## Objetivo
 
-O link "Confirmar meu e-mail" está abrindo `https://<ref>.supabase.co/auth/confirm?...` e o Supabase responde `No API key found in request`.
+Após o cadastro por e-mail (sem sessão retornada), redirecionar para uma nova página `/cadastro/confirme-email` em vez de mostrar apenas o texto de sucesso inline.
 
-Causa: em `src/lib/auth-email-templates.server.ts`, o `confirmUrl` é montado usando `p.site_url` (o valor `site_url` vindo do payload do hook aponta para o domínio do projeto Supabase, não para o app). Também não existe uma rota `/auth/confirm` no app para consumir o `token_hash`.
+## Mudanças
 
-## Correções
+### 1. Nova rota `src/routes/cadastro.confirme-email.tsx`
+- Rota pública, mesma "navbar superior" que a `/cadastro` (logo Monetisexy centralizado no topo + footer com Termos/Privacidade/Ajuda), para manter consistência.
+- Lê `email` via `validateSearch` (zod) para exibir "Enviamos um link para **email@exemplo.com**".
+- Card central com:
+  - Título "Confirme seu e-mail" + instruções curtas ("Abra o link que enviamos para ativar sua conta. Não esqueça de checar a caixa de spam.").
+  - Botão primário **"Já confirmei"** → chama `supabase.auth.getUser()`; se houver usuário confirmado, `routeAfterAuth(navigate)` (vai para `/feed`); caso contrário, mostra aviso "Ainda não detectamos a confirmação. Tente novamente em instantes."
+  - Botão secundário **"Reenviar e-mail"** → `supabase.auth.resend({ type: "signup", email })` com estado de loading, cooldown de 30s e mensagens de sucesso/erro (usando `getAuthErrorMessage`).
+  - Link discreto "Usar outro e-mail" voltando para `/cadastro`.
 
-1. **`src/lib/auth-email-templates.server.ts`**
-   - Trocar a base do `confirmUrl` para sempre usar `APP_BASE_URL` (`https://monetisexy.com`), ignorando `p.site_url`.
-   - Manter `token_hash`, `type` e `next` como query params.
-
-2. **Novo `src/routes/auth.confirm.tsx`** (rota pública)
-   - Ler `token_hash`, `type` e `next` da URL.
-   - Chamar `supabase.auth.verifyOtp({ type, token_hash })` no cliente.
-   - Em caso de sucesso: `navigate({ to: next ?? "/feed" })`.
-   - Em caso de erro (link expirado/inválido): mostrar mensagem amigável com botão para voltar a `/entrar` ou reenviar.
-   - Para `type=recovery`: redirecionar para uma tela de nova senha (usar `/entrar` com aviso por enquanto, já que não existe página dedicada — confirmar com o usuário se quer que eu crie `/reset-password`).
-
-3. **Publicar** para o hook e a nova rota ficarem ativos em `monetisexy.com`.
+### 2. `src/routes/cadastro.tsx`
+- No `onSubmit`, quando `signUpWithEmail` retornar sem `data.session`, trocar o `setSuccessMsg(...)` por `navigate({ to: "/cadastro/confirme-email", search: { email } })`.
+- Remover o estado `successMsg` (não é mais usado) e sua renderização.
 
 ## Fora do escopo
 
-- Não mexo em `email-hook.ts`, no segredo, nem no template visual.
-- Não crio página de reset de senha nova nesta rodada (a menos que você peça).
+- Não altero `/auth/confirm`, o hook de e-mail nem o template.
+- Não crio página nova para recovery/reset de senha.
+- Sem mudanças em backend.

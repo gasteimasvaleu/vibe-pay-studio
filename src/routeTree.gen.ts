@@ -15,6 +15,7 @@ import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CadastroConfirmeEmailRouteImport } from './routes/cadastro.confirme-email'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
@@ -109,6 +110,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroConfirmeEmailRoute = CadastroConfirmeEmailRouteImport.update({
+  id: '/confirme-email',
+  path: '/confirme-email',
+  getParentRoute: () => CadastroRoute,
 } as any)
 const AuthConfirmRoute = AuthConfirmRouteImport.update({
   id: '/auth/confirm',
@@ -485,7 +491,7 @@ const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/cadastro': typeof CadastroRoute
+  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -512,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -557,7 +564,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cadastro': typeof CadastroRoute
+  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -582,6 +589,7 @@ export interface FileRoutesByTo {
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -626,7 +634,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/cadastro': typeof CadastroRoute
+  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -653,6 +661,7 @@ export interface FileRoutesById {
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -727,6 +736,7 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/vault'
     | '/auth/confirm'
+    | '/cadastro/confirme-email'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -797,6 +807,7 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/vault'
     | '/auth/confirm'
+    | '/cadastro/confirme-email'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -867,6 +878,7 @@ export interface FileRouteTypes {
     | '/_authenticated/subscriptions'
     | '/_authenticated/vault'
     | '/auth/confirm'
+    | '/cadastro/confirme-email'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/mywallet/extrato'
@@ -914,7 +926,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  CadastroRoute: typeof CadastroRoute
+  CadastroRoute: typeof CadastroRouteWithChildren
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
@@ -967,6 +979,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/cadastro/confirme-email': {
+      id: '/cadastro/confirme-email'
+      path: '/confirme-email'
+      fullPath: '/cadastro/confirme-email'
+      preLoaderRoute: typeof CadastroConfirmeEmailRouteImport
+      parentRoute: typeof CadastroRoute
     }
     '/auth/confirm': {
       id: '/auth/confirm'
@@ -1641,10 +1660,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface CadastroRouteChildren {
+  CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
+}
+
+const CadastroRouteChildren: CadastroRouteChildren = {
+  CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
+}
+
+const CadastroRouteWithChildren = CadastroRoute._addFileChildren(
+  CadastroRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  CadastroRoute: CadastroRoute,
+  CadastroRoute: CadastroRouteWithChildren,
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
