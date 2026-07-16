@@ -177,11 +177,6 @@ export function AvatarCropDialog({ imageSrc, onCancel, onSuccess }: Props) {
           aspect={1}
           cropShape="round"
           showGrid={false}
-          transform={
-            flip
-              ? `translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) scaleX(-1)`
-              : undefined
-          }
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}
