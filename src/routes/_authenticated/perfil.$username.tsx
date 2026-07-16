@@ -651,10 +651,26 @@ function PerfilPage() {
           )}
 
           <div className="flex items-center gap-2 pt-1">
-            <SocialButton label="Instagram"><Instagram className="h-4 w-4" /></SocialButton>
-            <SocialButton label="X"><Twitter className="h-4 w-4" /></SocialButton>
-            <SocialButton label="TikTok"><Music2 className="h-4 w-4" /></SocialButton>
+            <SocialButton
+              label="Instagram"
+              href={profile.instagram ? `https://instagram.com/${profile.instagram}` : null}
+            >
+              <Instagram className="h-4 w-4" />
+            </SocialButton>
+            <SocialButton
+              label="X"
+              href={profile.x ? `https://x.com/${profile.x}` : null}
+            >
+              <Twitter className="h-4 w-4" />
+            </SocialButton>
+            <SocialButton
+              label="TikTok"
+              href={profile.tiktok ? `https://www.tiktok.com/@${profile.tiktok}` : null}
+            >
+              <Music2 className="h-4 w-4" />
+            </SocialButton>
           </div>
+
 
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
