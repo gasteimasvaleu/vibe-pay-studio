@@ -92,7 +92,8 @@ export const updatePrivacySetting = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({ [data.key]: data.value })
       .eq("user_id", userId);
