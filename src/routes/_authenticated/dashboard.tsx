@@ -86,13 +86,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
-  const { username, accountType, creatorNextStep, creatorOnboardingStarted } =
+  const { username, avatarUrl, accountType, creatorNextStep, creatorOnboardingStarted } =
     Route.useRouteContext();
 
   if (isCreatorLike(accountType)) {
     return (
       <CreatorDashboard
         username={username}
+        avatarUrl={avatarUrl}
         variant={accountType === "free_creator" ? "free_creator" : "creator"}
       />
     );
@@ -101,6 +102,7 @@ function DashboardPage() {
   return (
     <SubscriberDashboard
       username={username}
+      avatarUrl={avatarUrl}
       creatorNextStep={creatorNextStep}
       creatorOnboardingStarted={creatorOnboardingStarted}
     />
