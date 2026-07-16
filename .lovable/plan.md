@@ -1,56 +1,56 @@
-## Objetivo
+# Precificar a mensagem de boas-vindas
 
-Tornar `Configurações de Chat` funcional: persistir mensagem de boas-vindas (com mídia, áudio, emoji e tag) e enviá-la automaticamente em toda nova assinatura, incluindo renovações.
+O botão de tag (o 5º ícone da barra) passa a abrir um diálogo de precificação. Quando o criador define um preço, a mídia da mensagem de boas-vindas fica bloqueada para o assinante até ele pagar no chat — reaproveitando o fluxo de unlock que já existe (`chat_message_unlocks` + `createChatUnlockPayment` + carteira).
 
-## 1. Banco (migration)
+## UX (segue o screenshot)
 
-Adicionar em `public.profiles`:
-- `chat_welcome_enabled boolean not null default false`
-- `chat_welcome_message text` (nullable)
-- `chat_welcome_media jsonb not null default '[]'` — array de `{ path, mime, kind: 'image'|'video'|'audio', durationSec? }`, referenciando objetos no bucket `publications` (privado, já existente).
-- `chat_welcome_tag text` (nullable, ex.: assinante-novo)
+- Ícone de tag (atual `Tag` popover na barra inferior) vira "Precificar mensagem" e abre um `Dialog` com:
+  - Input de valor em R$ (formatado, mínimo R$ 1,00, máximo R$ 500,00).
+  - Botões "Cancelar" e "Salvar".
+- Quando há preço definido, aparece dentro do card (acima do textarea) uma pílula alaranjada:
+  - `🏷️  Preço para visualizar` à esquerda, `R$ 50,00` à direita, botão `X` circular para remover.
+  - Clicar na pílula reabre o dialog para editar.
+- Se preço > 0 e `media.length === 0`, aviso pequeno acima da pílula: "Você adicionou precificação, não esqueça de adicionar uma mídia."
+- O botão "Salvar alterações" fica desabilitado quando `price_cents > 0 && media.length === 0` (paywall sem mídia não faz sentido).
+- A funcionalidade atual de "tag textual" (assinante-novo, promo, etc.) é removida — o ícone de tag agora representa preço, alinhado ao screenshot.
 
-Trigger em `public.subscriptions` (AFTER INSERT/UPDATE, quando transiciona para `status='active'`):
-- Função `public.send_welcome_message_on_subscription()` (SECURITY DEFINER):
-  - Lê `chat_welcome_enabled/message/media/tag` do criador (`NEW.creator_id`).
-  - Se habilitado e (mensagem OU mídia presentes): obtém thread via lógica de `get_or_create_thread` (par ordenado user_a/user_b) entre criador e assinante, criando se necessário.
-  - Insere `chat_messages` com `sender_id = creator_id`, `price_cents = 0`, `content = message ?? ''`, `metadata = { welcome: true, tag, media }` (adicionar coluna `metadata jsonb` em `chat_messages` se ainda não existir — verificar; caso já exista `read_at/price_cents` sem metadata, criar coluna).
-  - Sempre executa (renovações reenviam), sem dedup.
+## Fluxo do assinante no chat
 
-## 2. Storage
+- Nenhuma mudança de UI necessária: `chat.$threadId.tsx` já renderiza mensagens com `price_cents > 0` como bloqueadas, mostra botão "Desbloquear por R$ X" e abre o diálogo de pagamento (`PaymentMethodDialog`) → carteira ou Asaas. Após pago, insere linha em `chat_message_unlocks` e a mídia aparece.
+- Basta garantir que a mensagem automática seja criada com `price_cents = <preço definido>` em vez de `0`.
 
-Reutilizar bucket privado `publications` com prefixo `chat-welcome/{userId}/...`. Policies existentes já cobrem owner insert/read; assinantes recebem acesso de leitura via nova policy em `storage.objects`:
-- SELECT allow quando `bucket_id='publications'` e o objeto está em `chat-welcome/<creator_id>/...` e existe subscription ativa entre `auth.uid()` (assinante) e `<creator_id>` (extrair primeiro segmento após `chat-welcome/` do `name`).
+## Migração
 
-## 3. Server functions (`src/lib/chat.functions.ts`)
+- `public.profiles`: adicionar `chat_welcome_price_cents integer not null default 0` (check `>= 0`).
+- Remover coluna `chat_welcome_tag` (não é mais usada) — ou mantê-la e apenas parar de escrever nela. **Manter** por segurança (evita reescrever o trigger e não quebra dados existentes); apenas some da UI.
+- Recriar `send_welcome_message_on_subscription()`:
+  - Lê `chat_welcome_price_cents` do criador.
+  - Insere `chat_messages` com `price_cents = welcome_price` (em vez de 0).
+  - Mantém `metadata = { welcome: true, media: [...] }` (sem `tag`).
 
-- `getChatWelcome()` → `{ enabled, message, media: [{ path, url (signed), mime, kind, durationSec }], tag }`. Gera signed URLs (1h) para preview.
-- `updateChatWelcome({ enabled, message?, mediaPaths: string[], tag? })`:
-  - Zod: se `enabled`, exigir `message.trim().length >= 3` OU pelo menos 1 mídia.
-  - Valida que cada `path` começa com `chat-welcome/<userId>/`.
-  - Faz update em `profiles`.
-- `createWelcomeUploadUrl({ filename, mime })` → retorna signed upload URL para `publications/chat-welcome/<userId>/<uuid>-<filename>` (via `supabase.storage.from('publications').createSignedUploadUrl`).
+## Server functions (`src/lib/chat.functions.ts`)
 
-## 4. UI (`src/routes/_authenticated/settings/chat-settings.tsx`)
+- `getChatWelcome` retorna também `priceCents: number`.
+- `updateChatWelcome` aceita `priceCents` (valida 0–50000, inteiro) e persiste em `profiles.chat_welcome_price_cents`.
+- Remover `tag` do payload de entrada/saída (ou aceitar e ignorar para compat).
 
-Substituir estado local mockado por:
-- `useQuery(getChatWelcome)` para carregar.
-- `useMutation(updateChatWelcome)` no botão Salvar (loading + toast).
-- Ícones do composer passam a funcionar:
-  - **Imagem/Vídeo** (`ImageIcon`): abre `<input type="file" accept="image/*,video/*">`, sobe via `createWelcomeUploadUrl`, exibe thumb removível.
-  - **Áudio** (`Mic`): grava com `MediaRecorder` (webm/opus), player de preview, upload igual.
-  - **Acervo** (`Archive`): reutiliza `VaultPicker` já usado no chat (importar de `src/routes/_authenticated/chat.$threadId.tsx` / componente equivalente) para selecionar item do vault e copiar `path` para lista de mídias.
-  - **Emoji** (`Smile`): popover com `emoji-picker-react` (já disponível no chat) que insere no textarea na posição do cursor.
-  - **Tag** (`Tag`): popover com lista curta de tags predefinidas (`assinante-novo`, `promo`, `retorno`) + input custom; salva em `chat_welcome_tag`.
-- Botão "Salvar alterações" habilita quando dirty e válido; desabilita durante mutação.
+## UI (`src/routes/_authenticated/settings.chat-settings.tsx`)
 
-## 5. Fluxo de envio automático
+- Novo estado `priceCents: number`.
+- Substituir o `Popover` do ícone `Tag` por um `Dialog` controlado (`WelcomePriceDialog`) com input monetário.
+- Renderizar a pílula de preço acima do textarea quando `priceCents > 0`; botão `X` zera o preço.
+- Remover renderização da tag textual e do bloco de "Escolha uma tag" / input personalizado.
+- Ajustar `canSave` para bloquear quando `enabled && priceCents > 0 && media.length === 0`.
 
-- Trigger SQL cobre todos os caminhos que ativam assinatura: `pay_with_wallet('subscription')`, webhook Asaas, e futuras renovações (novo INSERT com `status='active'` ou UPDATE para `active` em renovação).
-- Renderização no chat (`chat.$threadId.tsx`): quando `metadata.media` presente, renderizar thumbnails/áudio/vídeo usando signed URL gerada no server ao listar mensagens. Ajustar `getThreadWithPartner` para expandir `metadata.media` em URLs assinadas (1h) para o assinante quando pertencer àquela thread.
+## Detalhes técnicos
 
-## Considerações técnicas
-- Se `chat_messages.metadata` não existir, adicionar `metadata jsonb not null default '{}'` na mesma migration.
-- Tamanho máximo de mídia: 25 MB (validar client + server).
-- Áudio máximo: 2 min.
-- Sem versionamento: alterar boas-vindas afeta somente novas assinaturas dali em diante.
+- Máscara/parse: input controlado em centavos (ex.: usuário digita `50,00` → `5000`), sem depender de lib.
+- O trigger não precisa mudar quando o preço muda — próximas assinaturas já pegam o valor novo. Assinaturas já existentes não são reprocessadas (comportamento atual).
+- RLS/policies existentes de `chat_messages` e `chat_message_unlocks` já cobrem o caso; nada a alterar ali.
+
+## Ordem de execução
+
+1. Migração (coluna + trigger recriado).
+2. Atualizar `chat.functions.ts` (get/update + tipos).
+3. Atualizar `settings.chat-settings.tsx` (dialog + pílula + remover tag textual).
+4. Verificar visualmente no preview e testar salvar com/sem mídia.
