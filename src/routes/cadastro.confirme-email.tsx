@@ -155,6 +155,4 @@ function ConfirmeEmailPage() {
       </div>
     </SiteLayout>
   );
-    </div>
-  );
 }
