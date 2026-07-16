@@ -33,6 +33,7 @@ import {
   revokeSession,
   type DeviceSession,
 } from "@/lib/sessions.functions";
+import { parseUA, formatDate } from "@/lib/session-format";
 
 export const Route = createFileRoute(
   "/_authenticated/settings/device-management/",
@@ -47,7 +48,7 @@ export const Route = createFileRoute(
   component: DeviceManagementPage,
 });
 
-import { parseUA, formatDate } from "@/lib/session-format";
+
 
 
 function DeviceManagementPage() {
