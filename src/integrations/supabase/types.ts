@@ -1594,6 +1594,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_my_sessions: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          ip: string
+          refreshed_at: string
+          updated_at: string
+          user_agent: string
+        }[]
+      }
       pay_with_wallet: {
         Args: {
           _amount_cents?: number
@@ -1607,6 +1618,8 @@ export type Database = {
         Returns: Json
       }
       release_matured_earnings: { Args: never; Returns: number }
+      revoke_all_other_sessions: { Args: never; Returns: number }
+      revoke_session: { Args: { p_session_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
