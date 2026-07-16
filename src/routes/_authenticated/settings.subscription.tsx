@@ -117,7 +117,7 @@ function SubscriptionPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-28 space-y-5">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-5">
         {/* Card resumo */}
         <section className="rounded-3xl bg-card p-6 md:p-8 shadow-card">
           <p className="text-sm text-muted-foreground">Assinatura Mensal</p>
