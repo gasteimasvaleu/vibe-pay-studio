@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { isCreatorLike, type AccountType } from "@/lib/auth";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import {
   getUserPublications,
@@ -42,12 +43,13 @@ type ProfileData = {
   coverUrl: string | null;
   postsCount: number;
   mediasCount: number;
+  accountType: AccountType;
 };
 
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("user_id, username, display_name, bio, avatar_url, cover_url")
+    .select("user_id, username, display_name, bio, avatar_url, cover_url, account_type")
     .eq("username", username)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -73,6 +75,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
     coverUrl: profile.cover_url,
     postsCount: postsCount ?? 0,
     mediasCount: mediasCount ?? 0,
+    accountType: ((profile as any).account_type ?? "subscriber") as AccountType,
   };
 }
 
@@ -266,7 +269,13 @@ function ProfilePage() {
 
             <button
               type="button"
-              onClick={() => navigate({ to: "/settings/myprofile" })}
+              onClick={() =>
+                navigate({
+                  to: isCreatorLike(profile.accountType)
+                    ? "/settings/creator"
+                    : "/settings/myprofile",
+                })
+              }
               className="mt-5 w-full rounded-md bg-muted py-3 text-base font-semibold text-foreground hover:bg-muted/80 transition-colors"
             >
               Editar perfil
