@@ -107,21 +107,21 @@ function SettingsSocialMediaPage() {
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3">
         <SocialField
           icon={<Instagram className="h-6 w-6 text-foreground" />}
+          prefix="instagram.com/"
           value={instagram}
           onChange={(v) => setInstagram(sanitize(v))}
-          placeholder="instagram.com/(seu @)"
         />
         <SocialField
           icon={<TikTokIcon />}
+          prefix="tiktok.com/"
           value={tiktok}
           onChange={(v) => setTiktok(sanitize(v))}
-          placeholder="tiktok.com/(seu @)"
         />
         <SocialField
           icon={<XIcon />}
+          prefix="x.com/"
           value={x}
           onChange={(v) => setX(sanitize(v))}
-          placeholder="x.com/(seu @)"
         />
 
         <div className="flex flex-col gap-3 pt-2">
@@ -149,23 +149,23 @@ function SettingsSocialMediaPage() {
 
 function SocialField({
   icon,
+  prefix,
   value,
   onChange,
-  placeholder,
 }: {
   icon: React.ReactNode;
+  prefix: string;
   value: string;
   onChange: (v: string) => void;
-  placeholder: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
+    <label className="flex items-center gap-3 rounded-2xl bg-muted px-5 py-3 cursor-text">
       <span className="shrink-0 grid place-items-center">{icon}</span>
-      <Input
+      <span className="text-base text-foreground select-none">{prefix}</span>
+      <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="border-0 bg-transparent p-0 h-auto text-base text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
+        className="flex-1 min-w-0 border-0 bg-transparent p-0 h-auto text-base text-muted-foreground outline-none placeholder:text-muted-foreground"
       />
     </label>
   );
