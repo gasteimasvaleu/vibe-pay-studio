@@ -163,7 +163,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: msgs, error: mErr } = await supabase
         .from("chat_messages")
-        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
+        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
@@ -183,15 +183,38 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
       }
 
+      // Collect media paths across messages and sign in one batch
+      const allPaths: string[] = [];
+      for (const m of msgs ?? []) {
+        const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
+        for (const it of media) if (it?.path) allPaths.push(it.path);
+      }
+      const urlByPath = new Map<string, string>();
+      if (allPaths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("publications")
+          .createSignedUrls(Array.from(new Set(allPaths)), 60 * 60);
+        for (const s of signed ?? []) {
+          if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+        }
+      }
+
       return {
         partner: {
           userId: partnerId,
           username: profile?.username ?? "usuário",
           avatarUrl: null,
         },
-        messages: (msgs ?? []).map((m) => {
+        messages: (msgs ?? []).map((m: any) => {
           const price = m.price_cents ?? 0;
           const mine = m.sender_id === userId;
+          const meta = m.metadata ?? null;
+          const media: ChatWelcomeMedia[] | undefined = meta?.media
+            ? (meta.media as ChatWelcomeMedia[]).map((it) => ({
+                ...it,
+                url: urlByPath.get(it.path) ?? null,
+              }))
+            : undefined;
           return {
             id: m.id,
             threadId: m.thread_id,
@@ -201,6 +224,9 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
             createdAt: m.created_at,
             priceCents: price > 0 ? price : null,
             unlocked: price <= 0 || mine || unlockedSet.has(m.id),
+            metadata: meta
+              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media }
+              : null,
           };
         }),
       };
