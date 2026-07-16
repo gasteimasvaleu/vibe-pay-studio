@@ -325,7 +325,39 @@ function ChatThreadView() {
                     : "bg-card text-card-foreground border border-border rounded-bl-md shadow-card",
                 )}
               >
-                <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                {m.metadata?.welcome && !mine && (
+                  <div className="mb-1 text-[10px] uppercase tracking-wide font-semibold text-primary">
+                    Boas-vindas{m.metadata.tag ? ` · ${m.metadata.tag}` : ""}
+                  </div>
+                )}
+                {m.content && (
+                  <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                )}
+                {m.metadata?.media && m.metadata.media.length > 0 && (
+                  <div className="mt-2 grid gap-2 grid-cols-2">
+                    {m.metadata.media.map((mm, idx) =>
+                      mm.url ? (
+                        mm.kind === "image" ? (
+                          <img
+                            key={idx}
+                            src={mm.url}
+                            alt=""
+                            className="rounded-lg w-full object-cover max-h-64"
+                          />
+                        ) : mm.kind === "video" ? (
+                          <video
+                            key={idx}
+                            src={mm.url}
+                            controls
+                            className="rounded-lg w-full max-h-64"
+                          />
+                        ) : (
+                          <audio key={idx} src={mm.url} controls className="w-full col-span-2" />
+                        )
+                      ) : null,
+                    )}
+                  </div>
+                )}
                 {m.priceCents ? (
                   <div
                     className={cn(
