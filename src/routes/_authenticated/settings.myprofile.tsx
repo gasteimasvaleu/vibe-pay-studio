@@ -1,5 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteMyAccount } from "@/lib/account.functions";
 import {
   AlertCircle,
   ArrowLeft,
