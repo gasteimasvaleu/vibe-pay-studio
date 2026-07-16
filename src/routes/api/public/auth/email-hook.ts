@@ -21,14 +21,25 @@ import {
 const MAX_SKEW_SECONDS = 5 * 60;
 
 function verifySignature(
-  secret: string,
+  secretB64: string,
   id: string,
   timestamp: string,
   body: string,
   signatureHeader: string,
 ): boolean {
+  // Supabase's Standard Webhooks stores the secret as "v1,whsec_<base64>".
+  // The HMAC key is the raw bytes obtained by base64-decoding that value.
+  // Env var stores just the base64 portion (no prefix).
+  let keyBytes: Buffer;
+  try {
+    keyBytes = Buffer.from(secretB64, "base64");
+    if (keyBytes.length === 0) keyBytes = Buffer.from(secretB64, "utf8");
+  } catch {
+    keyBytes = Buffer.from(secretB64, "utf8");
+  }
+
   const signed = `${id}.${timestamp}.${body}`;
-  const expected = createHmac("sha256", secret).update(signed).digest("base64");
+  const expected = createHmac("sha256", keyBytes).update(signed).digest("base64");
 
   // signatureHeader can contain multiple space-separated "v1,<sig>" entries
   const parts = signatureHeader.split(" ");
