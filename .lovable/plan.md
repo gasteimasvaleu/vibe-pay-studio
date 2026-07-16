@@ -1,49 +1,26 @@
 ## Objetivo
 
-Ligar `/settings/device-management` a sessões reais do Supabase Auth. Substituir os mocks (`CURRENT`, `OTHERS`) por dados vindos de `auth.sessions`, identificar o acesso atual, permitir remover sessões individuais e "Remover todos os acessos".
+Substituir o mock `SESSIONS` na seção "Seus acessos" da página `/settings/security-menu` pelos acessos reais do usuário, usando o mesmo backend já criado para `/settings/device-management`.
 
-## Como funciona
+## Mudanças
 
-O Supabase Auth guarda cada sessão em `auth.sessions` com: `id`, `user_id`, `created_at`, `updated_at`, `refreshed_at`, `user_agent`, `ip`, `not_after`. O JWT do usuário carrega `session_id` no claim — usamos isso pra marcar qual card é "acesso atual". Como `auth.sessions` fica no schema `auth` (só service role acessa), toda leitura/gravação passa por server function.
+**`src/routes/_authenticated/settings.security-menu.tsx`**
+- Adicionar `loader: () => listMySessions()` importado de `@/lib/sessions.functions`.
+- Ler os dados via `Route.useLoaderData()` e mostrar até 2 sessões mais recentes (priorizando a atual + a próxima mais recente).
+- Remover o array mock `SESSIONS` e o tipo local `Session`.
+- Reaproveitar a lógica de `parseUA` (browser/OS) e `formatDate` já usadas em `settings.device-management.index.tsx` — extrair para um helper compartilhado `src/lib/session-format.ts` para evitar duplicação, e importar nos dois arquivos.
+- Card real exibe: ícone conforme tipo (mobile/tablet/desktop), `Browser · OS`, data do último acesso (`refreshedAt`), IP (ou "IP indisponível"), e badge "Atual" quando `isCurrent`.
+- Remover o item "Renomear" do dropdown (Supabase Auth não guarda apelido). Manter "Remover acesso" chamando `revokeSession` com `AlertDialog` de confirmação — desabilitado/oculto para a sessão atual (igual à página completa).
+- Após revogar, chamar `router.invalidate()` para recarregar a lista.
+- Se não houver nenhuma sessão além da atual, mostrar apenas a atual. Se a lista estiver vazia, mostrar mensagem discreta "Nenhum acesso ativo".
+- Manter o link "Ver todos acessos" apontando para `/settings/device-management`.
 
-## Server functions — novo `src/lib/sessions.functions.ts`
+**`src/lib/session-format.ts`** (novo helper)
+- Exportar `parseUA(ua)` e `formatDate(iso)` extraídos de `settings.device-management.index.tsx`.
 
-Todas com `.middleware([requireSupabaseAuth])`, carregando `supabaseAdmin` dentro do handler:
+**`src/routes/_authenticated/settings.device-management.index.tsx`**
+- Trocar as definições locais de `parseUA`/`formatDate` pelo import do helper compartilhado (sem alteração de comportamento).
 
-- `listMySessions()` → lê `auth.sessions` (`context.supabase.rpc` não expõe schema auth; usar `supabaseAdmin.schema('auth').from('sessions').select(...).eq('user_id', context.userId).order('refreshed_at', { ascending: false })`). Retorna array `{ id, userAgent, ip, createdAt, refreshedAt, isCurrent }` — `isCurrent = id === context.claims.session_id`.
-- `revokeSession({ sessionId: string })` → valida `sessionId ≠ current` e `user_id = context.userId`, então `supabaseAdmin.schema('auth').from('sessions').delete().eq('id', sessionId).eq('user_id', context.userId)`.
-- `revokeAllOtherSessions()` → mesmo `delete` com `.neq('id', context.claims.session_id)`.
-
-Não expor rota "sign out this device" pro card atual — só "Remover todos os outros" fecha as demais sem deslogar o usuário aqui.
-
-## Tela `settings.device-management.index.tsx`
-
-- `loader` chama `listMySessions()` (rota está sob `_authenticated`, ok).
-- Split em `current` (isCurrent = true) e `others`.
-- Parser simples de `user_agent` → `{ browser: 'Chrome' | 'Safari' | 'Firefox' | 'Edge' | 'Outro', os: 'Windows' | 'macOS' | 'iOS' | 'Android' | 'Linux' | '—' }`. Sem lib externa; regex direto.
-- Card mostra: **{browser} em {os}**, IP (em vez de "cidade, UF, BR" — Supabase não faz geolocalização; explicar em texto pequeno "Localização por IP indisponível"), "Ativo em {refreshed_at formatado pt-BR}" e "Entrou em {created_at}".
-- Menu de opções por card:
-  - Remover **"Renomear"** (Supabase não guarda apelido de sessão; simplificar).
-  - Manter **"Remover acesso"** → `AlertDialog` de confirmação → chama `revokeSession` → `toast.success` → `router.invalidate()`.
-- Botão "Remover todos os acessos" → `AlertDialog` → `revokeAllOtherSessions()` → `router.invalidate()`.
-- "Ver mais" continua mesmo comportamento (paginação client-side sobre `others`).
-- Fallback: se `others.length === 0`, mostrar mensagem "Nenhum outro acesso ativo".
-
-## Tela `settings.device-management.removed.tsx`
-
-Supabase não guarda histórico de sessões deletadas. Duas opções:
-
-- **(escolhido)** Manter a página com a mensagem informativa de placeholder que já existe hoje. Sem criar tabela nova nem migração.
-- (alternativa não tomada) Criar tabela `revoked_sessions` e inserir uma linha toda vez que revogamos — dá mais peso ao produto mas exige migração + escrita a cada revogação. Se o usuário quiser esse histórico, faço num passo seguinte.
-
-## Sem mudanças
-
-- Sem migração (dados vêm de `auth.sessions`).
-- Sem novos secrets — `supabaseAdmin` já usa `APP_SUPABASE_SERVICE_ROLE_KEY`.
-- Não vamos fazer geolocalização por IP nesse passo (evita dependência externa/custo). Só IP cru.
-
-## Arquivos
-
-- new  `src/lib/sessions.functions.ts` — 3 server functions autenticadas.
-- edit `src/routes/_authenticated/settings.device-management.index.tsx` — loader real, parser de user_agent, AlertDialogs de confirmação, remove "Renomear".
-- `settings.device-management.removed.tsx` fica como está.
+## Fora do escopo
+- Sem migrations, sem novos secrets, sem geolocalização por IP.
+- Sem alteração de layout visual dos outros itens do menu de segurança.
