@@ -1005,6 +1005,42 @@ export type Database = {
         }
         Relationships: []
       }
+      revoked_sessions: {
+        Row: {
+          id: string
+          ip: string | null
+          revoked_at: string
+          revoked_reason: string
+          session_created_at: string | null
+          session_id: string
+          session_last_active_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          ip?: string | null
+          revoked_at?: string
+          revoked_reason?: string
+          session_created_at?: string | null
+          session_id: string
+          session_last_active_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          ip?: string | null
+          revoked_at?: string
+          revoked_reason?: string
+          session_created_at?: string | null
+          session_id?: string
+          session_last_active_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_cards: {
         Row: {
           asaas_card_token: string
@@ -1593,6 +1629,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_my_revoked_sessions: {
+        Args: never
+        Returns: {
+          id: string
+          ip: string
+          revoked_at: string
+          revoked_reason: string
+          session_created_at: string
+          session_id: string
+          session_last_active_at: string
+          user_agent: string
+        }[]
       }
       list_my_sessions: {
         Args: never

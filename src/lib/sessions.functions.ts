@@ -11,6 +11,17 @@ export type DeviceSession = {
   isCurrent: boolean;
 };
 
+export type RevokedSession = {
+  id: string;
+  sessionId: string;
+  userAgent: string | null;
+  ip: string | null;
+  sessionCreatedAt: string | null;
+  sessionLastActiveAt: string | null;
+  revokedAt: string;
+  reason: "user" | "user_all" | string;
+};
+
 function currentSessionId(claims: Record<string, unknown>): string | null {
   const v = claims["session_id"];
   return typeof v === "string" ? v : null;
@@ -74,4 +85,35 @@ export const revokeAllOtherSessions = createServerFn({ method: "POST" })
     );
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+type RpcRevokedRow = {
+  id: string;
+  session_id: string;
+  user_agent: string | null;
+  ip: string | null;
+  session_created_at: string | null;
+  session_last_active_at: string | null;
+  revoked_at: string;
+  revoked_reason: string;
+};
+
+export const listMyRevokedSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<RevokedSession[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (context.supabase as any).rpc(
+      "list_my_revoked_sessions",
+    );
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as RpcRevokedRow[]).map((r) => ({
+      id: r.id,
+      sessionId: r.session_id,
+      userAgent: r.user_agent,
+      ip: r.ip,
+      sessionCreatedAt: r.session_created_at,
+      sessionLastActiveAt: r.session_last_active_at,
+      revokedAt: r.revoked_at,
+      reason: r.revoked_reason,
+    }));
   });
