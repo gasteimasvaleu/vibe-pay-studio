@@ -15,3 +15,69 @@ export const updateAvatarUrl = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { avatarUrl: url };
   });
+
+const RESERVED_USERNAMES = new Set([
+  "admin", "api", "auth", "settings", "perfil", "profile", "monetisexy",
+  "monetisex", "root", "support", "help", "about", "login", "logout",
+  "signup", "signin", "register", "entrar", "cadastro", "home", "explore",
+  "search", "notifications", "messages", "chat", "www", "app", "public",
+]);
+
+const USERNAME_RE = /^[a-z0-9_][a-z0-9_]{2,29}$/;
+
+function validateUsername(raw: string): { ok: true; value: string } | { ok: false; reason: "invalid_format" | "reserved" } {
+  const value = raw.trim().toLowerCase();
+  if (!USERNAME_RE.test(value)) return { ok: false, reason: "invalid_format" };
+  if (value.startsWith("_")) return { ok: false, reason: "invalid_format" };
+  if (RESERVED_USERNAMES.has(value)) return { ok: false, reason: "reserved" };
+  return { ok: true, value };
+}
+
+function validateDisplayName(raw: string): { ok: true; value: string } | { ok: false } {
+  const value = raw.replace(/\s+/g, " ").trim();
+  if (value.length < 2 || value.length > 40) return { ok: false };
+  if (/[\r\n]/.test(value)) return { ok: false };
+  return { ok: true, value };
+}
+
+export const checkUsernameAvailability = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { username: string }) => data)
+  .handler(async ({ data, context }) => {
+    const check = validateUsername(data.username);
+    if (!check.ok) {
+      return { available: false, isSelf: false, reason: check.reason } as const;
+    }
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("username", check.value)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return { available: true, isSelf: false } as const;
+    if (row.user_id === userId) return { available: true, isSelf: true } as const;
+    return { available: false, isSelf: false, reason: "taken" } as const;
+  });
+
+export const updateProfileIdentity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { displayName: string; username: string }) => data)
+  .handler(async ({ data, context }) => {
+    const nameCheck = validateDisplayName(data.displayName);
+    if (!nameCheck.ok) return { ok: false, reason: "invalid_display_name" } as const;
+    const userCheck = validateUsername(data.username);
+    if (!userCheck.ok) return { ok: false, reason: userCheck.reason } as const;
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: nameCheck.value, username: userCheck.value })
+      .eq("user_id", userId);
+    if (error) {
+      if ((error as { code?: string }).code === "23505") {
+        return { ok: false, reason: "username_taken" } as const;
+      }
+      throw new Error(error.message);
+    }
+    return { ok: true, displayName: nameCheck.value, username: userCheck.value } as const;
+  });

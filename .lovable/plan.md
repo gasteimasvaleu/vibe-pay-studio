@@ -1,54 +1,53 @@
 ## Objetivo
 
-Botão da câmera (foto de perfil) em `/settings/myprofile` abre um dialog fullscreen (como no screenshot) para escolher um arquivo, dar zoom/rotacionar e recortar em círculo — salvando em `profiles.avatar_url`.
+Tornar a página `/settings/social` ("Nome de perfil e Identificador") funcional: carregar os valores atuais do banco, checar disponibilidade do `@` (username) em tempo real ao editar, validar o nome, e salvar as alterações no Supabase.
 
-## Backend
+## Comportamento
 
-**Migration nova:**
-- Criar bucket público `avatars` via `storage.buckets`.
-- Policies em `storage.objects` para bucket `avatars`:
-  - SELECT público (`bucket_id = 'avatars'`).
-  - INSERT/UPDATE/DELETE para `authenticated` quando `(storage.foldername(name))[1] = auth.uid()::text`.
-- Layout de path: `avatars/{userId}/{uuid}.jpg`.
+- **Carregar valores atuais** do `profiles` do usuário logado: `display_name` e `username`.
+- **Nome do Perfil** (`display_name`):
+  - Validação local: obrigatório, 2–40 caracteres, sem quebras de linha.
+  - Sem checagem de banco (não precisa ser único).
+- **Identificador (`@`)**:
+  - Normalização já feita: lowercase, `[a-z0-9_]`, máx. 30.
+  - Validação: mínimo 3 caracteres, não pode começar com `_`, não pode ser uma palavra reservada (`admin`, `api`, `auth`, `settings`, `perfil`, `profile`, etc.).
+  - **Checagem de disponibilidade no banco** com debounce (~400ms):
+    - Se igual ao atual → "Este é seu identificador atual".
+    - Se disponível → "Disponível" em verde.
+    - Se ocupado → "Já está em uso" em vermelho.
+    - Enquanto checa → spinner "Verificando…".
+  - Usa `profiles_username_key` (UNIQUE) — consulta `SELECT 1 FROM profiles WHERE username = $1`.
+- **Botão Salvar** aparece no header (canto direito) quando há alterações válidas:
+  - Desabilitado enquanto verificando, se inválido, ou se `@` indisponível.
+  - Ao salvar: atualiza `profiles` via server function e trata erro `23505` (colisão de corrida) mostrando "Já está em uso".
+  - Sucesso: toast, `router.invalidate()` e mantém na página com os novos valores.
 
-Sem mudanças em `profiles` (já tem `avatar_url`).
+## Implementação técnica
 
-## Server function
+### Server functions em `src/lib/profile.functions.ts` (arquivo já existe)
 
-`src/lib/onboarding.functions.ts` ou novo `src/lib/profile.functions.ts` — `updateAvatarUrl({ avatarUrl })`:
-- `.middleware([requireSupabaseAuth])`.
-- Update `profiles.avatar_url` do `userId`.
-- Retorna `{ avatarUrl }`.
+Adicionar duas funções, ambas com `.middleware([requireSupabaseAuth])`:
 
-## UI
+1. **`checkUsernameAvailability({ username })`** → `{ available: boolean; isSelf: boolean }`
+   - Normaliza e valida formato server-side.
+   - `context.supabase.from("profiles").select("user_id").eq("username", username).maybeSingle()`.
+   - `isSelf = data?.user_id === context.userId`.
 
-**Nova lib de crop:** `bun add react-easy-crop` (usa canvas, gera Blob JPEG).
+2. **`updateProfileIdentity({ displayName, username })`** → `{ ok: true }` ou erro tipado
+   - Revalida ambos campos (fonte de verdade no servidor).
+   - `update(...).eq("user_id", context.userId)`; captura `error.code === "23505"` e devolve `{ ok: false, reason: "username_taken" }`.
 
-**Novo componente** `src/components/settings/AvatarCropDialog.tsx`:
-- Dialog fullscreen preto (`bg-black`, `max-w-none w-screen h-screen`), sem borda arredondada, com estrutura do screenshot:
-  - **Top bar:** botões "Mais zoom" / "Menos zoom" à esquerda; "Girar horizontal" / "Girar direita" / "Girar esquerda" à direita, cada um com ícone circular escuro e label branco abaixo.
-  - **Área central:** `<Cropper>` do `react-easy-crop`, aspect `1`, `cropShape="round"`, `showGrid={false}`. Fundo cinza claro atrás da máscara.
-  - **Footer:** dois botões redondos (X para cancelar, ✓ para confirmar) sobre pill escuro.
-- Estado local: `image`, `zoom`, `rotation`, `crop`, `croppedAreaPixels`.
-- Ações:
-  - Zoom in/out: `setZoom((z) => clamp(z ± 0.2, 1, 5))`.
-  - Girar direita/esquerda: `setRotation((r) => r ± 90)`.
-  - Girar horizontal: aplica flip via CSS `transform: scaleX(-1)` no wrapper + flag para incluir no canvas de export.
-- `getCroppedImg(imageSrc, croppedAreaPixels, rotation, flip)` — helper que desenha em `<canvas>` e retorna `Blob` JPEG 512×512, qualidade 0.9.
+### Página `src/routes/_authenticated/settings.social.tsx`
 
-**Fluxo de upload** (dentro do dialog, no confirmar):
-1. Gera Blob.
-2. `path = avatars/{userId}/{crypto.randomUUID()}.jpg`.
-3. `supabase.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg", upsert: false })`.
-4. `getPublicUrl(path)` — bucket público.
-5. Chama server fn `updateAvatarUrl({ avatarUrl })`.
-6. Se havia avatar antigo em `avatars/{userId}/...`, tenta remover (best-effort).
-7. Fecha dialog, `router.invalidate()`, `toast.success`.
+- Carregar `display_name` + `username` atuais no `beforeLoad` (já lê `username`; adicionar `display_name`).
+- Estado local para os dois campos + estado de checagem (`idle | checking | available | taken | invalid | self`).
+- Hook `useEffect` com debounce que dispara `checkUsernameAvailability` quando o handle muda e passa validação local. Cancelar via flag de request-id para evitar race.
+- Mensagens de status abaixo do input do `@`.
+- Botão "Salvar" no header, chamando `updateProfileIdentity` via `useServerFn`.
+- Toast de sucesso/erro com `sonner` (já usado no projeto).
 
-**Integração em `settings.myprofile.tsx`:**
-- Loader passa `avatarUrl` no `beforeLoad`.
-- Renderiza `<AvatarImage>` quando existir.
-- `<input type="file" accept="image/*" hidden>` — botão da câmera dispara `click()`.
-- Ao escolher arquivo → lê como dataURL → abre `AvatarCropDialog` com aquela imagem.
+## Segurança
 
-Sem outras mudanças no arquivo.
+- Toda validação e escrita passa por `requireSupabaseAuth` — o cliente nunca escreve direto em `profiles.username`.
+- A UNIQUE index existente (`profiles_username_key`) garante integridade mesmo em condição de corrida.
+- Sem alterações de schema; sem migração necessária.
