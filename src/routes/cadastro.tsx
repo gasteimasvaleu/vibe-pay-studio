@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SiteLayout } from "@/components/site/Layout";
 import { useMemo, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import { sanitizeUsername, USERNAME_MIN, USERNAME_MAX } from "@/lib/utils";
@@ -93,15 +94,9 @@ function CadastroPage() {
       : "Publique, se relacione com sua comunidade e comece a faturar.";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 flex items-center justify-center px-4 py-16">
+    <SiteLayout>
+      <div className="flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-md">
-          <Link to="/" className="block text-center mb-8">
-            <span className="text-2xl font-black tracking-tight">
-              monet<span className="text-gradient-primary">isex</span>
-            </span>
-          </Link>
-
           <div className="rounded-3xl border border-border bg-surface p-6 md:p-10">
             <AccountTypeTabs value={accountType} onChange={setAccountType} />
 
@@ -186,14 +181,10 @@ function CadastroPage() {
           </div>
         </div>
       </div>
-      <footer className="py-6 text-center text-xs text-muted-foreground">
-        <a href="#" className="hover:text-foreground">Termos</a> ·{" "}
-        <a href="#" className="hover:text-foreground">Privacidade</a> ·{" "}
-        <a href="#" className="hover:text-foreground">Ajuda</a>
-      </footer>
-    </div>
+    </SiteLayout>
   );
 }
+
 
 function AccountTypeTabs({
   value,
