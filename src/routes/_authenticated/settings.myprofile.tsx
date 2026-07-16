@@ -56,6 +56,8 @@ function SettingsMyProfilePage() {
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deleteFn = useServerFn(deleteMyAccount);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
