@@ -1,5 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteMyAccount } from "@/lib/account.functions";
 import {
   AlertCircle,
   ArrowLeft,
@@ -54,6 +56,8 @@ function SettingsMyProfilePage() {
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deleteFn = useServerFn(deleteMyAccount);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,9 +92,23 @@ function SettingsMyProfilePage() {
     }
   };
 
-  const handleConfirmDelete = () => {
-    setDeleteOpen(false);
-    toast.info("Em breve");
+  const handleConfirmDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteFn({});
+    } catch {
+      toast.error("Não foi possível excluir a conta");
+      setDeleting(false);
+      return;
+    }
+    toast.success("Conta excluída");
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* ignore — usuário já não existe */
+    }
+    window.location.replace("/");
   };
 
   return (
@@ -203,6 +221,7 @@ function SettingsMyProfilePage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setDeleteOpen(false)}
+                disabled={deleting}
                 className="h-12 px-6 rounded-md text-foreground hover:bg-accent"
               >
                 Cancelar
@@ -210,9 +229,10 @@ function SettingsMyProfilePage() {
               <Button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="h-12 px-8 rounded-md bg-muted text-foreground hover:bg-accent"
+                disabled={deleting}
+                className="h-12 px-8 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Continuar
+                {deleting ? "Excluindo…" : "Continuar"}
               </Button>
             </div>
           </div>
