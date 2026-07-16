@@ -31,6 +31,26 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     return { coverUrl: url };
   });
 
+export const updateProfileDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bio: string; location: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const bioTrimmed = data.bio.trim();
+    const locTrimmed = data.location.replace(/\s+/g, " ").trim();
+    if (bioTrimmed.length > 3000) throw new Error("bio muito longa");
+    if (locTrimmed.length > 120) throw new Error("localização muito longa");
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        bio: bioTrimmed.length ? bioTrimmed : null,
+        location: locTrimmed.length ? locTrimmed : null,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, bio: bioTrimmed, location: locTrimmed } as const;
+  });
+
 const RESERVED_USERNAMES = new Set([
   "admin", "api", "auth", "settings", "perfil", "profile", "monetisexy",
   "monetisex", "root", "support", "help", "about", "login", "logout",

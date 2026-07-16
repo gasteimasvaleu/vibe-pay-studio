@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { ArrowLeft, Camera, MapPin } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Camera, LocateFixed, Loader2, MapPin } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CoverCropDialog } from "@/components/settings/CoverCropDialog";
 import { CoverPreviewDialog } from "@/components/settings/CoverPreviewDialog";
+import { updateProfileDetails } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/details")({
   head: () => ({
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("cover_url, avatar_url, username, display_name")
+      .select("cover_url, avatar_url, username, display_name, bio, location")
       .eq("user_id", user.id)
       .maybeSingle();
     const username = profile?.username ?? user.email?.split("@")[0] ?? "voce";
@@ -33,12 +35,15 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
       coverUrl: profile?.cover_url ?? null,
       avatarUrl: profile?.avatar_url ?? null,
       displayName,
+      bio: profile?.bio ?? "",
+      location: profile?.location ?? "",
     };
   },
   component: SettingsDetailsPage,
 });
 
 const MAX_BIO = 3000;
+const MAX_LOCATION = 120;
 
 function SettingsDetailsPage() {
   const router = useRouter();
@@ -46,13 +51,18 @@ function SettingsDetailsPage() {
     coverUrl: initialCoverUrl,
     avatarUrl,
     displayName,
+    bio: initialBio,
+    location: initialLocation,
   } = Route.useRouteContext();
 
-  const [bio, setBio] = useState("");
-  const [location, setLocation] = useState("");
-  const initialBio = "";
-  const initialLocation = "";
-  const dirty = bio !== initialBio || location !== initialLocation;
+  const saveFn = useServerFn(updateProfileDetails);
+
+  const [bio, setBio] = useState(initialBio);
+  const [location, setLocation] = useState(initialLocation);
+  const [initial, setInitial] = useState({ bio: initialBio, location: initialLocation });
+  const [saving, setSaving] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const dirty = bio !== initial.bio || location !== initial.location;
 
   const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -79,6 +89,82 @@ function SettingsDetailsPage() {
     reader.readAsDataURL(file);
   };
 
+  const handleGeolocate = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocalização não disponível");
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=pt-BR&zoom=10`,
+            { headers: { Accept: "application/json" } },
+          );
+          if (!res.ok) throw new Error("reverse geocode failed");
+          const json = (await res.json()) as {
+            address?: {
+              city?: string;
+              town?: string;
+              village?: string;
+              municipality?: string;
+              state?: string;
+              country?: string;
+            };
+          };
+          const a = json.address ?? {};
+          const city = a.city ?? a.town ?? a.village ?? a.municipality ?? "";
+          const region = a.state ?? a.country ?? "";
+          const label = [city, region].filter(Boolean).join(", ").slice(0, MAX_LOCATION);
+          if (!label) {
+            toast.error("Não foi possível determinar a localização");
+          } else {
+            setLocation(label);
+          }
+        } catch {
+          toast.error("Não foi possível obter localização");
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        setGeoLoading(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error("Permissão de localização negada");
+        } else {
+          toast.error("Não foi possível obter localização");
+        }
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60_000 },
+    );
+  };
+
+  const handleSave = async () => {
+    if (!dirty || saving) return;
+    setSaving(true);
+    try {
+      const res = await saveFn({ data: { bio, location } });
+      if (res.ok) {
+        toast.success("Perfil atualizado");
+        setInitial({ bio: res.bio, location: res.location });
+        setBio(res.bio);
+        setLocation(res.location);
+        router.invalidate();
+      }
+    } catch {
+      toast.error("Não foi possível salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setBio(initial.bio);
+    setLocation(initial.location);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative z-10 border-b border-border bg-white">
@@ -98,7 +184,7 @@ function SettingsDetailsPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4 pb-28">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
         <input
           ref={fileInputRef}
           type="file"
@@ -144,29 +230,49 @@ function SettingsDetailsPage() {
             <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
             <Input
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => setLocation(e.target.value.slice(0, MAX_LOCATION))}
               placeholder="Localização"
+              maxLength={MAX_LOCATION}
               className="border-0 bg-transparent p-0 h-auto text-base text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
             />
+            <button
+              type="button"
+              onClick={handleGeolocate}
+              disabled={geoLoading}
+              aria-label="Usar minha localização atual"
+              className="h-9 w-9 shrink-0 grid place-items-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-60 transition-colors"
+            >
+              {geoLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <LocateFixed className="h-5 w-5" />
+              )}
+            </button>
           </label>
           <p className="text-xs text-muted-foreground px-1">
             Sua localização será exibida abaixo da biografia no seu perfil
           </p>
         </div>
-      </main>
 
-      <div className="fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20">
-        <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
-            disabled={!dirty}
-            onClick={() => toast.info("Em breve")}
-            className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground disabled:opacity-60"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            Salvar
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
-      </div>
+      </main>
 
       {cropSrc && (
         <CoverCropDialog

@@ -498,6 +498,7 @@ export type Database = {
           kyc_rejection_reason: string | null
           kyc_status: string
           kyc_verified_at: string | null
+          location: string | null
           onboarding_completed_at: string | null
           price_monthly: number | null
           tiktok_handle: string | null
@@ -530,6 +531,7 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
+          location?: string | null
           onboarding_completed_at?: string | null
           price_monthly?: number | null
           tiktok_handle?: string | null
@@ -562,6 +564,7 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
+          location?: string | null
           onboarding_completed_at?: string | null
           price_monthly?: number | null
           tiktok_handle?: string | null
