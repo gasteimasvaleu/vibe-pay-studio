@@ -128,7 +128,18 @@ function ChatThreadView() {
             read_at: string | null;
             created_at: string;
             price_cents: number | null;
+            metadata: unknown;
           };
+          const hasMedia =
+            !!m.metadata &&
+            typeof m.metadata === "object" &&
+            Array.isArray((m.metadata as { media?: unknown[] }).media) &&
+            (m.metadata as { media: unknown[] }).media.length > 0;
+          if (hasMedia) {
+            // Media messages need server-signed URLs; refetch.
+            queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+            return;
+          }
           queryClient.setQueryData<ThreadData>(
             ["chat", "messages", threadId],
             (old) => {
@@ -145,6 +156,7 @@ function ChatThreadView() {
                 createdAt: m.created_at,
                 priceCents: price > 0 ? price : null,
                 unlocked: price <= 0 || mine,
+                metadata: null,
               };
               return { ...old, messages: [...old.messages, newMsg] };
             },
