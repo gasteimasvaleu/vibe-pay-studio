@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { isCreatorLike, type AccountType } from "@/lib/auth";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import {
   getUserPublications,
