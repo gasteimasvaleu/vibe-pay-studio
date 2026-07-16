@@ -218,6 +218,18 @@ function SettingsMyProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {cropSrc && (
+        <AvatarCropDialog
+          imageSrc={cropSrc}
+          onCancel={() => setCropSrc(null)}
+          onSuccess={(url) => {
+            setAvatarUrl(url);
+            setCropSrc(null);
+            router.invalidate();
+          }}
+        />
+      )}
     </div>
   );
 }
