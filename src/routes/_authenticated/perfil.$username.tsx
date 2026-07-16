@@ -361,10 +361,11 @@ function PerfilPage() {
     likes: formatCompact(likesCount),
   };
 
-  const displayName = profile.username
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
-  const location = "São Paulo - BRA";
+  const displayName =
+    profile.displayName?.trim() ||
+    profile.username
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
   const monthlyPrice = profile.priceMonthly > 0 ? profile.priceMonthly : 0;
   const quarterlyPrice = monthlyPrice * 3 * (1 - (profile.discountQuarterly ?? 0) / 100);
