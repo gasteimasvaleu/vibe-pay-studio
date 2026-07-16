@@ -181,21 +181,26 @@ function SubscriptionPage() {
             onChange={setDiscountS}
           />
         </div>
-      </main>
 
-      {/* Barra fixa Salvar */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 py-3">
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full h-12 rounded-md text-base font-semibold"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {saving ? "Salvando..." : "Salvar"}
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
