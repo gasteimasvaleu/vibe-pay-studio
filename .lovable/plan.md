@@ -1,51 +1,40 @@
 ## Objetivo
 
-No botão da foto de capa em `/settings/details`, abrir um dialog preto (como o do avatar) para recortar a imagem em formato horizontal. Após confirmar o recorte, abrir um segundo dialog de pré-visualização mostrando o banner + avatar. O usuário decide entre **Salvar** (persiste) ou **Cancelar** (descarta).
+Tornar a página `/settings/details` funcional para bio + localização, com botão de geolocalização dentro do input e botões Salvar/Cancelar em fluxo (roxo, largura do input).
 
-## O que será construído
+## Mudanças
 
-### 1. Novo bucket de storage `covers` (privado)
-- Criado via `supabase--storage_create_bucket` (privado, como `avatars`).
-- Policies RLS em `storage.objects`: usuário só faz upload/leitura/delete dentro da própria pasta `{userId}/...`.
+### 1. Migração — adicionar `profiles.location`
+- Coluna `location text` (nullable, `check length <= 120`).
+- `profiles.bio` já existe.
 
-### 2. Server function `updateCoverUrl` em `src/lib/profile.functions.ts`
-- Middleware `requireSupabaseAuth`, valida URL, faz `update` em `profiles.cover_url`.
+### 2. Server function `updateProfileDetails` em `src/lib/profile.functions.ts`
+- Middleware `requireSupabaseAuth`.
+- Input: `{ bio: string; location: string }`.
+- Valida: `bio ≤ 3000`, `location ≤ 120`, trim; strings vazias viram `null`.
+- `update({ bio, location })` em `profiles` do usuário.
 
-### 3. Novo componente `src/components/settings/CoverCropDialog.tsx`
-- Baseado no `AvatarCropDialog`, mas:
-  - `aspect={3}` (banner horizontal ~ 3:1, mesma proporção usada no perfil/search).
-  - `cropShape="rect"`, sem grid.
-  - Saída em canvas ~1500×500 JPEG q0.9.
-  - Ao confirmar o recorte, **NÃO** faz upload ainda — apenas retorna o blob/dataURL via `onCropped(previewDataUrl)`.
+### 3. `settings.details.tsx` — carregar valores reais
+- `beforeLoad` passa a selecionar também `bio, location`.
+- Estados `bio`/`location` iniciam com os valores do perfil (fallback `""`).
+- `dirty` compara com iniciais reais.
 
-### 4. Novo componente `src/components/settings/CoverPreviewDialog.tsx`
-- Dialog (shadcn `Dialog`) com card claro reproduzindo o layout do segundo screenshot:
-  - Título "Pré-visualização".
-  - Banner recortado (`3:1`) com botão câmera central (reabre o recorte).
-  - Avatar atual sobreposto na base do banner, com botão câmera (reabre o `AvatarCropDialog`).
-- Botões **Salvar** (faz upload no bucket `covers`, gera signed URL e chama `updateCoverUrl`) e **Cancelar** (fecha e descarta).
+### 4. Botão de geolocalização dentro do input de localização
+- Ícone `LocateFixed` (lucide) à direita do input, dentro do mesmo container.
+- Ao clicar:
+  1. `navigator.geolocation.getCurrentPosition` (mostra loader no botão).
+  2. Reverse geocoding via Nominatim (`https://nominatim.openstreetmap.org/reverse?format=json&lat=..&lon=..&accept-language=pt-BR`) — sem chave, uso client-side.
+  3. Monta string `Cidade, Estado` (ou `Cidade, País` fallback) e preenche o input.
+  4. Erros: `toast.error` ("Permissão negada" / "Não foi possível obter localização").
 
-### 5. Integração em `src/routes/_authenticated/settings.details.tsx`
-- `beforeLoad` passa a carregar `cover_url` e `avatar_url` do perfil para preencher pré-visualização.
-- Substitui o `onClick={() => toast.info("Em breve")}` do botão de capa por:
-  1. Abre file picker (`accept="image/*"`, limite 10MB).
-  2. Abre `CoverCropDialog` com o arquivo lido.
-  3. Ao confirmar recorte → abre `CoverPreviewDialog` com o dataURL recortado.
-  4. Em "Salvar" no preview → upload + persistência; atualiza banner exibido e `router.invalidate()`.
-- Estado local mantém `coverUrl` atual (usado como fundo do próprio botão, substituindo o gradiente quando existe).
-
-## Fluxo resumido
-
-```text
-[botão capa] → file picker → CoverCropDialog (3:1, preto)
-   → ok → CoverPreviewDialog (banner + avatar) → Salvar → upload+update
-                                                → Cancelar → descarta
-```
+### 5. Botões Salvar / Cancelar em fluxo
+- Remover a barra fixa inferior (`fixed bottom-0 ...`) e o `pb-28`.
+- Abaixo do input de localização, dois botões empilhados, cada um `w-full`:
+  - **Salvar** — `bg-primary text-primary-foreground hover:bg-primary/90` (roxo padrão do app, mesmo estilo usado em `settings.social.tsx`). `disabled={!dirty || saving}`. Chama `updateProfileDetails`, `toast.success`, `router.invalidate()`, reseta `dirty` atualizando iniciais.
+  - **Cancelar** — mesmo estilo roxo (consistência com `settings.social.tsx`). `disabled={!dirty || saving}`. Restaura valores iniciais.
 
 ## Detalhes técnicos
 
-- Aspect ratio: **3:1** (consistente com o card usado em `search.tsx` e no perfil).
-- Bucket: `covers`, privado, signed URL de longa duração (mesmo padrão do `avatars`).
-- Nomeação: `covers/{userId}/{uuid}.jpg`.
-- Sem mudança em outras telas; apenas o botão da capa nesta rota é afetado.
-- Reutiliza `react-easy-crop` já instalado.
+- Nominatim exige `User-Agent`/rate-limit razoável; uso pontual em clique manual está ok. Fallback silencioso se a resposta falhar.
+- Sem alterações em `CoverCropDialog`/`CoverPreviewDialog`.
+- Sem novas dependências.
