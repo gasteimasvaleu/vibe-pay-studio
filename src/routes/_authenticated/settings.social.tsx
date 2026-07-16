@@ -1,8 +1,14 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { ArrowLeft, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, MessageCircle, Check, X, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import {
+  checkUsernameAvailability,
+  updateProfileIdentity,
+} from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/social")({
   head: () => ({
@@ -17,24 +23,120 @@ export const Route = createFileRoute("/_authenticated/settings/social")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, display_name")
       .eq("user_id", user.id)
       .maybeSingle();
     const username =
       profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    return { username };
+    const displayName =
+      profile?.display_name ??
+      username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+    return { username, displayName };
   },
   component: SettingsSocialPage,
 });
 
+const USERNAME_RE = /^[a-z0-9_][a-z0-9_]{2,29}$/;
+
+type Status =
+  | { kind: "idle" }
+  | { kind: "invalid"; message: string }
+  | { kind: "checking" }
+  | { kind: "self" }
+  | { kind: "available" }
+  | { kind: "taken" };
+
 function SettingsSocialPage() {
   const router = useRouter();
-  const { username } = Route.useRouteContext();
-  const initialDisplayName =
-    username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+  const { username: initialUsername, displayName: initialDisplayName } =
+    Route.useRouteContext();
 
   const [displayName, setDisplayName] = useState(initialDisplayName);
-  const [handle, setHandle] = useState(username);
+  const [handle, setHandle] = useState(initialUsername);
+  const [status, setStatus] = useState<Status>({ kind: "self" });
+  const [saving, setSaving] = useState(false);
+  const reqIdRef = useRef(0);
+
+  const checkFn = useServerFn(checkUsernameAvailability);
+  const saveFn = useServerFn(updateProfileIdentity);
+
+  const displayNameValid = useMemo(() => {
+    const v = displayName.replace(/\s+/g, " ").trim();
+    return v.length >= 2 && v.length <= 40;
+  }, [displayName]);
+
+  useEffect(() => {
+    if (handle === initialUsername) {
+      setStatus({ kind: "self" });
+      return;
+    }
+    if (!USERNAME_RE.test(handle) || handle.startsWith("_")) {
+      setStatus({
+        kind: "invalid",
+        message:
+          "Use 3–30 caracteres: letras, números ou _ (não pode começar com _).",
+      });
+      return;
+    }
+    setStatus({ kind: "checking" });
+    const id = ++reqIdRef.current;
+    const t = window.setTimeout(async () => {
+      try {
+        const res = await checkFn({ data: { username: handle } });
+        if (id !== reqIdRef.current) return;
+        if (!res.available) {
+          if ("reason" in res && res.reason === "reserved") {
+            setStatus({ kind: "invalid", message: "Este identificador é reservado." });
+          } else if ("reason" in res && res.reason === "invalid_format") {
+            setStatus({ kind: "invalid", message: "Formato inválido." });
+          } else {
+            setStatus({ kind: "taken" });
+          }
+        } else if (res.isSelf) {
+          setStatus({ kind: "self" });
+        } else {
+          setStatus({ kind: "available" });
+        }
+      } catch {
+        if (id !== reqIdRef.current) return;
+        setStatus({ kind: "invalid", message: "Erro ao verificar." });
+      }
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [handle, initialUsername, checkFn]);
+
+  const hasChanges =
+    (displayName.replace(/\s+/g, " ").trim() !== initialDisplayName ||
+      handle !== initialUsername);
+  const canSave =
+    hasChanges &&
+    displayNameValid &&
+    (status.kind === "self" || status.kind === "available");
+
+  async function onSave() {
+    if (!canSave || saving) return;
+    setSaving(true);
+    try {
+      const res = await saveFn({
+        data: { displayName, username: handle },
+      });
+      if (res.ok) {
+        toast.success("Perfil atualizado");
+        await router.invalidate();
+      } else if (res.reason === "username_taken") {
+        setStatus({ kind: "taken" });
+        toast.error("Este identificador já está em uso");
+      } else if (res.reason === "invalid_display_name") {
+        toast.error("Nome do perfil inválido");
+      } else {
+        toast.error("Não foi possível salvar");
+      }
+    } catch {
+      toast.error("Não foi possível salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,7 +153,14 @@ function SettingsSocialPage() {
           <h1 className="text-base font-semibold text-foreground truncate">
             Nome de perfil e Identificador
           </h1>
-          <span className="w-9" />
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!canSave || saving}
+            className="text-sm font-semibold text-primary disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[3.5rem] text-right"
+          >
+            {saving ? "Salvando…" : "Salvar"}
+          </button>
         </div>
       </header>
 
@@ -63,9 +172,15 @@ function SettingsSocialPage() {
           <Input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
+            maxLength={40}
             className="border-0 bg-transparent p-0 h-auto text-lg text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </label>
+        {!displayNameValid && (
+          <p className="px-5 text-xs text-destructive">
+            Use entre 2 e 40 caracteres.
+          </p>
+        )}
 
         <label className="flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
           <MessageCircle className="h-6 w-6 text-muted-foreground shrink-0" />
@@ -87,6 +202,32 @@ function SettingsSocialPage() {
             />
           </div>
         </label>
+
+        <div className="px-5 text-xs min-h-[1rem]">
+          {status.kind === "checking" && (
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" /> Verificando…
+            </span>
+          )}
+          {status.kind === "available" && (
+            <span className="inline-flex items-center gap-1.5 text-emerald-600">
+              <Check className="h-3 w-3" /> Disponível
+            </span>
+          )}
+          {status.kind === "taken" && (
+            <span className="inline-flex items-center gap-1.5 text-destructive">
+              <X className="h-3 w-3" /> Já está em uso
+            </span>
+          )}
+          {status.kind === "self" && (
+            <span className="text-muted-foreground">
+              Este é seu identificador atual.
+            </span>
+          )}
+          {status.kind === "invalid" && (
+            <span className="text-destructive">{status.message}</span>
+          )}
+        </div>
       </main>
     </div>
   );
