@@ -39,12 +39,13 @@ export const Route = createFileRoute("/_authenticated/em-alta")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, account_type")
+      .select("username, avatar_url, account_type")
       .eq("user_id", user.id)
       .maybeSingle();
     const acct = profile?.account_type ?? "subscriber";
     return {
       username: profile?.username ?? user.email?.split("@")[0] ?? "voce",
+      avatarUrl: profile?.avatar_url ?? null,
       isCreator: acct === "creator" || acct === "free_creator",
     };
   },
@@ -52,10 +53,10 @@ export const Route = createFileRoute("/_authenticated/em-alta")({
 });
 
 function EmAltaPage() {
-  const { username, isCreator } = Route.useRouteContext();
+  const { username, avatarUrl, isCreator } = Route.useRouteContext();
 
   return (
-    <DashboardShell username={username} isCreator={isCreator}>
+    <DashboardShell username={username} isCreator={isCreator} avatarUrl={avatarUrl}>
       <div className="space-y-8">
         <EmAltaSection title="Top creators">
           {topCreators.map((item, i) => (

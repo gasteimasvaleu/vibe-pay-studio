@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const { data: profile } = await supabase
       .from("profiles")
       .select(
-        "account_type, username, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at",
+        "account_type, username, avatar_url, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at",
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const accountType = (profile?.account_type ?? "subscriber") as AccountType;
     const username =
       profile?.username ?? user.email?.split("@")[0] ?? "voce";
+    const avatarUrl = profile?.avatar_url ?? null;
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
     // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
@@ -68,6 +69,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
     return {
       username,
+      avatarUrl,
       accountType,
       creatorNextStep,
       creatorOnboardingStarted,
@@ -84,13 +86,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
-  const { username, accountType, creatorNextStep, creatorOnboardingStarted } =
+  const { username, avatarUrl, accountType, creatorNextStep, creatorOnboardingStarted } =
     Route.useRouteContext();
 
   if (isCreatorLike(accountType)) {
     return (
       <CreatorDashboard
         username={username}
+        avatarUrl={avatarUrl}
         variant={accountType === "free_creator" ? "free_creator" : "creator"}
       />
     );
@@ -99,6 +102,7 @@ function DashboardPage() {
   return (
     <SubscriberDashboard
       username={username}
+      avatarUrl={avatarUrl}
       creatorNextStep={creatorNextStep}
       creatorOnboardingStarted={creatorOnboardingStarted}
     />

@@ -26,9 +26,11 @@ import { EarningsSummary } from "./EarningsSummary";
 export function CreatorDashboard({
   username,
   variant = "creator",
+  avatarUrl,
 }: {
   username: string;
   variant?: "creator" | "free_creator";
+  avatarUrl?: string | null;
 }) {
   const [signingOut, setSigningOut] = useState(false);
   const handleSignOut = async () => {
@@ -39,7 +41,7 @@ export function CreatorDashboard({
   void variant; // reservado p/ futuras diferenças entre creator pago e free_creator
 
   return (
-    <DashboardShell username={username} isCreator>
+    <DashboardShell username={username} isCreator avatarUrl={avatarUrl}>
       <div className="space-y-6">
         <EarningsSummary />
 
