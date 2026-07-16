@@ -1,29 +1,38 @@
+## Diagnóstico
+
+Hoje o botão "Excluir conta" abre o dialog, mas ao clicar em **Continuar** o `handleConfirmDelete` só chama `toast.info("Em breve")`. **Não há exclusão real.**
+
 ## Objetivo
 
-Tornar a página `/settings/change-password` funcional de verdade — verificando a senha atual e aplicando as **mesmas regras de senha do cadastro** — e adicionar os botões **Salvar** e **Cancelar** no padrão das outras páginas de settings.
-
-## Regras de senha (idênticas ao cadastro)
-
-- Mínimo de 8 caracteres
-- Pelo menos um número
-- Pelo menos uma letra minúscula **e** uma maiúscula
-- Pelo menos um caractere especial (`!@#$%^&*()_+-=[]{};':"\|,.<>/?\`~`)
+Implementar exclusão de conta de verdade: apagar o usuário em `auth.users` (o que remove em cascata `profiles` e demais dados via FKs `ON DELETE CASCADE`), encerrar a sessão e mandar o usuário para a home.
 
 ## Alterações
 
-**`src/routes/_authenticated/settings.change-password.tsx`**
+**1. Nova server function `src/lib/account.functions.ts`**
 
-1. **Extrair as regras** — replicar o `useMemo` de `rules` do `cadastro.tsx` aplicado sobre `next`; `passwordValid = Object.values(rules).every(Boolean)`.
-2. **Renderizar `PasswordRules` embaixo do campo "Nova Senha"** — copiar o componente `PasswordRules` e o ícone `Check` do `cadastro.tsx` para dentro deste arquivo (mesmo visual: checkbox roxo quando ok, cinza quando não).
-3. **Expor email no context** — `beforeLoad` retorna `email` do usuário para uso no handler.
-4. **`handleSave`**:
-   - Guard: `current` não vazio, `passwordValid`, `confirm === next`.
-   - Reautenticar: `supabase.auth.signInWithPassword({ email, password: current })`. Se erro → `toast.error("Senha atual incorreta")` e sair.
-   - `supabase.auth.updateUser({ password: next })`. Em sucesso: `toast.success("Senha alterada")`, limpa os três campos, `router.history.back()`.
-5. **Botões Salvar/Cancelar (padrão)**:
-   - Remover a barra fixa (`fixed bottom-0 …`) e o `pb-28` do `main`.
-   - Dentro do `main`, `<div className="flex flex-col gap-3 pt-2">` com dois botões `w-full bg-primary text-primary-foreground hover:bg-primary/90`:
-     - **Salvar** — `disabled={!canSubmit}`, texto `"Salvando…"` no loading. `canSubmit = current.length > 0 && passwordValid && confirm === next && !loading`.
-     - **Cancelar** — limpa os três inputs; `disabled` quando todos vazios ou durante loading.
+- `deleteMyAccount` = `createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(...)`.
+- Handler:
+  - Carrega `supabaseAdmin` com `await import("@/integrations/supabase/client.server")`.
+  - `await supabaseAdmin.auth.admin.deleteUser(context.userId)`.
+  - Se erro, `throw new Error("delete_failed")`.
+  - Retorna `{ ok: true }`.
+- Como o usuário deleta a **própria** conta (identificada por `context.userId`), não há verificação adicional de role.
 
-Sem mudanças em schema, server functions ou outras páginas.
+**2. `src/routes/_authenticated/settings.myprofile.tsx`**
+
+- Importar `useServerFn` e `deleteMyAccount`.
+- Novo estado `deleting`.
+- Reescrever `handleConfirmDelete`:
+  1. `setDeleting(true)`.
+  2. `await deleteFn({})` — em erro: `toast.error("Não foi possível excluir a conta")`, `setDeleting(false)`, sair.
+  3. `toast.success("Conta excluída")`.
+  4. `await supabase.auth.signOut()`.
+  5. `window.location.replace("/")` — recarrega o app já sem sessão (equivalente ao `handleSignOut` já usado no projeto).
+- No dialog:
+  - Botão **Continuar** vira destrutivo: `bg-destructive text-destructive-foreground hover:bg-destructive/90`, `disabled={deleting}`, texto `"Excluindo…"` durante loading.
+  - Botão **Cancelar** `disabled={deleting}`.
+
+## Observações
+
+- FKs para `auth.users(id)` no schema (ex.: `profiles.user_id`) já estão com `ON DELETE CASCADE`, então excluir o usuário limpa os dados associados automaticamente. Não é preciso migração.
+- `supabaseAdmin` fica exclusivamente dentro do handler (nunca no topo de `.functions.ts`), respeitando as regras de import.
