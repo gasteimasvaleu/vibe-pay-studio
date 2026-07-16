@@ -16,6 +16,21 @@ export const updateAvatarUrl = createServerFn({ method: "POST" })
     return { avatarUrl: url };
   });
 
+export const updateCoverUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { coverUrl: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const url = data.coverUrl.trim();
+    if (!url) throw new Error("url inválida");
+    const { error } = await supabase
+      .from("profiles")
+      .update({ cover_url: url })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { coverUrl: url };
+  });
+
 const RESERVED_USERNAMES = new Set([
   "admin", "api", "auth", "settings", "perfil", "profile", "monetisexy",
   "monetisex", "root", "support", "help", "about", "login", "logout",
