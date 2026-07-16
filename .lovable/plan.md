@@ -1,26 +1,36 @@
-## Objetivo
+## Problema
 
-Substituir o mock `SESSIONS` na seção "Seus acessos" da página `/settings/security-menu` pelos acessos reais do usuário, usando o mesmo backend já criado para `/settings/device-management`.
+A página `/settings/security-menu` (e também `/settings/device-management`) quebra com o erro `Invalid schema: auth`. Isso vem do PostgREST do Supabase: a Data API só expõe o schema `public`, então `supabaseAdmin.schema("auth").from("sessions")` sempre falha — não importa se é service role. É por isso que o loader lança e o error boundary do TanStack mostra "This page didn't load".
 
-## Mudanças
+## Correção
 
-**`src/routes/_authenticated/settings.security-menu.tsx`**
-- Adicionar `loader: () => listMySessions()` importado de `@/lib/sessions.functions`.
-- Ler os dados via `Route.useLoaderData()` e mostrar até 2 sessões mais recentes (priorizando a atual + a próxima mais recente).
-- Remover o array mock `SESSIONS` e o tipo local `Session`.
-- Reaproveitar a lógica de `parseUA` (browser/OS) e `formatDate` já usadas em `settings.device-management.index.tsx` — extrair para um helper compartilhado `src/lib/session-format.ts` para evitar duplicação, e importar nos dois arquivos.
-- Card real exibe: ícone conforme tipo (mobile/tablet/desktop), `Browser · OS`, data do último acesso (`refreshedAt`), IP (ou "IP indisponível"), e badge "Atual" quando `isCurrent`.
-- Remover o item "Renomear" do dropdown (Supabase Auth não guarda apelido). Manter "Remover acesso" chamando `revokeSession` com `AlertDialog` de confirmação — desabilitado/oculto para a sessão atual (igual à página completa).
-- Após revogar, chamar `router.invalidate()` para recarregar a lista.
-- Se não houver nenhuma sessão além da atual, mostrar apenas a atual. Se a lista estiver vazia, mostrar mensagem discreta "Nenhum acesso ativo".
-- Manter o link "Ver todos acessos" apontando para `/settings/device-management`.
+Trocar o acesso direto ao schema `auth` por funções Postgres SECURITY DEFINER expostas no schema `public`, que é o padrão suportado e seguro.
 
-**`src/lib/session-format.ts`** (novo helper)
-- Exportar `parseUA(ua)` e `formatDate(iso)` extraídos de `settings.device-management.index.tsx`.
+### 1. Migration nova
 
-**`src/routes/_authenticated/settings.device-management.index.tsx`**
-- Trocar as definições locais de `parseUA`/`formatDate` pelo import do helper compartilhado (sem alteração de comportamento).
+Criar três funções no schema `public`:
 
-## Fora do escopo
-- Sem migrations, sem novos secrets, sem geolocalização por IP.
-- Sem alteração de layout visual dos outros itens do menu de segurança.
+- `public.list_my_sessions()` → retorna `id, user_agent, ip, created_at, updated_at, refreshed_at` de `auth.sessions` onde `user_id = auth.uid()`, ordenado por `refreshed_at desc`.
+- `public.revoke_session(p_session_id uuid)` → `delete from auth.sessions where id = p_session_id and user_id = auth.uid()`; bloqueia se `p_session_id` for igual ao `session_id` do JWT atual (`auth.jwt() ->> 'session_id'`).
+- `public.revoke_all_other_sessions()` → `delete from auth.sessions where user_id = auth.uid() and id <> (auth.jwt() ->> 'session_id')::uuid`.
+
+Todas `SECURITY DEFINER`, `set search_path = public, auth`. `GRANT EXECUTE ... TO authenticated`. Sem `GRANT` para `anon`.
+
+### 2. `src/lib/sessions.functions.ts`
+
+- Remover o helper `authSchema()` e o import dinâmico de `client.server`.
+- Usar o cliente autenticado do middleware (`context.supabase`) e chamar as RPCs:
+  - `listMySessions` → `context.supabase.rpc('list_my_sessions')`, mapear para `DeviceSession[]` (marcar `isCurrent` com `claims.session_id`).
+  - `revokeSession` → `context.supabase.rpc('revoke_session', { p_session_id })`.
+  - `revokeAllOtherSessions` → `context.supabase.rpc('revoke_all_other_sessions')`.
+- Manter a mesma forma de retorno (`DeviceSession`) para não mexer nas telas.
+
+### 3. Sem mudanças de UI
+
+`settings.security-menu.tsx` e `settings.device-management.index.tsx` continuam iguais — o contrato do `DeviceSession[]` não muda.
+
+## Por que assim
+
+- PostgREST não expõe `auth` schema — expor seria um risco. Funções `SECURITY DEFINER` no `public` são o caminho recomendado pela Supabase para tocar em `auth.sessions`.
+- Como a checagem usa `auth.uid()` e `auth.jwt() ->> 'session_id'` dentro da função, o usuário só consegue listar/remover as próprias sessões, e nunca a sessão atual pelo endpoint individual.
+- Elimina a necessidade de `supabaseAdmin` nesse fluxo.
