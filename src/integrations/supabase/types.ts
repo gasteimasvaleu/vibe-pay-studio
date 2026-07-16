@@ -480,6 +480,13 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          address_cep: string | null
+          address_city: string | null
+          address_complement: string | null
+          address_district: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
           asaas_account_id: string | null
           asaas_account_status: string | null
           asaas_api_key_encrypted: string | null
@@ -487,19 +494,23 @@ export type Database = {
           asaas_wallet_id: string | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           cover_url: string | null
           cpf: string | null
           created_at: string
           discount_quarterly: number
           discount_semiannual: number
           display_name: string | null
+          full_name: string | null
           id: string
           instagram_handle: string | null
           kyc_rejection_reason: string | null
           kyc_status: string
           kyc_verified_at: string | null
           location: string | null
+          nickname: string | null
           onboarding_completed_at: string | null
+          phone: string | null
           price_monthly: number | null
           tiktok_handle: string | null
           updated_at: string
@@ -513,6 +524,13 @@ export type Database = {
         }
         Insert: {
           account_type?: string
+          address_cep?: string | null
+          address_city?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
           asaas_account_id?: string | null
           asaas_account_status?: string | null
           asaas_api_key_encrypted?: string | null
@@ -520,19 +538,23 @@ export type Database = {
           asaas_wallet_id?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           cover_url?: string | null
           cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
           display_name?: string | null
+          full_name?: string | null
           id?: string
           instagram_handle?: string | null
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
           location?: string | null
+          nickname?: string | null
           onboarding_completed_at?: string | null
+          phone?: string | null
           price_monthly?: number | null
           tiktok_handle?: string | null
           updated_at?: string
@@ -546,6 +568,13 @@ export type Database = {
         }
         Update: {
           account_type?: string
+          address_cep?: string | null
+          address_city?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
           asaas_account_id?: string | null
           asaas_account_status?: string | null
           asaas_api_key_encrypted?: string | null
@@ -553,19 +582,23 @@ export type Database = {
           asaas_wallet_id?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           cover_url?: string | null
           cpf?: string | null
           created_at?: string
           discount_quarterly?: number
           discount_semiannual?: number
           display_name?: string | null
+          full_name?: string | null
           id?: string
           instagram_handle?: string | null
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
           location?: string | null
+          nickname?: string | null
           onboarding_completed_at?: string | null
+          phone?: string | null
           price_monthly?: number | null
           tiktok_handle?: string | null
           updated_at?: string
