@@ -285,24 +285,52 @@ function ChatSettingsPage() {
               </div>
             )}
 
-            {tag && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
-                  <Tag className="h-3 w-3" /> {tag}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTag(null);
-                      markDirty();
-                    }}
-                    className="ml-1 hover:opacity-70"
-                    aria-label="Remover tag"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              </div>
+            {priceCents > 0 && (
+              <>
+                {media.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Você adicionou precificação, não esqueça de adicionar uma mídia.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPriceDialogOpen(true)}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors px-3 py-2.5 text-left"
+                >
+                  <span className="inline-flex items-center gap-2 text-primary text-sm font-medium">
+                    <Tag className="h-4 w-4" />
+                    Preço para visualizar
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-sm font-bold text-foreground">
+                      {formatBRL(priceCents)}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Remover preço"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPriceCents(0);
+                        markDirty();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPriceCents(0);
+                          markDirty();
+                        }
+                      }}
+                      className="h-5 w-5 grid place-items-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
+                    >
+                      <X className="h-3 w-3" />
+                    </span>
+                  </span>
+                </button>
+              </>
             )}
+
 
             <TooltipProvider delayDuration={200}>
               <div className="flex items-center gap-1 text-muted-foreground">
