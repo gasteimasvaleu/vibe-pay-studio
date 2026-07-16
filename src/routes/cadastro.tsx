@@ -30,7 +30,6 @@ function CadastroPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const rules = useMemo(
     () => ({
@@ -50,7 +49,6 @@ function CadastroPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setErrorMsg(null);
-    setSuccessMsg(null);
     setLoading(true);
     try {
       const data = await signUpWithEmail({ accountType, email, password, username });
@@ -60,7 +58,7 @@ function CadastroPage() {
         return;
       }
 
-      setSuccessMsg("Conta criada. Confira seu e-mail para confirmar o acesso.");
+      navigate({ to: "/cadastro/confirme-email", search: { email } });
     } catch (err) {
       setErrorMsg(
         err instanceof Error
@@ -74,7 +72,6 @@ function CadastroPage() {
 
   const handleGoogle = async () => {
     setErrorMsg(null);
-    setSuccessMsg(null);
     setGoogleLoading(true);
     try {
       await signInWithGoogle({ accountType, username: username || undefined });
