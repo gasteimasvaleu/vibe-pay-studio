@@ -165,11 +165,6 @@ function CadastroPage() {
                 </p>
               )}
 
-              {successMsg && (
-                <p role="status" className="text-sm text-primary">
-                  {successMsg}
-                </p>
-              )}
             </form>
 
             <Divider />
