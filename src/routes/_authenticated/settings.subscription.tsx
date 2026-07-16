@@ -66,7 +66,11 @@ function SubscriptionPage() {
   const monthlyValid = monthly >= MIN && monthly <= MAX;
   const discountsValid =
     discountQ >= 0 && discountQ <= 100 && discountS >= 0 && discountS <= 100;
-  const canSave = monthlyValid && discountsValid && !saving;
+  const dirty =
+    monthly !== initial.monthly ||
+    discountQ !== initial.discountQ ||
+    discountS !== initial.discountS;
+  const canSave = monthlyValid && discountsValid && dirty && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -88,6 +92,12 @@ function SubscriptionPage() {
     router.history.back();
   };
 
+  const handleCancel = () => {
+    setMonthly(initial.monthly);
+    setDiscountQ(initial.discountQ);
+    setDiscountS(initial.discountS);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative z-10 border-b border-border bg-white">
@@ -107,7 +117,7 @@ function SubscriptionPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-28 space-y-5">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-5">
         {/* Card resumo */}
         <section className="rounded-3xl bg-card p-6 md:p-8 shadow-card">
           <p className="text-sm text-muted-foreground">Assinatura Mensal</p>
@@ -171,21 +181,26 @@ function SubscriptionPage() {
             onChange={setDiscountS}
           />
         </div>
-      </main>
 
-      {/* Barra fixa Salvar */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 py-3">
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full h-12 rounded-md text-base font-semibold"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {saving ? "Salvando..." : "Salvar"}
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
