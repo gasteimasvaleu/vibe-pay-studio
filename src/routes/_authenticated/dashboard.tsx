@@ -69,6 +69,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
     return {
       username,
+      avatarUrl,
       accountType,
       creatorNextStep,
       creatorOnboardingStarted,
