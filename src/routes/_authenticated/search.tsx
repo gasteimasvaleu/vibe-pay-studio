@@ -35,21 +35,55 @@ function escapeIlike(input: string) {
 async function fetchCreators({
   query,
   pageParam,
+  viewerId,
 }: {
   query: string;
   pageParam: number;
+  viewerId: string | null;
 }) {
   const from = pageParam * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
-  let q = supabase
+  const trimmed = query.trim();
+  const isMentionLookup = trimmed.startsWith("@");
+  const term = isMentionLookup ? trimmed.slice(1) : trimmed;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = supabase
     .from("profiles")
     .select("user_id, username, display_name, avatar_url, cover_url, kyc_verified_at")
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  const trimmed = query.trim();
-  if (trimmed.length > 0) {
-    const pattern = `%${escapeIlike(trimmed)}%`;
+  // Respect global search restriction (own profile never filtered).
+  q = q.or(
+    viewerId
+      ? `restrict_search.eq.false,user_id.eq.${viewerId}`
+      : "restrict_search.eq.false",
+  );
+  // TODO: split restrict_search_br / restrict_search_country once IP geo is available.
+  // For now both act as "hide from all searches" (same effect as restrict_search).
+  q = q.or(
+    viewerId
+      ? `restrict_search_br.eq.false,user_id.eq.${viewerId}`
+      : "restrict_search_br.eq.false",
+  );
+  q = q.or(
+    viewerId
+      ? `restrict_search_country.eq.false,user_id.eq.${viewerId}`
+      : "restrict_search_country.eq.false",
+  );
+
+  // @mention lookup — also honor restrict_mentions.
+  if (isMentionLookup) {
+    q = q.or(
+      viewerId
+        ? `restrict_mentions.eq.false,user_id.eq.${viewerId}`
+        : "restrict_mentions.eq.false",
+    );
+  }
+
+  if (term.length > 0) {
+    const pattern = `%${escapeIlike(term)}%`;
     q = q.or(`username.ilike.${pattern},display_name.ilike.${pattern}`);
   }
 
@@ -64,6 +98,17 @@ async function fetchCreators({
 function SearchPage() {
   const [rawQuery, setRawQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [viewerId, setViewerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (alive) setViewerId(data.user?.id ?? null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(rawQuery), 300);
@@ -71,8 +116,9 @@ function SearchPage() {
   }, [rawQuery]);
 
   const query = useInfiniteQuery({
-    queryKey: ["creator-search", debounced] as const,
-    queryFn: ({ pageParam }) => fetchCreators({ query: debounced, pageParam }),
+    queryKey: ["creator-search", debounced, viewerId] as const,
+    queryFn: ({ pageParam }) =>
+      fetchCreators({ query: debounced, pageParam, viewerId }),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
   });
