@@ -12,7 +12,7 @@ import {
   Square,
   Loader2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -26,7 +26,6 @@ import {
 } from "@/lib/chat.functions";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -38,7 +37,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/settings/chat-settings")({
   head: () => ({
@@ -56,12 +62,17 @@ export const Route = createFileRoute("/_authenticated/settings/chat-settings")({
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const AUDIO_MAX_SEC = 120;
-const PRESET_TAGS = ["assinante-novo", "promo", "retorno", "vip"];
-
 function kindFromMime(mime: string): ChatWelcomeMedia["kind"] {
   if (mime.startsWith("image/")) return "image";
   if (mime.startsWith("video/")) return "video";
   return "audio";
+}
+
+function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 function ChatSettingsPage() {
@@ -79,9 +90,10 @@ function ChatSettingsPage() {
   const [enabled, setEnabled] = useState(false);
   const [message, setMessage] = useState("");
   const [media, setMedia] = useState<ChatWelcomeMedia[]>([]);
-  const [tag, setTag] = useState<string | null>(null);
+  const [priceCents, setPriceCents] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,7 +102,7 @@ function ChatSettingsPage() {
     setEnabled(data.enabled);
     setMessage(data.message);
     setMedia(data.media);
-    setTag(data.tag);
+    setPriceCents(data.priceCents ?? 0);
     setDirty(false);
   }, [data]);
 
@@ -108,7 +120,8 @@ function ChatSettingsPage() {
             kind,
             durationSec: durationSec ?? null,
           })),
-          tag,
+          tag: null,
+          priceCents,
         },
       }),
     onSuccess: () => {
@@ -192,11 +205,14 @@ function ChatSettingsPage() {
     });
   }
 
+  const priceButNoMedia = priceCents > 0 && media.length === 0;
   const canSave =
     dirty &&
     !updateMutation.isPending &&
     !uploading &&
+    !priceButNoMedia &&
     (!enabled || message.trim().length >= 3 || media.length > 0);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -269,24 +285,52 @@ function ChatSettingsPage() {
               </div>
             )}
 
-            {tag && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
-                  <Tag className="h-3 w-3" /> {tag}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTag(null);
-                      markDirty();
-                    }}
-                    className="ml-1 hover:opacity-70"
-                    aria-label="Remover tag"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              </div>
+            {priceCents > 0 && (
+              <>
+                {media.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Você adicionou precificação, não esqueça de adicionar uma mídia.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPriceDialogOpen(true)}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors px-3 py-2.5 text-left"
+                >
+                  <span className="inline-flex items-center gap-2 text-primary text-sm font-medium">
+                    <Tag className="h-4 w-4" />
+                    Preço para visualizar
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-sm font-bold text-foreground">
+                      {formatBRL(priceCents)}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Remover preço"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPriceCents(0);
+                        markDirty();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPriceCents(0);
+                          markDirty();
+                        }
+                      }}
+                      className="h-5 w-5 grid place-items-center rounded-full bg-primary text-primary-foreground hover:opacity-90"
+                    >
+                      <X className="h-3 w-3" />
+                    </span>
+                  </span>
+                </button>
+              </>
             )}
+
 
             <TooltipProvider delayDuration={200}>
               <div className="flex items-center gap-1 text-muted-foreground">
@@ -332,49 +376,13 @@ function ChatSettingsPage() {
                   </PopoverContent>
                 </Popover>
 
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Adicionar tag"
-                      className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <Tag className="h-5 w-5" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 space-y-2" align="start">
-                    <p className="text-xs font-medium text-muted-foreground">Escolha uma tag</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PRESET_TAGS.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => {
-                            setTag(t);
-                            markDirty();
-                          }}
-                          className={cn(
-                            "text-xs rounded-full px-3 py-1 border transition-colors",
-                            tag === t
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-border hover:bg-accent",
-                          )}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                    <Input
-                      placeholder="Tag personalizada"
-                      value={tag && !PRESET_TAGS.includes(tag) ? tag : ""}
-                      onChange={(e) => {
-                        setTag(e.target.value || null);
-                        markDirty();
-                      }}
-                      maxLength={40}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <IconButton
+                  label="Precificar mensagem"
+                  onClick={() => setPriceDialogOpen(true)}
+                >
+                  <Tag className="h-5 w-5" />
+                </IconButton>
+
 
                 {uploading && (
                   <span className="ml-2 inline-flex items-center gap-1 text-xs">
@@ -395,9 +403,24 @@ function ChatSettingsPage() {
           {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
       </main>
+
+      <PriceDialog
+        open={priceDialogOpen}
+        initialCents={priceCents}
+        onClose={() => setPriceDialogOpen(false)}
+        onSave={(cents) => {
+          setPriceCents(cents);
+          markDirty();
+          setPriceDialogOpen(false);
+          if (cents > 0 && media.length === 0) {
+            toast.message("Adicione uma mídia para desbloquear a precificação.");
+          }
+        }}
+      />
     </div>
   );
 }
+
 
 function IconButton({
   label,
@@ -533,6 +556,83 @@ function AudioRecorderButton({
       </TooltipTrigger>
       <TooltipContent>Gravar um áudio</TooltipContent>
     </Tooltip>
+  );
+}
+
+function PriceDialog({
+  open,
+  initialCents,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  initialCents: number;
+  onClose: () => void;
+  onSave: (cents: number) => void;
+}) {
+  const [raw, setRaw] = useState("");
+
+  useEffect(() => {
+    if (open) setRaw(initialCents > 0 ? String(initialCents) : "");
+  }, [open, initialCents]);
+
+  const cents = useMemo(() => {
+    const n = parseInt(raw || "0", 10);
+    return Number.isFinite(n) ? Math.min(50000, Math.max(0, n)) : 0;
+  }, [raw]);
+
+  const display = useMemo(() => formatBRL(cents), [cents]);
+  const valid = cents >= 100 && cents <= 50000;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => (v ? null : onClose())}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Precificar mensagem de boas-vindas</DialogTitle>
+          <DialogDescription>
+            Defina um preço entre R$ 1,00 e R$ 500,00. A mídia enviada junto à
+            mensagem ficará bloqueada até o assinante desbloquear no chat.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-2">
+          <label className="text-sm font-medium text-foreground">Valor</label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+              R$
+            </span>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={display.replace(/^R\$\s*/, "")}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setRaw(digits);
+              }}
+              className="w-full h-11 rounded-md border border-border bg-background pl-10 pr-3 text-base font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+          {!valid && (
+            <p className="text-xs text-destructive">
+              O preço mínimo é R$ 1,00.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            disabled={!valid}
+            onClick={() => onSave(cents)}
+          >
+            Salvar preço
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

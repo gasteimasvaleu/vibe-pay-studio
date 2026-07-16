@@ -531,6 +531,7 @@ export type Database = {
           chat_welcome_enabled: boolean
           chat_welcome_media: Json
           chat_welcome_message: string | null
+          chat_welcome_price_cents: number
           chat_welcome_tag: string | null
           cover_url: string | null
           cpf: string | null
@@ -586,6 +587,7 @@ export type Database = {
           chat_welcome_enabled?: boolean
           chat_welcome_media?: Json
           chat_welcome_message?: string | null
+          chat_welcome_price_cents?: number
           chat_welcome_tag?: string | null
           cover_url?: string | null
           cpf?: string | null
@@ -641,6 +643,7 @@ export type Database = {
           chat_welcome_enabled?: boolean
           chat_welcome_media?: Json
           chat_welcome_message?: string | null
+          chat_welcome_price_cents?: number
           chat_welcome_tag?: string | null
           cover_url?: string | null
           cpf?: string | null
