@@ -59,7 +59,8 @@ export async function sendTransactionalEmail(
     return { ok: false, skipped: false, error: "resend_not_configured" };
   }
 
-  // TODO: dispatch via Resend Gateway once verified sender domain is set up.
+  const defaultFrom =
+    process.env.APP_EMAIL_FROM ?? "Monetisexy <onboarding@resend.dev>";
   try {
     const response = await fetch(
       "https://connector-gateway.lovable.dev/resend/emails",
@@ -71,7 +72,7 @@ export async function sendTransactionalEmail(
           "X-Connection-Api-Key": resendKey,
         },
         body: JSON.stringify({
-          from: input.from ?? "Monetisexy <onboarding@resend.dev>",
+          from: input.from ?? defaultFrom,
           to: [input.to],
           subject: input.subject,
           html: input.html,
