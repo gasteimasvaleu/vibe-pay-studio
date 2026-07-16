@@ -376,49 +376,13 @@ function ChatSettingsPage() {
                   </PopoverContent>
                 </Popover>
 
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Adicionar tag"
-                      className="h-9 w-9 grid place-items-center rounded-full hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <Tag className="h-5 w-5" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 space-y-2" align="start">
-                    <p className="text-xs font-medium text-muted-foreground">Escolha uma tag</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PRESET_TAGS.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => {
-                            setTag(t);
-                            markDirty();
-                          }}
-                          className={cn(
-                            "text-xs rounded-full px-3 py-1 border transition-colors",
-                            tag === t
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-border hover:bg-accent",
-                          )}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                    <Input
-                      placeholder="Tag personalizada"
-                      value={tag && !PRESET_TAGS.includes(tag) ? tag : ""}
-                      onChange={(e) => {
-                        setTag(e.target.value || null);
-                        markDirty();
-                      }}
-                      maxLength={40}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <IconButton
+                  label="Precificar mensagem"
+                  onClick={() => setPriceDialogOpen(true)}
+                >
+                  <Tag className="h-5 w-5" />
+                </IconButton>
+
 
                 {uploading && (
                   <span className="ml-2 inline-flex items-center gap-1 text-xs">
