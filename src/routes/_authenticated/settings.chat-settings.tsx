@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Square,
+  Check,
   Loader2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -485,8 +486,15 @@ function AudioRecorderButton({
   const chunksRef = useRef<Blob[]>([]);
   const startRef = useRef<number>(0);
   const timerRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
 
-  const stop = () => {
+  const confirm = () => {
+    cancelledRef.current = false;
+    mediaRef.current?.stop();
+  };
+
+  const cancel = () => {
+    cancelledRef.current = true;
     mediaRef.current?.stop();
   };
 
@@ -497,11 +505,16 @@ function AudioRecorderButton({
       const mime = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
       const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       chunksRef.current = [];
+      cancelledRef.current = false;
       rec.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         if (timerRef.current) window.clearInterval(timerRef.current);
         setRecording(false);
+        if (cancelledRef.current) {
+          chunksRef.current = [];
+          return;
+        }
         const durationSec = Math.min(
           AUDIO_MAX_SEC,
           Math.max(1, Math.round((Date.now() - startRef.current) / 1000)),
@@ -521,7 +534,7 @@ function AudioRecorderButton({
       timerRef.current = window.setInterval(() => {
         const s = Math.round((Date.now() - startRef.current) / 1000);
         setElapsed(s);
-        if (s >= AUDIO_MAX_SEC) stop();
+        if (s >= AUDIO_MAX_SEC) confirm();
       }, 250);
     } catch (e: any) {
       toast.error(e?.message ?? "Não foi possível acessar o microfone");
@@ -529,18 +542,34 @@ function AudioRecorderButton({
   };
 
   if (recording) {
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const ss = String(elapsed % 60).padStart(2, "0");
     return (
-      <button
-        type="button"
-        onClick={stop}
-        className="h-9 px-3 grid place-items-center rounded-full bg-red-500/15 text-red-600 hover:bg-red-500/20 transition-colors gap-1.5 flex items-center text-xs font-medium"
-        aria-label="Parar gravação"
-      >
-        <Square className="h-3.5 w-3.5" />
-        {elapsed}s
-      </button>
+      <div className="flex items-center gap-1 h-9 px-1.5 rounded-full bg-accent/50">
+        <button
+          type="button"
+          onClick={cancel}
+          aria-label="Cancelar gravação"
+          className="h-7 w-7 grid place-items-center rounded-full text-red-500 hover:bg-red-500/10 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-1.5 px-2 text-xs font-medium tabular-nums text-foreground">
+          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" aria-hidden />
+          {mm}:{ss}
+        </div>
+        <button
+          type="button"
+          onClick={confirm}
+          aria-label="Enviar gravação"
+          className="h-7 w-7 grid place-items-center rounded-full text-green-600 hover:bg-green-500/10 transition-colors"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+      </div>
     );
   }
+
 
   return (
     <Tooltip>
