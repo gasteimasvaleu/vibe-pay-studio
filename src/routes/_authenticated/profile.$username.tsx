@@ -49,7 +49,7 @@ type ProfileData = {
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("user_id, username, display_name, bio, avatar_url, cover_url")
+    .select("user_id, username, display_name, bio, avatar_url, cover_url, account_type")
     .eq("username", username)
     .maybeSingle();
   if (error) throw new Error(error.message);
