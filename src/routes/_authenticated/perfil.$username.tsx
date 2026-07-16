@@ -634,10 +634,18 @@ function PerfilPage() {
             <Stat icon={<Heart className="h-4 w-4" />} value={stats.likes} variant="light" />
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
-            <span>{location}</span>
-          </div>
+          {profile.bio && (
+            <p className="text-sm text-foreground whitespace-pre-wrap pr-4 md:pr-6">
+              {profile.bio}
+            </p>
+          )}
+
+          {profile.location && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{profile.location}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 pt-1">
             <SocialButton label="Instagram"><Instagram className="h-4 w-4" /></SocialButton>
