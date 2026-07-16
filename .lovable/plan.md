@@ -1,41 +1,27 @@
+## Configurar Resend para envio de e-mails transacionais
 
-## Objetivo
+O código já está pronto para disparar via gateway do Resend (`src/lib/email.server.ts`). Falta conectar a conta e definir o remetente.
 
-Os switches em `/settings/privacy-mail` já persistem em `email_preferences` e o helper `sendTransactionalEmail` já respeita `can_send_email`. Falta o que dá "funcionalidade real" ponta-a-ponta: disparar emails nos eventos da plataforma passando pelo helper, para que os toggles efetivamente controlem envios (mesmo antes do Resend estar ligado, ficam gated e logados; assim que a chave for adicionada, começam a sair de verdade sem novas mudanças de código).
+### Passos
 
-## O que será feito
+1. **Conectar Resend via connector da Lovable** (`standard_connectors--connect` com `connector_id: resend`).
+   - Isso provisiona automaticamente `RESEND_API_KEY` como variável de ambiente nas server functions.
+   - `LOVABLE_API_KEY` já existe no projeto.
 
-1. **Gatilhos de envio via `sendTransactionalEmail`** — em cada ponto server-side já existente:
-   - `post_sales` → após `publication_unlock` pago (em `payments.functions.ts` / reconciler `payments-reconcile.server.ts`, no ramo que marca unlock como `paid`). Destinatário: autor da publicação.
-   - `content_purchase` → mesmo evento acima, destinatário: comprador (recibo da compra).
-   - `subscription_sales` → após `subscription` ficar `active` (mesmos arquivos de pagamento + `wallet-pay.functions.ts` no ramo `subscription`). Destinatário: criador.
-   - `free_to_paid` → quando `profiles.account_type` muda de `free_creator`/`subscriber` para `creator` (em `onboarding.functions.ts` / ponto que promove a conta). Destinatário: seguidores do criador (busca em `follows`, envio em lote com `Promise.allSettled`, gate individual pelo helper).
-   - `creator_referrals` → quando um perfil indicado vira criador. Como ainda não existe coluna `referred_by`, este envio fica preparado atrás de um `TODO` claro (função utilitária pronta, chamada só quando o campo existir) — sem migration nova.
+2. **Definir remetente (`from`)**:
+   - **Opção A — Testes rápidos:** manter `Monetisexy <onboarding@resend.dev>`. Só entrega para o e-mail do dono da conta Resend. Serve para validar o pipeline.
+   - **Opção B — Produção:** você verifica um domínio no painel do Resend (ex.: `mail.monetisexy.com`) e me passa o remetente (ex.: `Monetisexy <no-reply@mail.monetisexy.com>`). Eu troco o default no `email.server.ts` e adiciono `APP_EMAIL_FROM` como secret opcional para permitir override sem deploy.
 
-2. **Utilitário `src/lib/email-templates.server.ts`** com funções puras que retornam `{ subject, html }` para cada tipo (`postSaleEmail`, `contentPurchaseEmail`, `subscriptionSaleEmail`, `freeToPaidEmail`). HTML simples inline, com nome do criador/comprador, valor formatado em BRL e link para a publicação/perfil.
+3. **Teste end-to-end**:
+   - Após conectar, disparo um envio de teste (via server fn one-off ou reconciliação de uma transação real) e confirmo status 200 do gateway + entrega.
+   - Se falhar, leio o corpo do erro do Resend e ajusto (domínio não verificado, escopo, etc.).
 
-3. **Resolução de destinatário** — helper interno `resolveUserEmail(userId)` em `email.server.ts` que usa `supabaseAdmin.auth.admin.getUserById` para obter o email. Cacheado por chamada. Retorna `null` quando não houver email; nesse caso pula com log.
+### Perguntas rápidas antes de executar
 
-4. **Robustez** — todas as chamadas envolvidas em `try/catch` + `Promise.allSettled` para não quebrar o fluxo de pagamento se o envio falhar. Logs padronizados `[email] kind=... user=... status=...`.
+- Confirma que quer usar o **connector Resend da Lovable** (recomendado — sem gerenciar API key manualmente)? Ou prefere colar uma API key existente?
+- Já tem um **domínio verificado no Resend**, ou começamos com `onboarding@resend.dev` só para validar?
 
-5. **Sem novas tabelas nem colunas.** Nada muda no schema. Nenhuma migration.
+### Fora de escopo
 
-## Arquivos afetados (edições)
-
-- `src/lib/email.server.ts` — adicionar `resolveUserEmail`.
-- `src/lib/email-templates.server.ts` — novo arquivo com templates.
-- `src/lib/payments-reconcile.server.ts` — disparar post_sales + content_purchase + subscription_sales após marcar `paid`/`active`.
-- `src/lib/wallet-pay.functions.ts` — mesmos disparos no fluxo carteira.
-- `src/lib/onboarding.functions.ts` (ou local equivalente que promove a conta) — disparar free_to_paid para seguidores.
-- Stub `creator_referrals` documentado em `email.server.ts` como TODO.
-
-## Fora do escopo
-
-- Configurar Resend / domínio verificado (feito depois pelo usuário; helper já pronto).
-- Nova UI, novas migrations, mudanças em outros switches de privacidade.
-- Retry/queue persistente de emails (fica um `console.error` por enquanto).
-
-## Como validar depois
-
-- Toggle OFF em `/settings/privacy-mail` para "Vendas de postagens" → simular um unlock pago → log deve mostrar `skipped reason=user_opted_out` para o criador; comprador ainda recebe se estiver ON.
-- Toggle master `emails_enabled` OFF em `/settings/privacy-options` → nenhum envio para o usuário, independente das preferências.
+- Criar conta no Resend / verificar DNS do domínio (isso é feito por você no painel deles).
+- Retry queue, bounce tracking, unsubscribe link físico (o link para preferências já está no template).
