@@ -229,24 +229,24 @@ function SettingsSocialPage() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-5 pt-2">
-          <Button
-            type="button"
-            variant="default"
-            onClick={onCancel}
-            disabled={!hasChanges}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Cancelar
-          </Button>
+        <div className="flex flex-col gap-3 px-5 pt-2">
           <Button
             type="button"
             variant="default"
             onClick={onSave}
             disabled={!canSave || saving}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {saving ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            onClick={onCancel}
+            disabled={!hasChanges}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
       </main>
