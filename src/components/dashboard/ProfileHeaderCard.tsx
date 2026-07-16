@@ -7,12 +7,14 @@ export function ProfileHeaderCard({
   stat,
   levelBadge = "+100",
   showProfileLink = true,
+  avatarUrl,
 }: {
   username: string;
   isCreator: boolean;
   stat?: { value: number; label: string };
   levelBadge?: string;
   showProfileLink?: boolean;
+  avatarUrl?: string | null;
 }) {
   const displayName = username
     .replace(/[_-]+/g, " ")
@@ -36,9 +38,18 @@ export function ProfileHeaderCard({
       {/* Corpo */}
       <div className="relative px-5 pb-5">
         <div className="flex items-start justify-between -mt-10">
-          <div className="h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
-            {username.slice(0, 1).toUpperCase()}
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={`Avatar de @${username}`}
+              className="h-20 w-20 rounded-full ring-4 ring-card object-cover shadow-[var(--shadow-glow)]"
+            />
+          ) : (
+            <div className="h-20 w-20 rounded-full ring-4 ring-card bg-gradient-primary grid place-items-center text-2xl font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
+              {username.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+
           {showProfileLink && (
             <Link
               to="/perfil/$username"
