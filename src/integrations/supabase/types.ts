@@ -1152,6 +1152,24 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriber_restrictions: {
+        Row: {
+          created_at: string
+          creator_id: string
+          subscriber_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          subscriber_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          subscriber_id?: string
+        }
+        Relationships: []
+      }
       subscriber_wallets: {
         Row: {
           balance_cents: number
@@ -1701,6 +1719,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_restricted: {
+        Args: { _creator: string; _subscriber: string }
         Returns: boolean
       }
       list_my_revoked_sessions: {
