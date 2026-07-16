@@ -269,7 +269,13 @@ function ProfilePage() {
 
             <button
               type="button"
-              onClick={() => navigate({ to: "/settings/myprofile" })}
+              onClick={() =>
+                navigate({
+                  to: isCreatorLike(profile.accountType)
+                    ? "/settings/creator"
+                    : "/settings/myprofile",
+                })
+              }
               className="mt-5 w-full rounded-md bg-muted py-3 text-base font-semibold text-foreground hover:bg-muted/80 transition-colors"
             >
               Editar perfil
