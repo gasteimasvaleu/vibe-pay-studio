@@ -54,11 +54,11 @@ export function CircularSteps({
   colors = {},
   fontSizes = {},
 }: CircularStepsProps) {
-  const colorTitle = colors.title ?? "#ffffff";
-  const colorSubtitle = colors.subtitle ?? "rgba(232,121,249,0.9)";
-  const colorDescription = colors.description ?? "rgba(255,255,255,0.75)";
-  const colorArrowBg = colors.arrowBackground ?? "rgba(255,255,255,0.08)";
-  const colorArrowFg = colors.arrowForeground ?? "#ffffff";
+  const colorTitle = colors.title ?? "hsl(var(--foreground))";
+  const colorSubtitle = colors.subtitle ?? "hsl(var(--primary))";
+  const colorDescription = colors.description ?? "hsl(var(--muted-foreground))";
+  const colorArrowBg = colors.arrowBackground ?? "hsl(var(--muted))";
+  const colorArrowFg = colors.arrowForeground ?? "hsl(var(--foreground))";
   const colorArrowHoverBg =
     colors.arrowHoverBackground ?? "linear-gradient(135deg,#d946ef,#9333ea)";
 
@@ -122,7 +122,7 @@ export function CircularSteps({
       aspectRatio: "1 / 1",
       borderRadius: "9999px",
       overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.12)",
+      border: "1px solid hsl(var(--border))",
       boxShadow: "0 20px 60px -20px rgba(217,70,239,0.35)",
       transition: "all 0.8s cubic-bezier(.4,2,.3,1)",
       willChange: "transform, opacity",
@@ -255,7 +255,7 @@ export function CircularSteps({
                     background:
                       i === activeIndex
                         ? "linear-gradient(90deg,#d946ef,#9333ea)"
-                        : "rgba(255,255,255,0.2)",
+                        : "hsl(var(--muted-foreground) / 0.3)",
                   }}
                 />
               ))}
