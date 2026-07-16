@@ -1,55 +1,43 @@
 ## Objetivo
-Ligar a página `/settings/personal` a dados reais: campos travados (CPF, Nome Completo, Data de Nascimento) vindos do Veriff; campos editáveis (Apelido, Celular, Endereço) salvos em `profiles`, com botões Salvar/Cancelar seguindo o padrão do app.
 
-## 1. Migração — novas colunas em `profiles`
+Substituir o QR code / código estáticos por 2FA real usando **Supabase Auth MFA (TOTP)** e adicionar a segunda etapa (tela de verificação do código de 6 dígitos, screenshot 2) que efetivamente habilita o fator.
 
-Adicionar (todas nullable):
-- `full_name text`
-- `birth_date date`
-- `nickname text`
-- `phone text`
-- `address_cep text`
-- `address_street text`
-- `address_number text`
-- `address_complement text`
-- `address_district text`
-- `address_city text`
-- `address_state text` (UF, 2 letras)
+Como é TOTP padrão (RFC 6238), funciona com **qualquer autenticador**: Google Authenticator, Authy, 1Password, Microsoft Authenticator, Duo Mobile, etc.
 
-CPF já existe em `profiles.cpf`. Não haverá novas tabelas nem novas policies (as policies atuais de `profiles` cobrem update pelo próprio usuário).
+## Fluxo real
 
-## 2. Webhook do Veriff — extrair PII no `approved`
+1. `/settings/two-factor` (index) — em vez de status hardcoded "Não configurada", ler `supabase.auth.mfa.listFactors()` no client. Se já houver um fator TOTP `verified`, mostrar "Ativa" + botão **Desativar** (chama `mfa.unenroll({ factorId })`). Se não, botão **Habilitar** leva para `/settings/two-factor/setup`.
 
-Em `src/routes/api/public/webhooks/veriff-decision.ts`:
+2. `/settings/two-factor/setup` (screenshot 1) — passa a ser real:
+   - Ao montar: limpar fatores TOTP `unverified` órfãos (listFactors → unenroll dos não verificados) e chamar `supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Monetisexy' })`.
+   - Renderizar o `data.totp.qr_code` (SVG data URL que o próprio Supabase devolve) no lugar do QR gerado com `qrcode`.
+   - Mostrar `data.totp.secret` no input com botão copiar (já existe).
+   - Guardar `factorId` em `useState`.
+   - Botão **Avançar** → `navigate({ to: '/settings/two-factor/verify', search: { factorId } })`. Cancelar/voltar → `mfa.unenroll({ factorId })` para não deixar fator pendente.
 
-- Ampliar o tipo do payload para incluir `verification.person` (`firstName`, `lastName`, `dateOfBirth`) e `verification.document` (`number`).
-- Quando `nextStatus === "verified"`, popular no `update`:
-  - `full_name` = `person.firstName + " " + person.lastName` (trim, só se houver ao menos um)
-  - `birth_date` = `person.dateOfBirth` (formato ISO `YYYY-MM-DD` que o Veriff já entrega)
-  - `cpf` = dígitos de `document.number` (só se ainda estiver vazio, para não sobrescrever um CPF já digitado no Asaas)
-- Manter o resto do fluxo (idempotência, 200 em erro, etc.).
+3. Nova rota `/settings/two-factor/verify` (screenshot 2):
+   - Novo arquivo `src/routes/_authenticated/settings.two-factor.verify.tsx`.
+   - `validateSearch` com `factorId: z.string()`.
+   - Header idêntico às outras telas de settings (voltar + título "Autenticação de Dois Fatores").
+   - **Barra de progresso roxa (etapa 2/2)** — usa a cor primária do app (`bg-gradient-primary` / `bg-primary` conforme o token roxo definido em `src/styles.css`), não laranja como no screenshot de referência.
+   - Título **"Insira o código de validação"** + subtítulo **"Digite o código gerado pelo seu aplicativo autenticador para prosseguir na autenticação"**.
+   - Campo grande estilo "floating label" com label "Código de validação" e input numérico de 6 dígitos (inputMode `numeric`, maxLength 6, autofocus), ícone de QR à direita (decorativo).
+   - Botão fixo no rodapé **"Habilitar Autenticação"** (`w-full h-14 bg-gradient-primary`), desabilitado enquanto código não tiver 6 dígitos ou enquanto `verifying`.
+   - Ao clicar: `mfa.challenge({ factorId })` → `mfa.verify({ factorId, challengeId, code })`. Em sucesso: `toast.success('2FA ativado')` + `navigate({ to: '/settings/two-factor' })`. Em erro (código inválido / expirado): `toast.error` e limpar campo.
 
-## 3. Server function — leitura + gravação
-
-Novo arquivo `src/lib/personal.functions.ts`:
-
-- `getPersonalProfile` (GET, autenticado): retorna `{ cpf, full_name, birth_date, nickname, phone, address_* }` do próprio `user_id`.
-- `updatePersonalProfile` (POST, autenticado): recebe apenas os campos editáveis (`nickname`, `phone`, `address_*`) validados com Zod (UF ∈ BR_STATES, CEP 8 dígitos, campos obrigatórios não-vazios) e faz `update` em `profiles` via `context.supabase` (RLS).
-
-## 4. Tela — `settings.personal.tsx`
-
-- No `loader` (dentro de `_authenticated`, portanto safe para server-fn autenticada): chamar `getPersonalProfile` e retornar como `Route.useLoaderData()`.
-- Inicializar todos os `useState` com os valores retornados; guardar `initial` para o Cancelar.
-- Formatar exibição de `cpf` (`000.000.000-00`), `birth_date` (`DD/MM/AAAA`) e montar `full_name` a partir do banco — se estiverem vazios, manter placeholder e uma nota "Será preenchido após verificação de identidade".
-- Máscaras nos editáveis: CEP `00000-000`, celular `(00) 00000-0000`.
-- Trocar `handleSave` para chamar `updatePersonalProfile` via `useServerFn`, com `toast.success`/`toast.error` e atualização do `initial`.
-- Adicionar `dirty` (compara estado atual com `initial`) e botões **Salvar** / **Cancelar** no mesmo padrão de `settings.subscription.tsx` (dois botões `w-full`, Salvar desabilitado quando `!dirty` ou saving, Cancelar restaura `initial`).
-- `router.invalidate()` após salvar para revalidar o loader.
+4. Sem novas tabelas nem migração — Supabase Auth guarda os fatores em `auth.mfa_factors`.
 
 ## Detalhes técnicos
 
-- Novas colunas: sem `NOT NULL`, sem default, sem CHECK — para não quebrar linhas existentes e permitir preenchimento gradual pelo Veriff.
-- Webhook: `person`/`document` podem vir `null` em `declined`/`resubmission`; só ler quando `nextStatus === "verified"`.
-- `cpf` só é sobrescrito se `profiles.cpf` estiver NULL (usar um segundo update condicional, ou incluir no update principal apenas se estava vazio — checamos antes com um `select`).
-- `personal.functions.ts` fica em `src/lib/` (client-safe path). Não importa `client.server` — usa `context.supabase` do `requireSupabaseAuth`.
-- Loader roda sob `_authenticated`, então é seguro chamar a server-fn autenticada.
+- Tudo client-side com `supabase.auth.mfa.*`; nenhum server function necessário (o token do usuário basta).
+- Remover o import de `qrcode` do `settings.two-factor.setup.tsx` (usa o SVG do Supabase).
+- `SECRET_CODE` hardcoded é removido; o secret real vem de `enroll()`.
+- Cleanup de fatores `unverified` no mount do setup evita acúmulo se o usuário sair no meio.
+- MFA nível AAL2: após `verify` bem-sucedido, a sessão do próprio dispositivo sobe pra AAL2 automaticamente.
+- Cores: a barra de progresso e o botão principal usam os tokens roxos já existentes (`--primary` / `bg-gradient-primary`) — nenhuma cor hardcoded.
+
+## Arquivos
+
+- edit `src/routes/_authenticated/settings.two-factor.index.tsx` — status real via `listFactors`.
+- edit `src/routes/_authenticated/settings.two-factor.setup.tsx` — usa `mfa.enroll`, QR do Supabase, avançar leva pra `/verify?factorId=...`.
+- new  `src/routes/_authenticated/settings.two-factor.verify.tsx` — tela do screenshot 2 com barra de progresso roxa, chama `challenge` + `verify`.
