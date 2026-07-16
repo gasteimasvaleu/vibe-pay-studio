@@ -133,6 +133,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          metadata: Json
           price_cents: number
           read_at: string | null
           sender_id: string
@@ -142,6 +143,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          metadata?: Json
           price_cents?: number
           read_at?: string | null
           sender_id: string
@@ -151,6 +153,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          metadata?: Json
           price_cents?: number
           read_at?: string | null
           sender_id?: string
@@ -525,6 +528,10 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          chat_welcome_enabled: boolean
+          chat_welcome_media: Json
+          chat_welcome_message: string | null
+          chat_welcome_tag: string | null
           cover_url: string | null
           cpf: string | null
           created_at: string
@@ -576,6 +583,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          chat_welcome_enabled?: boolean
+          chat_welcome_media?: Json
+          chat_welcome_message?: string | null
+          chat_welcome_tag?: string | null
           cover_url?: string | null
           cpf?: string | null
           created_at?: string
@@ -627,6 +638,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          chat_welcome_enabled?: boolean
+          chat_welcome_media?: Json
+          chat_welcome_message?: string | null
+          chat_welcome_tag?: string | null
           cover_url?: string | null
           cpf?: string | null
           created_at?: string
