@@ -205,11 +205,14 @@ function ChatSettingsPage() {
     });
   }
 
+  const priceButNoMedia = priceCents > 0 && media.length === 0;
   const canSave =
     dirty &&
     !updateMutation.isPending &&
     !uploading &&
+    !priceButNoMedia &&
     (!enabled || message.trim().length >= 3 || media.length > 0);
+
 
   return (
     <div className="min-h-screen bg-background">
