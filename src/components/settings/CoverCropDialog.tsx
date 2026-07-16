@@ -133,7 +133,6 @@ export function CoverCropDialog({ imageSrc, onCancel, onCropped }: Props) {
           aspect={ASPECT}
           cropShape="rect"
           showGrid={false}
-          objectFit="horizontal-cover"
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}
