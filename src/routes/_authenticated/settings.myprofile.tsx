@@ -221,6 +221,7 @@ function SettingsMyProfilePage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setDeleteOpen(false)}
+                disabled={deleting}
                 className="h-12 px-6 rounded-md text-foreground hover:bg-accent"
               >
                 Cancelar
@@ -228,9 +229,10 @@ function SettingsMyProfilePage() {
               <Button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="h-12 px-8 rounded-md bg-muted text-foreground hover:bg-accent"
+                disabled={deleting}
+                className="h-12 px-8 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Continuar
+                {deleting ? "Excluindo…" : "Continuar"}
               </Button>
             </div>
           </div>
