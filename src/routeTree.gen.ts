@@ -69,6 +69,7 @@ import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './route
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
+import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth/email-hook'
 import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
 import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
 import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
@@ -416,6 +417,11 @@ const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   path: '/api/public/webhooks/asaas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
+  id: '/api/public/auth/email-hook',
+  path: '/api/public/auth/email-hook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsTwoFactorVerifyRoute =
   AuthenticatedSettingsTwoFactorVerifyRouteImport.update({
     id: '/verify',
@@ -533,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
+  '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -598,6 +605,7 @@ export interface FileRoutesByTo {
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
+  '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -670,6 +678,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/_authenticated/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/_authenticated/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
+  '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -742,6 +751,7 @@ export interface FileRouteTypes {
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
+    | '/api/public/auth/email-hook'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management/'
@@ -807,6 +817,7 @@ export interface FileRouteTypes {
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
+    | '/api/public/auth/email-hook'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management'
@@ -878,6 +889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/device-management/removed'
     | '/_authenticated/settings/two-factor/setup'
     | '/_authenticated/settings/two-factor/verify'
+    | '/api/public/auth/email-hook'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/settings/device-management/'
@@ -894,6 +906,7 @@ export interface RootRouteChildren {
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
+  ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
 }
@@ -1320,6 +1333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth/email-hook': {
+      id: '/api/public/auth/email-hook'
+      path: '/api/public/auth/email-hook'
+      fullPath: '/api/public/auth/email-hook'
+      preLoaderRoute: typeof ApiPublicAuthEmailHookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/two-factor/verify': {
       id: '/_authenticated/settings/two-factor/verify'
       path: '/verify'
@@ -1608,19 +1628,10 @@ const rootRouteChildren: RootRouteChildren = {
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
+  ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
