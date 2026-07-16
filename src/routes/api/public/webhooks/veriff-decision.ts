@@ -169,6 +169,19 @@ export const Route = createFileRoute("/api/public/webhooks/veriff-decision")({
               rows: updatedRows.length,
               nextStatus,
             });
+            if (nextStatus === "verified") {
+              const promotedId =
+                (updatedRows[0]?.user_id as string | undefined) ??
+                verification.vendorData;
+              if (promotedId) {
+                try {
+                  const events = await import("@/lib/email-events.server");
+                  await events.notifyFreeToPaid(promotedId);
+                } catch (err) {
+                  console.error("[veriff webhook] notifyFreeToPaid failed", err);
+                }
+              }
+            }
           }
 
           return new Response("ok", { status: 200 });
