@@ -19,10 +19,12 @@ export function SubscriberDashboard({
   username,
   creatorNextStep,
   creatorOnboardingStarted,
+  avatarUrl,
 }: {
   username: string;
   creatorNextStep: string;
   creatorOnboardingStarted: boolean;
+  avatarUrl?: string | null;
 }) {
   const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ export function SubscriberDashboard({
       username={username}
       isCreator={false}
       showProfileLink={false}
+      avatarUrl={avatarUrl}
     >
       <section className="space-y-4">
         <h3 className="text-lg font-bold tracking-tight text-white/90">
