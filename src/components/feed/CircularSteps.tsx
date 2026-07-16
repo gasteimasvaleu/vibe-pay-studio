@@ -54,11 +54,11 @@ export function CircularSteps({
   colors = {},
   fontSizes = {},
 }: CircularStepsProps) {
-  const colorTitle = colors.title ?? "#ffffff";
-  const colorSubtitle = colors.subtitle ?? "rgba(232,121,249,0.9)";
-  const colorDescription = colors.description ?? "rgba(255,255,255,0.75)";
-  const colorArrowBg = colors.arrowBackground ?? "rgba(255,255,255,0.08)";
-  const colorArrowFg = colors.arrowForeground ?? "#ffffff";
+  const colorTitle = colors.title ?? "hsl(var(--foreground))";
+  const colorSubtitle = colors.subtitle ?? "hsl(var(--primary))";
+  const colorDescription = colors.description ?? "hsl(var(--muted-foreground))";
+  const colorArrowBg = colors.arrowBackground ?? "hsl(var(--muted))";
+  const colorArrowFg = colors.arrowForeground ?? "hsl(var(--foreground))";
   const colorArrowHoverBg =
     colors.arrowHoverBackground ?? "linear-gradient(135deg,#d946ef,#9333ea)";
 

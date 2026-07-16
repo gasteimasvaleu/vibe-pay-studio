@@ -196,13 +196,13 @@ function FeedPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-6 md:p-10"
+              className="rounded-3xl border border-border bg-card backdrop-blur-md p-6 md:p-10"
             >
               <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-white">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">
                   Seu feed está vazio
                 </h2>
-                <p className="mt-2 text-sm text-white/75 max-w-md mx-auto leading-relaxed">
+                <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                   Veja como aproveitar a Monetisexy enquanto você assina seus creators.
                 </p>
               </div>
