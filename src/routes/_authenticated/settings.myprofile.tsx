@@ -37,12 +37,12 @@ export const Route = createFileRoute("/_authenticated/settings/myprofile")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
     const username =
       profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    return { username };
+    return { username, avatarUrl: profile?.avatar_url ?? null };
   },
   component: SettingsMyProfilePage,
 });
