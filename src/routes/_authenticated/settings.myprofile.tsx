@@ -49,11 +49,34 @@ export const Route = createFileRoute("/_authenticated/settings/myprofile")({
 
 function SettingsMyProfilePage() {
   const router = useRouter();
-  const { username } = Route.useRouteContext();
+  const { username, avatarUrl: initialAvatarUrl } = Route.useRouteContext();
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePickFile = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 10MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.onerror = () => toast.error("Não foi possível ler o arquivo");
+    reader.readAsDataURL(file);
+  };
 
   const handleCopyLink = async () => {
     try {
