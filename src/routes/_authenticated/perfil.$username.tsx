@@ -153,6 +153,11 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       profile: {
         userId: profile.user_id,
         username: profile.username,
+        displayName: (profile.display_name as string | null) ?? null,
+        bio: (profile.bio as string | null) ?? null,
+        location: (profile.location as string | null) ?? null,
+        avatarUrl: (profile.avatar_url as string | null) ?? null,
+        coverUrl: (profile.cover_url as string | null) ?? null,
         accountType: profile.account_type,
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
