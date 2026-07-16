@@ -7,11 +7,13 @@ export function DashboardShell({
   username,
   isCreator,
   showProfileLink,
+  avatarUrl,
   children,
 }: {
   username: string;
   isCreator: boolean;
   showProfileLink?: boolean;
+  avatarUrl?: string | null;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -47,6 +49,7 @@ export function DashboardShell({
           username={username}
           isCreator={isCreator}
           showProfileLink={showProfileLink}
+          avatarUrl={avatarUrl}
         />
         {children}
       </main>
