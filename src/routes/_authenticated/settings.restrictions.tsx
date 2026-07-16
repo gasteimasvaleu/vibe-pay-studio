@@ -355,14 +355,10 @@ function CandidateRow({
 
 function useDebounced<T>(value: T, delay: number): T {
   const [v, setV] = useState(value);
-  useMemoDebounce(() => setV(value), [value], delay);
+  useEffect(() => {
+    const id = window.setTimeout(() => setV(value), delay);
+    return () => window.clearTimeout(id);
+  }, [value, delay]);
   return v;
 }
 
-function useMemoDebounce(fn: () => void, deps: unknown[], delay: number) {
-  useMemo(() => {
-    const id = window.setTimeout(fn, delay);
-    return () => window.clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-}
