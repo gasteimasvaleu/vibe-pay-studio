@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getPersonalProfile,
+  updatePersonalProfile,
+} from "@/lib/personal.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/personal")({
   head: () => ({
@@ -27,6 +32,10 @@ export const Route = createFileRoute("/_authenticated/settings/personal")({
     if (!user) throw redirect({ to: "/entrar" });
     return { email: user.email ?? "" };
   },
+  loader: async () => {
+    const profile = await getPersonalProfile();
+    return { profile };
+  },
   component: PersonalPage,
 });
 
@@ -36,27 +45,71 @@ const BR_STATES = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ];
 
+function formatCpf(v: string | null) {
+  if (!v) return "";
+  const d = v.replace(/\D/g, "").padStart(11, "0").slice(-11);
+  if (d.length !== 11) return v;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function formatBirthDate(v: string | null) {
+  if (!v) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+  if (!m) return v;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function maskCep(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 5) return d;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
+}
+
+function maskPhone(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10)
+    return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
 function PersonalPage() {
   const router = useRouter();
   const { email } = Route.useRouteContext();
+  const { profile } = Route.useLoaderData();
+  const updateFn = useServerFn(updatePersonalProfile);
+
+  const initial = useMemo(
+    () => ({
+      nickname: profile.nickname ?? "",
+      phone: profile.phone ? maskPhone(profile.phone) : "",
+      cep: profile.address_cep ? maskCep(profile.address_cep) : "",
+      address: profile.address_street ?? "",
+      number: profile.address_number ?? "",
+      complement: profile.address_complement ?? "",
+      district: profile.address_district ?? "",
+      city: profile.address_city ?? "",
+      state: profile.address_state ?? "",
+    }),
+    [profile],
+  );
+
   const [tab, setTab] = useState<"info" | "address">("info");
-
-  // Info
-  const [nickname, setNickname] = useState("");
-  const [phone, setPhone] = useState("");
-
-  // Endereço
-  const [cep, setCep] = useState("");
-  const [address, setAddress] = useState("");
-  const [number, setNumber] = useState("");
-  const [complement, setComplement] = useState("");
-  const [district, setDistrict] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+  const [nickname, setNickname] = useState(initial.nickname);
+  const [phone, setPhone] = useState(initial.phone);
+  const [cep, setCep] = useState(initial.cep);
+  const [address, setAddress] = useState(initial.address);
+  const [number, setNumber] = useState(initial.number);
+  const [complement, setComplement] = useState(initial.complement);
+  const [district, setDistrict] = useState(initial.district);
+  const [city, setCity] = useState(initial.city);
+  const [state, setState] = useState(initial.state);
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const requiredMissing = {
-    cep: !cep.trim(),
+    cep: cep.replace(/\D/g, "").length !== 8,
     address: !address.trim(),
     number: !number.trim(),
     district: !district.trim(),
@@ -65,15 +118,65 @@ function PersonalPage() {
   };
   const hasErrors = Object.values(requiredMissing).some(Boolean);
 
-  const handleSave = () => {
+  const dirty =
+    nickname !== initial.nickname ||
+    phone !== initial.phone ||
+    cep !== initial.cep ||
+    address !== initial.address ||
+    number !== initial.number ||
+    complement !== initial.complement ||
+    district !== initial.district ||
+    city !== initial.city ||
+    state !== initial.state;
+
+  const handleCancel = () => {
+    setNickname(initial.nickname);
+    setPhone(initial.phone);
+    setCep(initial.cep);
+    setAddress(initial.address);
+    setNumber(initial.number);
+    setComplement(initial.complement);
+    setDistrict(initial.district);
+    setCity(initial.city);
+    setState(initial.state);
+    setAttempted(false);
+  };
+
+  const handleSave = async () => {
     setAttempted(true);
     if (hasErrors) {
       setTab("address");
       toast.error("Preencha os campos obrigatórios");
       return;
     }
-    toast.info("Em breve");
+    setSaving(true);
+    try {
+      await updateFn({
+        data: {
+          nickname: nickname.trim() || null,
+          phone: phone.trim() || null,
+          address_cep: cep,
+          address_street: address.trim(),
+          address_number: number.trim(),
+          address_complement: complement.trim() || null,
+          address_district: district.trim(),
+          address_city: city.trim(),
+          address_state: state,
+        },
+      });
+      toast.success("Dados salvos");
+      await router.invalidate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const cpfDisplay = formatCpf(profile.cpf);
+  const nameDisplay = profile.full_name ?? "";
+  const birthDisplay = formatBirthDate(profile.birth_date);
+  const kycPending = !profile.cpf || !profile.full_name || !profile.birth_date;
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,19 +226,20 @@ function PersonalPage() {
               <FloatingField
                 label="Celular"
                 value={phone}
-                onChange={setPhone}
+                onChange={(v) => setPhone(maskPhone(v))}
                 placeholder="(00) 00000-0000"
                 inputMode="tel"
               />
 
               <p className="md:col-span-2 text-sm text-muted-foreground mt-2">
                 Os campos abaixo não podem ser editados
+                {kycPending && " — serão preenchidos após a verificação de identidade"}
               </p>
 
-              <FloatingField label="CPF" value="" placeholder="000.000.000-00" disabled />
+              <FloatingField label="CPF" value={cpfDisplay} placeholder="000.000.000-00" disabled />
               <FloatingField label="E-mail" value={email} disabled />
-              <FloatingField label="Nome Completo" value="" placeholder="Nome completo" disabled />
-              <FloatingField label="Data de Nascimento" value="" placeholder="DD/MM/AAAA" disabled />
+              <FloatingField label="Nome Completo" value={nameDisplay} placeholder="Nome completo" disabled />
+              <FloatingField label="Data de Nascimento" value={birthDisplay} placeholder="DD/MM/AAAA" disabled />
             </div>
           </TabsContent>
 
@@ -151,10 +255,11 @@ function PersonalPage() {
               <FloatingField
                 label="CEP"
                 value={cep}
-                onChange={setCep}
+                onChange={(v) => setCep(maskCep(v))}
                 placeholder="00000-000"
                 required
                 error={attempted && requiredMissing.cep}
+                inputMode="numeric"
               />
               <FloatingField
                 label="Endereço"
@@ -222,13 +327,23 @@ function PersonalPage() {
           </TabsContent>
         </Tabs>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-3 pt-2">
           <Button
             type="button"
             onClick={handleSave}
+            disabled={!dirty || saving}
+            className="w-full h-12 rounded-md text-base font-semibold bg-primary"
+          >
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={!dirty || saving}
             className="w-full h-12 rounded-md text-base font-semibold"
           >
-            Salvar
+            Cancelar
           </Button>
         </div>
       </main>
