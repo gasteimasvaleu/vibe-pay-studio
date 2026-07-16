@@ -1,26 +1,49 @@
-## Contexto
+## Objetivo
 
-A página `/settings/two-factor` já detecta o fator TOTP verificado e mostra um botão **Desativar** quando ativo (usa `supabase.auth.mfa.unenroll`). Só que hoje é um botão outline "cru", sem confirmação e sem separação visual entre "desativar" e "remover".
+Ligar `/settings/device-management` a sessões reais do Supabase Auth. Substituir os mocks (`CURRENT`, `OTHERS`) por dados vindos de `auth.sessions`, identificar o acesso atual, permitir remover sessões individuais e "Remover todos os acessos".
 
-Como no Supabase MFA só existe uma operação (`unenroll`) — que ao mesmo tempo desabilita o 2FA e apaga o fator do `auth.mfa_factors` — não faz sentido ter dois botões distintos. Vou reforçar essa única ação, mas com UX de página de "gerenciar 2FA".
+## Como funciona
 
-## Mudanças em `/settings/two-factor` (quando ativa)
+O Supabase Auth guarda cada sessão em `auth.sessions` com: `id`, `user_id`, `created_at`, `updated_at`, `refreshed_at`, `user_agent`, `ip`, `not_after`. O JWT do usuário carrega `session_id` no claim — usamos isso pra marcar qual card é "acesso atual". Como `auth.sessions` fica no schema `auth` (só service role acessa), toda leitura/gravação passa por server function.
 
-- Cartão de status atualizado: bolinha verde/roxa + "Ativa" + linha secundária "Adicionada em {data}" (usando `factor.created_at` de `listFactors`).
-- Bloco separado "Zona de perigo" (borda `border-destructive/30`, fundo sutil) com:
-  - Título **"Remover autenticação de dois fatores"**
-  - Descrição curta: "Isso desativa o 2FA e remove o app autenticador da sua conta. Você poderá cadastrar novamente a qualquer momento."
-  - Botão **"Remover 2FA"** em `variant="destructive"`, largura total.
-- Ao clicar, abrir um `AlertDialog` (shadcn já disponível) confirmando: "Tem certeza que deseja remover?" com botões **Cancelar** / **Remover**.
-- Confirmado: chama `mfa.unenroll({ factorId })`, `toast.success("2FA removido")`, `refresh()`.
-- Estado `busy` desabilita o botão durante a chamada; erro exibe `toast.error`.
+## Server functions — novo `src/lib/sessions.functions.ts`
+
+Todas com `.middleware([requireSupabaseAuth])`, carregando `supabaseAdmin` dentro do handler:
+
+- `listMySessions()` → lê `auth.sessions` (`context.supabase.rpc` não expõe schema auth; usar `supabaseAdmin.schema('auth').from('sessions').select(...).eq('user_id', context.userId).order('refreshed_at', { ascending: false })`). Retorna array `{ id, userAgent, ip, createdAt, refreshedAt, isCurrent }` — `isCurrent = id === context.claims.session_id`.
+- `revokeSession({ sessionId: string })` → valida `sessionId ≠ current` e `user_id = context.userId`, então `supabaseAdmin.schema('auth').from('sessions').delete().eq('id', sessionId).eq('user_id', context.userId)`.
+- `revokeAllOtherSessions()` → mesmo `delete` com `.neq('id', context.claims.session_id)`.
+
+Não expor rota "sign out this device" pro card atual — só "Remover todos os outros" fecha as demais sem deslogar o usuário aqui.
+
+## Tela `settings.device-management.index.tsx`
+
+- `loader` chama `listMySessions()` (rota está sob `_authenticated`, ok).
+- Split em `current` (isCurrent = true) e `others`.
+- Parser simples de `user_agent` → `{ browser: 'Chrome' | 'Safari' | 'Firefox' | 'Edge' | 'Outro', os: 'Windows' | 'macOS' | 'iOS' | 'Android' | 'Linux' | '—' }`. Sem lib externa; regex direto.
+- Card mostra: **{browser} em {os}**, IP (em vez de "cidade, UF, BR" — Supabase não faz geolocalização; explicar em texto pequeno "Localização por IP indisponível"), "Ativo em {refreshed_at formatado pt-BR}" e "Entrou em {created_at}".
+- Menu de opções por card:
+  - Remover **"Renomear"** (Supabase não guarda apelido de sessão; simplificar).
+  - Manter **"Remover acesso"** → `AlertDialog` de confirmação → chama `revokeSession` → `toast.success` → `router.invalidate()`.
+- Botão "Remover todos os acessos" → `AlertDialog` → `revokeAllOtherSessions()` → `router.invalidate()`.
+- "Ver mais" continua mesmo comportamento (paginação client-side sobre `others`).
+- Fallback: se `others.length === 0`, mostrar mensagem "Nenhum outro acesso ativo".
+
+## Tela `settings.device-management.removed.tsx`
+
+Supabase não guarda histórico de sessões deletadas. Duas opções:
+
+- **(escolhido)** Manter a página com a mensagem informativa de placeholder que já existe hoje. Sem criar tabela nova nem migração.
+- (alternativa não tomada) Criar tabela `revoked_sessions` e inserir uma linha toda vez que revogamos — dá mais peso ao produto mas exige migração + escrita a cada revogação. Se o usuário quiser esse histórico, faço num passo seguinte.
 
 ## Sem mudanças
 
-- Estado "não configurada" continua igual (botão **Habilitar** → `/setup`).
-- Não mexer nas rotas `setup` nem `verify`.
-- Sem migração — Supabase gerencia `auth.mfa_factors`.
+- Sem migração (dados vêm de `auth.sessions`).
+- Sem novos secrets — `supabaseAdmin` já usa `APP_SUPABASE_SERVICE_ROLE_KEY`.
+- Não vamos fazer geolocalização por IP nesse passo (evita dependência externa/custo). Só IP cru.
 
-## Arquivo
+## Arquivos
 
-- edit `src/routes/_authenticated/settings.two-factor.index.tsx` — adiciona bloco "Zona de perigo" com `AlertDialog` de confirmação e exibe data de cadastro do fator.
+- new  `src/lib/sessions.functions.ts` — 3 server functions autenticadas.
+- edit `src/routes/_authenticated/settings.device-management.index.tsx` — loader real, parser de user_agent, AlertDialogs de confirmação, remove "Renomear".
+- `settings.device-management.removed.tsx` fica como está.
