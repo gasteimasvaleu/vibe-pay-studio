@@ -1,59 +1,37 @@
-# Emails de autenticação via Resend
+# Finalizar Send Email Hook via Resend
 
-Como o projeto usa Supabase próprio (não Lovable Cloud) e você já tem o Resend conectado com `monetisexy.com` verificado, vamos rotear os emails de auth do Supabase diretamente para o Resend usando o **Send Email Hook** do Supabase Auth.
+O código do hook já está pronto de mensagens anteriores:
+- `src/routes/api/public/auth/email-hook.ts` — route pública que verifica HMAC (Standard Webhooks) e envia via Resend gateway
+- `src/lib/auth-email-templates.server.ts` — templates HTML branded (signup, recovery, magic link, invite, email_change, reauthentication)
+- Secret `AUTH_EMAIL_HOOK_SECRET` já provisionado
 
-## Como funciona
+## O que falta (não é código — é config no Supabase)
 
-O Supabase Auth pode delegar o envio de TODOS os emails transacionais (signup confirmation, magic link, recovery, invite, email change, reauthentication) para um webhook HTTPS nosso, em vez do SMTP interno. O webhook recebe o payload com usuário + token/link, renderiza o template e envia via Resend.
+Como o Supabase é seu (não Lovable Cloud), a configuração do hook em `auth.config` só pode ser feita por você no Dashboard. Passos:
 
-```text
-Signup / Reset / Magic Link
-        │
-        ▼
-Supabase Auth ──(Send Email Hook + HMAC)──▶ /api/public/auth/email-hook
-                                                   │
-                                                   ├─ verifica assinatura
-                                                   ├─ renderiza template
-                                                   └─ POST Resend /emails
-                                                             │
-                                                             ▼
-                                                     Usuário recebe email
-                                                     de no-reply@monetisexy.com
-```
+1. **Gerar segredo base64** no terminal:
+   ```bash
+   openssl rand -base64 48
+   ```
 
-## Passos
+2. **Atualizar `AUTH_EMAIL_HOOK_SECRET` no Lovable** com esse mesmo valor (só a parte base64, sem prefixo). Vou abrir o formulário seguro na próxima mensagem.
 
-1. **Criar route pública** `src/routes/api/public/auth/email-hook.ts`
-   - Verifica header `webhook-signature` (padrão Standard Webhooks, HMAC SHA-256) usando um segredo compartilhado
-   - Lê o payload: `{ user, email_data: { token, token_hash, redirect_to, email_action_type, site_url } }`
-   - Escolhe o template por `email_action_type` (`signup`, `recovery`, `magiclink`, `invite`, `email_change`, `reauthentication`)
-   - Chama Resend via connector gateway (já configurado) usando `APP_EMAIL_FROM` = `Equipe Monetisexy <no-reply@monetisexy.com>`
+3. **Supabase Dashboard → Authentication → Hooks → Send Email Hook**:
+   - Enable
+   - Hook URL: `https://monetisexy.com/api/public/auth/email-hook`
+   - Secret: `v1,whsec_<mesmo_valor_base64>` (com prefixo)
 
-2. **Templates HTML** em `src/lib/auth-email-templates.server.ts`
-   - Um por tipo, com branding Monetisexy (mesmas cores/tipografia dos templates transacionais que já criamos em `src/lib/email-templates.server.ts`)
-   - Botão CTA com link `{{site_url}}/auth/confirm?token_hash=...&type=...&redirect_to=...`
+4. **Testar** com um cadastro novo — email deve chegar de `Equipe Monetisexy <no-reply@monetisexy.com>` via Resend (confere no dashboard do Resend em Logs).
 
-3. **Segredos**
-   - `SUPABASE_AUTH_HOOK_SECRET` — gerado com generate_secret, usado tanto no painel Supabase quanto na verificação da route
-   - `RESEND_API_KEY` e `LOVABLE_API_KEY` — já existem via connector
+## Ajustes que faço em código quando aprovar
 
-4. **Ação manual sua no Supabase Dashboard** (não posso fazer por API porque é Supabase próprio):
-   - Authentication → Hooks → **Send Email Hook** → Enable
-   - URL: `https://monetisexy.com/api/public/auth/email-hook` (ou a URL do preview durante teste)
-   - Secret: colar o valor de `SUPABASE_AUTH_HOOK_SECRET`
-   - Opcional: Authentication → Emails → desativar/limpar templates padrão para garantir que só o hook envia
+- Chamar `update_secret` (formulário seguro) pro `AUTH_EMAIL_HOOK_SECRET` — assim você cola o valor gerado e ele fica sincronizado.
+- Verificar se o `AUTH_EMAIL_HOOK_SECRET` gerado antes ainda está lá e substituir pelo seu valor.
 
-5. **Teste**: criar conta nova → confirmar que chega email da Monetisexy pelo Resend (verificar no dashboard do Resend em Logs).
+Nenhum outro arquivo precisa mudar — o código já suporta secret em formato base64.
 
-## Detalhes técnicos
+## Notas
 
-- A route fica em `/api/public/*` para pular auth (Supabase chama sem sessão de usuário)
-- Verificação de assinatura usa `standardwebhooks` — payload é `${msg_id}.${timestamp}.${body}`, comparação `timingSafeEqual`
-- Rejeita timestamps com mais de 5 minutos de desvio
-- Retorna 200 rápido; qualquer erro do Resend é logado mas não bloqueia (o Supabase re-tenta)
-- Não mexemos em `src/lib/email.server.ts` (já usado para emails transacionais do app) — mesma infra Resend, código separado só para clareza
-
-## O que NÃO faremos
-
-- Não usar o scaffold de auth emails do Lovable (requer Lovable Cloud, que este projeto não tem)
-- Não usar SMTP customizado do Supabase apontando pro Resend (funciona, mas o hook dá controle total sobre o template)
+- Não posso automatizar o passo 3 (dashboard Supabase) sem um Personal Access Token seu da Management API.
+- Uma vez configurado, funciona indefinidamente — não precisa refazer.
+- Rate limit do Supabase (`Authentication → Rate Limits → Emails per hour`) precisa estar alto o suficiente pro seu volume; default é bem baixo.
