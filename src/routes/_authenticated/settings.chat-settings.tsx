@@ -62,12 +62,17 @@ export const Route = createFileRoute("/_authenticated/settings/chat-settings")({
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const AUDIO_MAX_SEC = 120;
-const PRESET_TAGS = ["assinante-novo", "promo", "retorno", "vip"];
-
 function kindFromMime(mime: string): ChatWelcomeMedia["kind"] {
   if (mime.startsWith("image/")) return "image";
   if (mime.startsWith("video/")) return "video";
   return "audio";
+}
+
+function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 function ChatSettingsPage() {
@@ -85,9 +90,10 @@ function ChatSettingsPage() {
   const [enabled, setEnabled] = useState(false);
   const [message, setMessage] = useState("");
   const [media, setMedia] = useState<ChatWelcomeMedia[]>([]);
-  const [tag, setTag] = useState<string | null>(null);
+  const [priceCents, setPriceCents] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +102,7 @@ function ChatSettingsPage() {
     setEnabled(data.enabled);
     setMessage(data.message);
     setMedia(data.media);
-    setTag(data.tag);
+    setPriceCents(data.priceCents ?? 0);
     setDirty(false);
   }, [data]);
 
