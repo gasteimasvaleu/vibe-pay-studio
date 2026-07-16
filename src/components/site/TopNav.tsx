@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const LOGO_URL =
   "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy3..png";
