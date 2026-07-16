@@ -139,6 +139,12 @@ function SettingsSocialPage() {
     }
   }
 
+  function onCancel() {
+    setDisplayName(initialDisplayName);
+    setHandle(initialUsername);
+    setStatus({ kind: "self" });
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative z-10 border-b border-border bg-white">
@@ -154,14 +160,7 @@ function SettingsSocialPage() {
           <h1 className="text-base font-semibold text-foreground truncate">
             Nome de perfil e Identificador
           </h1>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={!canSave || saving}
-            className="text-sm font-semibold text-primary disabled:text-muted-foreground disabled:cursor-not-allowed min-w-[3.5rem] text-right"
-          >
-            {saving ? "Salvando…" : "Salvar"}
-          </button>
+          <div className="w-9" aria-hidden="true" />
         </div>
       </header>
 
