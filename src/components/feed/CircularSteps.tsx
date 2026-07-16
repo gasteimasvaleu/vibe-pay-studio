@@ -122,7 +122,7 @@ export function CircularSteps({
       aspectRatio: "1 / 1",
       borderRadius: "9999px",
       overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.12)",
+      border: "1px solid hsl(var(--border))",
       boxShadow: "0 20px 60px -20px rgba(217,70,239,0.35)",
       transition: "all 0.8s cubic-bezier(.4,2,.3,1)",
       willChange: "transform, opacity",
