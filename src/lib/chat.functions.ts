@@ -303,6 +303,7 @@ export type ChatWelcomeSettings = {
   message: string;
   media: ChatWelcomeMedia[];
   tag: string | null;
+  priceCents: number;
 };
 
 export const getChatWelcome = createServerFn({ method: "GET" })
@@ -311,7 +312,7 @@ export const getChatWelcome = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("profiles")
-      .select("chat_welcome_enabled, chat_welcome_message, chat_welcome_media, chat_welcome_tag")
+      .select("chat_welcome_enabled, chat_welcome_message, chat_welcome_media, chat_welcome_tag, chat_welcome_price_cents")
       .eq("user_id", userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -330,6 +331,7 @@ export const getChatWelcome = createServerFn({ method: "GET" })
       enabled: !!data?.chat_welcome_enabled,
       message: data?.chat_welcome_message ?? "",
       tag: data?.chat_welcome_tag ?? null,
+      priceCents: (data as any)?.chat_welcome_price_cents ?? 0,
       media: raw.map((m) => ({ ...m, url: urlByPath.get(m.path) ?? null })),
     };
   });
@@ -343,6 +345,7 @@ export const updateChatWelcome = createServerFn({ method: "POST" })
         message: z.string().max(4000).optional(),
         media: z.array(welcomeMediaSchema).max(10).default([]),
         tag: z.string().trim().max(40).nullable().optional(),
+        priceCents: z.number().int().min(0).max(50000).optional(),
       })
       .parse(data),
   )
@@ -350,8 +353,12 @@ export const updateChatWelcome = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const msg = (data.message ?? "").trim();
     const media = data.media ?? [];
+    const price = data.priceCents ?? 0;
     if (data.enabled && msg.length < 3 && media.length === 0) {
       throw new Error("Adicione uma mensagem (mín. 3 caracteres) ou uma mídia");
+    }
+    if (price > 0 && media.length === 0) {
+      throw new Error("Adicione uma mídia para poder precificar a mensagem");
     }
     const prefix = `chat-welcome/${userId}/`;
     for (const m of media) {
@@ -364,7 +371,8 @@ export const updateChatWelcome = createServerFn({ method: "POST" })
         chat_welcome_message: msg || null,
         chat_welcome_media: media as unknown as never,
         chat_welcome_tag: data.tag?.trim() || null,
-      })
+        chat_welcome_price_cents: price,
+      } as any)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
