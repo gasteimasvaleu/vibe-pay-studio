@@ -58,8 +58,7 @@ export function renderAuthEmail(
   action: string,
   p: AuthEmailPayload,
 ): { subject: string; html: string } {
-  const siteUrl = p.site_url || APP_BASE_URL;
-  const confirmUrl = `${siteUrl}/auth/confirm?token_hash=${encodeURIComponent(
+  const confirmUrl = `${APP_BASE_URL}/auth/confirm?token_hash=${encodeURIComponent(
     p.token_hash,
   )}&type=${encodeURIComponent(action)}&next=${encodeURIComponent(p.redirect_to || "/")}`;
 
