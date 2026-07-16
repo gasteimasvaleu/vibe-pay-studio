@@ -1,10 +1,12 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Instagram } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { updateSocialLinks } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/social-media")({
   head: () => ({
@@ -15,8 +17,18 @@ export const Route = createFileRoute("/_authenticated/settings/social-media")({
   }),
   beforeLoad: async () => {
     const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.user) throw redirect({ to: "/entrar" });
-    return {};
+    const user = sessionData.session?.user;
+    if (!user) throw redirect({ to: "/entrar" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("instagram_handle, tiktok_handle, x_handle")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return {
+      instagram: profile?.instagram_handle ?? "",
+      tiktok: profile?.tiktok_handle ?? "",
+      x: profile?.x_handle ?? "",
+    };
   },
   component: SettingsSocialMediaPage,
 });
@@ -26,10 +38,52 @@ const sanitize = (v: string) =>
 
 function SettingsSocialMediaPage() {
   const router = useRouter();
-  const [instagram, setInstagram] = useState("");
-  const [tiktok, setTiktok] = useState("");
-  const [x, setX] = useState("");
-  const dirty = instagram !== "" || tiktok !== "" || x !== "";
+  const {
+    instagram: initInstagram,
+    tiktok: initTiktok,
+    x: initX,
+  } = Route.useRouteContext();
+  const saveFn = useServerFn(updateSocialLinks);
+
+  const [instagram, setInstagram] = useState(initInstagram);
+  const [tiktok, setTiktok] = useState(initTiktok);
+  const [x, setX] = useState(initX);
+  const [initial, setInitial] = useState({
+    instagram: initInstagram,
+    tiktok: initTiktok,
+    x: initX,
+  });
+  const [saving, setSaving] = useState(false);
+  const dirty =
+    instagram !== initial.instagram ||
+    tiktok !== initial.tiktok ||
+    x !== initial.x;
+
+  const handleSave = async () => {
+    if (!dirty || saving) return;
+    setSaving(true);
+    try {
+      const res = await saveFn({ data: { instagram, tiktok, x } });
+      if (res.ok) {
+        toast.success("Redes sociais atualizadas");
+        setInitial({ instagram: res.instagram, tiktok: res.tiktok, x: res.x });
+        setInstagram(res.instagram);
+        setTiktok(res.tiktok);
+        setX(res.x);
+        router.invalidate();
+      }
+    } catch {
+      toast.error("Não foi possível salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setInstagram(initial.instagram);
+    setTiktok(initial.tiktok);
+    setX(initial.x);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,12 +104,12 @@ function SettingsSocialMediaPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3 pb-28">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3">
         <SocialField
           icon={<Instagram className="h-6 w-6 text-foreground" />}
           value={instagram}
           onChange={(v) => setInstagram(sanitize(v))}
-          placeholder="instagram.com/"
+          placeholder="instagram.com/(seu @)"
         />
         <SocialField
           icon={<TikTokIcon />}
@@ -69,20 +123,26 @@ function SettingsSocialMediaPage() {
           onChange={(v) => setX(sanitize(v))}
           placeholder="x.com/(seu @)"
         />
-      </main>
 
-      <div className="fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 md:px-6 py-3 z-20">
-        <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
-            disabled={!dirty}
-            onClick={() => toast.info("Em breve")}
-            className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground disabled:opacity-60"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            Salvar
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={!dirty || saving}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Cancelar
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
