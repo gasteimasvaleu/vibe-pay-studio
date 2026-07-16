@@ -196,7 +196,7 @@ function FeedPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="rounded-3xl border border-border bg-card backdrop-blur-md p-6 md:p-10"
+              className="rounded-3xl border border-border bg-card backdrop-blur-md p-4 md:p-6"
             >
               <CircularSteps
                 steps={[

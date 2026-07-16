@@ -156,7 +156,7 @@ export function CircularSteps({
 
   return (
     <div className="w-full">
-      <div className="grid gap-8 md:grid-cols-2 md:items-center">
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2 md:items-center">
         {/* Images */}
         <div
           ref={imageContainerRef}
