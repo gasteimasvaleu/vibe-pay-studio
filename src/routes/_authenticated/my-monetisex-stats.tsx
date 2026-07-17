@@ -69,6 +69,7 @@ import {
   getAssinantesStats,
   getTopAssinantes,
   getAtividadeAssinantes,
+  getAssinantesList,
   getTopPaises,
   getStreak,
   getAlcance,
