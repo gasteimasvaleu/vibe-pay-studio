@@ -1429,6 +1429,7 @@ function formatChartDate(iso: string) {
 function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ASSINANTES_TABS)[number]>("Assinaturas");
   const [topFiltro, setTopFiltro] = useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
+  const [gastoFiltro, setGastoFiltro] = useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
 
   const statsFn = useServerFn(getAssinantesStats);
   const stats = useQuery({
@@ -1442,6 +1443,12 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
     queryFn: () => topFn({ data: { ...range, metric: TOP_METRIC_MAP[topFiltro] } }),
     staleTime: 30_000,
   });
+  const gasto = useQuery({
+    queryKey: ["stats", "topAssinantesGasto", range.from, range.to, gastoFiltro],
+    queryFn: () => topFn({ data: { ...range, metric: TOP_METRIC_MAP[gastoFiltro] } }),
+    staleTime: 30_000,
+  });
+
 
   const chart = (stats.data?.daily ?? []).map(r => ({
     label: formatChartDate(r.day),
