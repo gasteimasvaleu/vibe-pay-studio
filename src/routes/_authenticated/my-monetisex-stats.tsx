@@ -1429,6 +1429,7 @@ function formatChartDate(iso: string) {
 function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ASSINANTES_TABS)[number]>("Assinaturas");
   const [topFiltro, setTopFiltro] = useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
+  const [gastoFiltro, setGastoFiltro] = useState<(typeof TOP_ASSINANTES_CHIPS)[number]>("Total");
 
   const statsFn = useServerFn(getAssinantesStats);
   const stats = useQuery({
@@ -1442,6 +1443,12 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
     queryFn: () => topFn({ data: { ...range, metric: TOP_METRIC_MAP[topFiltro] } }),
     staleTime: 30_000,
   });
+  const gasto = useQuery({
+    queryKey: ["stats", "topAssinantesGasto", range.from, range.to, gastoFiltro],
+    queryFn: () => topFn({ data: { ...range, metric: TOP_METRIC_MAP[gastoFiltro] } }),
+    staleTime: 30_000,
+  });
+
 
   const chart = (stats.data?.daily ?? []).map(r => ({
     label: formatChartDate(r.day),
@@ -1509,7 +1516,16 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
             </div>
           </div>
         ) : tab === "Top assinantes" ? (
-          <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} full />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2">
+              <TopAssinantesGastoTotal top={gasto.data ?? []} loading={gasto.isLoading} filtro={gastoFiltro} onFiltro={setGastoFiltro} />
+            </div>
+            <div className="space-y-5">
+              <ResumoAssinantesCard stats={stats.data} loading={stats.isLoading} />
+              <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
+            </div>
+          </div>
+
         ) : (
           <AtividadeAssinantesInline range={range} />
         )}
@@ -1629,6 +1645,92 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
     </div>
   );
 }
+
+function TopAssinantesGastoTotal({ top, loading, filtro, onFiltro }: {
+  top: { buyerId: string; gross: number; username: string | null; displayName: string | null; avatarUrl: string | null }[];
+  loading: boolean;
+  filtro: (typeof TOP_ASSINANTES_CHIPS)[number];
+  onFiltro: (f: (typeof TOP_ASSINANTES_CHIPS)[number]) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <div>
+        <h3 className="text-sm font-bold">Filtrar por</h3>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {TOP_ASSINANTES_CHIPS.map(c => (
+            <div key={c} className="shrink-0"><Chip label={c} active={c === filtro} onClick={() => onFiltro(c)} /></div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border overflow-hidden">
+        <div className="grid grid-cols-[minmax(0,2fr)_auto] gap-3 px-4 py-3 text-xs font-semibold text-muted-foreground border-b border-border">
+          <span>Nome</span>
+          <span className="text-right">Gasto total</span>
+        </div>
+        {loading ? (
+          <div className="p-4 space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+        ) : top.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">Sem dados para este filtro</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {top.map(t => {
+              const name = t.displayName || t.username || "Assinante";
+              return (
+                <div key={t.buyerId} className="grid grid-cols-[minmax(0,2fr)_auto] gap-3 items-center px-4 py-3 text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                      {t.avatarUrl ? <img src={t.avatarUrl} alt="" className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{name}</p>
+                      {t.username && <p className="text-xs text-muted-foreground truncate">@{t.username}</p>}
+                    </div>
+                  </div>
+                  <span className="justify-self-end font-semibold whitespace-nowrap">{formatBRL(t.gross)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResumoAssinantesCard({ stats, loading }: {
+  stats: { novosPeriodo: number; renovacoesPeriodo: number; faturamentoPeriodo: number } | undefined;
+  loading: boolean;
+}) {
+  const novos = stats?.novosPeriodo ?? 0;
+  const renov = stats?.renovacoesPeriodo ?? 0;
+  const totalAssin = novos + renov;
+  const items = [
+    { icon: Users, label: "Assinantes", value: loading ? "—" : String(totalAssin) },
+    { icon: UserPlus, label: "Assinaturas/Renovações", value: loading ? "—" : `${novos} / ${renov}` },
+    { icon: DollarSign, label: "Ganhos de assinaturas", value: loading ? "—" : formatBRL(stats?.faturamentoPeriodo ?? 0) },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Resumo</h3>
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {items.map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center text-primary shrink-0">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground truncate">{label}</p>
+              <p className="text-base font-bold truncate">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 function StatBox({ label, value, loading }: { label: string; value: number | string; loading: boolean }) {
   return (
