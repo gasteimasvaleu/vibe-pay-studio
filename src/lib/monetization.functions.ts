@@ -122,6 +122,47 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
   });
 
 /**
+ * Lista assinantes ativos do criador logado (para /follow).
+ */
+export const listMySubscribers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: subs, error } = await supabase
+      .from("subscriptions")
+      .select("id, subscriber_id, plan, price_cents_paid, started_at, current_period_end, status")
+      .eq("creator_id", userId)
+      .eq("status", "active")
+      .order("started_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const rows = subs ?? [];
+    if (!rows.length) return [];
+
+    const ids = Array.from(new Set(rows.map(r => r.subscriber_id as string)));
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("user_id, username, display_name, avatar_url")
+      .in("user_id", ids);
+    const byId = Object.fromEntries((profs ?? []).map(p => [p.user_id as string, p]));
+
+    return rows.map(r => {
+      const p = byId[r.subscriber_id as string] as { username?: string | null; display_name?: string | null; avatar_url?: string | null } | undefined;
+      return {
+        id: r.id as string,
+        subscriberId: r.subscriber_id as string,
+        username: p?.username ?? null,
+        displayName: p?.display_name ?? null,
+        avatarUrl: p?.avatar_url ?? null,
+        plan: r.plan as string,
+        priceCents: r.price_cents_paid ?? 0,
+        startedAt: r.started_at as string,
+        currentPeriodEnd: (r.current_period_end as string) ?? null,
+      };
+    });
+  });
+
+
+/**
  * Envia um mimo (gorjeta) ao criador em um post opcional.
  * Sem gateway real: cria como `paid` no modo manual para já refletir no dashboard.
  * Quando o PSP for integrado, muda para `pending` e o webhook faz virar `paid`.
