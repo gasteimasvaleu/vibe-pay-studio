@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Check, X, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/moderation")({
-  component: AdminModeration;
+  component: AdminModeration,
 });
 
 const FILTERS = [
