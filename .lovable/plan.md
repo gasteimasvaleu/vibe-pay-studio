@@ -1,26 +1,34 @@
-## Menu "..." no card Top Live
+## Gráfico Faturamento × Quantidade no card de engajamento
 
-Adicionar um menu vertical (kebab, `...`) no canto superior direito do card **Top Live**, seguindo o mesmo padrão já usado no card **Top postagem**.
+Substituir o conteúdo do card grande (aba Publicações e Lives) por um gráfico combinado agrupando os itens por dia dentro do período selecionado.
 
-### Comportamento
-- Ícone `MoreVertical` no topo direito do card, alinhado ao título "Top Live".
-- Ao clicar, abre o `CardMenu` (dropdown) já existente no arquivo.
-- Item do menu: **Exibir estatísticas** (conforme screenshot).
-- Ao selecionar, abre um `Dialog` com as estatísticas reais da live em destaque (a mesma live já mostrada no card):
-  - Título da live
-  - Data de início (`started_at`)
-  - Total de views (`total_views`)
-  - Faturamento bruto (`gross_cents`, formatado em BRL)
-- Se não houver live no período, o item do menu fica desabilitado.
+### Layout do card
+- Header (mantém): `N postagens/lives` + faturamento total à esquerda; à direita, legenda com dois pontos:
+  - Roxo (`hsl(var(--primary))` — o roxo do tema) → **Faturamento**
+  - Cinza (`hsl(var(--muted-foreground))`) → **Quantidade**
+- Corpo: gráfico combinado (Recharts `ComposedChart`) ocupando ~260px de altura:
+  - Barras cinza para quantidade de postagens/lives por dia (eixo Y direito)
+  - Linha roxa para faturamento por dia em BRL (eixo Y esquerdo)
+  - Eixo X: datas do período (formato curto dd/MM)
+  - Tooltip com data, faturamento (BRL) e quantidade
+- Se `items.length === 0`: manter mensagem "Sem dados de engajamento para o período selecionado."
+- A lista de itens abaixo é **removida** deste card (as ações/detalhes já existem em Top postagem / Top live).
+
+### Dados
+Agregar `pubQ.data.items` (ou `liveQ.data.items`) no cliente:
+- key: `publishedAt`/`started_at` truncado por dia (YYYY-MM-DD)
+- `revenue`: soma de `revenue` (publicações) ou `gross_cents/100` (lives)
+- `count`: contagem de itens
+- Preencher dias sem dados com zeros entre `range.from` e `range.to` para eixo contínuo.
+
+Sem mudanças de backend — usa os `items` já retornados por `getEngajamentoPublicacoes` / `getEngajamentoLives`.
 
 ### Alterações técnicas
-Arquivo único: `src/routes/_authenticated/my-monetisex-stats.tsx`, componente `TopLiveCard`:
-
-1. Trocar o header atual (linha ~1576) por um `flex items-start justify-between` contendo o título à esquerda e `<CardMenu items={[{ label: "Exibir estatísticas", onSelect: () => setStatsOpen(true) }]} />` à direita.
-2. Adicionar `const [statsOpen, setStatsOpen] = useState(false);`.
-3. Adicionar um `<Dialog open={statsOpen} onOpenChange={setStatsOpen}>` no final do card com `DialogHeader` "Estatísticas da live" e grid 2 colunas mostrando views e faturamento, além do título e data.
-
-Sem mudanças de backend — os dados já vêm de `getEngajamentoLives`.
+Arquivo único: `src/routes/_authenticated/my-monetisex-stats.tsx`
+- Importar `ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid` de `recharts`.
+- Criar helper local `buildDailySeries(items, range, getDate, getRevenue)` que devolve `{ date, revenue, count }[]`.
+- Trocar o bloco de listagem (linhas ~1069-1124) por: header + legenda + `<ResponsiveContainer>` com o `ComposedChart`.
+- Cor da barra: `hsl(var(--muted-foreground))`; cor da linha e do ponto: `hsl(var(--primary))`.
 
 ### Validação
-Rodar typecheck e conferir visualmente no preview que o menu abre e o dialog mostra os dados reais.
+Rodar typecheck e conferir no preview que o gráfico aparece com dados reais, cores corretas e a mensagem de vazio quando o período não tiver dados.
