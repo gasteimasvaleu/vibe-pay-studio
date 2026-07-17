@@ -166,9 +166,9 @@ export const listAdminTransactions = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .range(data.offset ?? 0, (data.offset ?? 0) + (data.limit ?? 50) - 1);
 
-    if (data.kind) q = q.eq("kind", data.kind);
-    if (data.status) q = q.eq("status", data.status);
-    if (data.method) q = q.eq("payment_method", data.method);
+    if (data.kind) q = q.eq("kind", data.kind as any);
+    if (data.status) q = q.eq("status", data.status as any);
+    if (data.method) q = q.eq("payment_method", data.method as any);
     if (data.fromIso) q = q.gte("created_at", data.fromIso);
     if (data.toIso) q = q.lt("created_at", data.toIso);
 
