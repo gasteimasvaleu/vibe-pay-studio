@@ -127,7 +127,7 @@ function ContentLeakReportPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">
+          <h1 className="text-base font-semibold text-slate-900 truncate">
             Reportar vazamento de conteúdo
           </h1>
           <span className="w-9" />
