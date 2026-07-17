@@ -1029,6 +1029,22 @@ export const setPublicationArchived = createServerFn({ method: "POST" })
     return { ok: true as const, archived: data.archived };
   });
 
+export const setPublicationPinned = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    publicationIdSchema.extend({ pinned: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ pinned: data.pinned })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, pinned: data.pinned };
+  });
+
+
 export const deletePublication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => publicationIdSchema.parse(d))

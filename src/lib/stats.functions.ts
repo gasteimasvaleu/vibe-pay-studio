@@ -578,15 +578,19 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: pubs, error } = await supabase
       .from("publications")
-      .select("id, caption, visibility, price_cents, published_at, created_at")
+      .select("id, caption, visibility, price_cents, published_at, created_at, pinned, archived_at")
       .eq("author_id", userId)
       .gte("created_at", data.from).lte("created_at", data.to);
     if (error) throw new Error(error.message);
+    const { data: profileRow } = await supabase
+      .from("profiles").select("username").eq("user_id", userId).maybeSingle();
+    const authorUsername = (profileRow?.username as string | null) ?? null;
     const list = pubs ?? [];
     const ids = list.map(p => p.id as string);
     if (!ids.length) {
-      return { items: [], totalCount: 0, totalRevenue: 0 };
+      return { items: [], totalCount: 0, totalRevenue: 0, authorUsername };
     }
+
 
     const [likesRes, commentsRes, unlocksRes, tipsRes] = await Promise.all([
       supabase.from("publication_likes").select("publication_id").in("publication_id", ids),
@@ -627,6 +631,8 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
         visibility: p.visibility,
         priceCents: p.price_cents ?? 0,
         publishedAt: p.published_at ?? p.created_at,
+        pinned: !!(p as { pinned?: boolean }).pinned,
+        archivedAt: (p as { archived_at?: string | null }).archived_at ?? null,
         likes: likesMap.get(id) ?? 0,
         comments: commentsMap.get(id) ?? 0,
         tips: tipsCount.get(id) ?? 0,
@@ -648,8 +654,10 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
       items,
       totalCount: items.length,
       totalRevenue: items.reduce((a, r) => a + r.revenue, 0),
+      authorUsername,
     };
   });
+
 
 /**
  * Lives do período (Engajamento › Lives, Top Live).
