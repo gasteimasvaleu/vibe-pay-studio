@@ -49,7 +49,9 @@ import {
   BarChart,
   Bar,
   Legend,
+  ComposedChart,
 } from "recharts";
+
 import {
   getEarningsSeries,
   getEarningsByProduct,
