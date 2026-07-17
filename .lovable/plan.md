@@ -1,44 +1,17 @@
-## Objetivo
+## Problema
 
-`/follow` (título "Meus assinantes") atualmente é estático — sempre mostra "Sem resultados para sua pesquisa.". Substituir pelo listagem real dos assinantes ativos do criador logado, com busca funcional.
+A página `/follow` filtra apenas `status = 'active'`, mas seu único assinante está com `status = 'cancelled'` — embora ainda tenha acesso vigente (`current_period_end = 14/08/2026`, hoje 17/07/2026). Por isso a lista aparece vazia.
 
-## Backend — `src/lib/monetization.functions.ts`
+Na plataforma, "cancelado" só significa que não vai renovar; enquanto o período pago não termina, o usuário continua sendo um assinante ativo do criador.
 
-Adicionar `listMySubscribers()` (server fn autenticada, `GET`):
-- `supabase.from("subscriptions").select("id, subscriber_id, plan, price_cents_paid, started_at, current_period_end, status").eq("creator_id", userId).eq("status", "active").order("started_at", { ascending: false })`
-- Enriquecer com `profiles (user_id, username, display_name, avatar_url)` via `.in("user_id", [...])`.
-- Retorna:
-  ```ts
-  Array<{
-    id: string;
-    subscriberId: string;
-    username: string | null;
-    displayName: string | null;
-    avatarUrl: string | null;
-    plan: string;
-    priceCents: number;
-    startedAt: string;
-    currentPeriodEnd: string | null;
-  }>
-  ```
+## Mudança
 
-## UI — `src/routes/_authenticated/follow.tsx`
+**`src/lib/monetization.functions.ts` → `listMySubscribers()`**
 
-- Loader: `context.queryClient.ensureQueryData({ queryKey: ["mySubscribers"], queryFn: () => listMySubscribers() })`.
-- Componente:
-  - `useSuspenseQuery` para carregar lista.
-  - `query` state (mantido) + `useDeferredValue` para filtrar client-side por `username` ou `displayName` (case-insensitive).
-  - Renderiza cada assinante como linha clicável: avatar (fallback com inicial) + `displayName || @username` + `@username` em segunda linha. Clique navega para `/perfil/$username` quando `username` existir.
-  - Estados:
-    - `Skeleton` (via `pendingComponent`/Suspense boundary do route)
-    - Vazio geral: "Você ainda não tem assinantes."
-    - Vazio de busca: "Sem resultados para sua pesquisa." (texto atual)
-  - Contador `N assinante(s)` sob a busca quando lista não vazia.
-- Adicionar `errorComponent` e `notFoundComponent` no route (obrigatório para rotas com loader).
+Trocar o filtro:
+- De: `.eq("status", "active")`
+- Para: `.in("status", ["active", "cancelled"]).gt("current_period_end", new Date().toISOString())`
 
-## Arquivos alterados
+Assim entram assinantes ativos + cancelados que ainda têm acesso pago vigente. Ordenação e enriquecimento com `profiles` permanecem iguais.
 
-- `src/lib/monetization.functions.ts` — adicionar `listMySubscribers`.
-- `src/routes/_authenticated/follow.tsx` — trocar por render dinâmico com query + filtro + navegação.
-
-Sem migração.
+Nenhuma mudança de UI, schema ou migration.
