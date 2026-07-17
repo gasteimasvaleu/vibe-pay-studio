@@ -1530,8 +1530,18 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
           </div>
 
         ) : (
-          <AtividadeAssinantesInline range={range} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2 space-y-5">
+              <AtividadeHeatmapCard range={range} />
+              <HorasMaisAtivasCard range={range} />
+            </div>
+            <div className="space-y-5">
+              <ResumoAssinantesCard stats={stats.data} loading={stats.isLoading} />
+              <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
+            </div>
+          </div>
         )}
+
       </div>
     </div>
   );
