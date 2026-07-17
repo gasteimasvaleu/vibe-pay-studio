@@ -1075,6 +1075,8 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
                 "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
                 "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
                 "Visualizações": { label: "Visualizações", format: "int", get: l => l.total_views ?? 0 },
+                "Comentários": { label: "Comentários", format: "int", get: l => l.comments ?? 0 },
+                "Curtidas": { label: "Curtidas", format: "int", get: l => l.likes ?? 0 },
               };
               const c = cfg[ordenarLive];
               return (
