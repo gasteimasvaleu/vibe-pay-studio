@@ -117,7 +117,7 @@ function ContentLeakReportPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative z-10 border-b border-border bg-card">
+      <header className="relative z-10 border-b border-border bg-white">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
@@ -127,7 +127,7 @@ function ContentLeakReportPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">
+          <h1 className="text-base font-semibold text-slate-900 truncate">
             Reportar vazamento de conteúdo
           </h1>
           <span className="w-9" />
