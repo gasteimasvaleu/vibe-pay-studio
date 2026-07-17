@@ -1383,39 +1383,154 @@ const TOP_POST_SORT: Record<(typeof TOP_POST_TABS)[number], "revenue" | "tips" |
   "Mais vendida": "revenue", "Mimos": "tips", "Curtidas": "likes", "Comentários": "comments",
 };
 
+type PostAction = "stats" | "copy" | "pin" | "archive";
+
 function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof TOP_POST_TABS)[number]>("Mais vendida");
+  const [action, setAction] = useState<PostAction | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const fn = useServerFn(getEngajamentoPublicacoes);
+  const pinFn = useServerFn(setPublicationPinned);
+  const archiveFn = useServerFn(setPublicationArchived);
+  const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["stats", "destaquesPub", range.from, range.to, tab],
     queryFn: () => fn({ data: { ...range, sort: TOP_POST_SORT[tab] } }),
     staleTime: 30_000,
   });
   const top = q.data?.items?.[0];
+  const authorUsername = q.data?.authorUsername ?? null;
+
+  const chooseAction = (a: PostAction) => {
+    setAction(a);
+    setChecked(false);
+  };
+  const cancelAction = () => { setAction(null); setChecked(false); };
+
+  const applyMutation = useMutation({
+    mutationFn: async () => {
+      if (!top || !action) return;
+      if (action === "stats") { setStatsOpen(true); return; }
+      if (action === "copy") {
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const url = authorUsername ? `${origin}/perfil/${authorUsername}` : origin;
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copiado");
+        return;
+      }
+      if (action === "pin") {
+        await pinFn({ data: { id: top.id, pinned: !top.pinned } });
+        toast.success(top.pinned ? "Post desafixado" : "Post fixado");
+        return;
+      }
+      if (action === "archive") {
+        await archiveFn({ data: { id: top.id, archived: true } });
+        toast.success("Post arquivado");
+        return;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      if (action === "archive" || action === "pin") {
+        queryClient.invalidateQueries({ queryKey: ["archived-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["publications"] });
+      }
+      if (action !== "stats") cancelAction();
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Falha ao aplicar ação");
+    },
+  });
+
+  const pinLabel = top?.pinned ? "Desafixar post" : "Fixar post";
+  const actionLabel: Record<PostAction, string> = {
+    stats: "Exibir estatísticas", copy: "Copiar link da publicação",
+    pin: pinLabel, archive: "Arquivar post",
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
+        <CardMenu items={[
+          { label: "Exibir estatísticas", onSelect: () => chooseAction("stats") },
+          { label: "Copiar link da publicação", onSelect: () => chooseAction("copy") },
+          { label: pinLabel, onSelect: () => chooseAction("pin") },
+          { label: "Arquivar post", onSelect: () => chooseAction("archive") },
+        ]} />
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {TOP_POST_TABS.map(t => (
           <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
         ))}
       </div>
+      {action && (
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2 text-sm">
+          <span className="font-medium text-primary">Ação: {actionLabel[action]}</span>
+          <button type="button" onClick={cancelAction} className="text-xs font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
+        </div>
+      )}
       {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
         !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma postagem encontrada no período.</p> : (
-          <Link to="/feed" className="mt-4 block rounded-xl bg-muted/50 p-4">
-            <p className="font-semibold truncate">{top.caption || "(sem legenda)"}</p>
-            <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-              <span>{fullDate.format(new Date(top.publishedAt as string))}</span>
-              <span>{top.likes} curtidas</span>
-              <span>{top.comments} coment.</span>
-              <span>{top.tips} mimos</span>
-              <span className="font-semibold text-foreground">{formatBRL(top.revenue)}</span>
-            </div>
-          </Link>
+          <div className="mt-4 flex items-start gap-3">
+            {action && (
+              <Checkbox
+                checked={checked}
+                onCheckedChange={(v) => setChecked(!!v)}
+                className="mt-2"
+                aria-label="Selecionar postagem"
+              />
+            )}
+            <Link to="/feed" className="block flex-1 rounded-xl bg-muted/50 p-4">
+              <p className="font-semibold truncate">
+                {top.pinned && <span className="mr-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">fixado</span>}
+                {top.caption || "(sem legenda)"}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                <span>{fullDate.format(new Date(top.publishedAt as string))}</span>
+                <span>{top.likes} curtidas</span>
+                <span>{top.comments} coment.</span>
+                <span>{top.tips} mimos</span>
+                <span className="font-semibold text-foreground">{formatBRL(top.revenue)}</span>
+              </div>
+            </Link>
+          </div>
         )}
+      {action && top && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            size="sm"
+            disabled={!checked || applyMutation.isPending}
+            onClick={() => applyMutation.mutate()}
+          >
+            {applyMutation.isPending ? "Aplicando…" : "Aplicar"}
+          </Button>
+        </div>
+      )}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Estatísticas da postagem</DialogTitle>
+          </DialogHeader>
+          {top && (
+            <div className="space-y-3 text-sm">
+              <p className="font-medium">{top.caption || "(sem legenda)"}</p>
+              <p className="text-muted-foreground text-xs">{fullDate.format(new Date(top.publishedAt as string))}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Curtidas</p><p className="text-lg font-bold">{top.likes}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Comentários</p><p className="text-lg font-bold">{top.comments}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Mimos</p><p className="text-lg font-bold">{top.tips}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-lg font-bold">{formatBRL(top.revenue)}</p></div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 const TOP_LIVE_TABS = ["Mais vendida", "Mimos"] as const;
 const TOP_LIVE_SORT: Record<(typeof TOP_LIVE_TABS)[number], "revenue" | "tips"> = {
