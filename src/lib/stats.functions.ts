@@ -524,6 +524,104 @@ export const getAtividadeAssinantes = createServerFn({ method: "GET" })
   });
 
 /**
+ * Lista detalhada de assinaturas do criador no período com filtro e busca.
+ */
+export const getAssinantesList = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { from: string; to: string; filter?: "todos" | "renovacoes" | "novos"; q?: string }) => ({
+    ...rangeValidator({ from: data.from, to: data.to }),
+    filter: data.filter ?? "todos",
+    q: (data.q ?? "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const now = Date.now();
+
+    const [allRes, periodRes] = await Promise.all([
+      supabase.from("subscriptions")
+        .select("subscriber_id, created_at")
+        .eq("creator_id", userId),
+      supabase.from("subscriptions")
+        .select("id, subscriber_id, status, price_cents_paid, started_at, current_period_end, created_at")
+        .eq("creator_id", userId)
+        .gte("created_at", data.from).lte("created_at", data.to)
+        .order("started_at", { ascending: false })
+        .limit(500),
+    ]);
+    if (allRes.error) throw new Error(allRes.error.message);
+    if (periodRes.error) throw new Error(periodRes.error.message);
+
+    const historyBefore = new Set(
+      (allRes.data ?? [])
+        .filter(s => new Date(s.created_at as string) < new Date(data.from))
+        .map(s => s.subscriber_id as string),
+    );
+
+    // Ordenar por created_at asc para calcular "novo vs renovação" corretamente
+    const period = (periodRes.data ?? []).slice().sort(
+      (a, b) => (a.created_at as string).localeCompare(b.created_at as string),
+    );
+    const seen = new Set<string>();
+    const flags = new Map<string, boolean>(); // id -> isRenewal
+    for (const s of period) {
+      const sid = s.subscriber_id as string;
+      const isRenewal = historyBefore.has(sid) || seen.has(sid);
+      seen.add(sid);
+      flags.set(s.id as string, isRenewal);
+    }
+
+    const ids = Array.from(new Set(period.map(s => s.subscriber_id as string)));
+    const profsRes = ids.length
+      ? await supabase.from("profiles")
+          .select("user_id, username, display_name, avatar_url")
+          .in("user_id", ids)
+      : { data: [] as { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null }[] };
+    const byId = Object.fromEntries((profsRes.data ?? []).map(p => [p.user_id as string, p]));
+
+    const needle = data.q.toLowerCase();
+
+    const rows = period
+      .filter(s => {
+        const isRenewal = flags.get(s.id as string) ?? false;
+        if (data.filter === "novos" && isRenewal) return false;
+        if (data.filter === "renovacoes" && !isRenewal) return false;
+        if (needle) {
+          const p = byId[s.subscriber_id as string] as { username?: string | null; display_name?: string | null } | undefined;
+          const hay = `${p?.username ?? ""} ${p?.display_name ?? ""}`.toLowerCase();
+          if (!hay.includes(needle)) return false;
+        }
+        return true;
+      })
+      .map(s => {
+        const sid = s.subscriber_id as string;
+        const p = byId[sid] as { username?: string | null; display_name?: string | null; avatar_url?: string | null } | undefined;
+        const startedAt = (s.started_at ?? s.created_at) as string;
+        const periodEnd = s.current_period_end as string | null;
+        const endMs = periodEnd ? new Date(periodEnd).getTime() : now;
+        const active = s.status === "active" && periodEnd && new Date(periodEnd).getTime() > now;
+        const durationMs = Math.max(0, Math.min(endMs, now) - new Date(startedAt).getTime());
+        return {
+          id: s.id as string,
+          subscriberId: sid,
+          username: p?.username ?? null,
+          displayName: p?.display_name ?? null,
+          avatarUrl: p?.avatar_url ?? null,
+          statusLabel: (active ? "Ativo" : "Expirado") as "Ativo" | "Expirado",
+          priceCents: s.price_cents_paid ?? 0,
+          durationDays: Math.max(0, Math.ceil(durationMs / 86400000)),
+          isRenewal: flags.get(s.id as string) ?? false,
+          startedAt,
+        };
+      })
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+      .slice(0, 200);
+
+    return rows;
+  });
+
+
+
+/**
  * Top 5 países (via country_code).
  */
 export const getTopPaises = createServerFn({ method: "GET" })

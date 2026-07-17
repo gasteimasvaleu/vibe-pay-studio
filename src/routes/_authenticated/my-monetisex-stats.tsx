@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useDeferredValue } from "react";
 import { createFileRoute, Link, useRouter, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,6 +17,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -42,6 +43,7 @@ import {
   Gift,
   Lock,
   MessageSquare,
+  Search,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -67,6 +69,7 @@ import {
   getAssinantesStats,
   getTopAssinantes,
   getAtividadeAssinantes,
+  getAssinantesList,
   getTopPaises,
   getStreak,
   getAlcance,
@@ -1498,12 +1501,8 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatBox label="Ativos" value={stats.data?.totalAtivos ?? 0} loading={stats.isLoading} />
-                <StatBox label="Novos" value={stats.data?.novosPeriodo ?? 0} loading={stats.isLoading} />
-                <StatBox label="Renovações" value={stats.data?.renovacoesPeriodo ?? 0} loading={stats.isLoading} />
-                <StatBox label="Ticket médio" value={formatBRL(stats.data?.ticketMedio ?? 0)} loading={stats.isLoading} />
-              </div>
+              <AssinantesListInline range={range} />
+
             </div>
             <div className="space-y-5">
               <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
@@ -1639,6 +1638,102 @@ function StatBox({ label, value, loading }: { label: string; value: number | str
     </div>
   );
 }
+
+const ASSINANTES_LIST_CHIPS = ["Todos", "Renovações", "Novos assinantes"] as const;
+type AssinantesListFilter = (typeof ASSINANTES_LIST_CHIPS)[number];
+const LIST_FILTER_MAP: Record<AssinantesListFilter, "todos" | "renovacoes" | "novos"> = {
+  "Todos": "todos",
+  "Renovações": "renovacoes",
+  "Novos assinantes": "novos",
+};
+
+function formatDuration(days: number): string {
+  if (days < 30) return `${days} ${days === 1 ? "dia" : "dias"}`;
+  const months = Math.floor(days / 30);
+  return `${months} ${months === 1 ? "mês" : "meses"}`;
+}
+
+function AssinantesListInline({ range }: { range: { from: string; to: string } }) {
+  const fn = useServerFn(getAssinantesList);
+  const [filter, setFilter] = useState<AssinantesListFilter>("Todos");
+  const [query, setQuery] = useState("");
+  const deferredQ = useDeferredValue(query);
+
+  const q = useQuery({
+    queryKey: ["stats", "assinantesList", range.from, range.to, LIST_FILTER_MAP[filter], deferredQ.trim()],
+    queryFn: () => fn({ data: { from: range.from, to: range.to, filter: LIST_FILTER_MAP[filter], q: deferredQ.trim() } }),
+    staleTime: 30_000,
+  });
+
+  const rows = q.data ?? [];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
+      <div>
+        <h3 className="text-sm font-bold">Filtrar por</h3>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {ASSINANTES_LIST_CHIPS.map(c => (
+            <div key={c} className="shrink-0">
+              <Chip label={c} active={c === filter} onClick={() => setFilter(c)} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Pesquisar assinantes..."
+          className="h-11 rounded-full pl-11"
+        />
+      </div>
+
+      <div className="rounded-xl border border-border overflow-hidden">
+        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto_auto] gap-3 px-4 py-3 text-xs font-semibold text-muted-foreground border-b border-border">
+          <span>Nome</span>
+          <span className="text-right">Status</span>
+          <span className="text-right">Preço</span>
+          <span className="text-right">Duração total</span>
+        </div>
+        {q.isLoading ? (
+          <div className="p-4 space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">Nenhum assinante encontrado.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {rows.map(r => {
+              const name = r.displayName || r.username || "Assinante";
+              const active = r.statusLabel === "Ativo";
+              return (
+                <div key={r.id} className="grid grid-cols-[minmax(0,2fr)_auto_auto_auto] gap-3 items-center px-4 py-3 text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                      {r.avatarUrl ? <img src={r.avatarUrl} alt="" className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{name}</p>
+                      {r.username && <p className="text-xs text-muted-foreground truncate">@{r.username}</p>}
+                    </div>
+                  </div>
+                  <span className={`justify-self-end rounded-full px-2.5 py-0.5 text-xs font-medium ${active ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                    {r.statusLabel}
+                  </span>
+                  <span className="justify-self-end font-semibold whitespace-nowrap">{formatBRL(r.priceCents)}</span>
+                  <span className="justify-self-end text-muted-foreground whitespace-nowrap">{formatDuration(r.durationDays)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 /* ============================== Destaques ============================== */
 
