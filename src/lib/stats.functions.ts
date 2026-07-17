@@ -1035,3 +1035,38 @@ export const logProfileView = createServerFn({ method: "POST" })
     await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null, country: normalizedCountry });
     return { ok: true };
   });
+
+/**
+ * Heatmap de atividade: distribui profile_views do criador em 7 dias × 8 buckets de 3h.
+ */
+export const getAssinantesActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(rangeValidator)
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("profile_views")
+      .select("created_at")
+      .eq("profile_id", userId)
+      .gte("created_at", data.from)
+      .lte("created_at", data.to)
+      .limit(1000);
+    if (error) throw new Error(error.message);
+
+    const heatmap: number[][] = Array.from({ length: 7 }, () => Array(8).fill(0));
+    const hourly: number[] = Array(8).fill(0);
+    let total = 0;
+    for (const r of rows ?? []) {
+      const d = new Date(r.created_at as string);
+      const day = d.getDay(); // 0=Sun..6=Sat
+      const bucket = Math.floor(d.getHours() / 3); // 0..7
+      heatmap[day][bucket] += 1;
+      hourly[bucket] += 1;
+      total += 1;
+    }
+    const max = heatmap.reduce((m, row) => Math.max(m, ...row), 0);
+    const hourlyMax = Math.max(...hourly);
+    const hourlyPct = hourly.map(v => (hourlyMax > 0 ? Math.round((v / hourlyMax) * 100) : 0));
+    return { heatmap, max, hourly, hourlyPct, total };
+  });
+
