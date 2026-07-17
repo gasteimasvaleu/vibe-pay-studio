@@ -132,7 +132,8 @@ export const listMySubscribers = createServerFn({ method: "GET" })
       .from("subscriptions")
       .select("id, subscriber_id, plan, price_cents_paid, started_at, current_period_end, status")
       .eq("creator_id", userId)
-      .eq("status", "active")
+      .in("status", ["active", "cancelled"])
+      .gt("current_period_end", new Date().toISOString())
       .order("started_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = subs ?? [];
