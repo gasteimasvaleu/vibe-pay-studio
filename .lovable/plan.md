@@ -1,52 +1,44 @@
 ## Objetivo
 
-Alinhar a aba **Lives** com a aba **Publicações**: mesmas 5 abas em "Ordenar por" (Mais compradas, Mimos, Visualizações, Comentários, Curtidas), ordenando a lista e alimentando o gráfico do card abaixo com a métrica selecionada.
+Deixar a aba **Alcance** exatamente como o screenshot, com dados reais:
 
-## 1. Banco de dados (migration)
+1. Card grande do gráfico "N Visitantes" (linhas Visitantes + Usuários) — já existe, sem mudanças estruturais.
+2. Card **Resumo** com 4 itens: **Visitantes**, **Assinaturas** (quantidade), **Assinaturas** (R$ faturamento), **Renovações**.
+3. Tabela **Visitantes do perfil** com colunas **Visitantes / Usuários / Total** (remover coluna "Publicações").
+4. Novo card **Principais países** com bandeira + nome do país + Visitantes / Usuários / Total, ordenado por Total desc.
 
-Criar duas tabelas para suportar curtidas e comentários em lives (hoje não existem).
+## 1. Banco (migration)
 
-**`public.live_likes`**
-- `live_id uuid` → `live_sessions(id) ON DELETE CASCADE`
-- `user_id uuid` (auth user)
-- `created_at timestamptz`
-- `UNIQUE (live_id, user_id)`
-- GRANTs: `SELECT, INSERT, DELETE` para `authenticated`; `ALL` para `service_role`
-- RLS: leitura pública autenticada; insert/delete apenas do próprio `user_id`
+Adicionar coluna de país às visitas para permitir o card "Principais países":
 
-**`public.live_comments`**
-- `live_id uuid` → `live_sessions(id) ON DELETE CASCADE`
-- `user_id uuid`
-- `content text NOT NULL`
-- `created_at timestamptz`, `updated_at timestamptz` (+ trigger `set_updated_at`)
-- GRANTs equivalentes
-- RLS: leitura para authenticated; insert do próprio user; update/delete do autor ou admin
+- `ALTER TABLE public.profile_views ADD COLUMN country text` (ISO-2, nullable — histórico fica `NULL`).
+- Índice `idx_profile_views_profile_country ON profile_views(profile_id, country)`.
 
-Índices: `(live_id)` em ambas.
+Sem novas policies (RLS existente permanece).
 
-## 2. Backend — `src/lib/stats.functions.ts`
+## 2. Backend
 
-Estender `getEngajamentoLives`:
+### `logProfileView` em `src/lib/stats.functions.ts`
+- Ler o header `cf-ipcountry` via `getRequestHeader` (Cloudflare Workers seta esse header automaticamente). Fallback: `x-vercel-ip-country`. Se ausente → `null`.
+- Passar `country` no `insert`.
 
-- Aceitar `sort: "revenue" | "tips" | "views" | "likes" | "comments"`.
-- Após buscar `live_sessions`, buscar em paralelo agregados por `live_id`:
-  - `live_likes` → `count` por `live_id`
-  - `live_comments` → `count` por `live_id`
-- Anexar `likes` e `comments` em cada item retornado.
-- Adicionar sorters `likes` e `comments`.
-- Somar `totalLikes` e `totalComments` no retorno (opcional; útil para o card Resumo futuramente).
+### `getAlcance`
+- Ao consultar `profile_views`, incluir `country` no `select`.
+- Agregar `topCountries: { country: string | null; visits: number; users: number }[]` (top 10, users = únicos por `viewer_id`).
+- Retornar também `subscriptionsCount`, `subscriptionsRevenueCents`, `renewalsCount` no período — reusar a mesma lógica de `getAssinantesStats` (query em `transactions` `kind='subscription'` + flag `isRenewal`) diretamente dentro do handler para não fazer round-trip extra.
 
-## 3. UI — `src/routes/_authenticated/my-monetisex-stats.tsx`
+## 3. UI — `src/routes/_authenticated/my-monetisex-stats.tsx` (`AlcancePanel`)
 
-- `ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações", "Comentários", "Curtidas"]`.
-- `liveSortMap`: adicionar `"Comentários": "comments"`, `"Curtidas": "likes"`.
-- No `cfg` do `EngajamentoChart` (bloco `isLives`), adicionar:
-  - `Comentários`: `{ label: "Comentários", format: "int", get: l => l.comments ?? 0 }`
-  - `Curtidas`: `{ label: "Curtidas", format: "int", get: l => l.likes ?? 0 }`
-
-Nenhuma outra alteração de layout — os chips já são renderizados dinamicamente a partir de `ORDENAR_LIVES`.
+- **Resumo**: substituir os 4 `ResumoItem`s por:
+  - `Users` "Visitantes" = `profileViews`
+  - `UserPlus` "Assinaturas" = `subscriptionsCount`
+  - `DollarSign` "Assinaturas" = `formatBRL(subscriptionsRevenueCents)`
+  - `RefreshCw` "Renovações" = `renewalsCount`
+- **Tabela "Visitantes do perfil"**: passar para 3 colunas (`Visitantes | Usuários | Total`), uma linha só ("Visitantes do perfil"), Total = Visitantes + Usuários? Não — no screenshot Total = 4 quando Visitantes=4 e Usuários=0, então **Total = Visitantes** (soma das duas colunas). Confirmado: `4 + 0 = 4`. Implementar assim.
+- **Novo card "Principais países"** abaixo da tabela: header com colunas `País | Visitantes | Usuários | Total`, linhas iterando `topCountries`. Usar emoji-flag derivada do ISO-2 (`String.fromCodePoint(0x1F1E6 + (c.charCodeAt(0)-65))...`) com fallback "🌐 Desconhecido" quando `country` é `null`. Nome do país via `Intl.DisplayNames(['pt-BR'], { type: 'region' })`.
+- Legendas do gráfico já estão em "Visitas / Usuários únicos" — renomear labels para **Visitantes** e **Usuários** para bater com o screenshot.
 
 ## Detalhes técnicos
 
-- Enquanto não houver UI de curtir/comentar em lives, as contagens serão 0 e o gráfico refletirá zero nessas abas — comportamento esperado.
-- Tipos do Supabase (`src/integrations/supabase/types.ts`) são regenerados após a migration aprovada; o código do server fn depende disso e é feito depois.
+- `cf-ipcountry` é preenchido pela Cloudflare em produção; em preview local pode vir vazio → linha "Desconhecido" agrega esses casos.
+- Nenhum breaking change no schema atual; visitas existentes ficam agrupadas em "Desconhecido" até serem re-logadas.
