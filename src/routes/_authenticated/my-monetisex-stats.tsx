@@ -1069,30 +1069,53 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            {isLives ? (
-              <EngajamentoChart
-                loading={liveQ.isLoading}
-                totalLabel={`${liveQ.data?.totalCount ?? 0} lives`}
-                totalRevenue={liveQ.data?.totalRevenue ?? 0}
-                range={range}
-                items={(liveQ.data?.items ?? []).map(l => ({
-                  date: l.started_at as string,
-                  revenue: (l.gross_cents ?? 0) / 100,
-                }))}
-              />
-            ) : (
-              <EngajamentoChart
-                loading={pubQ.isLoading}
-                totalLabel={`${pubQ.data?.totalCount ?? 0} postagens`}
-                totalRevenue={pubQ.data?.totalRevenue ?? 0}
-                range={range}
-                items={(pubQ.data?.items ?? []).map(p => ({
-                  date: p.publishedAt as string,
-                  revenue: p.revenue ?? 0,
-                }))}
-              />
-            )}
+            {isLives ? (() => {
+              const cfg: Record<(typeof ORDENAR_LIVES)[number], { label: string; format: "brl" | "int"; get: (l: NonNullable<typeof liveQ.data>["items"][number]) => number }> = {
+                "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
+                "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
+                "Visualizações": { label: "Visualizações", format: "int", get: l => l.total_views ?? 0 },
+              };
+              const c = cfg[ordenarLive];
+              return (
+                <EngajamentoChart
+                  loading={liveQ.isLoading}
+                  totalLabel={`${liveQ.data?.totalCount ?? 0} lives`}
+                  totalRevenue={liveQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(liveQ.data?.items ?? []).map(l => ({
+                    date: l.started_at as string,
+                    metric: c.get(l),
+                  }))}
+                />
+              );
+            })() : (() => {
+              const cfg: Record<(typeof ORDENAR_PUBLICACOES)[number], { label: string; format: "brl" | "int"; get: (p: NonNullable<typeof pubQ.data>["items"][number]) => number }> = {
+                "Recentes": { label: "Faturamento", format: "brl", get: p => p.revenue ?? 0 },
+                "Faturamento": { label: "Faturamento", format: "brl", get: p => p.revenue ?? 0 },
+                "Mimos": { label: "Mimos", format: "brl", get: p => p.tips ?? 0 },
+                "Curtidas": { label: "Curtidas", format: "int", get: p => p.likes ?? 0 },
+                "Comentários": { label: "Comentários", format: "int", get: p => p.comments ?? 0 },
+              };
+              const c = cfg[ordenarPub];
+              return (
+                <EngajamentoChart
+                  loading={pubQ.isLoading}
+                  totalLabel={`${pubQ.data?.totalCount ?? 0} postagens`}
+                  totalRevenue={pubQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(pubQ.data?.items ?? []).map(p => ({
+                    date: p.publishedAt as string,
+                    metric: c.get(p),
+                  }))}
+                />
+              );
+            })()}
           </div>
+
 
         </div>
 
@@ -1173,34 +1196,37 @@ function ResumoItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
 
 function EngajamentoChart({
   loading, totalLabel, totalRevenue, range, items,
+  metricLabel = "Faturamento", metricFormat = "brl",
 }: {
   loading: boolean;
   totalLabel: string;
   totalRevenue: number;
   range: { from: string; to: string };
-  items: { date: string; revenue: number }[];
+  items: { date: string; metric: number }[];
+  metricLabel?: string;
+  metricFormat?: "brl" | "int";
 }) {
   const data = useMemo(() => {
-    const byDay = new Map<string, { revenue: number; count: number }>();
+    const byDay = new Map<string, { metric: number; count: number }>();
     for (const it of items) {
       if (!it.date) continue;
       const key = new Date(it.date).toISOString().slice(0, 10);
-      const cur = byDay.get(key) ?? { revenue: 0, count: 0 };
-      cur.revenue += it.revenue || 0;
+      const cur = byDay.get(key) ?? { metric: 0, count: 0 };
+      cur.metric += it.metric || 0;
       cur.count += 1;
       byDay.set(key, cur);
     }
-    const out: { date: string; label: string; revenue: number; count: number }[] = [];
+    const out: { date: string; label: string; metric: number; count: number }[] = [];
     const from = new Date(range.from);
     const to = new Date(range.to);
     const d = new Date(from);
     while (d <= to) {
       const key = d.toISOString().slice(0, 10);
-      const v = byDay.get(key) ?? { revenue: 0, count: 0 };
+      const v = byDay.get(key) ?? { metric: 0, count: 0 };
       out.push({
         date: key,
         label: `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`,
-        revenue: v.revenue,
+        metric: v.metric,
         count: v.count,
       });
       d.setUTCDate(d.getUTCDate() + 1);
@@ -1208,6 +1234,8 @@ function EngajamentoChart({
     }
     return out;
   }, [items, range.from, range.to]);
+
+  const formatMetric = (v: number) => metricFormat === "brl" ? formatBRL(v) : String(Math.round(v));
 
   return (
     <>
@@ -1217,7 +1245,7 @@ function EngajamentoChart({
           <span className="text-base font-bold">{formatBRL(totalRevenue)}</span>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" />Faturamento</span>
+          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" />{metricLabel}</span>
           <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />Quantidade</span>
         </div>
       </div>
@@ -1231,18 +1259,19 @@ function EngajamentoChart({
             <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" />
-              <YAxis yAxisId="left" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" tickFormatter={(v) => formatBRL(v as number)} width={80} />
+              <YAxis yAxisId="left" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" tickFormatter={(v) => formatMetric(v as number)} width={metricFormat === "brl" ? 80 : 48} allowDecimals={metricFormat === "brl"} />
               <YAxis yAxisId="right" orientation="right" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" allowDecimals={false} />
               <Tooltip
                 contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--popover-foreground)" }}
-                formatter={(value: number, name: string) => name === "Faturamento" ? [formatBRL(value), name] : [value, name]}
+                formatter={(value: number, name: string) => name === metricLabel ? [formatMetric(value), name] : [value, name]}
                 labelFormatter={(l) => `Data: ${l}`}
               />
               <Bar yAxisId="right" dataKey="count" name="Quantidade" fill="color-mix(in oklab, var(--muted-foreground) 50%, transparent)" radius={[4, 4, 0, 0]} />
-              <Line yAxisId="left" type="monotone" dataKey="revenue" name="Faturamento" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3, fill: "var(--primary)" }} />
+              <Line yAxisId="left" type="monotone" dataKey="metric" name={metricLabel} stroke="var(--primary)" strokeWidth={2} dot={{ r: 3, fill: "var(--primary)" }} />
 
             </ComposedChart>
           </ResponsiveContainer>
+
         </div>
       )}
     </>

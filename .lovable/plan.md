@@ -1,22 +1,42 @@
-## Card "Top postagem/Top live" com miniatura e dado real
+## Gráfico por métrica selecionada
 
-O card pequeno na coluna direita do painel de Engajamento hoje mostra `items[0]` — que é o primeiro item da lista ordenada pelo filtro atual (Data / Faturamento / Mimos etc.), então nem sempre é o "top". Também não mostra miniatura.
+Hoje o gráfico do painel de Engajamento agrega sempre por faturamento × quantidade, sem reagir à aba "Ordenar por". Passar a exibir a métrica correspondente à aba ativa.
 
-### Ajustes
-Arquivo: `src/routes/_authenticated/my-monetisex-stats.tsx`, no bloco do card (linhas ~1116-1133).
+### Comportamento por aba
+Publicações:
+- **Recentes** → linha = Faturamento (BRL), barras = quantidade de postagens/dia
+- **Faturamento** → linha = Faturamento (BRL), barras = quantidade
+- **Mimos** → linha = Mimos (BRL), barras = quantidade
+- **Curtidas** → linha = Curtidas (nº), barras = quantidade
+- **Comentários** → linha = Comentários (nº), barras = quantidade
 
-1. Calcular o item de maior faturamento independentemente da ordenação escolhida:
-   - `topPub = [...(pubQ.data?.items ?? [])].sort((a,b)=>(b.revenue ?? 0) - (a.revenue ?? 0))[0]`
-   - `topLive = [...(liveQ.data?.items ?? [])].sort((a,b)=>(b.gross_cents ?? 0) - (a.gross_cents ?? 0))[0]`
+Lives:
+- **Mais compradas** → linha = Faturamento (BRL), barras = qtd de lives
+- **Mimos** → linha = Mimos (BRL), barras = qtd
+- **Visualizações** → linha = Views (nº), barras = qtd
 
-2. Renderizar layout com miniatura à esquerda:
-   - Publicações: `<img src={topPub.previewUrl} />` (campo já retornado por `getEngajamentoPublicacoes`); fallback: `div` com `ImageIcon`.
-   - Lives: `<img src={topLive.cover_url} />` (campo já existente em `live_sessions` e retornado por `getEngajamentoLives`); fallback: `div` com `Radio`.
-   - Tamanho: `h-14 w-14 rounded-lg object-cover`.
-3. À direita da miniatura: legenda/título (truncate) + faturamento em BRL + data curta.
-4. Manter mensagem de vazio quando não houver item.
+Legenda do card muda dinamicamente: "● {Métrica}   ● Quantidade" (roxo/cinza). Título mantém "N postagens/lives" + total de faturamento.
 
-Sem mudanças de backend — `previewUrl` e `cover_url` já vêm do server.
+### Alterações técnicas
+Arquivo único: `src/routes/_authenticated/my-monetisex-stats.tsx`.
+
+1. Estender `EngajamentoChart` para aceitar props:
+   - `metricLabel: string` (ex.: "Faturamento", "Mimos", "Curtidas", "Comentários", "Views")
+   - `metricFormat: "brl" | "int"` (formata eixo Y esquerdo e tooltip)
+   - `items: { date: string; metric: number }[]` (em vez de `revenue`)
+2. Nas chamadas dentro do `EngajamentoPanel`:
+   - Para publicações mapear `metric` a partir do item conforme `ordenarPub`:
+     - `Recentes|Faturamento` → `p.revenue`
+     - `Mimos` → `p.tips`
+     - `Curtidas` → `p.likes`
+     - `Comentários` → `p.comments`
+   - Para lives:
+     - `Mais compradas` → `l.gross_cents / 100`
+     - `Mimos` → `l.tips_cents / 100`
+     - `Visualizações` → `l.total_views`
+3. Ajustar tickFormatter/tooltip formatter para usar `formatBRL` quando `metricFormat === "brl"`, senão inteiro.
+
+Sem mudanças de backend — todos os campos já estão nos payloads de `getEngajamentoPublicacoes` e `getEngajamentoLives`.
 
 ### Validação
-Recarregar preview e conferir que a miniatura aparece e que o item exibido é o de maior faturamento no período.
+Alternar as abas e conferir que a linha (roxa) muda de escala/valor conforme a métrica, e a legenda reflete o rótulo correto.
