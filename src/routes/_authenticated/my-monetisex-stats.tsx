@@ -1505,8 +1505,9 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
           </div>
         )}
       {action && top && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4">
           <Button
+            className="w-full"
             size="sm"
             disabled={!checked || applyMutation.isPending}
             onClick={() => applyMutation.mutate()}
