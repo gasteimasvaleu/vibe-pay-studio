@@ -1,31 +1,26 @@
-## Objetivo
-Reorganizar o card de "Top postagem" para:
-1. O checkbox de seleção ficar dentro do card da postagem, no canto superior direito.
-2. A miniatura da postagem (`preview_url`) aparecer dentro do card, à esquerda da legenda.
+## Menu "..." no card Top Live
 
-## Premissa
-O checkbox continuará visível apenas quando uma ação está ativa (estado atual), apenas reposicionado para dentro do card.
+Adicionar um menu vertical (kebab, `...`) no canto superior direito do card **Top Live**, seguindo o mesmo padrão já usado no card **Top postagem**.
 
-## Passos
+### Comportamento
+- Ícone `MoreVertical` no topo direito do card, alinhado ao título "Top Live".
+- Ao clicar, abre o `CardMenu` (dropdown) já existente no arquivo.
+- Item do menu: **Exibir estatísticas** (conforme screenshot).
+- Ao selecionar, abre um `Dialog` com as estatísticas reais da live em destaque (a mesma live já mostrada no card):
+  - Título da live
+  - Data de início (`started_at`)
+  - Total de views (`total_views`)
+  - Faturamento bruto (`gross_cents`, formatado em BRL)
+- Se não houver live no período, o item do menu fica desabilitado.
 
-### 1. Backend — incluir miniatura no retorno das estatísticas
-- Arquivo: `src/lib/stats.functions.ts`
-- Na função `getEngajamentoPublicacoes`:
-  - Adicionar `preview_url` ao `.select(...)` da consulta em `publications`.
-  - Incluir `previewUrl: p.preview_url ?? null` no objeto retornado para cada item.
+### Alterações técnicas
+Arquivo único: `src/routes/_authenticated/my-monetisex-stats.tsx`, componente `TopLiveCard`:
 
-### 2. Frontend — reorganizar o card "Top postagem"
-- Arquivo: `src/routes/_authenticated/my-monetisex-stats.tsx`
-- No componente `TopPostagemCard`:
-  - Remover o `Checkbox` que hoje fica à esquerda do `Link`.
-  - Dentro do `Link` (card da postagem), adicionar o `Checkbox` posicionado no canto superior direito (apenas quando `action` estiver definido).
-  - Adicionar a miniatura da postagem (`top.previewUrl`) à esquerda da legenda, usando um `img` com `object-cover` e fallback para um ícone quando não houver imagem.
-  - Ajustar o layout interno do card para que a legenda e as estatísticas fiquem ao lado da miniatura.
+1. Trocar o header atual (linha ~1576) por um `flex items-start justify-between` contendo o título à esquerda e `<CardMenu items={[{ label: "Exibir estatísticas", onSelect: () => setStatsOpen(true) }]} />` à direita.
+2. Adicionar `const [statsOpen, setStatsOpen] = useState(false);`.
+3. Adicionar um `<Dialog open={statsOpen} onOpenChange={setStatsOpen}>` no final do card com `DialogHeader` "Estatísticas da live" e grid 2 colunas mostrando views e faturamento, além do título e data.
 
-### 3. Verificação
-- Rodar typecheck para garantir que os novos campos e tipos estão corretos.
-- Validar no preview que o checkbox aparece no topo direito do card e a miniatura fica à esquerda da legenda quando há `preview_url`.
+Sem mudanças de backend — os dados já vêm de `getEngajamentoLives`.
 
-## Arquivos alterados
-- `src/lib/stats.functions.ts`
-- `src/routes/_authenticated/my-monetisex-stats.tsx`
+### Validação
+Rodar typecheck e conferir visualmente no preview que o menu abre e o dialog mostra os dados reais.
