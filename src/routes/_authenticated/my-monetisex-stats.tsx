@@ -1516,7 +1516,16 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
             </div>
           </div>
         ) : tab === "Top assinantes" ? (
-          <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} full />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2">
+              <TopAssinantesGastoTotal top={gasto.data ?? []} loading={gasto.isLoading} filtro={gastoFiltro} onFiltro={setGastoFiltro} />
+            </div>
+            <div className="space-y-5">
+              <ResumoAssinantesCard stats={stats.data} loading={stats.isLoading} />
+              <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
+            </div>
+          </div>
+
         ) : (
           <AtividadeAssinantesInline range={range} />
         )}
