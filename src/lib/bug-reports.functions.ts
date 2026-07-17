@@ -102,8 +102,8 @@ export const listAdminBugReports = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const ids = Array.from(
-      new Set((rows ?? []).map((r: any) => r.reporter_id)),
-    );
+      new Set((rows ?? []).map((r: any) => r.reporter_id as string)),
+    ) as string[];
     const profs: Record<string, any> = {};
     if (ids.length) {
       const { data: p } = await supabase
