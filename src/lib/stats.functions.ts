@@ -804,6 +804,14 @@ export const logProfileView = createServerFn({ method: "POST" })
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) return { ok: false };
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const country = (
+      getRequestHeader("cf-ipcountry") ||
+      getRequestHeader("x-vercel-ip-country") ||
+      getRequestHeader("x-country") ||
+      null
+    );
+    const normalizedCountry = country && country.length === 2 ? country.toUpperCase() : null;
     const { createClient } = await import("@supabase/supabase-js");
     const client = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -816,6 +824,6 @@ export const logProfileView = createServerFn({ method: "POST" })
         },
       },
     });
-    await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null });
+    await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null, country: normalizedCountry });
     return { ok: true };
   });
