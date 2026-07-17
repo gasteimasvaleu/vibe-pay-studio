@@ -1,14 +1,20 @@
 import { useRef, useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  createBugEvidenceUploadUrl,
+  createBugReport,
+} from "@/lib/bug-reports.functions";
 
 const MAX_DESC = 5000;
 const MAX_MEDIA = 5;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
 export const Route = createFileRoute("/_authenticated/bugreport")({
   head: () => ({
