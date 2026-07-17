@@ -27,6 +27,26 @@ async function logAudit(
   });
 }
 
+const VALID_WITHDRAWAL_STATUSES = new Set([
+  "requested",
+  "in_review",
+  "approved",
+  "paid",
+  "rejected",
+  "failed",
+]);
+
+function normalizeWithdrawalStatuses(status?: string) {
+  if (!status) return [];
+
+  return status
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => (s === "pending" ? "in_review" : s))
+    .filter((s) => VALID_WITHDRAWAL_STATUSES.has(s));
+}
+
 // ---------- Roles / gate ----------
 
 /**
@@ -316,8 +336,8 @@ export const listAdminWithdrawals = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
 
-    if (data.status) {
-      const statuses = data.status.split(",");
+    const statuses = normalizeWithdrawalStatuses(data.status);
+    if (statuses.length > 0) {
       q = q.in("status", statuses as any);
     }
     const { data: rows, error } = await q;

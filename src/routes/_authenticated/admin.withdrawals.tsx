@@ -15,14 +15,15 @@ function brl(c: number) {
 }
 
 const FILTERS = [
-  { v: "requested,pending", l: "Pendentes" },
+  { v: "requested,in_review", l: "Pendentes" },
+  { v: "approved", l: "Aprovados" },
   { v: "paid", l: "Pagos" },
-  { v: "failed,rejected,cancelled", l: "Falharam" },
+  { v: "failed,rejected", l: "Falharam" },
   { v: "", l: "Todos" },
 ] as const;
 
 function AdminWithdrawals() {
-  const [status, setStatus] = useState<string>("requested,pending");
+  const [status, setStatus] = useState<string>("requested,in_review");
   const fetchFn = useServerFn(listAdminWithdrawals);
   const q = useQuery({
     queryKey: ["admin-withdrawals", status],
@@ -103,9 +104,7 @@ function AdminWithdrawals() {
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           w.status === "paid"
                             ? "bg-primary/10 text-primary"
-                            : w.status === "failed" ||
-                              w.status === "rejected" ||
-                              w.status === "cancelled"
+                            : w.status === "failed" || w.status === "rejected"
                             ? "bg-destructive/10 text-destructive"
                             : "bg-muted text-muted-foreground"
                         }`}
