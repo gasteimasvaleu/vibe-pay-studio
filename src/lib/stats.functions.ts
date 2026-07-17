@@ -413,115 +413,8 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
     }));
    });
 
-/**
- * Atividade recente dos assinantes (feed cronológico).
- */
-export const getAtividadeAssinantes = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(rangeValidator)
-  .handler(async ({ context, data }) => {
-    const { supabase, userId } = context;
 
-    const [subsAllRes, subsPeriodRes, cancelRes, txRes] = await Promise.all([
-      supabase.from("subscriptions")
-        .select("subscriber_id, created_at")
-        .eq("creator_id", userId),
-      supabase.from("subscriptions")
-        .select("id, subscriber_id, price_cents_paid, created_at")
-        .eq("creator_id", userId)
-        .gte("created_at", data.from).lte("created_at", data.to),
-      supabase.from("subscriptions")
-        .select("id, subscriber_id, price_cents_paid, cancelled_at")
-        .eq("creator_id", userId)
-        .not("cancelled_at", "is", null)
-        .gte("cancelled_at", data.from).lte("cancelled_at", data.to),
-      supabase.from("transactions")
-        .select("buyer_id, amount_cents_gross, kind, created_at")
-        .eq("creator_id", userId).eq("status", "paid")
-        .in("kind", ["tip", "chat_unlock", "publication_unlock"] as unknown as never[])
-        .gte("created_at", data.from).lte("created_at", data.to),
-    ]);
-    if (subsAllRes.error) throw new Error(subsAllRes.error.message);
-    if (subsPeriodRes.error) throw new Error(subsPeriodRes.error.message);
-    if (cancelRes.error) throw new Error(cancelRes.error.message);
-    if (txRes.error) throw new Error(txRes.error.message);
 
-    const historyBefore = new Set(
-      (subsAllRes.data ?? [])
-        .filter(s => new Date(s.created_at as string) < new Date(data.from))
-        .map(s => s.subscriber_id as string),
-    );
-
-    type Event = {
-      at: string;
-      type: "nova_assinatura" | "renovacao" | "cancelamento" | "compra";
-      kind?: string;
-      amountCents: number;
-      userId: string;
-    };
-    const events: Event[] = [];
-
-    const seen = new Set<string>();
-    const periodSorted = (subsPeriodRes.data ?? [])
-      .slice()
-      .sort((a, b) => (a.created_at as string).localeCompare(b.created_at as string));
-    for (const s of periodSorted) {
-      const sid = s.subscriber_id as string;
-      const isRenewal = historyBefore.has(sid) || seen.has(sid);
-      seen.add(sid);
-      events.push({
-        at: s.created_at as string,
-        type: isRenewal ? "renovacao" : "nova_assinatura",
-        amountCents: s.price_cents_paid ?? 0,
-        userId: sid,
-      });
-    }
-    for (const s of cancelRes.data ?? []) {
-      events.push({
-        at: s.cancelled_at as string,
-        type: "cancelamento",
-        amountCents: 0,
-        userId: s.subscriber_id as string,
-      });
-    }
-    for (const t of txRes.data ?? []) {
-      if (!t.buyer_id) continue;
-      events.push({
-        at: t.created_at as string,
-        type: "compra",
-        kind: t.kind as string,
-        amountCents: t.amount_cents_gross ?? 0,
-        userId: t.buyer_id as string,
-      });
-    }
-
-    events.sort((a, b) => b.at.localeCompare(a.at));
-    const top = events.slice(0, 100);
-
-    const ids = Array.from(new Set(top.map(e => e.userId)));
-    const profsRes = ids.length
-      ? await supabase.from("profiles")
-          .select("user_id, username, display_name, avatar_url")
-          .in("user_id", ids)
-      : { data: [] as { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null }[] };
-    const byId = Object.fromEntries((profsRes.data ?? []).map(p => [p.user_id as string, p]));
-
-    return top.map(e => {
-      const p = byId[e.userId] as { username?: string | null; display_name?: string | null; avatar_url?: string | null } | undefined;
-      return {
-        at: e.at,
-        type: e.type,
-        kind: e.kind ?? null,
-        amountCents: e.amountCents,
-        user: {
-          id: e.userId,
-          username: p?.username ?? null,
-          displayName: p?.display_name ?? null,
-          avatarUrl: p?.avatar_url ?? null,
-        },
-      };
-    });
-  });
 
 /**
  * Lista detalhada de assinaturas do criador no período com filtro e busca.
@@ -1035,3 +928,38 @@ export const logProfileView = createServerFn({ method: "POST" })
     await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null, country: normalizedCountry });
     return { ok: true };
   });
+
+/**
+ * Heatmap de atividade: distribui profile_views do criador em 7 dias × 8 buckets de 3h.
+ */
+export const getAssinantesActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(rangeValidator)
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("profile_views")
+      .select("created_at")
+      .eq("profile_id", userId)
+      .gte("created_at", data.from)
+      .lte("created_at", data.to)
+      .limit(1000);
+    if (error) throw new Error(error.message);
+
+    const heatmap: number[][] = Array.from({ length: 7 }, () => Array(8).fill(0));
+    const hourly: number[] = Array(8).fill(0);
+    let total = 0;
+    for (const r of rows ?? []) {
+      const d = new Date(r.created_at as string);
+      const day = d.getDay(); // 0=Sun..6=Sat
+      const bucket = Math.floor(d.getHours() / 3); // 0..7
+      heatmap[day][bucket] += 1;
+      hourly[bucket] += 1;
+      total += 1;
+    }
+    const max = heatmap.reduce((m, row) => Math.max(m, ...row), 0);
+    const hourlyMax = Math.max(...hourly);
+    const hourlyPct = hourly.map(v => (hourlyMax > 0 ? Math.round((v / hourlyMax) * 100) : 0));
+    return { heatmap, max, hourly, hourlyPct, total };
+  });
+
