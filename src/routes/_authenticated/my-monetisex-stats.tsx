@@ -1113,24 +1113,46 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
             )}
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <h3 className="text-base font-bold">{isLives ? "Top live" : "Top postagem"}</h3>
-            {(isLives ? liveQ.data?.items?.[0] : pubQ.data?.items?.[0]) ? (
-              isLives ? (
-                <div className="mt-3 text-sm">
-                  <p className="font-semibold">{liveQ.data?.items?.[0]?.title ?? "Live"}</p>
-                  <p className="text-muted-foreground text-xs">{formatBRL(liveQ.data?.items?.[0]?.gross_cents ?? 0)}</p>
-                </div>
-              ) : (
-                <div className="mt-3 text-sm">
-                  <p className="font-semibold truncate">{pubQ.data?.items?.[0]?.caption || "(sem legenda)"}</p>
-                  <p className="text-muted-foreground text-xs">{formatBRL(pubQ.data?.items?.[0]?.revenue ?? 0)}</p>
-                </div>
-              )
-            ) : (
-              <p className="mt-6 text-sm text-muted-foreground">{isLives ? "Sem lives no período." : "Nenhuma postagem no período."}</p>
-            )}
-          </div>
+          {(() => {
+            const topPub = [...(pubQ.data?.items ?? [])].sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))[0];
+            const topLive = [...(liveQ.data?.items ?? [])].sort((a, b) => (b.gross_cents ?? 0) - (a.gross_cents ?? 0))[0];
+            const hasTop = isLives ? !!topLive : !!topPub;
+            return (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+                <h3 className="text-base font-bold">{isLives ? "Top live" : "Top postagem"}</h3>
+                {!hasTop ? (
+                  <p className="mt-6 text-sm text-muted-foreground">{isLives ? "Sem lives no período." : "Nenhuma postagem no período."}</p>
+                ) : isLives ? (
+                  <div className="mt-3 flex items-center gap-3">
+                    {topLive!.cover_url ? (
+                      <img src={topLive!.cover_url} alt="Miniatura da live" className="h-14 w-14 flex-shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-muted"><Radio className="h-5 w-5 text-muted-foreground" /></div>
+                    )}
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="font-semibold truncate">{topLive!.title ?? "Live"}</p>
+                      <p className="text-muted-foreground text-xs">{fullDate.format(new Date(topLive!.started_at as string))}</p>
+                      <p className="text-xs font-semibold text-foreground">{formatBRL(topLive!.gross_cents ?? 0)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex items-center gap-3">
+                    {topPub!.previewUrl ? (
+                      <img src={topPub!.previewUrl} alt="Miniatura da postagem" className="h-14 w-14 flex-shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-muted"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>
+                    )}
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="font-semibold truncate">{topPub!.caption || "(sem legenda)"}</p>
+                      <p className="text-muted-foreground text-xs">{fullDate.format(new Date(topPub!.publishedAt as string))}</p>
+                      <p className="text-xs font-semibold text-foreground">{formatBRL(topPub!.revenue ?? 0)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
         </div>
       </div>
     </div>
