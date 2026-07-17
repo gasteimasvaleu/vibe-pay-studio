@@ -351,7 +351,7 @@ export const listAdminReports = createServerFn({ method: "GET" })
       .limit(data.limit ?? 200);
     if (data.status) {
       const statuses = data.status.split(",");
-      q = q.in("status", statuses);
+      q = q.in("status", statuses as any);
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
