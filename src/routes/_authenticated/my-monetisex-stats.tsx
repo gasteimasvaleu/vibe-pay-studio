@@ -1564,6 +1564,7 @@ const TOP_LIVE_SORT: Record<(typeof TOP_LIVE_TABS)[number], "revenue" | "tips"> 
 
 function TopLiveCard({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof TOP_LIVE_TABS)[number]>("Mais vendida");
+  const [statsOpen, setStatsOpen] = useState(false);
   const fn = useServerFn(getEngajamentoLives);
   const q = useQuery({
     queryKey: ["stats", "destaquesLive", range.from, range.to, tab],
@@ -1573,7 +1574,12 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
   const top = q.data?.items?.[0];
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top Live</h3></div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top Live</h3></div>
+        <CardMenu items={[
+          { label: "Exibir estatísticas", onSelect: () => setStatsOpen(true), disabled: !top },
+        ]} />
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {TOP_LIVE_TABS.map(t => (
           <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
@@ -1590,9 +1596,27 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
             </div>
           </div>
         )}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Estatísticas da live</DialogTitle>
+          </DialogHeader>
+          {top && (
+            <div className="space-y-3 text-sm">
+              <p className="font-medium">{top.title ?? "Live"}</p>
+              <p className="text-muted-foreground text-xs">{fullDate.format(new Date(top.started_at as string))}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Views</p><p className="text-lg font-bold">{top.total_views ?? 0}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-lg font-bold">{formatBRL(top.gross_cents ?? 0)}</p></div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 const TOP_ASSIN_TABS = ["Total", "Mais assinaturas", "Mimos", "Chat"] as const;
 const TOP_ASSIN_METRIC: Record<(typeof TOP_ASSIN_TABS)[number], "total" | "subscription" | "tip" | "chat_unlock"> = {
