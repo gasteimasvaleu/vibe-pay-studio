@@ -1501,12 +1501,8 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatBox label="Ativos" value={stats.data?.totalAtivos ?? 0} loading={stats.isLoading} />
-                <StatBox label="Novos" value={stats.data?.novosPeriodo ?? 0} loading={stats.isLoading} />
-                <StatBox label="Renovações" value={stats.data?.renovacoesPeriodo ?? 0} loading={stats.isLoading} />
-                <StatBox label="Ticket médio" value={formatBRL(stats.data?.ticketMedio ?? 0)} loading={stats.isLoading} />
-              </div>
+              <AssinantesListInline range={range} />
+
             </div>
             <div className="space-y-5">
               <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
