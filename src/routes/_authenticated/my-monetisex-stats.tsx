@@ -1069,30 +1069,53 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            {isLives ? (
-              <EngajamentoChart
-                loading={liveQ.isLoading}
-                totalLabel={`${liveQ.data?.totalCount ?? 0} lives`}
-                totalRevenue={liveQ.data?.totalRevenue ?? 0}
-                range={range}
-                items={(liveQ.data?.items ?? []).map(l => ({
-                  date: l.started_at as string,
-                  revenue: (l.gross_cents ?? 0) / 100,
-                }))}
-              />
-            ) : (
-              <EngajamentoChart
-                loading={pubQ.isLoading}
-                totalLabel={`${pubQ.data?.totalCount ?? 0} postagens`}
-                totalRevenue={pubQ.data?.totalRevenue ?? 0}
-                range={range}
-                items={(pubQ.data?.items ?? []).map(p => ({
-                  date: p.publishedAt as string,
-                  revenue: p.revenue ?? 0,
-                }))}
-              />
-            )}
+            {isLives ? (() => {
+              const cfg: Record<(typeof ORDENAR_LIVES)[number], { label: string; format: "brl" | "int"; get: (l: NonNullable<typeof liveQ.data>["items"][number]) => number }> = {
+                "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
+                "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
+                "Visualizações": { label: "Visualizações", format: "int", get: l => l.total_views ?? 0 },
+              };
+              const c = cfg[ordenarLive];
+              return (
+                <EngajamentoChart
+                  loading={liveQ.isLoading}
+                  totalLabel={`${liveQ.data?.totalCount ?? 0} lives`}
+                  totalRevenue={liveQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(liveQ.data?.items ?? []).map(l => ({
+                    date: l.started_at as string,
+                    metric: c.get(l),
+                  }))}
+                />
+              );
+            })() : (() => {
+              const cfg: Record<(typeof ORDENAR_PUBLICACOES)[number], { label: string; format: "brl" | "int"; get: (p: NonNullable<typeof pubQ.data>["items"][number]) => number }> = {
+                "Recentes": { label: "Faturamento", format: "brl", get: p => p.revenue ?? 0 },
+                "Faturamento": { label: "Faturamento", format: "brl", get: p => p.revenue ?? 0 },
+                "Mimos": { label: "Mimos", format: "brl", get: p => p.tips ?? 0 },
+                "Curtidas": { label: "Curtidas", format: "int", get: p => p.likes ?? 0 },
+                "Comentários": { label: "Comentários", format: "int", get: p => p.comments ?? 0 },
+              };
+              const c = cfg[ordenarPub];
+              return (
+                <EngajamentoChart
+                  loading={pubQ.isLoading}
+                  totalLabel={`${pubQ.data?.totalCount ?? 0} postagens`}
+                  totalRevenue={pubQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(pubQ.data?.items ?? []).map(p => ({
+                    date: p.publishedAt as string,
+                    metric: c.get(p),
+                  }))}
+                />
+              );
+            })()}
           </div>
+
 
         </div>
 
