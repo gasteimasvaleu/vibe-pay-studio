@@ -88,7 +88,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         supabase
           .from("withdrawals")
           .select("id", { count: "exact", head: true })
-          .in("status", ["requested", "pending"] as any),
+          .in("status", ["requested", "in_review"] as any),
         supabase
           .from("content_reports")
           .select("id", { count: "exact", head: true })
