@@ -196,6 +196,51 @@ export type Database = {
         }
         Relationships: []
       }
+      content_leak_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string
+          evidence_paths: string[]
+          id: string
+          leak_url: string
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description: string
+          evidence_paths?: string[]
+          id?: string
+          leak_url: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string
+          evidence_paths?: string[]
+          id?: string
+          leak_url?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_reports: {
         Row: {
           created_at: string
