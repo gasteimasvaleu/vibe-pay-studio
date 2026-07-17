@@ -1630,6 +1630,15 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
   );
 }
 
+function StatBox({ label, value, loading }: { label: string; value: number | string; loading: boolean }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-bold">{loading ? "—" : value}</p>
+    </div>
+  );
+}
+
 const ASSINANTES_LIST_CHIPS = ["Todos", "Renovações", "Novos assinantes"] as const;
 type AssinantesListFilter = (typeof ASSINANTES_LIST_CHIPS)[number];
 const LIST_FILTER_MAP: Record<AssinantesListFilter, "todos" | "renovacoes" | "novos"> = {
