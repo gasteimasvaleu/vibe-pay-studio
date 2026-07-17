@@ -1,46 +1,56 @@
-
 ## Objetivo
 
-Tornar a página `/content-leak-report` funcional (persistir denúncias no banco, com upload de mídias como evidência) e adicionar uma seção **Vazamentos** no dashboard admin para triagem/resolução.
+Tornar `/bugreport` funcional (persistir bugs + mídias) e adicionar uma seção "Bugs" no dashboard admin para triagem, seguindo o mesmo padrão já usado em vazamentos (`/content-leak-report` + `/admin/leaks`).
 
-## Backend (migração)
+## Banco de dados
 
-1. Novo bucket privado `leak-evidence` no Storage (só o dono lê seus próprios; admins leem tudo via política).
-2. Nova tabela `public.content_leak_reports`:
-   - `id uuid pk`, `reporter_id uuid` (auth.uid), `title text`, `leak_url text`, `description text`,
-   - `evidence_paths text[]` (paths do bucket),
-   - `status text` — `open` | `reviewing` | `resolved` | `dismissed` (default `open`),
-   - `admin_notes text`, `resolved_by uuid`, `resolved_at timestamptz`,
-   - `created_at`, `updated_at`.
-3. GRANTs + RLS:
-   - `authenticated` faz `INSERT` das próprias denúncias e `SELECT` das suas.
-   - Admin/moderator (`has_role`) faz `SELECT`/`UPDATE` em tudo.
-4. Políticas do bucket `leak-evidence`:
-   - INSERT/SELECT: dono pela primeira pasta = `auth.uid()`.
-   - SELECT extra: admin/moderator veem tudo.
+Migração única com:
 
-## Server functions (`src/lib/leak-reports.functions.ts`)
+- Tabela `public.bug_reports`
+  - `reporter_id` (uuid, FK lógica para `auth.users`)
+  - `title` (text)
+  - `description` (text)
+  - `media_paths` (text[]) — caminhos no bucket `bug-evidence`
+  - `status` (enum `bug_report_status`: `open`, `in_progress`, `resolved`, `wont_fix`) default `open`
+  - `priority` (enum `bug_report_priority`: `low`, `medium`, `high`) default `medium`
+  - `admin_notes` (text)
+  - `resolved_at`, `resolved_by`, `created_at`, `updated_at`
+- GRANTs (`authenticated` insert/select próprio; `service_role` all)
+- RLS:
+  - usuário autenticado insere o próprio report
+  - usuário lê apenas os próprios
+  - admin (via `has_role`) lê/atualiza tudo
+- Trigger `updated_at`
 
-- `createLeakReport({ title, leakUrl, description, evidencePaths })` — auth, valida tamanhos, insere linha.
-- `createLeakEvidenceUploadUrl({ filename, contentType })` — auth, retorna signed upload URL em `leak-evidence/{uid}/{uuid}-{filename}`.
-- `listAdminLeakReports({ status?, limit?, offset? })` — admin only, hidrata reporter (username/avatar) e gera signed URLs (5 min) para cada evidência.
-- `updateLeakReport({ id, status, adminNotes? })` — admin only, grava `resolved_by`/`resolved_at`, escreve `audit_logs`.
+## Storage
+
+Bucket privado `bug-evidence` (upload por signed URL, leitura via signed URL gerada no server).
+
+Políticas em `storage.objects`: dono pode fazer upload no próprio prefixo `{user_id}/…`; admin lê tudo.
+
+## Backend (`src/lib/bug-reports.functions.ts`)
+
+Server functions com `requireSupabaseAuth`:
+
+- `createBugEvidenceUploadUrl({ fileName, contentType })` → retorna `{ path, signedUrl }`
+- `createBugReport({ title, description, mediaPaths })` → insere linha
+- `listAdminBugReports({ status?, priority? })` → só admin; devolve reports + URLs assinadas das mídias + dados básicos do reporter (nome, avatar, email quando disponível via join com `profiles`)
+- `updateBugReport({ id, status?, priority?, adminNotes? })` → só admin; grava `resolved_at`/`resolved_by` quando status vira `resolved`/`wont_fix`
 
 ## Frontend
 
-### `src/routes/_authenticated/content-leak-report.tsx`
-- Substitui o `toast.success` fake pelo fluxo real:
-  1. Para cada arquivo: pede signed URL → PUT no Storage.
-  2. Chama `createLeakReport` com os paths retornados.
-  3. Toast de sucesso + `router.history.back()`. Trata erros com toast.
+- `src/routes/_authenticated/bugreport.tsx`
+  - `handleSubmit` async: para cada mídia pede signed upload URL → faz `PUT`, coleta paths, chama `createBugReport`, mostra toast e limpa formulário. Estado `submitting` desabilita o botão.
+- `src/routes/_authenticated/admin.tsx`
+  - Adiciona item de nav "Bugs" (ícone `Bug`) apontando para `/admin/bugs`.
+- `src/routes/_authenticated/admin.bugs.tsx` (novo)
+  - Lista com filtros por status e prioridade
+  - Cada card: título, descrição, reporter, data, thumbs/vídeos (signed URLs), select de status, select de prioridade, textarea de notas internas, botão salvar
+  - Usa `useQuery` + `useMutation` com invalidate
 
-### Admin
-- `src/routes/_authenticated/admin.tsx`: adiciona item **Vazamentos** (ícone `FileWarning`) ao `NAV`.
-- Nova rota `src/routes/_authenticated/admin.leaks.tsx`: mesma UX das outras abas admin (filtros por status, tabela em `Card`), com:
-  - Colunas: reporter, título, link (abre em nova aba), data, status.
-  - Expandir linha → descrição completa, thumbnails/links das evidências (signed URLs), textarea de notas admin.
-  - Ações: **Em análise**, **Resolvido**, **Descartar**.
+## Detalhes técnicos
 
-## Fora de escopo
-- Notificar por email o denunciante (podemos adicionar depois usando `email-events.server.ts`).
-- Fluxo de takedown/DMCA automatizado.
+- Padrão idêntico ao já implementado em `src/lib/leak-reports.functions.ts` e `src/routes/_authenticated/admin.leaks.tsx` — reaproveitar shape.
+- Limites: máx 5 mídias, imagens/vídeos, ~25 MB por arquivo (validar no server function antes de gerar signed URL).
+- Signed URLs de leitura no admin válidas por 1h.
+- `admin.tsx` já protege com `requireAdminAccess`; as functions de admin também revalidam role via `has_role`.
