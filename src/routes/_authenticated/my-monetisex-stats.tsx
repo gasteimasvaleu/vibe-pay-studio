@@ -1572,16 +1572,16 @@ function AtividadeHeatmapCard({ range }: { range: { from: string; to: string } }
         {q.isLoading ? (
           <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1.5">
             {HEATMAP_DAYS.map(d => (
-              <React.Fragment key={d}>
+              <Fragment key={d}>
                 <span className="text-xs text-muted-foreground pr-2 self-center">{d}</span>
                 {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-8 rounded-md" />)}
-              </React.Fragment>
+              </Fragment>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1.5">
             {HEATMAP_DAYS.map((day, di) => (
-              <React.Fragment key={day}>
+              <Fragment key={day}>
                 <span className="text-xs text-muted-foreground pr-2 self-center">{day}</span>
                 {heatmap[di].map((count, bi) => {
                   const opacity = max > 0 ? 0.08 + (count / max) * 0.72 : 0.08;
@@ -1594,7 +1594,7 @@ function AtividadeHeatmapCard({ range }: { range: { from: string; to: string } }
                     />
                   );
                 })}
-              </React.Fragment>
+              </Fragment>
             ))}
           </div>
         )}
