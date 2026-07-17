@@ -631,6 +631,8 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
         visibility: p.visibility,
         priceCents: p.price_cents ?? 0,
         publishedAt: p.published_at ?? p.created_at,
+        pinned: !!(p as { pinned?: boolean }).pinned,
+        archivedAt: (p as { archived_at?: string | null }).archived_at ?? null,
         likes: likesMap.get(id) ?? 0,
         comments: commentsMap.get(id) ?? 0,
         tips: tipsCount.get(id) ?? 0,
@@ -652,8 +654,10 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
       items,
       totalCount: items.length,
       totalRevenue: items.reduce((a, r) => a + r.revenue, 0),
+      authorUsername,
     };
   });
+
 
 /**
  * Lives do período (Engajamento › Lives, Top Live).
