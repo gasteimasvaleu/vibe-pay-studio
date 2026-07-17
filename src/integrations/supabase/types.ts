@@ -555,18 +555,21 @@ export type Database = {
       }
       profile_views: {
         Row: {
+          country: string | null
           created_at: string
           id: string
           profile_id: string
           viewer_id: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string
           id?: string
           profile_id: string
           viewer_id?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string
           id?: string
           profile_id?: string
