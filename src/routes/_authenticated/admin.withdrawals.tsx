@@ -1,0 +1,135 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { listAdminWithdrawals } from "@/lib/admin-dashboard.functions";
+import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/admin/withdrawals")({
+  component: AdminWithdrawals,
+});
+
+function brl(c: number) {
+  return (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+const FILTERS = [
+  { v: "requested,pending", l: "Pendentes" },
+  { v: "paid", l: "Pagos" },
+  { v: "failed,rejected,cancelled", l: "Falharam" },
+  { v: "", l: "Todos" },
+] as const;
+
+function AdminWithdrawals() {
+  const [status, setStatus] = useState<string>("requested,pending");
+  const fetchFn = useServerFn(listAdminWithdrawals);
+  const q = useQuery({
+    queryKey: ["admin-withdrawals", status],
+    queryFn: () => fetchFn({ data: { status, limit: 200 } }),
+    staleTime: 15_000,
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.v}
+            onClick={() => setStatus(f.v)}
+            className={`px-3 py-1.5 text-sm rounded-full border ${
+              status === f.v
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f.l}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Os saques são processados automaticamente via wallet ID (integração Asaas). Esta tela é
+        somente para monitoramento.
+      </p>
+
+      <Card className="overflow-hidden">
+        {q.isLoading ? (
+          <div className="py-16 flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : q.error || !q.data ? (
+          <div className="p-6 text-destructive text-sm">Erro.</div>
+        ) : q.data.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">Nenhum saque.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-xs text-muted-foreground">
+                <tr>
+                  <th className="text-left px-3 py-2">Solicitado</th>
+                  <th className="text-left px-3 py-2">Criador</th>
+                  <th className="text-left px-3 py-2">Chave Pix</th>
+                  <th className="text-right px-3 py-2">Bruto</th>
+                  <th className="text-right px-3 py-2">Taxa</th>
+                  <th className="text-right px-3 py-2">Líquido</th>
+                  <th className="text-left px-3 py-2">Status</th>
+                  <th className="text-left px-3 py-2">Processado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {q.data.map((w: any) => (
+                  <tr key={w.id} className="border-t border-border">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">
+                      {new Date(w.requested_at ?? w.created_at).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-3 py-2">
+                      {w.creator ? `@${w.creator.username}` : w.creator_id.slice(0, 8)}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      <div>{w.pix_key_type}</div>
+                      <div className="text-muted-foreground truncate max-w-[180px]">
+                        {w.pix_key}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-right">{brl(w.amount_cents)}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">
+                      {brl(w.fee_cents ?? 0)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {brl(w.net_cents ?? w.amount_cents)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          w.status === "paid"
+                            ? "bg-primary/10 text-primary"
+                            : w.status === "failed" ||
+                              w.status === "rejected" ||
+                              w.status === "cancelled"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {w.status}
+                      </span>
+                      {w.rejection_reason && (
+                        <div className="text-[10px] text-destructive mt-0.5">
+                          {w.rejection_reason}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {w.processed_at
+                        ? new Date(w.processed_at).toLocaleString("pt-BR")
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
