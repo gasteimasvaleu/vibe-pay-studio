@@ -1,18 +1,22 @@
-## Corrigir cores do gráfico de engajamento
+## Card "Top postagem/Top live" com miniatura e dado real
 
-O gráfico está renderizando tudo em preto porque as cores foram passadas como `hsl(var(--primary))`, mas os tokens deste projeto (`src/styles.css`) são `oklch(...)` — envolver em `hsl()` gera cor inválida e o Recharts cai para preto.
+O card pequeno na coluna direita do painel de Engajamento hoje mostra `items[0]` — que é o primeiro item da lista ordenada pelo filtro atual (Data / Faturamento / Mimos etc.), então nem sempre é o "top". Também não mostra miniatura.
 
-### Alteração
-Arquivo: `src/routes/_authenticated/my-monetisex-stats.tsx`, componente `EngajamentoChart`.
+### Ajustes
+Arquivo: `src/routes/_authenticated/my-monetisex-stats.tsx`, no bloco do card (linhas ~1116-1133).
 
-Substituir nos props do Recharts:
-- `hsl(var(--primary))` → `var(--primary)` (linha e ponto de Faturamento — roxo)
-- `hsl(var(--muted-foreground) / 0.5)` → `color-mix(in oklab, var(--muted-foreground) 50%, transparent)` (barras de Quantidade — cinza)
-- `hsl(var(--muted-foreground))` → `var(--muted-foreground)` (ticks dos eixos)
-- `hsl(var(--border))` → `var(--border)` (grid e eixos)
-- `hsl(var(--popover))` / `hsl(var(--popover-foreground))` → `var(--popover)` / `var(--popover-foreground)` (tooltip)
+1. Calcular o item de maior faturamento independentemente da ordenação escolhida:
+   - `topPub = [...(pubQ.data?.items ?? [])].sort((a,b)=>(b.revenue ?? 0) - (a.revenue ?? 0))[0]`
+   - `topLive = [...(liveQ.data?.items ?? [])].sort((a,b)=>(b.gross_cents ?? 0) - (a.gross_cents ?? 0))[0]`
 
-Sem outras mudanças.
+2. Renderizar layout com miniatura à esquerda:
+   - Publicações: `<img src={topPub.previewUrl} />` (campo já retornado por `getEngajamentoPublicacoes`); fallback: `div` com `ImageIcon`.
+   - Lives: `<img src={topLive.cover_url} />` (campo já existente em `live_sessions` e retornado por `getEngajamentoLives`); fallback: `div` com `Radio`.
+   - Tamanho: `h-14 w-14 rounded-lg object-cover`.
+3. À direita da miniatura: legenda/título (truncate) + faturamento em BRL + data curta.
+4. Manter mensagem de vazio quando não houver item.
+
+Sem mudanças de backend — `previewUrl` e `cover_url` já vêm do server.
 
 ### Validação
-Recarregar preview e confirmar que a linha aparece em roxo e as barras em cinza, como no screenshot enviado.
+Recarregar preview e conferir que a miniatura aparece e que o item exibido é o de maior faturamento no período.
