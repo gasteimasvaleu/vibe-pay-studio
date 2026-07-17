@@ -66,6 +66,7 @@ import {
   listExtrato,
   getAssinantesStats,
   getTopAssinantes,
+  getAtividadeAssinantes,
   getTopPaises,
   getStreak,
   getAlcance,
