@@ -291,7 +291,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-function CardMenu({ items }: { items: { label: string; onSelect?: () => void }[] }) {
+function CardMenu({ items }: { items: { label: string; onSelect?: () => void; disabled?: boolean }[] }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -303,12 +303,13 @@ function CardMenu({ items }: { items: { label: string; onSelect?: () => void }[]
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
         {items.map(it => (
-          <DropdownMenuItem key={it.label} onSelect={it.onSelect} className="py-3 px-3 text-base cursor-pointer rounded-xl">{it.label}</DropdownMenuItem>
+          <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled} className="py-3 px-3 text-base cursor-pointer rounded-xl">{it.label}</DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
 
 function TabsRow<T extends string>({ tabs, active, onChange }: { tabs: readonly T[]; active: T; onChange: (t: T) => void }) {
   return (
