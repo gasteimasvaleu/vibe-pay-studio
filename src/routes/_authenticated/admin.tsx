@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { requireAdminAccess } from "@/lib/admin-dashboard.functions";
 
-import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning } from "lucide-react";
+import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning, Bug } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -27,6 +27,7 @@ const NAV = [
   { to: "/admin/withdrawals", label: "Saques", icon: Banknote, exact: false },
   { to: "/admin/moderation", label: "Moderação", icon: ShieldAlert, exact: false },
   { to: "/admin/leaks", label: "Vazamentos", icon: FileWarning, exact: false },
+  { to: "/admin/bugs", label: "Bugs", icon: Bug, exact: false },
 ] as const;
 
 function AdminLayout() {
