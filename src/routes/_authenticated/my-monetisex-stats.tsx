@@ -1070,60 +1070,30 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             {isLives ? (
-              <>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-base font-bold">{liveQ.data?.totalCount ?? 0} lives</span>
-                  <span className="text-base font-bold">{formatBRL(liveQ.data?.totalRevenue ?? 0)}</span>
-                </div>
-                {liveQ.isLoading ? <Skeleton className="mt-6 h-40" /> :
-                  (liveQ.data?.items ?? []).length === 0 ? (
-                    <p className="mt-8 text-center text-sm text-muted-foreground">Sem lives no período.</p>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      {(liveQ.data?.items ?? []).map(l => (
-                        <div key={l.id} className="rounded-xl bg-muted/50 p-3 flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-lg bg-muted grid place-items-center"><Radio className="h-5 w-5 text-primary" /></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate">{l.title ?? "Live"}</p>
-                            <p className="text-xs text-muted-foreground">{fullDate.format(new Date(l.started_at as string))}</p>
-                          </div>
-                          <div className="text-right text-sm">
-                            <p className="font-semibold">{formatBRL(l.gross_cents ?? 0)}</p>
-                            <p className="text-xs text-muted-foreground">{l.total_views ?? 0} views</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              </>
+              <EngajamentoChart
+                loading={liveQ.isLoading}
+                totalLabel={`${liveQ.data?.totalCount ?? 0} lives`}
+                totalRevenue={liveQ.data?.totalRevenue ?? 0}
+                range={range}
+                items={(liveQ.data?.items ?? []).map(l => ({
+                  date: l.started_at as string,
+                  revenue: (l.gross_cents ?? 0) / 100,
+                }))}
+              />
             ) : (
-              <>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-base font-bold">{pubQ.data?.totalCount ?? 0} postagens</span>
-                  <span className="text-base font-bold">{formatBRL(pubQ.data?.totalRevenue ?? 0)}</span>
-                </div>
-                {pubQ.isLoading ? <Skeleton className="mt-6 h-40" /> :
-                  (pubQ.data?.items ?? []).length === 0 ? (
-                    <p className="mt-8 text-center text-sm text-muted-foreground">Nenhuma publicação no período.</p>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      {(pubQ.data?.items ?? []).map(p => (
-                        <Link key={p.id} to="/feed" className="block rounded-xl bg-muted/50 p-3">
-                          <p className="font-semibold truncate">{p.caption || "(sem legenda)"}</p>
-                          <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                            <span>{fullDate.format(new Date(p.publishedAt as string))}</span>
-                            <span>{p.likes} curtidas</span>
-                            <span>{p.comments} coment.</span>
-                            <span>{p.tips} mimos</span>
-                            <span className="font-semibold text-foreground">{formatBRL(p.revenue)}</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-              </>
+              <EngajamentoChart
+                loading={pubQ.isLoading}
+                totalLabel={`${pubQ.data?.totalCount ?? 0} postagens`}
+                totalRevenue={pubQ.data?.totalRevenue ?? 0}
+                range={range}
+                items={(pubQ.data?.items ?? []).map(p => ({
+                  date: p.publishedAt as string,
+                  revenue: p.revenue ?? 0,
+                }))}
+              />
             )}
           </div>
+
         </div>
 
         <div className="space-y-5">
