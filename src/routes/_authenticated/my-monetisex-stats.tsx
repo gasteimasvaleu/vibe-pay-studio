@@ -66,6 +66,8 @@ import {
   getEngajamentoLives,
 } from "@/lib/stats.functions";
 import { getCreatorEarningsSummary } from "@/lib/finance.functions";
+import { setPublicationPinned, setPublicationArchived } from "@/lib/publications.functions";
+
 
 const searchSchema = z.object({
   from: z.string().optional(),
