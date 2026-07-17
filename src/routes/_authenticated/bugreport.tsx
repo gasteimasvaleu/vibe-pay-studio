@@ -1,14 +1,20 @@
 import { useRef, useState } from "react";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  createBugEvidenceUploadUrl,
+  createBugReport,
+} from "@/lib/bug-reports.functions";
 
 const MAX_DESC = 5000;
 const MAX_MEDIA = 5;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
 export const Route = createFileRoute("/_authenticated/bugreport")({
   head: () => ({
@@ -32,8 +38,15 @@ function BugReportPage() {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = titulo.trim().length > 0 && descricao.trim().length > 0;
+  const createUploadUrl = useServerFn(createBugEvidenceUploadUrl);
+  const createReport = useServerFn(createBugReport);
+
+  const canSubmit =
+    !submitting &&
+    titulo.trim().length > 0 &&
+    descricao.trim().length > 0;
 
   function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -44,6 +57,10 @@ function BugReportPage() {
     }
     const next: MediaItem[] = [];
     for (const file of Array.from(files).slice(0, remaining)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} excede 25 MB`);
+        continue;
+      }
       next.push({
         id: crypto.randomUUID(),
         file,
@@ -62,13 +79,40 @@ function BugReportPage() {
     });
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit) return;
-    toast.success("Bug reportado com sucesso");
-    setTitulo("");
-    setDescricao("");
-    media.forEach((m) => URL.revokeObjectURL(m.url));
-    setMedia([]);
+    setSubmitting(true);
+    try {
+      const mediaPaths: string[] = [];
+      for (const m of media) {
+        const { path, signedUrl } = await createUploadUrl({
+          data: { filename: m.file.name, contentType: m.file.type },
+        });
+        const res = await fetch(signedUrl, {
+          method: "PUT",
+          headers: { "content-type": m.file.type || "application/octet-stream" },
+          body: m.file,
+        });
+        if (!res.ok) throw new Error(`Falha no upload de ${m.file.name}`);
+        mediaPaths.push(path);
+      }
+      await createReport({
+        data: {
+          title: titulo.trim(),
+          description: descricao.trim(),
+          mediaPaths,
+        },
+      });
+      toast.success("Bug reportado com sucesso");
+      setTitulo("");
+      setDescricao("");
+      media.forEach((m) => URL.revokeObjectURL(m.url));
+      setMedia([]);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao enviar");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -199,7 +243,13 @@ function BugReportPage() {
           disabled={!canSubmit}
           className="w-full h-12 rounded-md text-base font-semibold"
         >
-          Enviar
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...
+            </>
+          ) : (
+            "Enviar"
+          )}
         </Button>
       </main>
     </div>
