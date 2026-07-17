@@ -42,6 +42,7 @@ import {
   Gift,
   Lock,
   MessageSquare,
+  Search,
 } from "lucide-react";
 import {
   ResponsiveContainer,
