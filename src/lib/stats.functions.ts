@@ -517,9 +517,9 @@ export const getAlcance = createServerFn({ method: "GET" })
       .eq("author_id", userId);
     const ids = (pubIds ?? []).map(p => p.id as string);
 
-    const [profRes, pubRes, followRes] = await Promise.all([
+    const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes] = await Promise.all([
       supabase.from("profile_views")
-        .select("viewer_id, created_at")
+        .select("viewer_id, created_at, country")
         .eq("profile_id", userId)
         .gte("created_at", data.from).lte("created_at", data.to),
       ids.length
@@ -532,18 +532,28 @@ export const getAlcance = createServerFn({ method: "GET" })
         .select("follower_id, created_at")
         .eq("followee_id", userId)
         .gte("created_at", data.from).lte("created_at", data.to),
+      supabase.from("subscriptions")
+        .select("subscriber_id, created_at")
+        .eq("creator_id", userId),
+      supabase.from("subscriptions")
+        .select("subscriber_id, price_cents_paid, created_at")
+        .eq("creator_id", userId)
+        .gte("created_at", data.from).lte("created_at", data.to)
+        .order("created_at", { ascending: true }),
     ]);
 
     const profViews = ("data" in profRes ? profRes.data : []) ?? [];
     const pubViews = ("data" in pubRes ? pubRes.data : []) ?? [];
     const follows = ("data" in followRes ? followRes.data : []) ?? [];
+    const subsAll = ("data" in subsAllRes ? subsAllRes.data : []) ?? [];
+    const subsPeriod = ("data" in subsPeriodRes ? subsPeriodRes.data : []) ?? [];
 
-    const profVisitors = new Set(profViews.map(v => v.viewer_id).filter(Boolean));
-    const pubVisitors = new Set(pubViews.map(v => v.viewer_id).filter(Boolean));
+    const profVisitors = new Set((profViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
+    const pubVisitors = new Set((pubViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
 
     const dailyMap = new Map<string, { day: string; visits: number; users: number }>();
     const seenPerDay = new Map<string, Set<string>>();
-    for (const v of profViews) {
+    for (const v of profViews as { viewer_id: string | null; created_at: string }[]) {
       const k = dayKey(v.created_at as string);
       const cur = dailyMap.get(k) ?? { day: k, visits: 0, users: 0 };
       cur.visits += 1;
@@ -555,6 +565,42 @@ export const getAlcance = createServerFn({ method: "GET" })
     }
     const daily = Array.from(dailyMap.values()).sort((a, b) => a.day.localeCompare(b.day));
 
+    // Top países
+    const countryMap = new Map<string, { visits: number; users: Set<string> }>();
+    for (const v of profViews as { viewer_id: string | null; country: string | null }[]) {
+      const key = (v.country ?? "").toUpperCase() || "UNKNOWN";
+      const cur = countryMap.get(key) ?? { visits: 0, users: new Set<string>() };
+      cur.visits += 1;
+      if (v.viewer_id) cur.users.add(v.viewer_id as string);
+      countryMap.set(key, cur);
+    }
+    const topCountries = Array.from(countryMap.entries())
+      .map(([country, v]) => ({
+        country: country === "UNKNOWN" ? null : country,
+        visits: v.visits,
+        users: v.users.size,
+      }))
+      .sort((a, b) => (b.visits + b.users) - (a.visits + a.users))
+      .slice(0, 10);
+
+    // Assinaturas: novos vs renovações no período
+    const historyBefore = new Set(
+      (subsAll as { subscriber_id: string; created_at: string }[])
+        .filter(s => new Date(s.created_at) < new Date(data.from))
+        .map(s => s.subscriber_id),
+    );
+    const seenInPeriod = new Set<string>();
+    let subscriptionsCount = 0;
+    let renewalsCount = 0;
+    let subscriptionsRevenueCents = 0;
+    for (const s of subsPeriod as { subscriber_id: string; price_cents_paid: number | null }[]) {
+      const isRenewal = historyBefore.has(s.subscriber_id) || seenInPeriod.has(s.subscriber_id);
+      seenInPeriod.add(s.subscriber_id);
+      if (isRenewal) renewalsCount += 1;
+      else subscriptionsCount += 1;
+      subscriptionsRevenueCents += s.price_cents_paid ?? 0;
+    }
+
     return {
       profileViews: profViews.length,
       profileUniqueViewers: profVisitors.size,
@@ -562,8 +608,13 @@ export const getAlcance = createServerFn({ method: "GET" })
       publicationUniqueViewers: pubVisitors.size,
       newFollowers: follows.length,
       daily,
+      topCountries,
+      subscriptionsCount,
+      renewalsCount,
+      subscriptionsRevenueCents,
     };
   });
+
 
 /**
  * Engajamento: publicações do período com métricas.
@@ -753,6 +804,14 @@ export const logProfileView = createServerFn({ method: "POST" })
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) return { ok: false };
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const country = (
+      getRequestHeader("cf-ipcountry") ||
+      getRequestHeader("x-vercel-ip-country") ||
+      getRequestHeader("x-country") ||
+      null
+    );
+    const normalizedCountry = country && country.length === 2 ? country.toUpperCase() : null;
     const { createClient } = await import("@supabase/supabase-js");
     const client = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -765,6 +824,6 @@ export const logProfileView = createServerFn({ method: "POST" })
         },
       },
     });
-    await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null });
+    await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null, country: normalizedCountry });
     return { ok: true };
   });
