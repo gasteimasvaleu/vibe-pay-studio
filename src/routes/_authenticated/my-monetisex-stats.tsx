@@ -39,11 +39,8 @@ import {
   Eye,
   UserPlus,
   RefreshCw,
-  X as XIcon,
-  Gift,
-  Lock,
-  MessageSquare,
   Search,
+
 } from "lucide-react";
 import {
   ResponsiveContainer,
