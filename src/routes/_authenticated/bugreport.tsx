@@ -117,17 +117,17 @@ function BugReportPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative z-10 border-b border-border bg-card">
+      <header className="relative z-10 border-b border-border bg-white text-slate-900">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
             onClick={() => router.history.back()}
-            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="h-9 w-9 grid place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
             aria-label="Voltar"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">
+          <h1 className="text-base font-semibold truncate">
             Reportar bug
           </h1>
           <span className="w-9" />
