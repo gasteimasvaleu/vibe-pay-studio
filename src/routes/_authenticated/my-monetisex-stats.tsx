@@ -1480,29 +1480,46 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
       )}
       {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
         !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma postagem encontrada no período.</p> : (
-          <div className="mt-4 flex items-start gap-3">
+          <Link to="/feed" className="relative mt-4 block rounded-xl bg-muted/50 p-4">
             {action && (
-              <Checkbox
-                checked={checked}
-                onCheckedChange={(v) => setChecked(!!v)}
-                className="mt-2"
-                aria-label="Selecionar postagem"
-              />
+              <span
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                className="absolute right-3 top-3"
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(v) => setChecked(!!v)}
+                  aria-label="Selecionar postagem"
+                />
+              </span>
             )}
-            <Link to="/feed" className="block flex-1 rounded-xl bg-muted/50 p-4">
-              <p className="font-semibold truncate">
-                {top.pinned && <span className="mr-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">fixado</span>}
-                {top.caption || "(sem legenda)"}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span>{fullDate.format(new Date(top.publishedAt as string))}</span>
-                <span>{top.likes} curtidas</span>
-                <span>{top.comments} coment.</span>
-                <span>{top.tips} mimos</span>
-                <span className="font-semibold text-foreground">{formatBRL(top.revenue)}</span>
+            <div className="flex items-start gap-3">
+              {top.previewUrl ? (
+                <img
+                  src={top.previewUrl}
+                  alt="Miniatura da postagem"
+                  className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-muted">
+                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold truncate">
+                  {top.pinned && <span className="mr-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">fixado</span>}
+                  {top.caption || "(sem legenda)"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  <span>{fullDate.format(new Date(top.publishedAt as string))}</span>
+                  <span>{top.likes} curtidas</span>
+                  <span>{top.comments} coment.</span>
+                  <span>{top.tips} mimos</span>
+                  <span className="font-semibold text-foreground">{formatBRL(top.revenue)}</span>
+                </div>
               </div>
-            </Link>
-          </div>
+            </div>
+          </Link>
         )}
       {action && top && (
         <div className="mt-4">

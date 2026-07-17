@@ -578,7 +578,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: pubs, error } = await supabase
       .from("publications")
-      .select("id, caption, visibility, price_cents, published_at, created_at, pinned, archived_at")
+      .select("id, caption, visibility, price_cents, published_at, created_at, pinned, archived_at, preview_url")
       .eq("author_id", userId)
       .gte("created_at", data.from).lte("created_at", data.to);
     if (error) throw new Error(error.message);
@@ -633,6 +633,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
         publishedAt: p.published_at ?? p.created_at,
         pinned: !!(p as { pinned?: boolean }).pinned,
         archivedAt: (p as { archived_at?: string | null }).archived_at ?? null,
+        previewUrl: (p as { preview_url?: string | null }).preview_url ?? null,
         likes: likesMap.get(id) ?? 0,
         comments: commentsMap.get(id) ?? 0,
         tips: tipsCount.get(id) ?? 0,
