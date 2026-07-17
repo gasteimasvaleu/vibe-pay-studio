@@ -593,6 +593,8 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
           avatar_url: string | null
+          ban_reason: string | null
+          banned_at: string | null
           bio: string | null
           birth_date: string | null
           chat_welcome_enabled: boolean
@@ -649,6 +651,8 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
           bio?: string | null
           birth_date?: string | null
           chat_welcome_enabled?: boolean
@@ -705,6 +709,8 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
           bio?: string | null
           birth_date?: string | null
           chat_welcome_enabled?: boolean
@@ -1738,6 +1744,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_daily_revenue: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          day: string
+          gross_cents: number
+          platform_fee_cents: number
+          tx_count: number
+        }[]
+      }
+      admin_financial_summary: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          earning_creators: number
+          gateway_fee_cents: number
+          gross_cents: number
+          net_cents: number
+          paying_users: number
+          platform_fee_cents: number
+          tx_count: number
+        }[]
+      }
+      admin_wallets_snapshot: {
+        Args: never
+        Returns: {
+          creator_pending_international_cents: number
+          creator_pending_national_cents: number
+          creator_released_cents: number
+          subscriber_balance_cents: number
+          withdrawals_pending_cents: number
+        }[]
+      }
       apply_transaction_split:
         | {
             Args: { _commission_pct?: number; _gross_cents: number }
@@ -1792,6 +1829,7 @@ export type Database = {
         Args: { _creator: string; _subscriber: string }
         Returns: boolean
       }
+      is_user_banned: { Args: { _user_id: string }; Returns: boolean }
       list_my_revoked_sessions: {
         Args: never
         Returns: {
