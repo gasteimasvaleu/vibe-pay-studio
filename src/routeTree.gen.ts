@@ -73,6 +73,7 @@ import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
@@ -445,6 +446,11 @@ const AuthenticatedAdminModerationRoute =
     path: '/moderation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLeaksRoute = AuthenticatedAdminLeaksRouteImport.update({
+  id: '/leaks',
+  path: '/leaks',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedSettingsTwoFactorIndexRoute =
   AuthenticatedSettingsTwoFactorIndexRouteImport.update({
     id: '/',
@@ -559,6 +565,7 @@ export interface FileRoutesByFullPath {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -635,6 +642,7 @@ export interface FileRoutesByTo {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -713,6 +721,7 @@ export interface FileRoutesById {
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -794,6 +803,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/admin/leaks'
     | '/admin/moderation'
     | '/admin/transactions'
     | '/admin/users'
@@ -870,6 +880,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/admin/leaks'
     | '/admin/moderation'
     | '/admin/transactions'
     | '/admin/users'
@@ -947,6 +958,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/_authenticated/admin/leaks'
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/transactions'
     | '/_authenticated/admin/users'
@@ -1459,6 +1471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/leaks': {
+      id: '/_authenticated/admin/leaks'
+      path: '/leaks'
+      fullPath: '/admin/leaks'
+      preLoaderRoute: typeof AuthenticatedAdminLeaksRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/settings/two-factor/': {
       id: '/_authenticated/settings/two-factor/'
       path: '/'
@@ -1561,6 +1580,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -1569,6 +1589,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,

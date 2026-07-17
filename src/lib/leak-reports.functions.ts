@@ -153,7 +153,7 @@ export const updateLeakReport = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from("content_leak_reports")
-      .update(patch)
+      .update(patch as any)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
 
