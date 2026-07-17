@@ -37,6 +37,8 @@ import {
   DollarSign,
   Eye,
   UserPlus,
+  RefreshCw,
+  Globe,
 } from "lucide-react";
 import {
   ResponsiveContainer,
