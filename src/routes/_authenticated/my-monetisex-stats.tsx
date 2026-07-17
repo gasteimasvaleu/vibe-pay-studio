@@ -1547,82 +1547,98 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
   );
 }
 
-function AtividadeAssinantesInline({ range }: { range: { from: string; to: string } }) {
-  const fn = useServerFn(getAtividadeAssinantes);
-  const q = useQuery({
-    queryKey: ["stats", "atividadeAssinantes", range.from, range.to],
+const HEATMAP_DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+const HEATMAP_HOURS = ["12am", "3am", "6am", "9am", "12pm", "3pm", "6pm", "9pm"] as const;
+
+function useAssinantesActivity(range: { from: string; to: string }) {
+  const fn = useServerFn(getAssinantesActivity);
+  return useQuery({
+    queryKey: ["stats", "assinantesActivity", range.from, range.to],
     queryFn: () => fn({ data: range }),
     staleTime: 30_000,
   });
+}
 
-  const rows = q.data ?? [];
+function AtividadeHeatmapCard({ range }: { range: { from: string; to: string } }) {
+  const q = useAssinantesActivity(range);
+  const heatmap = q.data?.heatmap ?? Array.from({ length: 7 }, () => Array(8).fill(0));
+  const max = q.data?.max ?? 0;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-primary" />
-        <h3 className="text-base font-bold">Atividade dos assinantes</h3>
-      </div>
-      <div className="mt-4 divide-y divide-border">
+      <h3 className="text-base font-bold">Atividade dos assinantes</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Distribuição de acessos dos assinantes por dia e horário</p>
+      <div className="mt-5">
         {q.isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 my-2 w-full" />)
-        ) : rows.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">Nenhuma atividade no período.</div>
-        ) : rows.map((r, i) => {
-          const meta = activityMeta(r.type, r.kind);
-          const name = r.user.displayName || r.user.username || "Assinante";
-          return (
-            <div key={i} className="flex items-center gap-3 py-3">
-              <div className="h-9 w-9 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                {r.user.avatarUrl ? <img src={r.user.avatarUrl} alt="" className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{name}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <meta.Icon className={`h-3.5 w-3.5 ${meta.color}`} />
-                  <span>{meta.label}</span>
-                  <span>·</span>
-                  <span>{relativeTime(r.at)}</span>
-                </p>
-              </div>
-              {r.amountCents > 0 && (
-                <span className="text-sm font-semibold whitespace-nowrap">{formatBRL(r.amountCents)}</span>
-              )}
-            </div>
-          );
-        })}
+          <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1.5">
+            {HEATMAP_DAYS.map(d => (
+              <React.Fragment key={d}>
+                <span className="text-xs text-muted-foreground pr-2 self-center">{d}</span>
+                {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-8 rounded-md" />)}
+              </React.Fragment>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1.5">
+            {HEATMAP_DAYS.map((day, di) => (
+              <React.Fragment key={day}>
+                <span className="text-xs text-muted-foreground pr-2 self-center">{day}</span>
+                {heatmap[di].map((count, bi) => {
+                  const opacity = max > 0 ? 0.08 + (count / max) * 0.72 : 0.08;
+                  return (
+                    <div
+                      key={bi}
+                      className="h-8 rounded-md"
+                      style={{ background: `hsl(var(--primary) / ${opacity})` }}
+                      title={`${count} ${count === 1 ? "acesso" : "acessos"}`}
+                    />
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+        <div className="mt-2 grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1.5">
+          <span />
+          {HEATMAP_HOURS.map(h => (
+            <span key={h} className="text-xs text-muted-foreground text-center">{h}</span>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function activityMeta(type: string, kind: string | null) {
-  switch (type) {
-    case "nova_assinatura": return { Icon: UserPlus, label: "Nova assinatura", color: "text-primary" };
-    case "renovacao": return { Icon: RefreshCw, label: "Renovação", color: "text-muted-foreground" };
-    case "cancelamento": return { Icon: XIcon, label: "Cancelamento", color: "text-destructive" };
-    case "compra":
-      if (kind === "tip") return { Icon: Gift, label: "Mimo", color: "text-primary" };
-      if (kind === "chat_unlock") return { Icon: MessageSquare, label: "Chat desbloqueado", color: "text-primary" };
-      if (kind === "publication_unlock") return { Icon: Lock, label: "Publicação desbloqueada", color: "text-primary" };
-      return { Icon: DollarSign, label: "Compra", color: "text-primary" };
-    default: return { Icon: DollarSign, label: type, color: "text-muted-foreground" };
-  }
+function HorasMaisAtivasCard({ range }: { range: { from: string; to: string } }) {
+  const q = useAssinantesActivity(range);
+  const data = HEATMAP_HOURS.map((label, i) => ({ label, pct: q.data?.hourlyPct[i] ?? 0 }));
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-base font-bold">Horas mais ativas</h3>
+      <div className="mt-4 h-56">
+        {q.isLoading ? <Skeleton className="h-full w-full" /> : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="horasFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+              <YAxis domain={[0, 100]} ticks={[0, 33, 66, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={40} tickLine={false} axisLine={false} />
+              <Tooltip formatter={(v: number) => `${v}%`} />
+              <Area type="monotone" dataKey="pct" stroke="#8B5CF6" strokeWidth={2} fill="url(#horasFill)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function relativeTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return "agora";
-  const m = Math.floor(s / 60);
-  if (m < 60) return `há ${m} min`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `há ${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 30) return `há ${d}d`;
-  const mo = Math.floor(d / 30);
-  return `há ${mo}mês`;
-}
 
 function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
   top: { buyerId: string; gross: number; username: string | null; displayName: string | null; avatarUrl: string | null }[];
