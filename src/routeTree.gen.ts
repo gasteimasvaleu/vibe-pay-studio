@@ -69,6 +69,7 @@ import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_a
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
+import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
@@ -418,6 +419,12 @@ const AuthenticatedBancoCadastrarRoute =
     path: '/cadastrar',
     getParentRoute: () => AuthenticatedBancoRoute,
   } as any)
+const AuthenticatedAdminTransactionsRoute =
+  AuthenticatedAdminTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedSettingsTwoFactorIndexRoute =
   AuthenticatedSettingsTwoFactorIndexRouteImport.update({
     id: '/',
@@ -532,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -604,6 +612,7 @@ export interface FileRoutesByTo {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -678,6 +687,7 @@ export interface FileRoutesById {
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -755,6 +765,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/admin/transactions'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -827,6 +838,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/admin/transactions'
     | '/banco/cadastrar'
     | '/chat/$threadId'
     | '/mywallet/extrato'
@@ -900,6 +912,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/_authenticated/admin/transactions'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/mywallet/extrato'
@@ -1380,6 +1393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
       parentRoute: typeof AuthenticatedBancoRoute
     }
+    '/_authenticated/admin/transactions': {
+      id: '/_authenticated/admin/transactions'
+      path: '/transactions'
+      fullPath: '/admin/transactions'
+      preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/settings/two-factor/': {
       id: '/_authenticated/settings/two-factor/'
       path: '/'
@@ -1482,10 +1502,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
