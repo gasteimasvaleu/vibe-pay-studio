@@ -1207,17 +1207,18 @@ function EngajamentoChart({
         <div className="mt-4 h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} stroke="hsl(var(--border))" />
-              <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} stroke="hsl(var(--border))" tickFormatter={(v) => formatBRL(v as number)} width={80} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} stroke="hsl(var(--border))" allowDecimals={false} />
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" />
+              <YAxis yAxisId="left" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" tickFormatter={(v) => formatBRL(v as number)} width={80} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} stroke="var(--border)" allowDecimals={false} />
               <Tooltip
-                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--popover-foreground))" }}
+                contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--popover-foreground)" }}
                 formatter={(value: number, name: string) => name === "Faturamento" ? [formatBRL(value), name] : [value, name]}
                 labelFormatter={(l) => `Data: ${l}`}
               />
-              <Bar yAxisId="right" dataKey="count" name="Quantidade" fill="hsl(var(--muted-foreground) / 0.5)" radius={[4, 4, 0, 0]} />
-              <Line yAxisId="left" type="monotone" dataKey="revenue" name="Faturamento" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))" }} />
+              <Bar yAxisId="right" dataKey="count" name="Quantidade" fill="color-mix(in oklab, var(--muted-foreground) 50%, transparent)" radius={[4, 4, 0, 0]} />
+              <Line yAxisId="left" type="monotone" dataKey="revenue" name="Faturamento" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3, fill: "var(--primary)" }} />
+
             </ComposedChart>
           </ResponsiveContainer>
         </div>
