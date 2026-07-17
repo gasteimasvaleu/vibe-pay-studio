@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { requireAdminAccess } from "@/lib/admin-dashboard.functions";
-import { TopNav } from "@/components/site/TopNav";
+
 import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -32,7 +32,6 @@ const NAV = [
 function AdminLayout() {
   return (
     <div className="min-h-screen bg-background">
-      <TopNav />
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
         <div className="flex items-center gap-2 mb-4">
           <h1 className="text-2xl font-semibold">Painel administrativo</h1>
