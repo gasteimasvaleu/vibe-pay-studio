@@ -57,7 +57,10 @@ import {
   Bar,
   Legend,
   ComposedChart,
+  AreaChart,
+  Area,
 } from "recharts";
+
 
 import {
   getEarningsSeries,
