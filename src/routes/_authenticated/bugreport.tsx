@@ -243,7 +243,13 @@ function BugReportPage() {
           disabled={!canSubmit}
           className="w-full h-12 rounded-md text-base font-semibold"
         >
-          Enviar
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...
+            </>
+          ) : (
+            "Enviar"
+          )}
         </Button>
       </main>
     </div>
