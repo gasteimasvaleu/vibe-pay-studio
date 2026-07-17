@@ -1,37 +1,71 @@
+## Contexto técnico apurado
 
-## Contexto
+- **Auth/roles**: enum `app_role` = `admin | moderator | creator | subscriber`; tabela `user_roles`; função `has_role(_user_id, _role)`. Middleware server-side já existe (`requireRole` em `src/lib/admin.functions.ts`).
+- **Backend admin já pronto (`src/lib/admin.functions.ts`, 291 linhas)**: `reportContent`, `listOpenReports`, `resolveReport`, `moderatePublication`, `approveWithdrawal`, `rejectWithdrawal`, `grantRole`, `revokeRole`, `setKycStatus`, `listAuditLogs`. Falta apenas a camada de UI e algumas funções agregadas.
+- **Faltando no backend**: (a) agregações financeiras globais (GMV, fees, saldos); (b) listagem admin de transações e usuários; (c) coluna de banimento em `profiles` (`banned_at`, `ban_reason`).
+- **Navbar**: `src/components/site/AppTopBar.tsx` — inserir ícone admin entre "Sair" (linha 69) e o avatar (linha 76), condicionado ao role.
+- **User admin**: `caiorobbb@gmail.com` → `user_id = ef28932d-d010-4904-8349-dac4a73758a5` (confirmado em auth.users).
 
-Hoje há dois caminhos distintos para cartão de crédito no app:
+## Arquitetura
 
-- **Gorjeta, assinatura, contribuição de desafio, tip/promoção** — criam um `payment` no Asaas com `billingType: CREDIT_CARD` e redirecionam para o `invoiceUrl` (checkout hospedado Asaas). Sem tokenização, funciona.
-- **"Adicionar cartão" e "Recarga 1-clique" (mywallet)** — usam `POST /v3/creditCard/tokenize` + cobrança com `creditCardToken`. Endpoint retorna **403** porque a API key ainda não tem essa permissão (usuário irá resolver depois).
+```text
+/admin (layout com gate has_role('admin'))
+├── /admin                → visão geral (KPIs + atalhos)
+├── /admin/financeiro     → GMV, fees, saldos, gráfico de receita
+├── /admin/transacoes     → explorer de transactions + payment_intents
+├── /admin/saques         → fila withdrawals (pending/paid/rejected)
+├── /admin/usuarios       → busca, roles, KYC, ban/unban
+├── /admin/moderacao      → fila content_reports + moderar publicações
+└── /admin/auditoria      → audit_logs (histórico de ações admin)
+```
 
-A recarga em `/mywallet/recarregar` só oferece PIX. Objetivo: também oferecer cartão via checkout hospedado, igual ao restante do app. Cartões salvos e recarga 1-clique ficam como estão (usuário vai liberar a tokenização em breve).
+Gate: pathless layout `src/routes/_authenticated/admin/route.tsx` com `beforeLoad` que chama uma server fn `requireAdmin()` (usa `requireSupabaseAuth` + `has_role`). Redireciona para `/dashboard` se não for admin.
 
-## Escopo — Frontend
+## Passos de implementação
 
-**`src/routes/_authenticated/mywallet.recarregar.tsx`**
-- Adicionar seletor de método (PIX / Cartão) reusando `PaymentMethodPicker` sem a opção `WALLET`, ou botões locais equivalentes. Padrão: PIX.
-- Ao continuar:
-  - `PIX` → fluxo atual (`PixCheckout`).
-  - `CREDIT_CARD` → chamar `createWalletTopupPayment({ method: "CREDIT_CARD" })` e renderizar `CardCheckout` com o `invoiceUrl` retornado (mesmo padrão de `TipDialog`/`SubscribeDialog`).
-- Respeitar mínimo por método (`PAYMENT_MIN_GROSS_CENTS`) e usar `translatePaymentError` para erros.
+### 1. Migration (schema + seed)
+- Adiciona `profiles.banned_at TIMESTAMPTZ`, `profiles.ban_reason TEXT`.
+- Cria função `admin_is_banned(_uid uuid) RETURNS boolean` (security definer) para reutilizar em RLS futuras.
+- **Seed único**: `INSERT INTO user_roles (user_id, role) VALUES ('ef28932d-...', 'admin') ON CONFLICT DO NOTHING`.
+- Cria view/função `admin_financial_summary(_from, _to)` que retorna GMV, platform_fee_total, gateway_fee_total, net_total, contagem por método (agrega `transactions` sem filtro por creator) — security definer, executável só por role admin.
 
-## Escopo — Backend
+### 2. Novas server functions em `src/lib/admin.functions.ts`
+- `requireAdmin` (helper reutilizável para o `beforeLoad`).
+- `getFinancialOverview({ from, to })` → chama `admin_financial_summary` + soma `creator_wallets` e `subscriber_wallets`.
+- `listAdminTransactions({ filters, page })` — filtros: método, status, kind, período, busca por buyer/creator username.
+- `listAdminUsers({ q, role?, kyc?, banned?, page })` — join `profiles + user_roles + auth.users.email`.
+- `banUser({ userId, reason })` / `unbanUser({ userId })` — set/reset `banned_at`; grava audit_log.
+- `listAdminWithdrawals({ status })` (envolve `withdrawals` + dados do creator/payout_accounts).
+- `listAllReports({ status })` — versão paginada de `listOpenReports`.
 
-**`src/lib/payments.functions.ts` → `createWalletTopupPayment`**
-- Aceitar `method: "PIX" | "CREDIT_CARD"` no `inputValidator`.
-- Quando `CREDIT_CARD`, criar `payment` com `billingType: "CREDIT_CARD"` (sem `creditCardToken`/`creditCard`) e retornar `{ paymentIntentId, invoiceUrl }`. O QR PIX só é gerado quando `method === "PIX"`.
-- Validar mínimo com `assertMeetsMinimum`.
+### 3. UI
 
-Nada muda no webhook `/api/public/webhooks/asaas` — ele já credita a carteira quando o pagamento (qualquer método) fica `RECEIVED/CONFIRMED` com o `externalReference` do topup.
+- **Layout admin** `src/routes/_authenticated/admin/route.tsx`: sidebar lateral esquerda com navegação entre as sub-rotas, header simples "Admin · Monetisexy". Reusa componentes shadcn existentes (Card, Table, Badge, Tabs).
+- **Overview `/admin`**: 4 KPIs (GMV 30d, Taxa da plataforma 30d, Saques pendentes, Reports abertos) + gráfico de receita diária (ComposedChart, mesmo estilo já usado em stats — roxo para faturamento, cinza para quantidade).
+- **Financeiro**: seletor de período + tabela por método + gráfico + card de saldos totais em carteiras.
+- **Transações**: DataTable com filtros (kind, method, status, período, busca), export CSV client-side.
+- **Saques**: 3 abas (Pendentes / Pagos / Rejeitados). Card por saque com botões "Marcar como pago" e "Rejeitar" (dialog com motivo). Já 100% automático via wallet id — esta tela é para monitoramento e intervenção manual em casos-borda.
+- **Usuários**: busca por username/email, filtros por role/KYC/banned. Ações no drawer lateral: grant/revoke role, aprovar/reprovar KYC, banir/desbanir. Link para `/perfil/:username`.
+- **Moderação**: 2 abas — "Reports" (fila) e "Publicações denunciadas". Ações: marcar report como actioned/dismissed, aprovar/ocultar/remover publicação com nota.
+- **Auditoria**: tabela paginada de `audit_logs` com filtro por actor e action.
 
-## Fora de escopo
+### 4. Ícone na navbar
+- Em `src/components/site/AppTopBar.tsx`: buscar role atual via `useQuery` (nova server fn leve `getMyRoles()` já retornando `{ isAdmin, isModerator }`).
+- Se `isAdmin`, renderizar `<Link to="/admin"><ShieldCheck /></Link>` entre o botão "Sair" e o avatar (linha ~75), no mesmo estilo dos outros ícones (círculo, hover accent, tooltip "Admin").
 
-- Não mexer em `saved-cards.functions.ts` nem no fluxo de cartões salvos / recarga 1-clique.
-- Não alterar gorjeta/assinatura/desafio (já funcionam).
+### 5. Enforcement do ban
+- Ao logar/carregar sessão: se `profiles.banned_at IS NOT NULL`, `onAuthStateChange` no root redireciona para `/conta-suspensa` (nova rota pública mínima com o motivo).
+- Server functions críticas (`monetization`, `payments`, `publications`) recebem check `if (banned) throw`.
+- (Fora do v1: bloqueio via RLS em cada tabela — pode ser adicionado depois se necessário.)
 
-## Verificação
+## Fora do escopo v1
+- Lives (tabelas existem mas sem UI no app inteiro — precisa ser tratado como feature separada).
+- Feature flags/configurações globais (não há tabela hoje).
+- Videochamadas admin (server fn de pagamento existe, mas sem UI de app).
+- Impersonate/login-as-user.
 
-1. `/mywallet/recarregar` mostra seletor PIX / Cartão; PIX gera QR como hoje.
-2. Selecionando Cartão + Continuar, abre o checkout Asaas em nova aba (via `CardCheckout`); ao pagar, o webhook credita a carteira.
+## Detalhes técnicos importantes
+- Layout `_authenticated/admin/route.tsx` NÃO altera o gate `_authenticated/route.tsx` (integração-managed). Apenas adiciona segunda checagem por role.
+- Todas as server functions admin usam `requireSupabaseAuth` + `has_role` — nunca `supabaseAdmin` para autorizar. `supabaseAdmin` é usado apenas depois de confirmado o role, para operações que precisam bypassar RLS (ex.: listar transactions de todos os users).
+- Toda ação de escrita chama `logAudit()` para trilha em `audit_logs`.
+- Rota `/admin/*` fica em `_authenticated/`, então herda auto-bearer middleware e gate de sessão existentes.
