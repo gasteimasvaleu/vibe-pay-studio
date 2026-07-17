@@ -1,42 +1,52 @@
-## Gráfico por métrica selecionada
+## Objetivo
 
-Hoje o gráfico do painel de Engajamento agrega sempre por faturamento × quantidade, sem reagir à aba "Ordenar por". Passar a exibir a métrica correspondente à aba ativa.
+Alinhar a aba **Lives** com a aba **Publicações**: mesmas 5 abas em "Ordenar por" (Mais compradas, Mimos, Visualizações, Comentários, Curtidas), ordenando a lista e alimentando o gráfico do card abaixo com a métrica selecionada.
 
-### Comportamento por aba
-Publicações:
-- **Recentes** → linha = Faturamento (BRL), barras = quantidade de postagens/dia
-- **Faturamento** → linha = Faturamento (BRL), barras = quantidade
-- **Mimos** → linha = Mimos (BRL), barras = quantidade
-- **Curtidas** → linha = Curtidas (nº), barras = quantidade
-- **Comentários** → linha = Comentários (nº), barras = quantidade
+## 1. Banco de dados (migration)
 
-Lives:
-- **Mais compradas** → linha = Faturamento (BRL), barras = qtd de lives
-- **Mimos** → linha = Mimos (BRL), barras = qtd
-- **Visualizações** → linha = Views (nº), barras = qtd
+Criar duas tabelas para suportar curtidas e comentários em lives (hoje não existem).
 
-Legenda do card muda dinamicamente: "● {Métrica}   ● Quantidade" (roxo/cinza). Título mantém "N postagens/lives" + total de faturamento.
+**`public.live_likes`**
+- `live_id uuid` → `live_sessions(id) ON DELETE CASCADE`
+- `user_id uuid` (auth user)
+- `created_at timestamptz`
+- `UNIQUE (live_id, user_id)`
+- GRANTs: `SELECT, INSERT, DELETE` para `authenticated`; `ALL` para `service_role`
+- RLS: leitura pública autenticada; insert/delete apenas do próprio `user_id`
 
-### Alterações técnicas
-Arquivo único: `src/routes/_authenticated/my-monetisex-stats.tsx`.
+**`public.live_comments`**
+- `live_id uuid` → `live_sessions(id) ON DELETE CASCADE`
+- `user_id uuid`
+- `content text NOT NULL`
+- `created_at timestamptz`, `updated_at timestamptz` (+ trigger `set_updated_at`)
+- GRANTs equivalentes
+- RLS: leitura para authenticated; insert do próprio user; update/delete do autor ou admin
 
-1. Estender `EngajamentoChart` para aceitar props:
-   - `metricLabel: string` (ex.: "Faturamento", "Mimos", "Curtidas", "Comentários", "Views")
-   - `metricFormat: "brl" | "int"` (formata eixo Y esquerdo e tooltip)
-   - `items: { date: string; metric: number }[]` (em vez de `revenue`)
-2. Nas chamadas dentro do `EngajamentoPanel`:
-   - Para publicações mapear `metric` a partir do item conforme `ordenarPub`:
-     - `Recentes|Faturamento` → `p.revenue`
-     - `Mimos` → `p.tips`
-     - `Curtidas` → `p.likes`
-     - `Comentários` → `p.comments`
-   - Para lives:
-     - `Mais compradas` → `l.gross_cents / 100`
-     - `Mimos` → `l.tips_cents / 100`
-     - `Visualizações` → `l.total_views`
-3. Ajustar tickFormatter/tooltip formatter para usar `formatBRL` quando `metricFormat === "brl"`, senão inteiro.
+Índices: `(live_id)` em ambas.
 
-Sem mudanças de backend — todos os campos já estão nos payloads de `getEngajamentoPublicacoes` e `getEngajamentoLives`.
+## 2. Backend — `src/lib/stats.functions.ts`
 
-### Validação
-Alternar as abas e conferir que a linha (roxa) muda de escala/valor conforme a métrica, e a legenda reflete o rótulo correto.
+Estender `getEngajamentoLives`:
+
+- Aceitar `sort: "revenue" | "tips" | "views" | "likes" | "comments"`.
+- Após buscar `live_sessions`, buscar em paralelo agregados por `live_id`:
+  - `live_likes` → `count` por `live_id`
+  - `live_comments` → `count` por `live_id`
+- Anexar `likes` e `comments` em cada item retornado.
+- Adicionar sorters `likes` e `comments`.
+- Somar `totalLikes` e `totalComments` no retorno (opcional; útil para o card Resumo futuramente).
+
+## 3. UI — `src/routes/_authenticated/my-monetisex-stats.tsx`
+
+- `ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações", "Comentários", "Curtidas"]`.
+- `liveSortMap`: adicionar `"Comentários": "comments"`, `"Curtidas": "likes"`.
+- No `cfg` do `EngajamentoChart` (bloco `isLives`), adicionar:
+  - `Comentários`: `{ label: "Comentários", format: "int", get: l => l.comments ?? 0 }`
+  - `Curtidas`: `{ label: "Curtidas", format: "int", get: l => l.likes ?? 0 }`
+
+Nenhuma outra alteração de layout — os chips já são renderizados dinamicamente a partir de `ORDENAR_LIVES`.
+
+## Detalhes técnicos
+
+- Enquanto não houver UI de curtir/comentar em lives, as contagens serão 0 e o gráfico refletirá zero nessas abas — comportamento esperado.
+- Tipos do Supabase (`src/integrations/supabase/types.ts`) são regenerados após a migration aprovada; o código do server fn depende disso e é feito depois.
