@@ -1,44 +1,51 @@
-## Objetivo
 
-Deixar a aba **Alcance** exatamente como o screenshot, com dados reais:
+## 1. Chart do card "Assinaturas" (visual + dados reais)
 
-1. Card grande do gráfico "N Visitantes" (linhas Visitantes + Usuários) — já existe, sem mudanças estruturais.
-2. Card **Resumo** com 4 itens: **Visitantes**, **Assinaturas** (quantidade), **Assinaturas** (R$ faturamento), **Renovações**.
-3. Tabela **Visitantes do perfil** com colunas **Visitantes / Usuários / Total** (remover coluna "Publicações").
-4. Novo card **Principais países** com bandeira + nome do país + Visitantes / Usuários / Total, ordenado por Total desc.
+Substituir o `BarChart` atual (novos/renovações) por um `ComposedChart` com dois eixos, no mesmo estilo do screenshot:
 
-## 1. Banco (migration)
+- **Título dinâmico**: `"{totalAssinantes} Assinantes, {R$ faturamento}"` (usa `stats.data.novosPeriodo + renovacoesPeriodo` e `faturamentoPeriodo`).
+- **Linha "Faturamento"** — cor **roxo** (`#8B5CF6`), eixo Y esquerdo em `R$`.
+- **Linha "Quantidade"** — cor **cinza** (`hsl(var(--muted-foreground))`), eixo Y direito (inteiro).
+- Grid tracejado, legenda no topo direito com bullets coloridos, tooltip formatado (BRL para faturamento).
+- Vazio: overlay `"Nenhum dado disponível para o período."` centralizado sobre o grid (não substitui o chart).
+- Datas do eixo X: `MMM d, yyyy` em duas linhas (igual screenshot).
 
-Adicionar coluna de país às visitas para permitir o card "Principais países":
+Dados já vêm de `getAssinantesStats().daily` (`gross`, `novos + renovacoes` = quantidade). Nenhuma mudança de backend necessária para o chart.
 
-- `ALTER TABLE public.profile_views ADD COLUMN country text` (ISO-2, nullable — histórico fica `NULL`).
-- Índice `idx_profile_views_profile_country ON profile_views(profile_id, country)`.
+## 2. Nova aba "Atividade dos assinantes"
 
-Sem novas policies (RLS existente permanece).
+Adicionar `"Atividade dos assinantes"` ao array `ASSINANTES_TABS`. Ao selecionar, renderiza um feed cronológico real das ações dos assinantes no período.
 
-## 2. Backend
+### Backend — novo `getAtividadeAssinantes` em `src/lib/stats.functions.ts`
 
-### `logProfileView` em `src/lib/stats.functions.ts`
-- Ler o header `cf-ipcountry` via `getRequestHeader` (Cloudflare Workers seta esse header automaticamente). Fallback: `x-vercel-ip-country`. Se ausente → `null`.
-- Passar `country` no `insert`.
+- Input: `{ from, to }`.
+- Lê em paralelo, filtrado por `creator_id = userId` e período:
+  - `subscriptions` (`id, subscriber_id, status, price_cents_paid, started_at, created_at, canceled_at, current_period_end`)
+  - `transactions` de assinantes (`kind in ('subscription','tip','chat_unlock','publication_unlock')`, `buyer_id, amount_cents_gross, kind, created_at`)
+- Deriva eventos:
+  - `nova_assinatura` (primeira subscription do subscriber no criador)
+  - `renovacao` (subscription subsequente do mesmo subscriber)
+  - `cancelamento` (`canceled_at` no período)
+  - `compra` (transaction do tipo tip/chat_unlock/publication_unlock)
+- Enriquecer com `profiles (username, display_name, avatar_url)` via `.in('user_id', [...ids])`.
+- Retorna `Array<{ at: string; type: 'nova_assinatura'|'renovacao'|'cancelamento'|'compra'; kind?: string; amountCents: number; user: { id, username, displayName, avatarUrl } }>` ordenado desc, limitado a 100.
 
-### `getAlcance`
-- Ao consultar `profile_views`, incluir `country` no `select`.
-- Agregar `topCountries: { country: string | null; visits: number; users: number }[]` (top 10, users = únicos por `viewer_id`).
-- Retornar também `subscriptionsCount`, `subscriptionsRevenueCents`, `renewalsCount` no período — reusar a mesma lógica de `getAssinantesStats` (query em `transactions` `kind='subscription'` + flag `isRenewal`) diretamente dentro do handler para não fazer round-trip extra.
+### UI — nova `AtividadeAssinantesInline`
 
-## 3. UI — `src/routes/_authenticated/my-monetisex-stats.tsx` (`AlcancePanel`)
+Lista com linhas:
+- Avatar + `@username` / display name
+- Ícone + label do evento (`UserPlus` Nova assinatura, `RefreshCw` Renovação, `X` Cancelamento, `Gift`/`MessageSquare`/`Lock` Compra)
+- Valor em BRL (quando aplicável)
+- Timestamp relativo (`há X min/h/d`)
 
-- **Resumo**: substituir os 4 `ResumoItem`s por:
-  - `Users` "Visitantes" = `profileViews`
-  - `UserPlus` "Assinaturas" = `subscriptionsCount`
-  - `DollarSign` "Assinaturas" = `formatBRL(subscriptionsRevenueCents)`
-  - `RefreshCw` "Renovações" = `renewalsCount`
-- **Tabela "Visitantes do perfil"**: passar para 3 colunas (`Visitantes | Usuários | Total`), uma linha só ("Visitantes do perfil"), Total = Visitantes + Usuários? Não — no screenshot Total = 4 quando Visitantes=4 e Usuários=0, então **Total = Visitantes** (soma das duas colunas). Confirmado: `4 + 0 = 4`. Implementar assim.
-- **Novo card "Principais países"** abaixo da tabela: header com colunas `País | Visitantes | Usuários | Total`, linhas iterando `topCountries`. Usar emoji-flag derivada do ISO-2 (`String.fromCodePoint(0x1F1E6 + (c.charCodeAt(0)-65))...`) com fallback "🌐 Desconhecido" quando `country` é `null`. Nome do país via `Intl.DisplayNames(['pt-BR'], { type: 'region' })`.
-- Legendas do gráfico já estão em "Visitas / Usuários únicos" — renomear labels para **Visitantes** e **Usuários** para bater com o screenshot.
+Vazio: `"Nenhuma atividade no período."` Loading: skeletons.
 
-## Detalhes técnicos
+## 3. Arquivos alterados
 
-- `cf-ipcountry` é preenchido pela Cloudflare em produção; em preview local pode vir vazio → linha "Desconhecido" agrega esses casos.
-- Nenhum breaking change no schema atual; visitas existentes ficam agrupadas em "Desconhecido" até serem re-logadas.
+- `src/lib/stats.functions.ts` — adicionar `getAtividadeAssinantes`.
+- `src/routes/_authenticated/my-monetisex-stats.tsx`:
+  - Importar `ComposedChart`, `Line` de `recharts` e novos ícones.
+  - Trocar o chart do card Assinaturas.
+  - Adicionar 3ª aba e renderizar `AtividadeAssinantesInline`.
+
+Sem migração de banco.
