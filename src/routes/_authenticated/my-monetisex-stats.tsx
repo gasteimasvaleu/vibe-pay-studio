@@ -1409,11 +1409,19 @@ function countryName(iso: string | null): string {
 
 /* ============================== Assinantes ============================== */
 
-const ASSINANTES_TABS = ["Assinaturas", "Top assinantes"] as const;
+const ASSINANTES_TABS = ["Assinaturas", "Top assinantes", "Atividade dos assinantes"] as const;
 const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat"] as const;
 const TOP_METRIC_MAP: Record<(typeof TOP_ASSINANTES_CHIPS)[number], "total"|"subscription"|"tip"|"chat_unlock"> = {
   Total: "total", Assinaturas: "subscription", Mimos: "tip", Chat: "chat_unlock",
 };
+
+const chartDate = new Intl.DateTimeFormat("pt-BR", { month: "short", day: "numeric", year: "numeric" });
+function formatChartDate(iso: string) {
+  const parts = chartDate.format(new Date(iso)).replace(".", "").split(" de ");
+  // pt-BR "17 de jul. de 2026" -> ["17", "jul", "2026"]
+  if (parts.length === 3) return `${parts[1]} ${parts[0]},\n${parts[2]}`;
+  return chartDate.format(new Date(iso));
+}
 
 function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ASSINANTES_TABS)[number]>("Assinaturas");
@@ -1432,7 +1440,12 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
     staleTime: 30_000,
   });
 
-  const chart = (stats.data?.daily ?? []).map(r => ({ ...r, label: shortDate.format(new Date(r.day)) }));
+  const chart = (stats.data?.daily ?? []).map(r => ({
+    label: formatChartDate(r.day),
+    faturamento: (r.gross ?? 0) / 100,
+    quantidade: (r.novos ?? 0) + (r.renovacoes ?? 0),
+  }));
+  const totalAssinantes = (stats.data?.novosPeriodo ?? 0) + (stats.data?.renovacoesPeriodo ?? 0);
 
   return (
     <div className="space-y-5">
@@ -1451,23 +1464,37 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
             <div className="md:col-span-2 space-y-5">
               <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-base font-bold">{stats.data?.totalAtivos ?? 0} Ativos · {formatBRL(stats.data?.faturamentoPeriodo ?? 0)}</h3>
+                  <h3 className="text-base font-bold">
+                    {totalAssinantes} Assinantes, {formatBRL(stats.data?.faturamentoPeriodo ?? 0)}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "#8B5CF6" }} />Faturamento</span>
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/70" />Quantidade</span>
+                  </div>
                 </div>
-                <div className="mt-6 h-64">
-                  {stats.isLoading ? <Skeleton className="h-full w-full" /> : chart.length === 0 ? (
-                    <div className="h-full grid place-items-center text-sm text-muted-foreground">Nenhum dado disponível.</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chart}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={30} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="novos" name="Novos" fill="hsl(var(--primary))" />
-                        <Bar dataKey="renovacoes" name="Renovações" fill="hsl(var(--muted-foreground))" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                <div className="relative mt-6 h-72">
+                  {stats.isLoading ? <Skeleton className="h-full w-full" /> : (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={chart.length ? chart : [{ label: "", faturamento: 0, quantidade: 0 }]} margin={{ top: 10, right: 12, bottom: 10, left: 0 }}>
+                          <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} interval="preserveStartEnd" tickLine={false} axisLine={false} height={44} />
+                          <YAxis yAxisId="left" tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={44} tickLine={false} axisLine={false} />
+                          <YAxis yAxisId="right" orientation="right" allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={28} tickLine={false} axisLine={false} />
+                          <Tooltip
+                            formatter={(v: number, name) => name === "Faturamento" ? formatBRL(Number(v) * 100) : String(v)}
+                            labelFormatter={(l) => String(l).replace("\n", " ")}
+                          />
+                          <Line yAxisId="left" type="monotone" dataKey="faturamento" name="Faturamento" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3, fill: "#8B5CF6" }} activeDot={{ r: 5 }} />
+                          <Line yAxisId="right" type="monotone" dataKey="quantidade" name="Quantidade" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      {chart.length === 0 && (
+                        <div className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-muted-foreground">
+                          Nenhum dado disponível para o período.
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1482,12 +1509,91 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
               <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} />
             </div>
           </div>
-        ) : (
+        ) : tab === "Top assinantes" ? (
           <TopAssinantesInline top={top.data ?? []} loading={top.isLoading} filtro={topFiltro} onFiltro={setTopFiltro} full />
+        ) : (
+          <AtividadeAssinantesInline range={range} />
         )}
       </div>
     </div>
   );
+}
+
+function AtividadeAssinantesInline({ range }: { range: { from: string; to: string } }) {
+  const fn = useServerFn(getAtividadeAssinantes);
+  const q = useQuery({
+    queryKey: ["stats", "atividadeAssinantes", range.from, range.to],
+    queryFn: () => fn({ data: range }),
+    staleTime: 30_000,
+  });
+
+  const rows = q.data ?? [];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2">
+        <Users className="h-5 w-5 text-primary" />
+        <h3 className="text-base font-bold">Atividade dos assinantes</h3>
+      </div>
+      <div className="mt-4 divide-y divide-border">
+        {q.isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 my-2 w-full" />)
+        ) : rows.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">Nenhuma atividade no período.</div>
+        ) : rows.map((r, i) => {
+          const meta = activityMeta(r.type, r.kind);
+          const name = r.user.displayName || r.user.username || "Assinante";
+          return (
+            <div key={i} className="flex items-center gap-3 py-3">
+              <div className="h-9 w-9 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-semibold text-muted-foreground">
+                {r.user.avatarUrl ? <img src={r.user.avatarUrl} alt="" className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{name}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <meta.Icon className={`h-3.5 w-3.5 ${meta.color}`} />
+                  <span>{meta.label}</span>
+                  <span>·</span>
+                  <span>{relativeTime(r.at)}</span>
+                </p>
+              </div>
+              {r.amountCents > 0 && (
+                <span className="text-sm font-semibold whitespace-nowrap">{formatBRL(r.amountCents)}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function activityMeta(type: string, kind: string | null) {
+  switch (type) {
+    case "nova_assinatura": return { Icon: UserPlus, label: "Nova assinatura", color: "text-primary" };
+    case "renovacao": return { Icon: RefreshCw, label: "Renovação", color: "text-muted-foreground" };
+    case "cancelamento": return { Icon: XIcon, label: "Cancelamento", color: "text-destructive" };
+    case "compra":
+      if (kind === "tip") return { Icon: Gift, label: "Mimo", color: "text-primary" };
+      if (kind === "chat_unlock") return { Icon: MessageSquare, label: "Chat desbloqueado", color: "text-primary" };
+      if (kind === "publication_unlock") return { Icon: Lock, label: "Publicação desbloqueada", color: "text-primary" };
+      return { Icon: DollarSign, label: "Compra", color: "text-primary" };
+    default: return { Icon: DollarSign, label: type, color: "text-muted-foreground" };
+  }
+}
+
+function relativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "agora";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `há ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `há ${d}d`;
+  const mo = Math.floor(d / 30);
+  return `há ${mo}mês`;
 }
 
 function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
