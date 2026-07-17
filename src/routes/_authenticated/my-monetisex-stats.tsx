@@ -1019,7 +1019,7 @@ function ExtratoFaturamentoCard({ range }: { range: { from: string; to: string }
 
 const ENGAJAMENTO_TABS = ["Publicações", "Lives"] as const;
 const ORDENAR_PUBLICACOES = ["Recentes", "Faturamento", "Mimos", "Curtidas", "Comentários"] as const;
-const ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações"] as const;
+const ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações", "Comentários", "Curtidas"] as const;
 
 function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ENGAJAMENTO_TABS)[number]>("Publicações");
@@ -1029,9 +1029,10 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
   const pubSortMap: Record<(typeof ORDENAR_PUBLICACOES)[number], "recent"|"revenue"|"tips"|"likes"|"comments"> = {
     "Recentes": "recent", "Faturamento": "revenue", "Mimos": "tips", "Curtidas": "likes", "Comentários": "comments",
   };
-  const liveSortMap: Record<(typeof ORDENAR_LIVES)[number], "revenue"|"tips"|"views"> = {
-    "Mais compradas": "revenue", "Mimos": "tips", "Visualizações": "views",
+  const liveSortMap: Record<(typeof ORDENAR_LIVES)[number], "revenue"|"tips"|"views"|"likes"|"comments"> = {
+    "Mais compradas": "revenue", "Mimos": "tips", "Visualizações": "views", "Comentários": "comments", "Curtidas": "likes",
   };
+
   const pubFn = useServerFn(getEngajamentoPublicacoes);
   const pubQ = useQuery({
     queryKey: ["stats", "engPub", range.from, range.to, ordenarPub],
@@ -1074,6 +1075,8 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
                 "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
                 "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
                 "Visualizações": { label: "Visualizações", format: "int", get: l => l.total_views ?? 0 },
+                "Comentários": { label: "Comentários", format: "int", get: l => l.comments ?? 0 },
+                "Curtidas": { label: "Curtidas", format: "int", get: l => l.likes ?? 0 },
               };
               const c = cfg[ordenarLive];
               return (

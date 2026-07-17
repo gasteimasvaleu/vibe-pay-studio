@@ -665,7 +665,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
  */
 export const getEngajamentoLives = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { from: string; to: string; sort?: "revenue" | "tips" | "views" }) => ({
+  .inputValidator((data: { from: string; to: string; sort?: "revenue" | "tips" | "views" | "likes" | "comments" }) => ({
     ...rangeValidator({ from: data.from, to: data.to }),
     sort: data.sort ?? "revenue",
   }))
@@ -677,11 +677,33 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
       .eq("creator_id", userId)
       .gte("started_at", data.from).lte("started_at", data.to);
     if (error) throw new Error(error.message);
-    const list = rows ?? [];
+    const base = rows ?? [];
+    const ids = base.map(r => r.id);
+    let likesMap = new Map<string, number>();
+    let commentsMap = new Map<string, number>();
+    if (ids.length > 0) {
+      const [likesRes, commentsRes] = await Promise.all([
+        supabase.from("live_likes").select("live_id").in("live_id", ids),
+        supabase.from("live_comments").select("live_id").in("live_id", ids),
+      ]);
+      for (const r of (likesRes.data ?? []) as { live_id: string }[]) {
+        likesMap.set(r.live_id, (likesMap.get(r.live_id) ?? 0) + 1);
+      }
+      for (const r of (commentsRes.data ?? []) as { live_id: string }[]) {
+        commentsMap.set(r.live_id, (commentsMap.get(r.live_id) ?? 0) + 1);
+      }
+    }
+    const list = base.map(r => ({
+      ...r,
+      likes: likesMap.get(r.id) ?? 0,
+      comments: commentsMap.get(r.id) ?? 0,
+    }));
     const sorters = {
       revenue: (a: (typeof list)[number], b: (typeof list)[number]) => (b.gross_cents ?? 0) - (a.gross_cents ?? 0),
       tips: (a: (typeof list)[number], b: (typeof list)[number]) => (b.tips_cents ?? 0) - (a.tips_cents ?? 0),
       views: (a: (typeof list)[number], b: (typeof list)[number]) => (b.total_views ?? 0) - (a.total_views ?? 0),
+      likes: (a: (typeof list)[number], b: (typeof list)[number]) => b.likes - a.likes,
+      comments: (a: (typeof list)[number], b: (typeof list)[number]) => b.comments - a.comments,
     };
     list.sort(sorters[data.sort]);
     return {
@@ -689,8 +711,11 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
       totalCount: list.length,
       totalRevenue: list.reduce((a, r) => a + (r.gross_cents ?? 0), 0),
       totalViews: list.reduce((a, r) => a + (r.total_views ?? 0), 0),
+      totalLikes: list.reduce((a, r) => a + r.likes, 0),
+      totalComments: list.reduce((a, r) => a + r.comments, 0),
     };
   });
+
 
 /**
  * Registra visita a uma publicação (throttle: 1 view por viewer_id/dia).
