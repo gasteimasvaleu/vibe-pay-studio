@@ -1315,8 +1315,8 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
                     <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={40} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="visits" name="Visitas" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="users" name="Usuários únicos" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="visits" name="Visitantes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="users" name="Usuários" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -1326,16 +1326,43 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 text-sm text-muted-foreground border-b border-border pb-3">
               <span />
-              <span className="text-right">Visitas</span>
+              <span className="text-right">Visitantes</span>
               <span className="text-right">Usuários</span>
-              <span className="text-right">Publicações</span>
+              <span className="text-right">Total</span>
             </div>
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 items-center pt-4 text-sm">
               <span className="text-foreground">Visitantes do perfil</span>
               <span className="text-right">{data?.profileViews ?? 0}</span>
               <span className="text-right">{data?.profileUniqueViewers ?? 0}</span>
-              <span className="text-right font-bold">{data?.publicationViews ?? 0}</span>
+              <span className="text-right font-bold">{(data?.profileViews ?? 0) + (data?.profileUniqueViewers ?? 0)}</span>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold mb-4">Principais países</h3>
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 text-sm text-muted-foreground border-b border-border pb-3">
+              <span>País</span>
+              <span className="text-right">Visitantes</span>
+              <span className="text-right">Usuários</span>
+              <span className="text-right">Total</span>
+            </div>
+            {isLoading ? (
+              <Skeleton className="mt-4 h-8 w-full" />
+            ) : (data?.topCountries ?? []).length === 0 ? (
+              <p className="pt-4 text-sm text-muted-foreground">Nenhum país registrado no período.</p>
+            ) : (
+              (data?.topCountries ?? []).map((c, i) => (
+                <div key={c.country ?? `unk-${i}`} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 items-center pt-4 text-sm">
+                  <span className="flex items-center gap-2 text-foreground">
+                    <span className="text-lg leading-none">{countryFlag(c.country)}</span>
+                    <span>{countryName(c.country)}</span>
+                  </span>
+                  <span className="text-right">{c.visits}</span>
+                  <span className="text-right">{c.users}</span>
+                  <span className="text-right font-bold">{c.visits + c.users}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -1344,9 +1371,9 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
             <h3 className="text-base font-bold">Resumo</h3>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <ResumoItem icon={Users} label="Visitantes" value={String(data?.profileViews ?? 0)} />
-              <ResumoItem icon={Eye} label="Visualizações posts" value={String(data?.publicationViews ?? 0)} />
-              <ResumoItem icon={UserPlus} label="Novos seguidores" value={String(data?.newFollowers ?? 0)} />
-              <ResumoItem icon={Users} label="Usuários únicos" value={String(data?.profileUniqueViewers ?? 0)} />
+              <ResumoItem icon={UserPlus} label="Assinaturas" value={String(data?.subscriptionsCount ?? 0)} />
+              <ResumoItem icon={DollarSign} label="Assinaturas" value={formatBRL(data?.subscriptionsRevenueCents ?? 0)} />
+              <ResumoItem icon={RefreshCw} label="Renovações" value={String(data?.renewalsCount ?? 0)} />
             </div>
           </div>
         </div>
@@ -1354,6 +1381,27 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
     </div>
   );
 }
+
+function countryFlag(iso: string | null): string {
+  if (!iso || iso.length !== 2) return "🌐";
+  const cc = iso.toUpperCase();
+  const A = 0x1f1e6;
+  return String.fromCodePoint(A + (cc.charCodeAt(0) - 65), A + (cc.charCodeAt(1) - 65));
+}
+
+const regionNames = typeof Intl !== "undefined" && "DisplayNames" in Intl
+  ? new Intl.DisplayNames(["pt-BR"], { type: "region" })
+  : null;
+
+function countryName(iso: string | null): string {
+  if (!iso) return "Desconhecido";
+  try {
+    return regionNames?.of(iso.toUpperCase()) ?? iso.toUpperCase();
+  } catch {
+    return iso.toUpperCase();
+  }
+}
+
 
 /* ============================== Assinantes ============================== */
 
