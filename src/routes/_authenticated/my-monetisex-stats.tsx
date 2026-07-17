@@ -1369,81 +1369,131 @@ function StatBox({ label, value, loading }: { label: string; value: number | str
 /* ============================== Destaques ============================== */
 
 function DestaquesPanel({ range }: { range: { from: string; to: string } }) {
-  const pubFn = useServerFn(getEngajamentoPublicacoes);
-  const pubQ = useQuery({
-    queryKey: ["stats", "destaques", range.from, range.to],
-    queryFn: () => pubFn({ data: { ...range, sort: "revenue" } }),
-    staleTime: 30_000,
-  });
-  const liveFn = useServerFn(getEngajamentoLives);
-  const liveQ = useQuery({
-    queryKey: ["stats", "destaquesLive", range.from, range.to],
-    queryFn: () => liveFn({ data: { ...range, sort: "revenue" } }),
-    staleTime: 30_000,
-  });
-  const topFn = useServerFn(getTopAssinantes);
-  const topQ = useQuery({
-    queryKey: ["stats", "destaquesTop", range.from, range.to],
-    queryFn: () => topFn({ data: { ...range, metric: "total" } }),
-    staleTime: 30_000,
-  });
-
-  const topPub = pubQ.data?.items?.[0];
-  const topLive = liveQ.data?.items?.[0];
-
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
-        {pubQ.isLoading ? <Skeleton className="mt-6 h-16 w-full" /> :
-          !topPub ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma postagem no período.</p> : (
-            <Link to="/feed" className="mt-4 block rounded-xl bg-muted/50 p-4">
-              <p className="font-semibold truncate">{topPub.caption || "(sem legenda)"}</p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span>{fullDate.format(new Date(topPub.publishedAt as string))}</span>
-                <span>{topPub.likes} curtidas</span>
-                <span>{topPub.comments} coment.</span>
-                <span className="font-semibold text-foreground">{formatBRL(topPub.revenue)}</span>
-              </div>
-            </Link>
-          )}
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top live</h3></div>
-        {liveQ.isLoading ? <Skeleton className="mt-6 h-16 w-full" /> :
-          !topLive ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma live no período.</p> : (
-            <div className="mt-4 rounded-xl bg-muted/50 p-4">
-              <p className="font-semibold truncate">{topLive.title ?? "Live"}</p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span>{fullDate.format(new Date(topLive.started_at as string))}</span>
-                <span>{topLive.total_views ?? 0} views</span>
-                <span className="font-semibold text-foreground">{formatBRL(topLive.gross_cents ?? 0)}</span>
-              </div>
-            </div>
-          )}
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top assinantes</h3></div>
-        {topQ.isLoading ? <Skeleton className="mt-6 h-32 w-full" /> :
-          (topQ.data ?? []).length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados no período.</p> : (
-            <div className="mt-4 space-y-2">
-              {(topQ.data ?? []).slice(0, 5).map((t, i) => (
-                <div key={t.buyerId} className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
-                  <span className="font-bold text-muted-foreground w-6">#{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{t.displayName ?? t.username ?? "Usuário"}</p>
-                  </div>
-                  <span className="font-bold">{formatBRL(t.gross)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-      </div>
+      <TopPostagemCard range={range} />
+      <TopLiveCard range={range} />
+      <TopAssinantesCard range={range} />
     </div>
   );
 }
+
+const TOP_POST_TABS = ["Mais vendida", "Mimos", "Curtidas", "Comentários"] as const;
+const TOP_POST_SORT: Record<(typeof TOP_POST_TABS)[number], "revenue" | "tips" | "likes" | "comments"> = {
+  "Mais vendida": "revenue", "Mimos": "tips", "Curtidas": "likes", "Comentários": "comments",
+};
+
+function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
+  const [tab, setTab] = useState<(typeof TOP_POST_TABS)[number]>("Mais vendida");
+  const fn = useServerFn(getEngajamentoPublicacoes);
+  const q = useQuery({
+    queryKey: ["stats", "destaquesPub", range.from, range.to, tab],
+    queryFn: () => fn({ data: { ...range, sort: TOP_POST_SORT[tab] } }),
+    staleTime: 30_000,
+  });
+  const top = q.data?.items?.[0];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {TOP_POST_TABS.map(t => (
+          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
+        ))}
+      </div>
+      {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
+        !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma postagem encontrada no período.</p> : (
+          <Link to="/feed" className="mt-4 block rounded-xl bg-muted/50 p-4">
+            <p className="font-semibold truncate">{top.caption || "(sem legenda)"}</p>
+            <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <span>{fullDate.format(new Date(top.publishedAt as string))}</span>
+              <span>{top.likes} curtidas</span>
+              <span>{top.comments} coment.</span>
+              <span>{top.tips} mimos</span>
+              <span className="font-semibold text-foreground">{formatBRL(top.revenue)}</span>
+            </div>
+          </Link>
+        )}
+    </div>
+  );
+}
+
+const TOP_LIVE_TABS = ["Mais vendida", "Mimos"] as const;
+const TOP_LIVE_SORT: Record<(typeof TOP_LIVE_TABS)[number], "revenue" | "tips"> = {
+  "Mais vendida": "revenue", "Mimos": "tips",
+};
+
+function TopLiveCard({ range }: { range: { from: string; to: string } }) {
+  const [tab, setTab] = useState<(typeof TOP_LIVE_TABS)[number]>("Mais vendida");
+  const fn = useServerFn(getEngajamentoLives);
+  const q = useQuery({
+    queryKey: ["stats", "destaquesLive", range.from, range.to, tab],
+    queryFn: () => fn({ data: { ...range, sort: TOP_LIVE_SORT[tab] } }),
+    staleTime: 30_000,
+  });
+  const top = q.data?.items?.[0];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top Live</h3></div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {TOP_LIVE_TABS.map(t => (
+          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
+        ))}
+      </div>
+      {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
+        !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma live no período.</p> : (
+          <div className="mt-4 rounded-xl bg-muted/50 p-4">
+            <p className="font-semibold truncate">{top.title ?? "Live"}</p>
+            <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <span>{fullDate.format(new Date(top.started_at as string))}</span>
+              <span>{top.total_views ?? 0} views</span>
+              <span className="font-semibold text-foreground">{formatBRL(top.gross_cents ?? 0)}</span>
+            </div>
+          </div>
+        )}
+    </div>
+  );
+}
+
+const TOP_ASSIN_TABS = ["Total", "Mais assinaturas", "Mimos", "Chat"] as const;
+const TOP_ASSIN_METRIC: Record<(typeof TOP_ASSIN_TABS)[number], "total" | "subscription" | "tip" | "chat_unlock"> = {
+  "Total": "total", "Mais assinaturas": "subscription", "Mimos": "tip", "Chat": "chat_unlock",
+};
+
+function TopAssinantesCard({ range }: { range: { from: string; to: string } }) {
+  const [tab, setTab] = useState<(typeof TOP_ASSIN_TABS)[number]>("Total");
+  const fn = useServerFn(getTopAssinantes);
+  const q = useQuery({
+    queryKey: ["stats", "destaquesTop", range.from, range.to, tab],
+    queryFn: () => fn({ data: { ...range, metric: TOP_ASSIN_METRIC[tab] } }),
+    staleTime: 30_000,
+  });
+  const items = q.data ?? [];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top assinantes</h3></div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {TOP_ASSIN_TABS.map(t => (
+          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
+        ))}
+      </div>
+      {q.isLoading ? <Skeleton className="mt-4 h-32 w-full" /> :
+        items.length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados no período.</p> : (
+          <div className="mt-4 space-y-2">
+            {items.slice(0, 5).map((t, i) => (
+              <div key={t.buyerId} className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
+                <span className="font-bold text-muted-foreground w-6">#{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{t.displayName ?? t.username ?? "Usuário"}</p>
+                </div>
+                <span className="font-bold">{formatBRL(t.gross)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+    </div>
+  );
+}
+
 
 /* ============================== Sequência ============================== */
 
