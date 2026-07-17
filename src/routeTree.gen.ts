@@ -38,6 +38,7 @@ import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_auth
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
@@ -231,6 +232,11 @@ const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
 const AuthenticatedBancoRoute = AuthenticatedBancoRouteImport.update({
   id: '/banco',
   path: '/banco',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAccountStatusRoute =
@@ -496,6 +502,7 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
@@ -569,6 +576,7 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
@@ -639,6 +647,7 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
   '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
   '/_authenticated/bugreport': typeof AuthenticatedBugreportRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
@@ -714,6 +723,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/account-status'
+    | '/admin'
     | '/banco'
     | '/bugreport'
     | '/chat'
@@ -787,6 +797,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/account-status'
+    | '/admin'
     | '/banco'
     | '/bugreport'
     | '/chat-agendamento'
@@ -856,6 +867,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/sobre'
     | '/_authenticated/account-status'
+    | '/_authenticated/admin'
     | '/_authenticated/banco'
     | '/_authenticated/bugreport'
     | '/_authenticated/chat'
@@ -1139,6 +1151,13 @@ declare module '@tanstack/react-router' {
       path: '/banco'
       fullPath: '/banco'
       preLoaderRoute: typeof AuthenticatedBancoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/account-status': {
@@ -1548,6 +1567,7 @@ const AuthenticatedCreatorOnboardingDocumentosRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountStatusRoute: typeof AuthenticatedAccountStatusRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedBancoRoute: typeof AuthenticatedBancoRouteWithChildren
   AuthenticatedBugreportRoute: typeof AuthenticatedBugreportRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
@@ -1598,6 +1618,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountStatusRoute: AuthenticatedAccountStatusRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedBancoRoute: AuthenticatedBancoRouteWithChildren,
   AuthenticatedBugreportRoute: AuthenticatedBugreportRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
