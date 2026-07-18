@@ -240,18 +240,22 @@ function CriarPerfilGratuitoPage() {
                 className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
               />
               <div className="relative">
-                <Input
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
-                  placeholder="monetisexy.com/(seu @)"
-                  className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
-                />
+                <div className="flex items-center rounded-md bg-muted/60 h-12 pl-5 pr-2 text-sm focus-within:ring-2 focus-within:ring-ring">
+                  <span className="select-none text-muted-foreground pr-0.5">monetisexy.com/</span>
+                  <input
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
+                    placeholder="seuusuario"
+                    className="flex-1 bg-transparent border-0 outline-none h-full text-sm text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
                 {handle.length > 0 && !handleValid && (
                   <p className="text-xs text-destructive mt-1 px-4">
                     Use 3-30 caracteres: letras minúsculas, números, _ ou .
                   </p>
                 )}
               </div>
+
             </div>
 
             <div className="space-y-3">
