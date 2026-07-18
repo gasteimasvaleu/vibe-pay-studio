@@ -7,6 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createFreeCreatorProfile } from "@/lib/onboarding.functions";
+import heroA from "@/assets/free-profile-hero-1.jpg";
+import heroB from "@/assets/free-profile-hero-2.jpg";
+import heroC from "@/assets/free-profile-hero-3.jpg";
+import heroD from "@/assets/free-profile-hero-4.jpg";
+import coverA from "@/assets/free-profile-cover-1.jpg";
+import coverB from "@/assets/free-profile-cover-2.jpg";
+import coverC from "@/assets/free-profile-cover-3.jpg";
 
 export const Route = createFileRoute("/_authenticated/criar-perfil-gratuito")({
   head: () => ({
@@ -22,18 +29,35 @@ export const Route = createFileRoute("/_authenticated/criar-perfil-gratuito")({
   component: CriarPerfilGratuitoPage,
 });
 
-const COVER_OPTIONS = [
-  "https://picsum.photos/seed/cover-a/600/450",
-  "https://picsum.photos/seed/cover-b/600/450",
-  "https://picsum.photos/seed/cover-c/600/450",
-];
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
+const COVER_OPTIONS = [coverA, coverB, coverC];
+const HERO_IMAGES = [heroA, heroB, heroC, heroD];
 
-const HERO_IMAGES = [
-  "https://picsum.photos/seed/hero-a/500/700",
-  "https://picsum.photos/seed/hero-b/500/700",
-  "https://picsum.photos/seed/hero-c/500/700",
-  "https://picsum.photos/seed/hero-d/500/500",
-];
+type UploadKind = "avatar" | "cover";
+
+async function uploadToBucket(
+  bucket: "avatars" | "covers",
+  file: File,
+): Promise<string> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+  if (!userId) throw new Error("sessão expirada");
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  const safeExt = /^(jpg|jpeg|png|webp)$/.test(ext) ? ext : "jpg";
+  const path = `${userId}/${crypto.randomUUID()}.${safeExt}`;
+  const { error: upErr } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
+  if (upErr) throw new Error(upErr.message);
+  const { data: signed, error: signErr } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_URL_TTL);
+  if (signErr || !signed) {
+    await supabase.storage.from(bucket).remove([path]);
+    throw new Error(signErr?.message ?? "falha ao gerar URL");
+  }
+  return signed.signedUrl;
+}
 
 function CriarPerfilGratuitoPage() {
   const navigate = useNavigate();
@@ -41,49 +65,82 @@ function CriarPerfilGratuitoPage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [submitting, setSubmitting] = useState(false);
 
-  // Step 2 state
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
   const [bio, setBio] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [selectedCover, setSelectedCover] = useState<string | null>(COVER_OPTIONS[0]);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [selectedCover, setSelectedCover] = useState<string>(COVER_OPTIONS[0]);
+  const [uploading, setUploading] = useState<UploadKind | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
-  const canSubmit = displayName.trim().length > 0 && handleValid && !submitting;
+  const canSubmit =
+    displayName.trim().length > 0 && handleValid && !submitting && uploading === null;
 
-  const initials = (displayName.trim() || "CA")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((s) => s[0]?.toUpperCase() ?? "")
-    .join("") || "CA";
+  const initials =
+    (displayName.trim() || "CA")
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase() ?? "")
+      .join("") || "CA";
 
-  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onAvatarPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    setAvatarPreview(URL.createObjectURL(file));
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreview(localPreview);
+    setUploading("avatar");
+    try {
+      const url = await uploadToBucket("avatars", file);
+      setAvatarUrl(url);
+    } catch (err) {
+      setAvatarPreview(null);
+      setAvatarUrl(null);
+      toast.error((err as Error).message ?? "falha ao enviar avatar");
+    } finally {
+      setUploading((k) => (k === "avatar" ? null : k));
+    }
   };
 
-  const onCoverPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCoverPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    setSelectedCover(URL.createObjectURL(file));
+    const localPreview = URL.createObjectURL(file);
+    setSelectedCover(localPreview);
+    setUploading("cover");
+    try {
+      const url = await uploadToBucket("covers", file);
+      setSelectedCover(url);
+    } catch (err) {
+      setSelectedCover(COVER_OPTIONS[0]);
+      toast.error((err as Error).message ?? "falha ao enviar capa");
+    } finally {
+      setUploading((k) => (k === "cover" ? null : k));
+    }
   };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // Só persistimos URLs http(s); previews locais (blob:) ficam pra edição posterior.
+      // Salva capa apenas se for URL http(s) (asset do projeto ou signed URL do Storage);
+      // blob: previews locais não persistem.
       const coverUrl =
-        selectedCover && /^https?:\/\//i.test(selectedCover) ? selectedCover : null;
+        selectedCover && /^https?:\/\//i.test(selectedCover)
+          ? selectedCover
+          : selectedCover && selectedCover.startsWith("/")
+            ? `${window.location.origin}${selectedCover}`
+            : null;
       await createProfile({
         data: {
           handle: handle.trim().toLowerCase(),
           displayName: displayName.trim(),
           bio: bio.trim() || null,
-          avatarUrl: null,
+          avatarUrl,
           coverUrl,
         },
       });
@@ -120,10 +177,10 @@ function CriarPerfilGratuitoPage() {
         {step === 1 ? (
           <section className="space-y-8">
             <div className="grid grid-cols-3 gap-2">
-              <img src={HERO_IMAGES[0]} alt="" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
-              <img src={HERO_IMAGES[1]} alt="" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
-              <img src={HERO_IMAGES[2]} alt="" className="col-span-1 h-full w-full object-cover rounded-2xl aspect-[3/2]" />
-              <img src={HERO_IMAGES[3]} alt="" className="col-span-1 h-full w-full object-cover rounded-2xl aspect-[3/2]" />
+              <img src={HERO_IMAGES[0]} alt="" loading="lazy" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
+              <img src={HERO_IMAGES[1]} alt="" loading="lazy" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
+              <img src={HERO_IMAGES[2]} alt="" loading="lazy" className="col-span-1 h-full w-full object-cover rounded-2xl aspect-[3/2]" />
+              <img src={HERO_IMAGES[3]} alt="" loading="lazy" className="col-span-1 h-full w-full object-cover rounded-2xl aspect-[3/2]" />
             </div>
 
             <div className="text-center space-y-2">
@@ -154,13 +211,19 @@ function CriarPerfilGratuitoPage() {
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="relative h-32 w-32 rounded-full bg-muted grid place-items-center overflow-hidden"
+                disabled={uploading === "avatar"}
+                className="relative h-32 w-32 rounded-full bg-muted grid place-items-center overflow-hidden disabled:opacity-70"
                 aria-label="Enviar foto de perfil"
               >
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-3xl font-bold text-foreground">{initials}</span>
+                )}
+                {uploading === "avatar" && (
+                  <span className="absolute inset-0 bg-black/40 grid place-items-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                  </span>
                 )}
                 <span className="absolute bottom-1 right-1 h-9 w-9 rounded-full bg-card border border-border grid place-items-center shadow-card">
                   <Camera className="h-4 w-4 text-foreground" />
@@ -203,7 +266,7 @@ function CriarPerfilGratuitoPage() {
                       onClick={() => setSelectedCover(url)}
                       className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 ${active ? "border-primary" : "border-transparent"}`}
                     >
-                      <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                      <img src={url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                       {active && (
                         <span className="absolute inset-0 bg-black/40 grid place-items-center">
                           <span className="h-10 w-10 rounded-full bg-card grid place-items-center">
@@ -218,9 +281,11 @@ function CriarPerfilGratuitoPage() {
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="text-xs font-semibold text-primary hover:underline"
+                disabled={uploading === "cover"}
+                className="text-xs font-semibold text-primary hover:underline disabled:opacity-50 inline-flex items-center gap-2"
               >
-                + Enviar sua foto
+                {uploading === "cover" && <Loader2 className="h-3 w-3 animate-spin" />}
+                {uploading === "cover" ? "Enviando..." : "+ Enviar sua foto"}
               </button>
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={onCoverPick} />
             </div>
