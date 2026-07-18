@@ -61,7 +61,7 @@ async function hydratePublications(client: any, pubIds: string[]) {
   (media ?? []).forEach((m: any) => {
     if (!mediaMap.has(m.publication_id)) mediaMap.set(m.publication_id, m);
   });
-  const authorIds = Array.from(new Set((pubs ?? []).map((p: any) => p.author_id)));
+  const authorIds = Array.from(new Set((pubs ?? []).map((p: any) => p.author_id))) as string[];
   const authors = await fetchAuthorsMap(client, authorIds);
   return { pubs: pubMap, media: mediaMap, authors };
 }
