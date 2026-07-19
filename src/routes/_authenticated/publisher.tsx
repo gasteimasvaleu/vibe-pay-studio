@@ -70,6 +70,8 @@ import {
   createPublication,
   deleteDraftMedia,
 } from "@/lib/publications.functions";
+import { VaultPickerSheet } from "@/components/publisher/VaultPickerSheet";
+import type { VaultMediaItem } from "@/lib/vault.functions";
 
 export const Route = createFileRoute("/_authenticated/publisher")({
   head: () => ({
@@ -231,6 +233,8 @@ function PublisherPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
   const [preview, setPreview] = useState<PreviewMedia | null>(null);
+  const [vaultPickerOpen, setVaultPickerOpen] = useState(false);
+  const [vaultPickerTarget, setVaultPickerTarget] = useState<"media" | "preview">("media");
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
@@ -416,6 +420,61 @@ function PublisherPage() {
   const triggerPreviewCamera = () => {
     flushSync(() => setPreviewSheetOpen(false));
     previewCameraInputRef.current?.click();
+  };
+
+  const openVaultPicker = (target: "media" | "preview") => {
+    flushSync(() => {
+      setPickerOpen(false);
+      setPreviewSheetOpen(false);
+    });
+    setVaultPickerTarget(target);
+    setVaultPickerOpen(true);
+  };
+
+  const handleVaultPick = (items: VaultMediaItem[]) => {
+    const usable = items.filter((it) => it.type === "image" || it.type === "video" || it.type === "gif");
+    if (usable.length === 0) {
+      toast.error("Nenhuma mídia compatível selecionada");
+      return;
+    }
+
+    if (vaultPickerTarget === "preview") {
+      const first = usable[0];
+      setPreview((prev) => {
+        if (prev?.previewUrl && prev.storagePath) {
+          // Não deleta drafts do acervo — apenas descarta referência local.
+        }
+        return {
+          status: "ready",
+          type: first.type === "video" ? "video" : "image",
+          previewUrl: first.url,
+          publicUrl: first.url,
+          storagePath: first.storagePath,
+          uploadProgress: 100,
+        };
+      });
+      return;
+    }
+
+    const remaining = MAX_MEDIA - media.length;
+    if (remaining <= 0) {
+      toast.error(`Máximo de ${MAX_MEDIA} mídias por publicação`);
+      return;
+    }
+    const slice = usable.slice(0, remaining);
+    if (slice.length < usable.length) {
+      toast.info(`Apenas ${slice.length} mídia(s) adicionadas (limite ${MAX_MEDIA})`);
+    }
+    const newItems: MediaItem[] = slice.map((it) => ({
+      id: crypto.randomUUID(),
+      previewUrl: it.url,
+      publicUrl: it.url,
+      storagePath: it.storagePath,
+      type: it.type === "video" ? "video" : "image",
+      status: "ready",
+      uploadProgress: 100,
+    }));
+    setMedia((m) => [...m, ...newItems]);
   };
 
   const onPreviewFile = async (file: File | null | undefined) => {
@@ -866,7 +925,7 @@ function PublisherPage() {
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
               label="Acervo no Monetisexy"
-              onClick={triggerFileInput}
+              onClick={() => openVaultPicker("media")}
             />
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
@@ -897,7 +956,7 @@ function PublisherPage() {
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
               label="Acervo no Monetisexy"
-              onClick={() => toast.info("Em breve")}
+              onClick={() => openVaultPicker("preview")}
             />
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
@@ -907,6 +966,14 @@ function PublisherPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <VaultPickerSheet
+        open={vaultPickerOpen}
+        onOpenChange={setVaultPickerOpen}
+        mode={vaultPickerTarget}
+        maxSelectable={Math.max(1, MAX_MEDIA - media.length)}
+        onConfirm={handleVaultPick}
+      />
 
 
 
