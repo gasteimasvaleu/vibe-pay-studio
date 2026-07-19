@@ -70,6 +70,8 @@ import {
   createPublication,
   deleteDraftMedia,
 } from "@/lib/publications.functions";
+import { VaultPickerSheet } from "@/components/publisher/VaultPickerSheet";
+import type { VaultMediaItem } from "@/lib/vault.functions";
 
 export const Route = createFileRoute("/_authenticated/publisher")({
   head: () => ({
