@@ -422,6 +422,61 @@ function PublisherPage() {
     previewCameraInputRef.current?.click();
   };
 
+  const openVaultPicker = (target: "media" | "preview") => {
+    flushSync(() => {
+      setPickerOpen(false);
+      setPreviewSheetOpen(false);
+    });
+    setVaultPickerTarget(target);
+    setVaultPickerOpen(true);
+  };
+
+  const handleVaultPick = (items: VaultMediaItem[]) => {
+    const usable = items.filter((it) => it.type === "image" || it.type === "video" || it.type === "gif");
+    if (usable.length === 0) {
+      toast.error("Nenhuma mídia compatível selecionada");
+      return;
+    }
+
+    if (vaultPickerTarget === "preview") {
+      const first = usable[0];
+      setPreview((prev) => {
+        if (prev?.previewUrl && prev.storagePath) {
+          // Não deleta drafts do acervo — apenas descarta referência local.
+        }
+        return {
+          status: "ready",
+          type: first.type === "video" ? "video" : "image",
+          previewUrl: first.url,
+          publicUrl: first.url,
+          storagePath: first.storagePath,
+          uploadProgress: 100,
+        };
+      });
+      return;
+    }
+
+    const remaining = MAX_MEDIA - media.length;
+    if (remaining <= 0) {
+      toast.error(`Máximo de ${MAX_MEDIA} mídias por publicação`);
+      return;
+    }
+    const slice = usable.slice(0, remaining);
+    if (slice.length < usable.length) {
+      toast.info(`Apenas ${slice.length} mídia(s) adicionadas (limite ${MAX_MEDIA})`);
+    }
+    const newItems: MediaItem[] = slice.map((it) => ({
+      id: crypto.randomUUID(),
+      previewUrl: it.url,
+      publicUrl: it.url,
+      storagePath: it.storagePath,
+      type: it.type === "video" ? "video" : "image",
+      status: "ready",
+      uploadProgress: 100,
+    }));
+    setMedia((m) => [...m, ...newItems]);
+  };
+
   const onPreviewFile = async (file: File | null | undefined) => {
     if (!file) return;
     const sessionRes = await supabase.auth.getSession();
