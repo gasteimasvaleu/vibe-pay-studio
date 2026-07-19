@@ -328,7 +328,9 @@ export function VaultPickerSheet({
           >
             {singleSelect
               ? "Usar como prévia"
-              : `Adicionar ${selectedCount || ""}${selectedCount ? " item" + (selectedCount > 1 ? "s" : "") : "seleção"}`}
+              : selectedCount === 0
+                ? "Adicionar seleção"
+                : `Adicionar ${selectedCount} ${selectedCount > 1 ? "itens" : "item"}`}
           </Button>
         </div>
       </SheetContent>
