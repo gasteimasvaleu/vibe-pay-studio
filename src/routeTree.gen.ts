@@ -74,6 +74,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
+import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
@@ -452,6 +453,12 @@ const AuthenticatedAdminLeaksRoute = AuthenticatedAdminLeaksRouteImport.update({
   path: '/leaks',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminEmailsRoute =
+  AuthenticatedAdminEmailsRouteImport.update({
+    id: '/emails',
+    path: '/emails',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
   id: '/bugs',
   path: '/bugs',
@@ -572,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
@@ -650,6 +658,7 @@ export interface FileRoutesByTo {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
@@ -730,6 +739,7 @@ export interface FileRoutesById {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
@@ -813,6 +823,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/admin/bugs'
+    | '/admin/emails'
     | '/admin/leaks'
     | '/admin/moderation'
     | '/admin/transactions'
@@ -891,6 +902,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/admin/bugs'
+    | '/admin/emails'
     | '/admin/leaks'
     | '/admin/moderation'
     | '/admin/transactions'
@@ -970,6 +982,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/_authenticated/admin/bugs'
+    | '/_authenticated/admin/emails'
     | '/_authenticated/admin/leaks'
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/transactions'
@@ -1490,6 +1503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeaksRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/emails': {
+      id: '/_authenticated/admin/emails'
+      path: '/emails'
+      fullPath: '/admin/emails'
+      preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/bugs': {
       id: '/_authenticated/admin/bugs'
       path: '/bugs'
@@ -1600,6 +1620,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBugsRoute: typeof AuthenticatedAdminBugsRoute
+  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
@@ -1610,6 +1631,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBugsRoute: AuthenticatedAdminBugsRoute,
+  AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,

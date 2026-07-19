@@ -418,6 +418,30 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body_html: string
+          kind: Database["public"]["Enums"]["email_kind"]
+          subject: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_html: string
+          kind: Database["public"]["Enums"]["email_kind"]
+          subject: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_html?: string
+          kind?: Database["public"]["Enums"]["email_kind"]
+          subject?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -710,6 +734,7 @@ export type Database = {
           onboarding_completed_at: string | null
           phone: string | null
           price_monthly: number | null
+          referred_by: string | null
           restrict_friendships: boolean
           restrict_mentions: boolean
           restrict_search: boolean
@@ -768,6 +793,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           phone?: string | null
           price_monthly?: number | null
+          referred_by?: string | null
           restrict_friendships?: boolean
           restrict_mentions?: boolean
           restrict_search?: boolean
@@ -826,6 +852,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           phone?: string | null
           price_monthly?: number | null
+          referred_by?: string | null
           restrict_friendships?: boolean
           restrict_mentions?: boolean
           restrict_search?: boolean
@@ -1962,6 +1989,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "creator" | "subscriber"
+      email_kind:
+        | "free_to_paid"
+        | "post_sales"
+        | "subscription_sales"
+        | "content_purchase"
+        | "creator_referrals"
       moderation_status: "pending" | "approved" | "hidden" | "removed"
       payment_method: "pix" | "credit_card" | "boleto" | "wallet" | "manual"
       promotion_status: "active" | "paused" | "ended"
@@ -2134,6 +2167,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "creator", "subscriber"],
+      email_kind: [
+        "free_to_paid",
+        "post_sales",
+        "subscription_sales",
+        "content_purchase",
+        "creator_referrals",
+      ],
       moderation_status: ["pending", "approved", "hidden", "removed"],
       payment_method: ["pix", "credit_card", "boleto", "wallet", "manual"],
       promotion_status: ["active", "paused", "ended"],

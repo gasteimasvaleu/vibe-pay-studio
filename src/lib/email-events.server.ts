@@ -8,15 +8,17 @@
  */
 
 import { resolveUserEmail, sendTransactionalEmail } from "./email.server";
-import {
-  contentPurchaseEmail,
-  freeToPaidEmail,
-  postSaleEmail,
-  subscriptionSaleEmail,
-} from "./email-templates.server";
+import { renderTemplate } from "./email-templates.server";
 
 const APP_BASE_URL =
-  process.env.APP_BASE_URL ?? "https://vibe-pay-studio.lovable.app";
+  process.env.APP_BASE_URL ?? "https://monetisexy.com";
+
+function brl(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AdminClient = any;
@@ -42,12 +44,15 @@ async function getDisplayName(
   );
 }
 
-/**
- * Publication unlock paid → post_sales (autor) + content_purchase (comprador).
- */
-export async function notifyPublicationUnlock(
-  unlockId: string,
-): Promise<void> {
+function planLabel(plan: string): string {
+  return plan === "quarterly"
+    ? "trimestral"
+    : plan === "semiannual"
+      ? "semestral"
+      : "mensal";
+}
+
+export async function notifyPublicationUnlock(unlockId: string): Promise<void> {
   try {
     const admin = await getAdmin();
     const { data: unlock } = await admin
@@ -65,6 +70,7 @@ export async function notifyPublicationUnlock(
     if (!pub) return;
 
     const publicationUrl = `${APP_BASE_URL}/feed?p=${pub.id}`;
+    const amountBRL = brl(unlock.amount_cents);
 
     const [buyerName, creatorName, sellerEmail, buyerEmail] = await Promise.all([
       getDisplayName(admin, unlock.buyer_id),
@@ -76,9 +82,9 @@ export async function notifyPublicationUnlock(
     const jobs: Array<Promise<unknown>> = [];
 
     if (sellerEmail) {
-      const tpl = postSaleEmail({
+      const tpl = await renderTemplate("post_sales", {
         buyerName,
-        amountCents: unlock.amount_cents,
+        amountBRL,
         publicationUrl,
       });
       jobs.push(
@@ -93,10 +99,11 @@ export async function notifyPublicationUnlock(
     }
 
     if (buyerEmail) {
-      const tpl = contentPurchaseEmail({
+      const tpl = await renderTemplate("content_purchase", {
         creatorName,
-        amountCents: unlock.amount_cents,
+        amountBRL,
         publicationUrl,
+        what: "publicação",
       });
       jobs.push(
         sendTransactionalEmail({
@@ -115,11 +122,6 @@ export async function notifyPublicationUnlock(
   }
 }
 
-/**
- * Chat message unlock paid → content_purchase (comprador).
- * Não há um "post_sales" para mensagem individual; a venda em chat aparece no
- * relatório mas não gera notificação separada por design.
- */
 export async function notifyChatUnlock(unlockId: string): Promise<void> {
   try {
     const admin = await getAdmin();
@@ -136,11 +138,11 @@ export async function notifyChatUnlock(unlockId: string): Promise<void> {
     ]);
     if (!buyerEmail) return;
 
-    const tpl = contentPurchaseEmail({
+    const tpl = await renderTemplate("content_purchase", {
       creatorName,
-      amountCents: unlock.amount_cents,
+      amountBRL: brl(unlock.amount_cents),
       publicationUrl: `${APP_BASE_URL}/chat`,
-      isChat: true,
+      what: "mensagem",
     });
     await sendTransactionalEmail({
       userId: unlock.buyer_id,
@@ -154,9 +156,6 @@ export async function notifyChatUnlock(unlockId: string): Promise<void> {
   }
 }
 
-/**
- * Subscription ficou ativa → subscription_sales (criador).
- */
 export async function notifySubscriptionActive(
   subscriptionId: string,
 ): Promise<void> {
@@ -175,10 +174,11 @@ export async function notifySubscriptionActive(
     ]);
     if (!sellerEmail) return;
 
-    const tpl = subscriptionSaleEmail({
+    const tpl = await renderTemplate("subscription_sales", {
       subscriberName,
-      amountCents: sub.price_cents_paid,
-      plan: sub.plan,
+      amountBRL: brl(sub.price_cents_paid),
+      planLabel: planLabel(sub.plan as string),
+      dashboardUrl: `${APP_BASE_URL}/dashboard`,
     });
     await sendTransactionalEmail({
       userId: sub.creator_id,
@@ -192,22 +192,13 @@ export async function notifySubscriptionActive(
   }
 }
 
-/**
- * Perfil passou de free/subscriber para "creator" → free_to_paid para os
- * seguidores.
- *
- * Idempotência: usa flag booleana `profiles.free_to_paid_notified_at`? Ainda
- * não existe — a chamada é feita apenas no ponto de promoção real (Veriff
- * aprovado / getKycStatus faz o UPDATE), então a race é improvável. Se vier
- * a duplicar, adicionar essa coluna via migration futura.
- */
 export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
   try {
     const admin = await getAdmin();
 
     const { data: creator } = await admin
       .from("profiles")
-      .select("display_name, username")
+      .select("display_name, username, referred_by")
       .eq("user_id", creatorUserId)
       .maybeSingle();
     if (!creator?.username) return;
@@ -215,7 +206,9 @@ export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
     const creatorName =
       (creator.display_name as string | undefined) ||
       (creator.username as string);
+    const creatorUrl = `${APP_BASE_URL}/perfil/${creator.username}`;
 
+    // Fan-out para seguidores
     const { data: followers } = await admin
       .from("follows")
       .select("follower_id")
@@ -225,14 +218,12 @@ export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
     const ids = (followers ?? [])
       .map((r: { follower_id: string }) => r.follower_id)
       .filter(Boolean);
-    if (ids.length === 0) return;
 
-    const tpl = freeToPaidEmail({
+    const tpl = await renderTemplate("free_to_paid", {
       creatorName,
-      creatorHandle: creator.username as string,
+      creatorUrl,
     });
 
-    // Simple concurrency guard: process in chunks of 20.
     const chunkSize = 20;
     for (let i = 0; i < ids.length; i += chunkSize) {
       const chunk = ids.slice(i, i + chunkSize);
@@ -250,6 +241,25 @@ export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
           });
         }),
       );
+    }
+
+    // Indicação: quem indicou recebe creator_referrals
+    const referredBy = (creator as { referred_by?: string | null }).referred_by;
+    if (referredBy) {
+      const referrerEmail = await resolveUserEmail(referredBy);
+      if (referrerEmail) {
+        const refTpl = await renderTemplate("creator_referrals", {
+          referredName: creatorName,
+          creatorUrl,
+        });
+        await sendTransactionalEmail({
+          userId: referredBy,
+          kind: "creator_referrals",
+          to: referrerEmail,
+          subject: refTpl.subject,
+          html: refTpl.html,
+        });
+      }
     }
   } catch (err) {
     console.error("[email-events] notifyFreeToPaid failed", err);
