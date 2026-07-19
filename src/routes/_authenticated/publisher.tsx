@@ -925,7 +925,7 @@ function PublisherPage() {
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
               label="Acervo no Monetisexy"
-              onClick={triggerFileInput}
+              onClick={() => openVaultPicker("media")}
             />
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
