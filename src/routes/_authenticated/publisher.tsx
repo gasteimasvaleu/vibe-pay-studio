@@ -277,6 +277,10 @@ function PublisherPage() {
     flushSync(() => setPickerOpen(false));
     fileInputRef.current?.click();
   };
+  const triggerMediaCamera = () => {
+    flushSync(() => setPickerOpen(false));
+    mediaCameraInputRef.current?.click();
+  };
 
   const onFiles = async (files: FileList | null) => {
     if (!files) return;
