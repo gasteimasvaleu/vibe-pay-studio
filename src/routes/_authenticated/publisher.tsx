@@ -967,6 +967,14 @@ function PublisherPage() {
         </SheetContent>
       </Sheet>
 
+      <VaultPickerSheet
+        open={vaultPickerOpen}
+        onOpenChange={setVaultPickerOpen}
+        mode={vaultPickerTarget}
+        maxSelectable={Math.max(1, MAX_MEDIA - media.length)}
+        onConfirm={handleVaultPick}
+      />
+
 
 
       <PriceDialog
