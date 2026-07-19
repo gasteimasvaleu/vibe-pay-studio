@@ -830,6 +830,19 @@ function PublisherPage() {
       />
 
       <input
+        ref={mediaCameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      <input
         ref={previewInputRef}
         type="file"
         accept="image/*,video/*"
