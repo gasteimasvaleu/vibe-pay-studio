@@ -223,6 +223,7 @@ function PublisherPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaCameraInputRef = useRef<HTMLInputElement | null>(null);
   const previewInputRef = useRef<HTMLInputElement | null>(null);
   const previewCameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -275,6 +276,10 @@ function PublisherPage() {
     // senão navegadores bloqueiam a abertura do diálogo de arquivos.
     flushSync(() => setPickerOpen(false));
     fileInputRef.current?.click();
+  };
+  const triggerMediaCamera = () => {
+    flushSync(() => setPickerOpen(false));
+    mediaCameraInputRef.current?.click();
   };
 
   const onFiles = async (files: FileList | null) => {
@@ -825,6 +830,19 @@ function PublisherPage() {
       />
 
       <input
+        ref={mediaCameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(e) => {
+          void onFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      <input
         ref={previewInputRef}
         type="file"
         accept="image/*,video/*"
@@ -930,7 +948,7 @@ function PublisherPage() {
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
               label="Câmera"
-              onClick={triggerFileInput}
+              onClick={triggerMediaCamera}
             />
           </div>
         </SheetContent>
