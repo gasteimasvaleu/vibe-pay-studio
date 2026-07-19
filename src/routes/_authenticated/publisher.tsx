@@ -233,6 +233,8 @@ function PublisherPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
   const [preview, setPreview] = useState<PreviewMedia | null>(null);
+  const [vaultPickerOpen, setVaultPickerOpen] = useState(false);
+  const [vaultPickerTarget, setVaultPickerTarget] = useState<"media" | "preview">("media");
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
