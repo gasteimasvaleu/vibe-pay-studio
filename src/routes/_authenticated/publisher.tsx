@@ -948,7 +948,7 @@ function PublisherPage() {
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
               label="Câmera"
-              onClick={triggerFileInput}
+              onClick={triggerMediaCamera}
             />
           </div>
         </SheetContent>
