@@ -223,6 +223,7 @@ function PublisherPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioTimerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaCameraInputRef = useRef<HTMLInputElement | null>(null);
   const previewInputRef = useRef<HTMLInputElement | null>(null);
   const previewCameraInputRef = useRef<HTMLInputElement | null>(null);
 
