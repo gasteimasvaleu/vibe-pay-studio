@@ -956,7 +956,7 @@ function PublisherPage() {
             <PickerOption
               icon={<FolderPlus className="h-5 w-5" />}
               label="Acervo no Monetisexy"
-              onClick={() => toast.info("Em breve")}
+              onClick={() => openVaultPicker("preview")}
             />
             <PickerOption
               icon={<Camera className="h-5 w-5" />}
