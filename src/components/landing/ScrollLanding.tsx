@@ -4,8 +4,8 @@ import { LoginCard } from "@/components/site/LoginCard";
 import { HeroCard } from "@/components/site/HeroCard";
 import { GlassPromoCard } from "./GlassPromoCard";
 
-const VIDEO_URL =
-  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-02178457259314100000000000000000000ffffc0a870455f887e_1784572784037_c141adff.mp4";
+const BACKGROUND_IMAGE_URL =
+  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-021784545806860aaaf13501739a5ff290af8d9343e27fc9037e4_0_1784545870764_ebce0aa8.png";
 
 const PROMO_CARDS = [
   {
@@ -59,15 +59,14 @@ export function ScrollLanding() {
   return (
     <section ref={sectionRef} className="relative -mt-16" style={{ height: "420vh" }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Background video */}
-        <video
+        {/* Background image */}
+        <img
           className="absolute inset-0 h-full w-full object-cover"
-          src={VIDEO_URL}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
+          src={BACKGROUND_IMAGE_URL}
+          alt=""
+          aria-hidden="true"
         />
+
 
 
 
