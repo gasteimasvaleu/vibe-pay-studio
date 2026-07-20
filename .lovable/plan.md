@@ -1,25 +1,14 @@
-Trocar o background da landing page desktop (`/`) de volta para vídeo, usando a URL MP4 corrigida fornecida pelo usuário.
+## Contexto
+O logo "monetisexy." está centralizado no header do site (`justify-center`). O usuário selecionou esse elemento no preview e pediu para alinhá-lo à esquerda, inclusive na página `/cadastro`.
 
-## Alterações
+## Diagnóstico
+- `src/components/site/Navbar.tsx` renderiza o logo dentro de um container com `flex items-center justify-center` (linha 29).
+- A página `/cadastro` usa `SiteLayout` com `minimalNav`, que por sua vez renderiza o mesmo `<Navbar />`. Logo, a correção na Navbar se propaga para `/cadastro`.
+- Não há outro texto "monetisexy." na página `/cadastro` — o HeroCard usa "Monetisexy," (título), não o logo.
 
-1. **Atualizar `src/components/landing/ScrollLanding.tsx`**
-   - Substituir a constante `BACKGROUND_IMAGE_URL` pela nova URL MP4:
-     `https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-02178458091058100000000000000000000ffffc0a8b246874113_1784581253477_ada8c43a.mp4`
-   - Trocar o elemento `<img>` por `<video>` com:
-     - `autoPlay`
-     - `muted` (necessário para autoplay em navegadores)
-     - `playsInline` (necessário para iOS)
-     - **sem** `loop` (conforme solicitação anterior: o vídeo deve rodar uma única vez)
-     - `className="absolute inset-0 h-full w-full object-cover"`
-     - `aria-hidden="true"`
-     - `alt` não se aplica a `<video>`; manter apenas `aria-hidden`
+## Plano de implementação
+1. Em `src/components/site/Navbar.tsx`, alterar a classe do container interno do header de `justify-center` para `justify-start`, mantendo `items-center` e as demais classes intactas.
+2. Verificar visualmente no preview se o logo ficou alinhado à esquerda tanto na home quanto na página `/cadastro`.
 
-## O que não muda
-
-- Todas as animações de scroll (glass cards, LoginCard, HeroCard) permanecem iguais.
-- O efeito glass dos cards CTA permanece.
-- O vídeo continua sem escurecimento/overlay.
-
-## Resultado esperado
-
-A landing page desktop exibe o vídeo MP4 correto como background, reproduzindo automaticamente uma única vez, enquanto os elementos glass e os cards de login/promoção sobem por cima conforme o scroll.
+## Arquivos alterados
+- `src/components/site/Navbar.tsx`
