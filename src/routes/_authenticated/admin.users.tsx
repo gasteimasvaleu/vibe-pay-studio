@@ -207,8 +207,26 @@ function AdminUsers() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs">{u.kyc_status ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                    <td className="px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span>{u.kyc_status ?? "—"}</span>
+                        {(u.kyc_status === "processing" ||
+                          u.kyc_status === "not_started") && (
+                          <button
+                            onClick={() => handleRefreshKyc(u.user_id)}
+                            disabled={kycBusy === u.user_id}
+                            title="Reconsultar Veriff"
+                            className="inline-flex items-center text-primary hover:opacity-80 disabled:opacity-40"
+                          >
+                            <RefreshCw
+                              className={`h-3 w-3 ${
+                                kycBusy === u.user_id ? "animate-spin" : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </td>
                       {new Date(u.created_at).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-3 py-2">
