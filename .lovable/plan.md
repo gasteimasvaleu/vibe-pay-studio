@@ -1,32 +1,29 @@
-## Diagnóstico
+Redesign visual do componente `Footer` para atender ao novo estilo solicitado.
 
-A penalização do Asaas ("recurso temporariamente alterado para a URL informada no cabeçalho Location") indica que o endpoint `https://vibe-pay-studio.lovable.app/api/public/webhooks/asaas` está respondendo com **302/307 + Location** em vez de `200`.
+## O que será feito
 
-Isso acontece porque o projeto agora tem domínio customizado (`monetisexy.com`) e o subdomínio `vibe-pay-studio.lovable.app` redireciona para o domínio principal. Webhooks do Asaas **não seguem redirects** — cada 3xx é contado como falha e após várias falhas o webhook é penalizado/pausado.
+1. **Trocar o background do footer** de `bg-black` para `bg-white` (usando `bg-card` para respeitar o tema claro/escuro, já que no tema claro `--card` é branco).
+2. **Ajustar as cores do texto interno** para garantir legibilidade sobre fundo branco:
+   - Títulos das colunas (`label-caps`) passam de `text-foreground` para um tom escuro sólido (`text-foreground` já é escuro no tema claro, mas vamos garantir contraste).
+   - Links e descrição passam de `text-muted-foreground` para um cinza escuro legível (`text-muted-foreground` no tema claro já é `oklch(0.5...)`, que é legível; manteremos, mas vamos trocar o hover para `text-foreground`).
+   - Logo mantém o gradiente roxo.
+   - Ícones sociais ajustados para cinza escuro com hover no primário.
+3. **Envolver o footer em um card flutuante**:
+   - Adicionar um wrapper interno com `bg-white`, `rounded-3xl`, `border`, `shadow-card` e margens (`mx-4 mb-6` ou `mx-6 mb-8`) para criar o efeito de card flutuante sobre a página.
+   - Manter o `max-w-7xl mx-auto` dentro do card para o conteúdo.
+   - Remover o `border-t` do `<footer>` original, pois o card já terá borda arredondada.
+4. **Ajustar o container da página** (`SiteLayout`) para garantir que o card flutuante tenha espaço visual: adicionar padding inferior no `<main>` ou margem no footer.
+5. **Verificar o tema escuro**: garantir que, no dark mode, o card continue usando `bg-card` (que vira escuro) e as cores de texto continuem legíveis. O efeito flutuante deve se manter.
 
-O handler em `src/routes/api/public/webhooks/asaas.ts` está correto (retorna 200 com token válido). O problema é puramente de URL configurada no painel do Asaas.
+## Arquivos envolvidos
 
-## Correção (no painel do Asaas, não no código)
+- `src/components/site/Footer.tsx` — alterações principais de estilo.
+- `src/components/site/Layout.tsx` — ajuste de espaçamento inferior se necessário.
 
-1. Acessar Asaas → Integrações → Webhooks → "Monetisexy 2".
-2. Trocar a URL de:
-   - `https://vibe-pay-studio.lovable.app/api/public/webhooks/asaas`
+## Critérios de aceitação
 
-   Para uma URL que responde 200 direto, nesta ordem de preferência:
-   - **`https://monetisexy.com/api/public/webhooks/asaas`** (domínio final, mais estável e sem redirect)
-   - Alternativa: `https://project--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app/api/public/webhooks/asaas` (URL estável de produção do Lovable, imune a rename)
-3. Salvar e clicar em **Reativar/Retomar** o webhook (a penalização precisa ser desfeita manualmente após corrigir a URL).
-4. Reenviar os eventos pendentes na fila (o Asaas oferece botão "Reenviar" nos eventos com falha) — o handler é idempotente (dedupe por `event_id` em `asaas_events`), então reenvios são seguros.
-
-## Verificação
-
-- Testar com `curl -I -X POST https://monetisexy.com/api/public/webhooks/asaas` — deve retornar `401 unauthorized` (sem token), **não** `301/302/307`. Isso confirma que a URL responde direto sem redirect.
-- Após reativar, acompanhar a fila do webhook no Asaas — os próximos eventos devem sair com `200 OK`.
-
-## Observação sobre o evento recebido
-
-O payload que você mostrou é `PAYMENT_OVERDUE` do pagamento `pay_jceii8j5115xhoxp` (unlock da publicação `2c3ea175-…`). Após corrigir a URL e reenviar, o handler vai marcar o `publication_unlocks` correspondente como `cancelled` automaticamente (via `TERMINAL_CANCELLED`).
-
-## Não é necessário mudar código
-
-Nenhuma edição em `src/routes/api/public/webhooks/asaas.ts` — o handler já está correto. A ação é 100% de configuração no painel do Asaas.
+- Footer renderiza com fundo branco no tema claro.
+- Todo o texto interno é legível sobre o fundo branco.
+- Footer está visualmente dentro de um card com bordas arredondadas e sombra, criando efeito flutuante.
+- Não há regressão no tema escuro.
+- Build passa sem erros.
