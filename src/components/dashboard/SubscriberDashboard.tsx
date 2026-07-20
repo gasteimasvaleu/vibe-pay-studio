@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   ArrowRight,
   BadgeCheck,
@@ -12,6 +15,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setActiveProfileView } from "@/lib/account.functions";
 import { ActionCard } from "./ActionCard";
 import { DashboardShell } from "./DashboardShell";
 
@@ -20,19 +24,37 @@ export function SubscriberDashboard({
   creatorNextStep,
   creatorOnboardingStarted,
   avatarUrl,
+  linkedCreatorMode = false,
 }: {
   username: string;
   creatorNextStep: string;
   creatorOnboardingStarted: boolean;
   avatarUrl?: string | null;
+  linkedCreatorMode?: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const switchView = useServerFn(setActiveProfileView);
 
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
     window.location.href = "/";
+  };
+
+  const handleBackToCreator = async () => {
+    setSwitching(true);
+    try {
+      await switchView({ data: { view: "creator" } });
+      await queryClient.invalidateQueries();
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
+    } finally {
+      setSwitching(false);
+    }
   };
 
   const creatorTitle = creatorOnboardingStarted
@@ -48,7 +70,17 @@ export function SubscriberDashboard({
       isCreator={false}
       showProfileLink={false}
       avatarUrl={avatarUrl}
+      switchBar={
+        linkedCreatorMode
+          ? {
+              label: "Voltar ao perfil creator",
+              onClick: handleBackToCreator,
+              loading: switching,
+            }
+          : undefined
+      }
     >
+
       <section className="space-y-4">
         <h3 className="text-lg font-bold tracking-tight text-white/90">
           Área do Assinante
