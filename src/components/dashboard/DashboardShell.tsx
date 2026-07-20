@@ -7,6 +7,7 @@ export type SwitchBar = {
   label: string;
   onClick: () => void;
   loading?: boolean;
+  avatarUrl?: string | null;
 };
 
 export function DashboardShell({
