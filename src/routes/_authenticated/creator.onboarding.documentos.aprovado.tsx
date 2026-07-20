@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
+import { Sparkles, Rocket, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding } from "@/lib/onboarding.functions";
