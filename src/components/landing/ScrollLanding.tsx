@@ -110,12 +110,12 @@ export function ScrollLanding() {
 
         {/* Scroll hint */}
         <motion.div
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-xs uppercase tracking-[0.3em] font-semibold flex flex-col items-center gap-2"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-black text-xs uppercase tracking-[0.3em] font-semibold flex flex-col items-center gap-2"
           style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
         >
           <span>Role para descobrir</span>
           <motion.span
-            className="block h-6 w-[2px] bg-white/60"
+            className="block h-6 w-[2px] bg-black/60"
             animate={{ scaleY: [0.3, 1, 0.3], originY: 0 }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           />
