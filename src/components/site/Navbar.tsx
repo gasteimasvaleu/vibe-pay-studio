@@ -76,17 +76,7 @@ export function Navbar({ minimal = false }: { minimal?: boolean }) {
       {open && (
         <div className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border">
           <div className="px-4 py-6 flex flex-col gap-4">
-            {navLinks.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                onClick={() => setOpen(false)}
-                className="text-base font-medium text-muted-foreground hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ))}
-            <div className="flex gap-3 pt-4 border-t border-border">
+          <div className="flex gap-3 pt-4 border-t border-border">
               <Link
                 to="/entrar"
                 onClick={() => setOpen(false)}
