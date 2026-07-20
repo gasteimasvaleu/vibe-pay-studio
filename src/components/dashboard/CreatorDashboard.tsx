@@ -28,6 +28,8 @@ import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
 import { EarningsSummary } from "./EarningsSummary";
 
+type Variant = "creator" | "free_creator" | "linked_free";
+
 export function CreatorDashboard({
   username,
   variant = "creator",
@@ -36,7 +38,7 @@ export function CreatorDashboard({
   freeProfileEnabled = false,
 }: {
   username: string;
-  variant?: "creator" | "free_creator";
+  variant?: Variant;
   avatarUrl?: string | null;
   switchAvatarUrl?: string | null;
   freeProfileEnabled?: boolean;
@@ -47,6 +49,9 @@ export function CreatorDashboard({
   const queryClient = useQueryClient();
   const switchView = useServerFn(setActiveProfileView);
 
+  // Perfil gratuito (vinculado ou puro) não expõe cards de assinatura paga.
+  const isFreeMode = variant === "free_creator" || variant === "linked_free";
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
@@ -54,7 +59,6 @@ export function CreatorDashboard({
   };
 
   const handleSwitchToFree = async () => {
-    if (variant !== "creator") return;
     if (!freeProfileEnabled) {
       navigate({ to: "/criar-perfil-gratuito" });
       return;
@@ -71,23 +75,44 @@ export function CreatorDashboard({
     }
   };
 
+  const handleSwitchToCreator = async () => {
+    setSwitching(true);
+    try {
+      await switchView({ data: { view: "creator" } });
+      await queryClient.invalidateQueries();
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  let switchBar: React.ComponentProps<typeof DashboardShell>["switchBar"];
+  if (variant === "creator") {
+    switchBar = {
+      label: freeProfileEnabled
+        ? "Acessar perfil gratuito"
+        : "Ativar perfil gratuito",
+      onClick: handleSwitchToFree,
+      loading: switching,
+      avatarUrl: freeProfileEnabled ? switchAvatarUrl : null,
+    };
+  } else if (variant === "linked_free") {
+    switchBar = {
+      label: "Voltar ao perfil creator",
+      onClick: handleSwitchToCreator,
+      loading: switching,
+      avatarUrl: switchAvatarUrl,
+    };
+  }
+
   return (
     <DashboardShell
       username={username}
       isCreator
       avatarUrl={avatarUrl}
-      switchBar={
-        variant === "creator"
-          ? {
-              label: freeProfileEnabled
-                ? "Acessar perfil gratuito"
-                : "Ativar perfil gratuito",
-              onClick: handleSwitchToFree,
-              loading: switching,
-              avatarUrl: freeProfileEnabled ? switchAvatarUrl : null,
-            }
-          : undefined
-      }
+      switchBar={switchBar}
     >
 
       <div className="space-y-6">
@@ -100,18 +125,22 @@ export function CreatorDashboard({
             description="Acesse e visualize seu perfil"
             to={`/profile/${username}`}
           />
-          <ActionCard
-            icon={<BadgePercent className="h-5 w-5" />}
-            title="Ofertas"
-            description="Aqui você pode gerir suas Ofertas"
-            to="/promotions"
-          />
-          <ActionCard
-            icon={<UserPlus className="h-5 w-5" />}
-            title="Perfil Gratuito"
-            description="Seu perfil gratuito no ar em um clique."
-            to="/criar-perfil-gratuito"
-          />
+          {!isFreeMode && (
+            <ActionCard
+              icon={<BadgePercent className="h-5 w-5" />}
+              title="Ofertas"
+              description="Aqui você pode gerir suas Ofertas"
+              to="/promotions"
+            />
+          )}
+          {variant === "creator" && (
+            <ActionCard
+              icon={<UserPlus className="h-5 w-5" />}
+              title="Perfil Gratuito"
+              description="Seu perfil gratuito no ar em um clique."
+              to="/criar-perfil-gratuito"
+            />
+          )}
           <ActionCard
             icon={<LineChart className="h-5 w-5" />}
             title="Meu Monetisexy"
@@ -136,12 +165,14 @@ export function CreatorDashboard({
             description="Descubra o que está bombando"
             to="/em-alta"
           />
-          <ActionCard
-            icon={<Users className="h-5 w-5" />}
-            title="Meus assinantes"
-            description="Acompanhe quem mais te apoia"
-            to="/follow"
-          />
+          {!isFreeMode && (
+            <ActionCard
+              icon={<Users className="h-5 w-5" />}
+              title="Meus assinantes"
+              description="Acompanhe quem mais te apoia"
+              to="/follow"
+            />
+          )}
           <ActionCard
             icon={<UserPlus className="h-5 w-5" />}
             title="Assinaturas"

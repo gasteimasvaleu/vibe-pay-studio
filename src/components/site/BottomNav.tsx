@@ -32,11 +32,10 @@ export function BottomNav() {
   });
 
   const accountType = profile?.account_type ?? "subscriber";
-  const inFreeMode =
-    accountType === "creator" &&
-    profile?.free_profile_enabled === true &&
-    profile?.active_view === "free";
-  const isSubscriber = accountType === "subscriber" || inFreeMode;
+  // Todo tipo de creator (pago, gratuito puro, ou pago em modo free) tem o
+  // layout com "Postar". Só `subscriber` puro vê o layout de assinante.
+  const isSubscriber = accountType === "subscriber";
+
 
   return (
     <nav

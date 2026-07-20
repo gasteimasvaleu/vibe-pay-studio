@@ -114,17 +114,16 @@ function DashboardPage() {
     inFreeMode,
   } = Route.useRouteContext();
 
-  // Creator pago no modo gratuito → renderiza a UI de assinante com botão
-  // "Voltar ao perfil creator".
+  // Creator pago no modo gratuito → renderiza o dashboard de criador com a
+  // switch bar "Voltar ao perfil creator" e sem os cards de assinatura paga.
   if (accountType === "creator" && inFreeMode) {
     return (
-      <SubscriberDashboard
+      <CreatorDashboard
         username={username}
         avatarUrl={avatarUrl}
         switchAvatarUrl={creatorAvatarUrl}
-        creatorNextStep={creatorNextStep}
-        creatorOnboardingStarted={creatorOnboardingStarted}
-        linkedCreatorMode
+        variant="linked_free"
+        freeProfileEnabled={freeProfileEnabled}
       />
     );
   }
@@ -140,6 +139,7 @@ function DashboardPage() {
       />
     );
   }
+
 
   return (
     <SubscriberDashboard
