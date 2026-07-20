@@ -1,16 +1,11 @@
-## Objetivo
-O botão de perfil na `TopNav` (canto superior direito) hoje mostra apenas a inicial "M" sobre um gradiente. Deve exibir a foto do perfil do usuário logado (respeitando o perfil ativo: creator ou gratuito).
+## Decisão confirmada: monetização no perfil gratuito
 
-## Mudanças
-Arquivo: `src/components/site/TopNav.tsx`
+**Comportamento desejado:** perfis gratuitos de creator podem publicar conteúdo pago (posts avulsos/PPV e desafios), sem bloqueio de monetização.
 
-1. Além do `supabase.auth.getUser()`, buscar de `public.profiles` as colunas `avatar_url`, `free_avatar_url` e `active_view` para o `user_id` atual.
-2. Resolver o avatar a exibir:
-   - Se `active_view === 'free'` → usar `free_avatar_url ?? avatar_url`.
-   - Senão → `avatar_url`.
-3. Renderizar no `<Link to="/dashboard">`:
-   - Se houver URL: `<img>` circular (`h-9 w-9 rounded-full object-cover ring-1 ring-border`) com `alt="Meu painel"`.
-   - Fallback (sem avatar): manter o círculo com gradiente e a inicial atual.
-4. Manter o mesmo tamanho/estilo do botão para não deslocar o layout.
+**Estado atual do sistema:**
+- O publisher (`/publisher`) exibe o toggle "Publicação paga" e "Desafio" para qualquer creator, independentemente do perfil ativo ser pago ou gratuito.
+- A função `createPublication` não restringe `visibility = paid/challenge` por tipo de perfil.
+- O banco possui o trigger `publications_fill_profile()`, que preenche `publications.creator_profile_id` com o perfil ativo do autor no momento da publicação. Ou seja, se o autor está no modo gratuito, o post pago fica vinculado ao perfil gratuito.
+- O trigger `publication_unlocks_sync_transaction()` usa o `creator_profile_id` da publicação para gerar a `transaction` de desbloqueio, então a receva do PPV é atribuída ao perfil gratuito correto.
 
-Sem alterações em backend, rotas ou outras UIs.
+**Ação:** nenhuma alteração de código necessária. O requisito já está atendido.
