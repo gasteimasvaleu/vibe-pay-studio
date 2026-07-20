@@ -45,6 +45,7 @@ type ProfileData = {
   mediasCount: number;
   accountType: AccountType;
   isFreeView: boolean;
+  creatorProfileId: string | null;
 };
 
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
@@ -60,15 +61,28 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
 
   const isFreeView = (profile as any).free_username === username && profile.username !== username;
 
+  // Resolve creator_profile_id (paid vs free) para escopo do feed
+  const { data: cp } = await supabase
+    .from("creator_profiles")
+    .select("id, kind")
+    .eq("user_id", profile.user_id);
+  const creatorProfileId =
+    (cp ?? []).find((r: any) => r.kind === (isFreeView ? "free" : "paid"))?.id ?? null;
+
+  const pubsQuery = supabase
+    .from("publications")
+    .select("id", { count: "exact", head: true })
+    .eq("author_id", profile.user_id);
+  const mediasQuery = supabase
+    .from("publication_media")
+    .select("id, publications!inner(author_id, creator_profile_id)", { count: "exact", head: true })
+    .eq("publications.author_id", profile.user_id);
+
   const [{ count: postsCount }, { count: mediasCount }] = await Promise.all([
-    supabase
-      .from("publications")
-      .select("id", { count: "exact", head: true })
-      .eq("author_id", profile.user_id),
-    supabase
-      .from("publication_media")
-      .select("id, publications!inner(author_id)", { count: "exact", head: true })
-      .eq("publications.author_id", profile.user_id),
+    creatorProfileId ? pubsQuery.eq("creator_profile_id", creatorProfileId) : pubsQuery,
+    creatorProfileId
+      ? mediasQuery.eq("publications.creator_profile_id", creatorProfileId)
+      : mediasQuery,
   ]);
 
   return {
@@ -80,12 +94,13 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
     bio: profile.bio ?? "",
     avatarUrl: isFreeView ? ((profile as any).free_avatar_url ?? null) : profile.avatar_url,
     coverUrl: profile.cover_url,
-    postsCount: isFreeView ? 0 : (postsCount ?? 0),
-    mediasCount: isFreeView ? 0 : (mediasCount ?? 0),
+    postsCount: postsCount ?? 0,
+    mediasCount: mediasCount ?? 0,
     accountType: (isFreeView
       ? "free_creator"
       : ((profile as any).account_type ?? "subscriber")) as AccountType,
     isFreeView,
+    creatorProfileId,
   };
 }
 
