@@ -34,9 +34,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       accountType === "creator" && freeProfileEnabled && activeView === "free";
     // No modo free vinculado a um creator, priorizamos o avatar do perfil creator
     // para reforçar a relação entre as duas visões.
+    const creatorAvatarUrl = profile?.avatar_url ?? null;
+    const freeAvatarUrl = profile?.free_avatar_url ?? profile?.avatar_url ?? null;
     const avatarUrl = inFreeMode
-      ? profile?.avatar_url ?? profile?.free_avatar_url ?? null
-      : profile?.avatar_url ?? null;
+      ? creatorAvatarUrl ?? freeAvatarUrl
+      : creatorAvatarUrl;
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
     // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
