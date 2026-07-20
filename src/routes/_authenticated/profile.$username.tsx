@@ -135,12 +135,17 @@ function ProfilePage() {
   const fetchUserPubs = useServerFn(getUserPublications);
   const fetchMedias = useServerFn(getUserMediasGrid);
 
-  const postsQueryKey = ["user-feed", profile.userId] as const;
+  const postsQueryKey = ["user-feed", profile.userId, profile.creatorProfileId] as const;
   const postsQuery = useInfiniteQuery({
     queryKey: postsQueryKey,
     queryFn: ({ pageParam }) =>
       fetchUserPubs({
-        data: { userId: profile.userId, limit: 10, cursor: pageParam ?? undefined },
+        data: {
+          userId: profile.userId,
+          limit: 10,
+          cursor: pageParam ?? undefined,
+          creatorProfileId: profile.creatorProfileId ?? undefined,
+        },
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -148,7 +153,7 @@ function ProfilePage() {
   });
 
   const mediasQuery = useInfiniteQuery({
-    queryKey: ["user-medias-grid", profile.userId, mediaFilter],
+    queryKey: ["user-medias-grid", profile.userId, profile.creatorProfileId, mediaFilter],
     queryFn: ({ pageParam }) =>
       fetchMedias({
         data: {
@@ -156,6 +161,7 @@ function ProfilePage() {
           limit: 24,
           cursor: pageParam ?? undefined,
           filter: mediaFilter,
+          creatorProfileId: profile.creatorProfileId ?? undefined,
         },
       }),
     initialPageParam: undefined as string | undefined,
