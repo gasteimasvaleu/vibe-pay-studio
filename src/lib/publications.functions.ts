@@ -374,6 +374,7 @@ const getUserPublicationsSchema = z.object({
   userId: z.string().uuid(),
   limit: z.number().int().min(1).max(50).optional(),
   cursor: z.string().datetime().optional(),
+  creatorProfileId: z.string().uuid().optional(),
 });
 
 export const getUserPublications = createServerFn({ method: "POST" })
