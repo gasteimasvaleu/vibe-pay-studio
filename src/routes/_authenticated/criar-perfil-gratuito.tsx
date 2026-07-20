@@ -74,7 +74,7 @@ function CriarPerfilGratuitoPage() {
       if (!userData.user) return;
       const { data: p } = await supabase
         .from("profiles")
-        .select("account_type")
+        .select("account_type, free_username")
         .eq("user_id", userData.user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -84,6 +84,7 @@ function CriarPerfilGratuitoPage() {
           | "creator"
           | "free_creator",
       );
+      if (p?.free_username) setHandle(p.free_username);
     })();
     return () => {
       cancelled = true;
