@@ -58,9 +58,6 @@ function AprovadoPage() {
           <CheckCircle2 className="w-10 h-10 text-emerald-600" strokeWidth={2.2} />
         </div>
 
-        <h2 className="mt-6 text-2xl md:text-3xl font-black tracking-tight leading-tight text-neutral-900">
-          Identidade aprovada!
-        </h2>
         <p className="mt-3 text-neutral-700 leading-relaxed max-w-lg mx-auto">
           Tudo certo por aqui. Sua conta está oficialmente pronta para monetizar
           — pagamentos, publicações e assinantes já podem ser gerenciados no seu
