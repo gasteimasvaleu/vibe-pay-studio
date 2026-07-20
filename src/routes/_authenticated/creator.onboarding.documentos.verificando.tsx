@@ -49,39 +49,67 @@ function VerificandoPage() {
   const finish = useServerFn(completeOnboarding);
   const [status, setStatus] = useState<KycStatus>("processing");
   const [completed, setCompleted] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [checkingNow, setCheckingNow] = useState(false);
+  const startedAt = useState(() => Date.now())[0];
+
+  const runCheck = async () => {
+    try {
+      const r = await fetchStatus();
+      setStatus(r.status);
+      if (r.status === "verified" && !completed) {
+        setCompleted(true);
+        try {
+          await finish();
+        } catch {
+          // ignore
+        }
+        navigate({ to: "/creator/onboarding/documentos/aprovado" });
+        return true;
+      }
+    } catch (err) {
+      console.warn("[verificando] check failed", err);
+    }
+    return false;
+  };
 
   useEffect(() => {
     let mounted = true;
     let timer: ReturnType<typeof setTimeout>;
 
-    const poll = async () => {
-      try {
-        const r = await fetchStatus();
-        if (!mounted) return;
-        setStatus(r.status);
-        if (r.status === "verified" && !completed) {
-          setCompleted(true);
-          try {
-            await finish();
-          } catch {
-            // ignore — usuário ainda vê a tela de aprovado
-          }
-          navigate({ to: "/creator/onboarding/documentos/aprovado" });
-          return;
-        }
-        if (r.status === "processing") {
-          timer = setTimeout(poll, 8000);
-        }
-      } catch {
-        timer = setTimeout(poll, 12000);
-      }
+    const tick = async () => {
+      if (!mounted) return;
+      const done = await runCheck();
+      if (!mounted || done) return;
+      // Adaptive: 3s no primeiro minuto, 8s depois
+      const age = Date.now() - startedAt;
+      const delay = age < 60_000 ? 3000 : 8000;
+      timer = setTimeout(tick, delay);
     };
-    void poll();
+    void tick();
+
+    const elapsedTimer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
     return () => {
       mounted = false;
       if (timer) clearTimeout(timer);
+      clearInterval(elapsedTimer);
     };
-  }, [fetchStatus, finish, completed, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCheckNow = async () => {
+    setCheckingNow(true);
+    try {
+      await runCheck();
+    } finally {
+      setCheckingNow(false);
+    }
+  };
+
+  const showSlowNotice = elapsed >= 90 && status !== "verified";
 
   const banner = (() => {
     if (status === "verified") {
@@ -120,7 +148,36 @@ function VerificandoPage() {
               Isso pode demorar alguns minutos. Você será redirecionado
               automaticamente assim que for concluído.
             </p>
+
+            {showSlowNotice && (
+              <div className="mt-8 max-w-md rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-800">
+                <p className="font-semibold">Está demorando mais que o esperado.</p>
+                <p className="mt-1 text-amber-700">
+                  Se você já concluiu o processo na Veriff, clique em
+                  "Verificar agora". Caso contrário, você pode voltar ao painel
+                  — vamos te avisar assim que for aprovado.
+                </p>
+                <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCheckNow}
+                    disabled={checkingNow}
+                    className="flex-1 px-4 py-2 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white text-sm font-semibold shadow-glow hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {checkingNow ? "Verificando..." : "Verificar agora"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/dashboard" })}
+                    className="flex-1 px-4 py-2 rounded-md border border-amber-300 bg-white text-sm font-medium text-amber-800 hover:bg-amber-100 transition"
+                  >
+                    Voltar ao painel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+
         ) : (
           <>
             <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight text-neutral-900">
