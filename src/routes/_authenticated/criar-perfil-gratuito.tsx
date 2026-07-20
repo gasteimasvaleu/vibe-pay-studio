@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/criar-perfil-gratuito")({
 });
 
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
-const COVER_OPTIONS = [coverA, coverB, coverC];
+const COVER_OPTIONS = [coverB, coverC];
 const HERO_IMAGES = [heroA, heroB, heroC, heroD];
 
 type UploadKind = "avatar" | "cover";
@@ -260,6 +260,35 @@ function CriarPerfilGratuitoPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold">Escolha uma foto de capa e sua biografia</h3>
               <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploading === "cover"}
+                  className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 bg-muted ${
+                    selectedCover && !COVER_OPTIONS.includes(selectedCover)
+                      ? "border-primary"
+                      : "border-transparent"
+                  }`}
+                  aria-label="Enviar sua foto de capa"
+                >
+                  {selectedCover && !COVER_OPTIONS.includes(selectedCover) && (
+                    <img
+                      src={selectedCover}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                  <span className="absolute inset-0 grid place-items-center">
+                    <span className="h-10 w-10 rounded-full bg-card grid place-items-center shadow-card">
+                      <Camera className="h-4 w-4 text-foreground" />
+                    </span>
+                  </span>
+                  {uploading === "cover" && (
+                    <span className="absolute inset-0 bg-black/40 grid place-items-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    </span>
+                  )}
+                </button>
                 {COVER_OPTIONS.map((url) => {
                   const active = selectedCover === url;
                   return (
@@ -281,15 +310,6 @@ function CriarPerfilGratuitoPage() {
                   );
                 })}
               </div>
-              <button
-                type="button"
-                onClick={() => coverInputRef.current?.click()}
-                disabled={uploading === "cover"}
-                className="text-xs font-semibold text-primary hover:underline disabled:opacity-50 inline-flex items-center gap-2"
-              >
-                {uploading === "cover" && <Loader2 className="h-3 w-3 animate-spin" />}
-                {uploading === "cover" ? "Enviando..." : "+ Enviar sua foto"}
-              </button>
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={onCoverPick} />
             </div>
 
