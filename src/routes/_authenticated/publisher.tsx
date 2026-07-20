@@ -198,7 +198,59 @@ function uploadWithProgress({
   });
 }
 
+function ActiveProfileBadge() {
+  const { data } = useQuery({
+    queryKey: ["publisher-active-profile"],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return null;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("active_view, free_profile_enabled, account_type, username, free_username, display_name, free_display_name, avatar_url, free_avatar_url")
+        .eq("user_id", uid)
+        .maybeSingle();
+      return prof;
+    },
+    staleTime: 30_000,
+  });
+
+  if (!data) return null;
+  const canSwitch =
+    data.account_type === "free_creator" ||
+    (data.account_type === "creator" && data.free_profile_enabled === true);
+  if (!canSwitch) return null;
+
+  const isFree = data.active_view === "free";
+  const label = isFree
+    ? `@${data.free_username ?? "perfil-gratuito"}`
+    : `@${data.username ?? "perfil"}`;
+  const name = isFree
+    ? data.free_display_name ?? "Perfil gratuito"
+    : data.display_name ?? "Perfil pago";
+  const avatar = isFree ? data.free_avatar_url : data.avatar_url;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 pb-2">
+      <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${isFree ? "bg-muted border-border" : "bg-primary/10 border-primary/30"}`}>
+        {avatar ? (
+          <img src={avatar} alt="" className="h-5 w-5 rounded-full object-cover" />
+        ) : (
+          <div className="h-5 w-5 rounded-full bg-muted-foreground/20" />
+        )}
+        <span className="text-muted-foreground">Publicando em</span>
+        <span className="font-medium text-foreground">{name}</span>
+        <span className="text-muted-foreground">· {label}</span>
+        <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${isFree ? "bg-muted-foreground/15 text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+          {isFree ? "GRATUITO" : "PAGO"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function PublisherPage() {
+
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [pickerOpen, setPickerOpen] = useState(false);
