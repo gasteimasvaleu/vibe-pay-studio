@@ -46,14 +46,15 @@ export function ScrollLanding() {
   const glassY = useTransform(scrollYProgress, [0.1, 0.3], [60, 0]);
   const glassScale = useTransform(scrollYProgress, [0.1, 0.3, 0.9, 1], [0.9, 1, 1, 0.96]);
 
-  const loginOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1]);
-  const loginX = useTransform(scrollYProgress, [0.4, 0.6], [-80, 0]);
+  const loginOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
+  const loginX = useTransform(scrollYProgress, [0.45, 0.7], [-80, 0]);
 
-  const heroOpacity = useTransform(scrollYProgress, [0.65, 0.85], [0, 1]);
-  const heroX = useTransform(scrollYProgress, [0.65, 0.85], [80, 0]);
+  const heroOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
+  const heroX = useTransform(scrollYProgress, [0.45, 0.7], [80, 0]);
 
-  // Once login+hero are visible, fade the glass cards down so they don't fight the foreground
-  const glassFade = useTransform(scrollYProgress, [0.55, 0.75], [1, 0.25]);
+  // Fade the glass cards once the foreground is visible
+  const glassFade = useTransform(scrollYProgress, [0.5, 0.7], [1, 0.2]);
+
 
   return (
     <section ref={sectionRef} className="relative -mt-16" style={{ height: "420vh" }}>
@@ -78,7 +79,7 @@ export function ScrollLanding() {
           style={{ opacity: glassOpacity }}
         >
           <motion.div
-            className="grid grid-cols-3 gap-6 max-w-6xl w-full"
+            className="grid grid-cols-3 gap-6 max-w-6xl w-full items-stretch"
             style={{ y: glassY, scale: glassScale, opacity: glassFade }}
           >
             {PROMO_CARDS.map((c) => (
@@ -87,12 +88,13 @@ export function ScrollLanding() {
           </motion.div>
         </motion.div>
 
+
         {/* Foreground: LoginCard + HeroCard */}
         <div className="absolute inset-0 flex items-center justify-center pt-16 pointer-events-none">
-          <div className="grid grid-cols-2 gap-12 max-w-7xl w-full px-8">
+          <div className="grid grid-cols-2 gap-12 max-w-7xl w-full px-8 items-stretch">
             <motion.div
               style={{ opacity: loginOpacity, x: loginX }}
-              className="pointer-events-auto"
+              className="pointer-events-auto h-full"
             >
               <LoginCard />
             </motion.div>
@@ -104,6 +106,7 @@ export function ScrollLanding() {
             </motion.div>
           </div>
         </div>
+
 
         {/* Scroll hint */}
         <motion.div
