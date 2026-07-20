@@ -4,8 +4,8 @@ import { LoginCard } from "@/components/site/LoginCard";
 import { HeroCard } from "@/components/site/HeroCard";
 import { GlassPromoCard } from "./GlassPromoCard";
 
-const VIDEO_URL =
-  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-02178457259314100000000000000000000ffffc0a870455f887e_1784572784037_c141adff.mp4";
+const BACKGROUND_IMAGE_URL =
+  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-021784545806860aaaf13501739a5ff290af8d9343e27fc9037e4_0_1784545870764_ebce0aa8.png";
 
 const PROMO_CARDS = [
   {
