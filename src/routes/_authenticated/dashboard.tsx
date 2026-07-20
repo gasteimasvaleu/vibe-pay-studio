@@ -81,6 +81,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     return {
       username,
       avatarUrl,
+      creatorAvatarUrl,
+      freeAvatarUrl,
       accountType,
       creatorNextStep,
       creatorOnboardingStarted,
@@ -103,6 +105,8 @@ function DashboardPage() {
   const {
     username,
     avatarUrl,
+    creatorAvatarUrl,
+    freeAvatarUrl,
     accountType,
     creatorNextStep,
     creatorOnboardingStarted,
@@ -117,6 +121,7 @@ function DashboardPage() {
       <SubscriberDashboard
         username={username}
         avatarUrl={avatarUrl}
+        switchAvatarUrl={creatorAvatarUrl}
         creatorNextStep={creatorNextStep}
         creatorOnboardingStarted={creatorOnboardingStarted}
         linkedCreatorMode
@@ -129,6 +134,7 @@ function DashboardPage() {
       <CreatorDashboard
         username={username}
         avatarUrl={avatarUrl}
+        switchAvatarUrl={freeAvatarUrl}
         variant={accountType === "free_creator" ? "free_creator" : "creator"}
         freeProfileEnabled={freeProfileEnabled}
       />
@@ -142,5 +148,6 @@ function DashboardPage() {
       creatorNextStep={creatorNextStep}
       creatorOnboardingStarted={creatorOnboardingStarted}
     />
+
   );
 }
