@@ -122,6 +122,7 @@ export type Database = {
           buyer_id: string
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           id: string
           message_id: string
           provider: string
@@ -135,6 +136,7 @@ export type Database = {
           buyer_id: string
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           id?: string
           message_id: string
           provider?: string
@@ -148,6 +150,7 @@ export type Database = {
           buyer_id?: string
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           id?: string
           message_id?: string
           provider?: string
@@ -157,6 +160,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_message_unlocks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_message_unlocks_message_id_fkey"
             columns: ["message_id"]
@@ -402,6 +412,7 @@ export type Database = {
           chat_replies: number
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           day: string
           live_minutes: number
           publications_count: number
@@ -412,6 +423,7 @@ export type Database = {
           chat_replies?: number
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           day: string
           live_minutes?: number
           publications_count?: number
@@ -422,16 +434,26 @@ export type Database = {
           chat_replies?: number
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           day?: string
           live_minutes?: number
           publications_count?: number
           revenue_cents?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "creator_streak_days_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       creator_wallets: {
         Row: {
+          creator_profile_id: string | null
           pending_international_cents: number
           pending_national_cents: number
           released_cents: number
@@ -439,6 +461,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          creator_profile_id?: string | null
           pending_international_cents?: number
           pending_national_cents?: number
           released_cents?: number
@@ -446,13 +469,22 @@ export type Database = {
           user_id: string
         }
         Update: {
+          creator_profile_id?: string | null
           pending_international_cents?: number
           pending_national_cents?: number
           released_cents?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "creator_wallets_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_preferences: {
         Row: {
@@ -511,25 +543,37 @@ export type Database = {
       follows: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           followee_id: string
           follower_id: string
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           followee_id: string
           follower_id: string
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           followee_id?: string
           follower_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "follows_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       live_comments: {
         Row: {
           content: string
           created_at: string
+          creator_profile_id: string | null
           id: string
           live_id: string
           updated_at: string
@@ -538,6 +582,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           live_id: string
           updated_at?: string
@@ -546,12 +591,20 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           live_id?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "live_comments_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_comments_live_id_fkey"
             columns: ["live_id"]
@@ -564,23 +617,33 @@ export type Database = {
       live_likes: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           id: string
           live_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           live_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           live_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "live_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_likes_live_id_fkey"
             columns: ["live_id"]
@@ -595,6 +658,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           ended_at: string | null
           gross_cents: number
           id: string
@@ -609,6 +673,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           ended_at?: string | null
           gross_cents?: number
           id?: string
@@ -623,6 +688,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           ended_at?: string | null
           gross_cents?: number
           id?: string
@@ -633,7 +699,15 @@ export type Database = {
           updated_at?: string
           viewers_peak?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_intents: {
         Row: {
@@ -967,6 +1041,7 @@ export type Database = {
         Row: {
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           description: string
           discount_pct: number
           duration_days: number
@@ -984,6 +1059,7 @@ export type Database = {
         Insert: {
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           description?: string
           discount_pct: number
           duration_days: number
@@ -1001,6 +1077,7 @@ export type Database = {
         Update: {
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           description?: string
           discount_pct?: number
           duration_days?: number
@@ -1015,25 +1092,43 @@ export type Database = {
           subscriptions_used?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promotions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       publication_bookmarks: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           publication_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           publication_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           publication_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_bookmarks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_bookmarks_publication_id_fkey"
             columns: ["publication_id"]
@@ -1047,6 +1142,7 @@ export type Database = {
         Row: {
           amount_cents: number
           created_at: string
+          creator_profile_id: string | null
           id: string
           position: number
           publication_id: string
@@ -1054,6 +1150,7 @@ export type Database = {
         Insert: {
           amount_cents: number
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_id: string
@@ -1061,11 +1158,19 @@ export type Database = {
         Update: {
           amount_cents?: number
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_challenge_tiers_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_challenge_tiers_publication_id_fkey"
             columns: ["publication_id"]
@@ -1079,16 +1184,19 @@ export type Database = {
         Row: {
           comment_id: string
           created_at: string
+          creator_profile_id: string | null
           user_id: string
         }
         Insert: {
           comment_id: string
           created_at?: string
+          creator_profile_id?: string | null
           user_id: string
         }
         Update: {
           comment_id?: string
           created_at?: string
+          creator_profile_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1099,12 +1207,20 @@ export type Database = {
             referencedRelation: "publication_comments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "publication_comment_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       publication_comments: {
         Row: {
           body: string
           created_at: string
+          creator_profile_id: string | null
           id: string
           parent_id: string | null
           publication_id: string
@@ -1113,6 +1229,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           parent_id?: string | null
           publication_id: string
@@ -1121,12 +1238,20 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           parent_id?: string | null
           publication_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_comments_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_comments_parent_id_fkey"
             columns: ["parent_id"]
@@ -1146,20 +1271,30 @@ export type Database = {
       publication_likes: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           publication_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           publication_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           publication_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_likes_publication_id_fkey"
             columns: ["publication_id"]
@@ -1172,6 +1307,7 @@ export type Database = {
       publication_media: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           id: string
           position: number
           publication_id: string
@@ -1181,6 +1317,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_id: string
@@ -1190,6 +1327,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_id?: string
@@ -1198,6 +1336,13 @@ export type Database = {
           url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_media_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_media_publication_id_fkey"
             columns: ["publication_id"]
@@ -1212,6 +1357,7 @@ export type Database = {
           amount_cents: number
           buyer_id: string
           created_at: string
+          creator_profile_id: string | null
           id: string
           provider: string
           provider_ref: string | null
@@ -1223,6 +1369,7 @@ export type Database = {
           amount_cents: number
           buyer_id: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           provider?: string
           provider_ref?: string | null
@@ -1234,6 +1381,7 @@ export type Database = {
           amount_cents?: number
           buyer_id?: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           provider?: string
           provider_ref?: string | null
@@ -1242,6 +1390,13 @@ export type Database = {
           transaction_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_unlocks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_unlocks_publication_id_fkey"
             columns: ["publication_id"]
@@ -1261,23 +1416,33 @@ export type Database = {
       publication_views: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           id: string
           publication_id: string
           viewer_id: string | null
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           publication_id: string
           viewer_id?: string | null
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           publication_id?: string
           viewer_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "publication_views_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_views_publication_id_fkey"
             columns: ["publication_id"]
@@ -1297,6 +1462,7 @@ export type Database = {
           challenge_cents: number | null
           comments_disabled: boolean
           created_at: string
+          creator_profile_id: string | null
           expires_at: string | null
           id: string
           moderation_note: string | null
@@ -1319,6 +1485,7 @@ export type Database = {
           challenge_cents?: number | null
           comments_disabled?: boolean
           created_at?: string
+          creator_profile_id?: string | null
           expires_at?: string | null
           id?: string
           moderation_note?: string | null
@@ -1341,6 +1508,7 @@ export type Database = {
           challenge_cents?: number | null
           comments_disabled?: boolean
           created_at?: string
+          creator_profile_id?: string | null
           expires_at?: string | null
           id?: string
           moderation_note?: string | null
@@ -1354,7 +1522,15 @@ export type Database = {
           updated_at?: string
           visibility?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "publications_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revoked_sessions: {
         Row: {
@@ -1438,19 +1614,30 @@ export type Database = {
         Row: {
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           subscriber_id: string
         }
         Insert: {
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           subscriber_id: string
         }
         Update: {
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           subscriber_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriber_restrictions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriber_wallets: {
         Row: {
@@ -1476,6 +1663,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           current_period_end: string
           id: string
           plan: Database["public"]["Enums"]["subscription_plan"]
@@ -1493,6 +1681,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           current_period_end: string
           id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -1510,6 +1699,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           current_period_end?: string
           id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -1524,6 +1714,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "subscriptions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subscriptions_promotion_id_fkey"
             columns: ["promotion_id"]
             isOneToOne: false
@@ -1537,6 +1734,7 @@ export type Database = {
           amount_cents: number
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           id: string
           message: string | null
           provider: string
@@ -1550,6 +1748,7 @@ export type Database = {
           amount_cents: number
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           id?: string
           message?: string | null
           provider?: string
@@ -1563,6 +1762,7 @@ export type Database = {
           amount_cents?: number
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           id?: string
           message?: string | null
           provider?: string
@@ -1573,6 +1773,13 @@ export type Database = {
           transaction_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tips_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tips_publication_id_fkey"
             columns: ["publication_id"]
@@ -1598,6 +1805,7 @@ export type Database = {
           country_code: string
           created_at: string
           creator_id: string | null
+          creator_profile_id: string | null
           gateway_fee_cents: number
           id: string
           is_international: boolean
@@ -1623,6 +1831,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           creator_id?: string | null
+          creator_profile_id?: string | null
           gateway_fee_cents?: number
           id?: string
           is_international?: boolean
@@ -1648,6 +1857,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           creator_id?: string | null
+          creator_profile_id?: string | null
           gateway_fee_cents?: number
           id?: string
           is_international?: boolean
@@ -1665,7 +1875,15 @@ export type Database = {
           updated_at?: string
           wallet_released_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1813,6 +2031,7 @@ export type Database = {
         Row: {
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           duration_minutes: number
           ended_at: string | null
           id: string
@@ -1832,6 +2051,7 @@ export type Database = {
         Insert: {
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           duration_minutes?: number
           ended_at?: string | null
           id?: string
@@ -1851,6 +2071,7 @@ export type Database = {
         Update: {
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           duration_minutes?: number
           ended_at?: string | null
           id?: string
@@ -1869,6 +2090,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "video_calls_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_calls_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
@@ -1882,6 +2110,7 @@ export type Database = {
           amount_cents: number
           created_at: string
           creator_id: string
+          creator_profile_id: string | null
           fee_cents: number
           id: string
           is_first_withdrawal: boolean
@@ -1902,6 +2131,7 @@ export type Database = {
           amount_cents: number
           created_at?: string
           creator_id: string
+          creator_profile_id?: string | null
           fee_cents?: number
           id?: string
           is_first_withdrawal?: boolean
@@ -1922,6 +2152,7 @@ export type Database = {
           amount_cents?: number
           created_at?: string
           creator_id?: string
+          creator_profile_id?: string | null
           fee_cents?: number
           id?: string
           is_first_withdrawal?: boolean
@@ -1939,6 +2170,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "withdrawals_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "withdrawals_transaction_id_fkey"
             columns: ["transaction_id"]
