@@ -2259,6 +2259,7 @@ export type Database = {
         Args: { _kind: string; _user_id: string }
         Returns: boolean
       }
+      default_paid_profile: { Args: { _user_id: string }; Returns: string }
       ensure_creator_wallet: { Args: { _user_id: string }; Returns: undefined }
       ensure_subscriber_wallet: {
         Args: { _user_id: string }
@@ -2301,18 +2302,32 @@ export type Database = {
           user_agent: string
         }[]
       }
-      pay_with_wallet: {
-        Args: {
-          _amount_cents?: number
-          _creator_id?: string
-          _kind: string
-          _message?: string
-          _message_id?: string
-          _plan?: string
-          _publication_id?: string
-        }
-        Returns: Json
-      }
+      pay_with_wallet:
+        | {
+            Args: {
+              _amount_cents?: number
+              _creator_id?: string
+              _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount_cents?: number
+              _creator_id?: string
+              _creator_profile_id?: string
+              _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+            }
+            Returns: Json
+          }
       release_matured_earnings: { Args: never; Returns: number }
       revoke_all_other_sessions: { Args: never; Returns: number }
       revoke_session: { Args: { p_session_id: string }; Returns: undefined }
