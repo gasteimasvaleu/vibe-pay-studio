@@ -11,7 +11,6 @@ import heroA from "@/assets/free-profile-hero-1.jpg";
 import heroB from "@/assets/free-profile-hero-2.jpg";
 import heroC from "@/assets/free-profile-hero-3.jpg";
 import heroD from "@/assets/free-profile-hero-4.jpg";
-import coverA from "@/assets/free-profile-cover-1.jpg";
 import coverB from "@/assets/free-profile-cover-2.jpg";
 import coverC from "@/assets/free-profile-cover-3.jpg";
 
