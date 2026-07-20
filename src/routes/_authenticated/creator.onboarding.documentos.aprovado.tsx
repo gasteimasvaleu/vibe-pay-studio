@@ -55,13 +55,7 @@ function AprovadoPage() {
     <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
       <div className="max-w-2xl mx-auto text-center">
 
-        <p className="mt-3 text-neutral-700 leading-relaxed max-w-lg mx-auto">
-          Tudo certo por aqui. Sua conta está oficialmente pronta para monetizar
-          — pagamentos, publicações e assinantes já podem ser gerenciados no seu
-          painel.
-        </p>
-
-        <div className="mt-8 mx-auto max-w-md rounded-3xl overflow-hidden border border-neutral-200 shadow-glow">
+        <div className="mx-auto max-w-md rounded-3xl overflow-hidden border border-neutral-200 shadow-glow">
           <img
             src={heroImg}
             alt=""
@@ -71,6 +65,12 @@ function AprovadoPage() {
             className="w-full h-auto"
           />
         </div>
+
+        <p className="mt-6 text-neutral-700 leading-relaxed max-w-lg mx-auto">
+          Tudo certo por aqui. Sua conta está oficialmente pronta para monetizar
+          — pagamentos, publicações e assinantes já podem ser gerenciados no seu
+          painel.
+        </p>
 
         <div className="mt-10 grid gap-3 sm:grid-cols-3 text-left">
           <NextCard
