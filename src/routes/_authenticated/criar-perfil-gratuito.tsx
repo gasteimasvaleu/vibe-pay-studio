@@ -166,7 +166,7 @@ function CriarPerfilGratuitoPage() {
             : null;
       await createProfile({
         data: {
-          handle: isLinkedMode ? null : handle.trim().toLowerCase(),
+          handle: handle.trim().toLowerCase(),
           displayName: displayName.trim(),
           bio: bio.trim() || null,
           avatarUrl,
