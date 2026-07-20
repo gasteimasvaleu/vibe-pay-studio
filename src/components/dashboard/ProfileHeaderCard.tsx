@@ -39,7 +39,7 @@ export function ProfileHeaderCard({
       </div>
 
       {/* Corpo */}
-      <div className="relative px-5 pb-5">
+      <div className={cn("relative px-5", footer ? "pb-4" : "pb-5")}>
         <div className="flex items-start justify-between -mt-10">
           {avatarUrl ? (
             <img
