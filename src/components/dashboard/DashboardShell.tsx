@@ -66,9 +66,15 @@ export function DashboardShell({
                 disabled={switchBar.loading}
                 className="w-full flex items-center gap-3 px-5 py-3 bg-[hsl(38_60%_94%)] hover:bg-[hsl(38_60%_90%)] transition-colors border-t border-border/60 text-left disabled:opacity-70"
               >
-                <span className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center shrink-0">
+                <span className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center shrink-0 overflow-hidden">
                   {switchBar.loading ? (
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : switchBar.avatarUrl ? (
+                    <img
+                      src={switchBar.avatarUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="text-primary text-sm font-bold">P</span>
                   )}
