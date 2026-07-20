@@ -34,9 +34,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       accountType === "creator" && freeProfileEnabled && activeView === "free";
     // No modo free vinculado a um creator, priorizamos o avatar do perfil creator
     // para reforçar a relação entre as duas visões.
+    const creatorAvatarUrl = profile?.avatar_url ?? null;
+    const freeAvatarUrl = profile?.free_avatar_url ?? profile?.avatar_url ?? null;
     const avatarUrl = inFreeMode
-      ? profile?.avatar_url ?? profile?.free_avatar_url ?? null
-      : profile?.avatar_url ?? null;
+      ? creatorAvatarUrl ?? freeAvatarUrl
+      : creatorAvatarUrl;
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
     // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
@@ -79,6 +81,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     return {
       username,
       avatarUrl,
+      creatorAvatarUrl,
+      freeAvatarUrl,
       accountType,
       creatorNextStep,
       creatorOnboardingStarted,
@@ -101,6 +105,8 @@ function DashboardPage() {
   const {
     username,
     avatarUrl,
+    creatorAvatarUrl,
+    freeAvatarUrl,
     accountType,
     creatorNextStep,
     creatorOnboardingStarted,
@@ -115,6 +121,7 @@ function DashboardPage() {
       <SubscriberDashboard
         username={username}
         avatarUrl={avatarUrl}
+        switchAvatarUrl={creatorAvatarUrl}
         creatorNextStep={creatorNextStep}
         creatorOnboardingStarted={creatorOnboardingStarted}
         linkedCreatorMode
@@ -127,6 +134,7 @@ function DashboardPage() {
       <CreatorDashboard
         username={username}
         avatarUrl={avatarUrl}
+        switchAvatarUrl={freeAvatarUrl}
         variant={accountType === "free_creator" ? "free_creator" : "creator"}
         freeProfileEnabled={freeProfileEnabled}
       />
@@ -140,5 +148,6 @@ function DashboardPage() {
       creatorNextStep={creatorNextStep}
       creatorOnboardingStarted={creatorOnboardingStarted}
     />
+
   );
 }

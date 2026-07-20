@@ -32,11 +32,13 @@ export function CreatorDashboard({
   username,
   variant = "creator",
   avatarUrl,
+  switchAvatarUrl,
   freeProfileEnabled = false,
 }: {
   username: string;
   variant?: "creator" | "free_creator";
   avatarUrl?: string | null;
+  switchAvatarUrl?: string | null;
   freeProfileEnabled?: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
@@ -82,6 +84,7 @@ export function CreatorDashboard({
                 : "Ativar perfil gratuito",
               onClick: handleSwitchToFree,
               loading: switching,
+              avatarUrl: freeProfileEnabled ? switchAvatarUrl : null,
             }
           : undefined
       }

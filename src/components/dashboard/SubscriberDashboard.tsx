@@ -24,12 +24,14 @@ export function SubscriberDashboard({
   creatorNextStep,
   creatorOnboardingStarted,
   avatarUrl,
+  switchAvatarUrl,
   linkedCreatorMode = false,
 }: {
   username: string;
   creatorNextStep: string;
   creatorOnboardingStarted: boolean;
   avatarUrl?: string | null;
+  switchAvatarUrl?: string | null;
   linkedCreatorMode?: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
@@ -76,6 +78,7 @@ export function SubscriberDashboard({
               label: "Voltar ao perfil creator",
               onClick: handleBackToCreator,
               loading: switching,
+              avatarUrl: switchAvatarUrl,
             }
           : undefined
       }
