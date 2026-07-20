@@ -200,7 +200,11 @@ function CriarPerfilGratuitoPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-semibold text-foreground truncate">
-          {step === 1 ? "Crie seu perfil gratuito" : "Personalizando perfil"}
+          {step === 1
+            ? isLinkedMode
+              ? "Ativar perfil gratuito"
+              : "Crie seu perfil gratuito"
+            : "Personalizando perfil"}
         </h1>
       </header>
 
