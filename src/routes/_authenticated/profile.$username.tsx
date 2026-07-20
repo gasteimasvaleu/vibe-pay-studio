@@ -44,16 +44,21 @@ type ProfileData = {
   postsCount: number;
   mediasCount: number;
   accountType: AccountType;
+  isFreeView: boolean;
 };
 
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("user_id, username, display_name, bio, avatar_url, cover_url, account_type")
-    .eq("username", username)
+    .select(
+      "user_id, username, display_name, bio, avatar_url, cover_url, account_type, free_username, free_display_name, free_avatar_url",
+    )
+    .or(`username.eq.${username},free_username.eq.${username}`)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!profile) throw notFound();
+
+  const isFreeView = (profile as any).free_username === username && profile.username !== username;
 
   const [{ count: postsCount }, { count: mediasCount }] = await Promise.all([
     supabase
@@ -68,14 +73,19 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
 
   return {
     userId: profile.user_id,
-    username: profile.username,
-    displayName: profile.display_name ?? profile.username,
+    username,
+    displayName: isFreeView
+      ? ((profile as any).free_display_name ?? username)
+      : (profile.display_name ?? profile.username),
     bio: profile.bio ?? "",
-    avatarUrl: profile.avatar_url,
+    avatarUrl: isFreeView ? ((profile as any).free_avatar_url ?? null) : profile.avatar_url,
     coverUrl: profile.cover_url,
-    postsCount: postsCount ?? 0,
-    mediasCount: mediasCount ?? 0,
-    accountType: ((profile as any).account_type ?? "subscriber") as AccountType,
+    postsCount: isFreeView ? 0 : (postsCount ?? 0),
+    mediasCount: isFreeView ? 0 : (mediasCount ?? 0),
+    accountType: (isFreeView
+      ? "free_creator"
+      : ((profile as any).account_type ?? "subscriber")) as AccountType,
+    isFreeView,
   };
 }
 

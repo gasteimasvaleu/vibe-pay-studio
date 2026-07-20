@@ -74,7 +74,7 @@ function CriarPerfilGratuitoPage() {
       if (!userData.user) return;
       const { data: p } = await supabase
         .from("profiles")
-        .select("account_type")
+        .select("account_type, free_username")
         .eq("user_id", userData.user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -84,6 +84,7 @@ function CriarPerfilGratuitoPage() {
           | "creator"
           | "free_creator",
       );
+      if (p?.free_username) setHandle(p.free_username);
     })();
     return () => {
       cancelled = true;
@@ -105,7 +106,7 @@ function CriarPerfilGratuitoPage() {
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
   const canSubmit =
     displayName.trim().length > 0 &&
-    (isLinkedMode || handleValid) &&
+    handleValid &&
     !submitting &&
     uploading === null;
 
@@ -165,7 +166,7 @@ function CriarPerfilGratuitoPage() {
             : null;
       await createProfile({
         data: {
-          handle: isLinkedMode ? null : handle.trim().toLowerCase(),
+          handle: handle.trim().toLowerCase(),
           displayName: displayName.trim(),
           bio: bio.trim() || null,
           avatarUrl,
@@ -274,30 +275,28 @@ function CriarPerfilGratuitoPage() {
                 placeholder="Nome de perfil"
                 className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
               />
-              {!isLinkedMode && (
-                <div className="relative">
-                  <div className="flex items-center rounded-md bg-muted/60 h-12 pl-5 pr-2 text-sm focus-within:ring-2 focus-within:ring-ring">
-                    <span className="select-none text-muted-foreground pr-0.5">monetisexy.com/</span>
-                    <input
-                      value={handle}
-                      onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
-                      placeholder="seuusuario"
-                      className="flex-1 bg-transparent border-0 outline-none h-full text-sm text-foreground placeholder:text-muted-foreground"
-                    />
-                  </div>
-                  {handle.length > 0 && !handleValid && (
-                    <p className="text-xs text-destructive mt-1 px-4">
-                      Use 3-30 caracteres: letras minúsculas, números, _ ou .
-                    </p>
-                  )}
+              <div className="relative">
+                <div className="flex items-center rounded-md bg-muted/60 h-12 pl-5 pr-2 text-sm focus-within:ring-2 focus-within:ring-ring">
+                  <span className="select-none text-muted-foreground pr-0.5">monetisexy.com/</span>
+                  <input
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
+                    placeholder="seuusuario"
+                    className="flex-1 bg-transparent border-0 outline-none h-full text-sm text-foreground placeholder:text-muted-foreground"
+                  />
                 </div>
-              )}
-              {isLinkedMode && (
-                <p className="text-xs text-muted-foreground px-1">
-                  Perfil gratuito vinculado à sua conta creator — sem novo @.
-                  Você poderá alternar entre creator e assinante a qualquer momento.
-                </p>
-              )}
+                {handle.length > 0 && !handleValid && (
+                  <p className="text-xs text-destructive mt-1 px-4">
+                    Use 3-30 caracteres: letras minúsculas, números, _ ou .
+                  </p>
+                )}
+                {isLinkedMode && (
+                  <p className="text-xs text-muted-foreground mt-1 px-1">
+                    Este @ será o endereço público do seu perfil gratuito, separado do seu @ de creator.
+                  </p>
+                )}
+              </div>
+
 
             </div>
 

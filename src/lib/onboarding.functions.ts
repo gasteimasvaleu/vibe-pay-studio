@@ -304,18 +304,31 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
 
     // Creator pago: ativa o "modo perfil gratuito" vinculado à mesma conta.
     // Não altera username, account_type nem o perfil creator original.
+    // Exige handle separado (free_username) para a URL pública do perfil gratuito.
     if (current?.account_type === "creator") {
+      if (!data.handle) throw new Error("handle_required");
+
+      const { data: taken, error: takenErr } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .or(`username.eq.${data.handle},free_username.eq.${data.handle}`)
+        .neq("user_id", userId)
+        .maybeSingle();
+      if (takenErr) throw new Error(takenErr.message);
+      if (taken) throw new Error("handle_taken");
+
       const { error: upErr } = await supabase
         .from("profiles")
         .update({
           free_profile_enabled: true,
           active_view: "free",
+          free_username: data.handle,
           free_display_name: data.displayName,
           free_avatar_url: data.avatarUrl ?? null,
         })
         .eq("user_id", userId);
       if (upErr) throw new Error(upErr.message);
-      return { ok: true, username: current.username, mode: "linked" as const };
+      return { ok: true, username: data.handle, mode: "linked" as const };
     }
 
     // Assinante/free_creator: cria/atualiza um perfil gratuito real.
