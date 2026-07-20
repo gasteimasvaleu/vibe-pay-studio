@@ -18,7 +18,12 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { setActiveProfileView } from "@/lib/account.functions";
 import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
 import { EarningsSummary } from "./EarningsSummary";
@@ -27,21 +32,61 @@ export function CreatorDashboard({
   username,
   variant = "creator",
   avatarUrl,
+  freeProfileEnabled = false,
 }: {
   username: string;
   variant?: "creator" | "free_creator";
   avatarUrl?: string | null;
+  freeProfileEnabled?: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const switchView = useServerFn(setActiveProfileView);
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
     window.location.href = "/";
   };
-  void variant; // reservado p/ futuras diferenças entre creator pago e free_creator
+
+  const handleSwitchToFree = async () => {
+    if (variant !== "creator") return;
+    if (!freeProfileEnabled) {
+      navigate({ to: "/criar-perfil-gratuito" });
+      return;
+    }
+    setSwitching(true);
+    try {
+      await switchView({ data: { view: "free" } });
+      await queryClient.invalidateQueries();
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   return (
-    <DashboardShell username={username} isCreator avatarUrl={avatarUrl}>
+    <DashboardShell
+      username={username}
+      isCreator
+      avatarUrl={avatarUrl}
+      switchBar={
+        variant === "creator"
+          ? {
+              label: freeProfileEnabled
+                ? "Acessar perfil gratuito"
+                : "Ativar perfil gratuito",
+              onClick: handleSwitchToFree,
+              loading: switching,
+            }
+          : undefined
+      }
+    >
+
       <div className="space-y-6">
         <EarningsSummary />
 
