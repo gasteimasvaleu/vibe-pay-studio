@@ -82,10 +82,10 @@ function CadastroPage() {
           className="absolute inset-0 opacity-70"
           style={{ background: "var(--gradient-radial)" }}
         />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="order-2 lg:order-1">
-            <div className="w-full max-w-md mx-auto lg:mx-0">
-              <div className="rounded-3xl border border-border bg-surface p-6 md:p-10">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          <div className="order-2 lg:order-1 h-full">
+            <div className="w-full h-full">
+              <div className="rounded-3xl border border-border bg-surface p-6 md:p-10 h-full">
                 <AccountTypeTabs value={accountType} onChange={setAccountType} />
 
                 <h1 className="mt-8 text-2xl md:text-3xl font-black tracking-tight">Crie sua conta</h1>
@@ -159,8 +159,8 @@ function CadastroPage() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2 hidden lg:block">
-            <HeroCard />
+          <div className="order-1 lg:order-2 hidden lg:block h-full">
+            <HeroCard fullHeight />
           </div>
         </div>
       </section>
