@@ -9,9 +9,10 @@ export function Footer() {
           <div className="p-8 md:p-10">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
               <div>
-                <span className="text-2xl font-black tracking-tight text-card-foreground">
-                  monet<span className="text-gradient-primary">isex</span>
-                </span>
+              <span className="text-2xl font-black tracking-tight text-card-foreground">
+                <span className="text-black">moneti</span>
+                <span className="text-gradient-primary">sexy.</span>
+              </span>
                 <p className="mt-4 text-sm text-card-foreground/80 max-w-xs">
                   A maior plataforma de creator economy do Brasil.
                 </p>

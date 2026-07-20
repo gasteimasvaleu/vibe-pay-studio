@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X, Globe } from "lucide-react";
 
-export function Navbar() {
+export function Navbar({ minimal = false }: { minimal?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -19,6 +19,29 @@ export function Navbar() {
     { to: "/blog", label: "Blog" },
   ];
 
+  const logo = (
+    <Link to="/" className="flex items-center gap-2">
+      <span className="text-xl font-black tracking-tight">
+        <span className="text-black">moneti</span>
+        <span className="text-gradient-primary">sexy.</span>
+      </span>
+    </Link>
+  );
+
+  if (minimal) {
+    return (
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? "bg-background/80 backdrop-blur-lg border-b border-border" : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-center">
+          {logo}
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -26,11 +49,7 @@ export function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl font-black tracking-tight">
-            monet<span className="text-gradient-primary">isex</span>
-          </span>
-        </Link>
+        {logo}
 
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((l) => (

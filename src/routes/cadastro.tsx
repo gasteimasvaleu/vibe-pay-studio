@@ -76,7 +76,7 @@ function CadastroPage() {
       : "Publique, se relacione com sua comunidade e comece a faturar.";
 
   return (
-    <SiteLayout>
+    <SiteLayout minimalNav>
       <section className="relative overflow-hidden -mt-16 pt-16">
         <div
           className="absolute inset-0 opacity-70"
