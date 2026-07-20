@@ -106,7 +106,7 @@ function CriarPerfilGratuitoPage() {
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
   const canSubmit =
     displayName.trim().length > 0 &&
-    (isLinkedMode || handleValid) &&
+    handleValid &&
     !submitting &&
     uploading === null;
 
