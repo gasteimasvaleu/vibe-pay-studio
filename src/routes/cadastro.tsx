@@ -149,8 +149,7 @@ function CadastroPage() {
                     <span>
                       Ao se cadastrar na Monetisexy, você atesta que leu e concorda com nossos{" "}
                       <a href="#" className="text-primary hover:underline">Termos</a> e{" "}
-                      <a href="#" className="text-primary hover:underline">Privacidade</a> e confuses_connector_gateway
-                      confirma que tem pelo menos 18 anos de idade.
+                      <a href="#" className="text-primary hover:underline">Privacidade</a> e confirma que tem pelo menos 18 anos de idade.
                     </span>
                   </label>
 
