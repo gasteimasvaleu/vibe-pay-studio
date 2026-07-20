@@ -43,11 +43,24 @@ export const setActiveProfileView = createServerFn({ method: "POST" })
       if (!allowed) throw new Error("free_profile_not_enabled");
     }
 
+    // Resolve o creator_profile correspondente ao modo escolhido
+    const targetKind = data.view === "free" ? "free" : "paid";
+    const { data: cp } = await supabase
+      .from("creator_profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("kind", targetKind)
+      .maybeSingle();
+
     const { error: upErr } = await supabase
       .from("profiles")
-      .update({ active_view: data.view })
+      .update({
+        active_view: data.view,
+        active_profile_id: cp?.id ?? null,
+      })
       .eq("user_id", userId);
     if (upErr) throw new Error(upErr.message);
+
 
     return { ok: true, view: data.view } as const;
   });
