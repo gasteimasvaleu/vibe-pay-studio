@@ -86,22 +86,24 @@ export function SubscriberDashboard({
           Área do Assinante
         </h3>
 
-        <button
-          type="button"
-          onClick={() => navigate({ to: creatorNextStep as never })}
-          className="group w-full text-left rounded-2xl p-5 shadow-card bg-gradient-primary text-primary-foreground transition-all hover:brightness-110 flex items-center gap-4"
-        >
-          <div className="h-12 w-12 rounded-xl bg-white/20 border border-white/30 grid place-items-center shrink-0">
-            <BadgeCheck className="h-6 w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-base md:text-lg font-bold">{creatorTitle}</p>
-            <p className="text-sm text-primary-foreground/80 mt-0.5">
-              {creatorDesc}
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
-        </button>
+        {!linkedCreatorMode && (
+          <button
+            type="button"
+            onClick={() => navigate({ to: creatorNextStep as never })}
+            className="group w-full text-left rounded-2xl p-5 shadow-card bg-gradient-primary text-primary-foreground transition-all hover:brightness-110 flex items-center gap-4"
+          >
+            <div className="h-12 w-12 rounded-xl bg-white/20 border border-white/30 grid place-items-center shrink-0">
+              <BadgeCheck className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base md:text-lg font-bold">{creatorTitle}</p>
+              <p className="text-sm text-primary-foreground/80 mt-0.5">
+                {creatorDesc}
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
+          </button>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ActionCard
