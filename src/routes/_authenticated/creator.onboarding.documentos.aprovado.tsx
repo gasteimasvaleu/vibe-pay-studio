@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
+import { Sparkles, Rocket, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding } from "@/lib/onboarding.functions";
@@ -54,9 +54,6 @@ function AprovadoPage() {
   return (
     <OnboardingShell title="Identidade aprovada" step={3} backTo="/dashboard">
       <div className="max-w-2xl mx-auto text-center">
-        <div className="mx-auto w-20 h-20 rounded-md bg-emerald-100 border border-emerald-300 flex items-center justify-center shadow-glow">
-          <CheckCircle2 className="w-10 h-10 text-emerald-600" strokeWidth={2.2} />
-        </div>
 
         <p className="mt-3 text-neutral-700 leading-relaxed max-w-lg mx-auto">
           Tudo certo por aqui. Sua conta está oficialmente pronta para monetizar
