@@ -82,16 +82,16 @@ function CadastroPage() {
           className="absolute inset-0 opacity-70"
           style={{ background: "var(--gradient-radial)" }}
         />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           <div className="order-2 lg:order-1 h-full">
             <div className="w-full h-full">
-              <div className="rounded-3xl border border-border bg-surface p-6 md:p-10 h-full">
+              <div className="rounded-3xl border border-border bg-surface p-6 md:p-8 h-full">
                 <AccountTypeTabs value={accountType} onChange={setAccountType} />
 
-                <h1 className="mt-8 text-2xl md:text-3xl font-black tracking-tight">Crie sua conta</h1>
+                <h1 className="mt-6 text-2xl md:text-3xl font-black tracking-tight">Crie sua conta</h1>
                 <p className="mt-2 text-sm text-muted-foreground">{copy}</p>
 
-                <form onSubmit={onSubmit} className="mt-8 space-y-4">
+                <form onSubmit={onSubmit} className="mt-6 space-y-4">
                   <Field
                     label="Nome de usuário"
                     type="text"
@@ -149,7 +149,7 @@ function CadastroPage() {
                   )}
                 </form>
 
-                <p className="mt-8 text-center text-sm text-muted-foreground">
+                <p className="mt-6 text-center text-sm text-muted-foreground">
                   Já tem conta?{" "}
                   <Link to="/entrar" className="text-primary hover:underline font-semibold">
                     Entrar
