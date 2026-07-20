@@ -1,19 +1,27 @@
 import type { ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, Loader2 } from "lucide-react";
 import { ProfileHeaderCard } from "./ProfileHeaderCard";
+
+export type SwitchBar = {
+  label: string;
+  onClick: () => void;
+  loading?: boolean;
+};
 
 export function DashboardShell({
   username,
   isCreator,
   showProfileLink,
   avatarUrl,
+  switchBar,
   children,
 }: {
   username: string;
   isCreator: boolean;
   showProfileLink?: boolean;
   avatarUrl?: string | null;
+  switchBar?: SwitchBar;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -21,7 +29,6 @@ export function DashboardShell({
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
       <div className="absolute inset-0 bg-white" />
-
 
       <header className="relative z-10 border-b border-border bg-white">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
@@ -50,6 +57,28 @@ export function DashboardShell({
           isCreator={isCreator}
           showProfileLink={showProfileLink}
           avatarUrl={avatarUrl}
+          footer={
+            switchBar ? (
+              <button
+                type="button"
+                onClick={switchBar.onClick}
+                disabled={switchBar.loading}
+                className="w-full flex items-center gap-3 px-5 py-3 bg-[hsl(38_60%_94%)] hover:bg-[hsl(38_60%_90%)] transition-colors border-t border-border/60 text-left disabled:opacity-70"
+              >
+                <span className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center shrink-0">
+                  {switchBar.loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : (
+                    <span className="text-primary text-sm font-bold">P</span>
+                  )}
+                </span>
+                <span className="flex-1 text-sm font-medium text-foreground">
+                  {switchBar.label}
+                </span>
+                <ArrowLeftRight className="h-4 w-4 text-primary shrink-0" />
+              </button>
+            ) : null
+          }
         />
         {children}
       </main>
