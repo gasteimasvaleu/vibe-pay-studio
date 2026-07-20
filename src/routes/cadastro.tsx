@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
+import { HeroCard } from "@/components/site/HeroCard";
 import { useMemo, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import { sanitizeUsername, USERNAME_MIN, USERNAME_MAX } from "@/lib/utils";
