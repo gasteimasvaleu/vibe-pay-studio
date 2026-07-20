@@ -11,19 +11,36 @@ const LOGO_URL =
 
 export function TopNav() {
   const [initial, setInitial] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
       if (!mounted) return;
-      setSignedIn(!!data.user);
+      const user = data.user;
+      setSignedIn(!!user);
       const name =
-        (data.user?.user_metadata as { username?: string } | null)?.username ??
-        data.user?.email?.split("@")[0] ??
+        (user?.user_metadata as { username?: string } | null)?.username ??
+        user?.email?.split("@")[0] ??
         "";
       setInitial(name.charAt(0).toUpperCase());
-    });
+
+      if (user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("avatar_url, free_avatar_url, active_view")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!mounted) return;
+        const inFree = prof?.active_view === "free";
+        const resolved = inFree
+          ? prof?.free_avatar_url ?? prof?.avatar_url ?? null
+          : prof?.avatar_url ?? null;
+        setAvatarUrl(resolved);
+      }
+    })();
     return () => {
       mounted = false;
     };
@@ -65,12 +82,23 @@ export function TopNav() {
           <Link
             to="/dashboard"
             aria-label="Meu painel"
-            className="h-9 w-9 rounded-full bg-gradient-primary grid place-items-center text-sm font-bold text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-90 transition-opacity"
+            className="h-9 w-9 rounded-full overflow-hidden ring-1 ring-border hover:opacity-90 transition-opacity"
           >
-            {initial}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Meu painel"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="h-full w-full grid place-items-center bg-gradient-primary text-sm font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
+                {initial}
+              </span>
+            )}
           </Link>
         </div>
       </div>
     </header>
   );
 }
+
