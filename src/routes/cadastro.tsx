@@ -159,8 +159,8 @@ function CadastroPage() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2 hidden lg:block">
-            <HeroCard />
+          <div className="order-1 lg:order-2 hidden lg:block h-full">
+            <HeroCard fullHeight />
           </div>
         </div>
       </section>
