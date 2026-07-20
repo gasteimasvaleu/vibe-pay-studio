@@ -66,7 +66,6 @@ export function ScrollLanding() {
           autoPlay
           muted
           playsInline
-          loop
           preload="auto"
         />
 
