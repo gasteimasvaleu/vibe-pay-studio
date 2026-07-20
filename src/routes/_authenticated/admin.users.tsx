@@ -8,8 +8,9 @@ import {
   listAdminUsers,
   unbanUser,
 } from "@/lib/admin-dashboard.functions";
+import { adminRefreshKyc } from "@/lib/onboarding.functions";
 import { Card } from "@/components/ui/card";
-import { Loader2, Ban, ShieldCheck } from "lucide-react";
+import { Loader2, Ban, ShieldCheck, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,26 @@ function AdminUsers() {
   const listFn = useServerFn(listAdminUsers);
   const banFn = useServerFn(banUser);
   const unbanFn = useServerFn(unbanUser);
+  const refreshKycFn = useServerFn(adminRefreshKyc);
   const qc = useQueryClient();
+  const [kycBusy, setKycBusy] = useState<string | null>(null);
+
+  async function handleRefreshKyc(userId: string) {
+    setKycBusy(userId);
+    try {
+      const r = await refreshKycFn({ data: { userId } });
+      if (r.ok) {
+        toast.success(`KYC atualizado: ${r.status}`);
+        qc.invalidateQueries({ queryKey: ["admin-users"] });
+      } else {
+        toast.error(r.message ?? "Falha ao consultar KYC");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha");
+    } finally {
+      setKycBusy(null);
+    }
+  }
 
   const q = useQuery({
     queryKey: ["admin-users", term, role, banned, page],
@@ -187,7 +207,26 @@ function AdminUsers() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs">{u.kyc_status ?? "—"}</td>
+                    <td className="px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span>{u.kyc_status ?? "—"}</span>
+                        {(u.kyc_status === "processing" ||
+                          u.kyc_status === "not_started") && (
+                          <button
+                            onClick={() => handleRefreshKyc(u.user_id)}
+                            disabled={kycBusy === u.user_id}
+                            title="Reconsultar Veriff"
+                            className="inline-flex items-center text-primary hover:opacity-80 disabled:opacity-40"
+                          >
+                            <RefreshCw
+                              className={`h-3 w-3 ${
+                                kycBusy === u.user_id ? "animate-spin" : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {new Date(u.created_at).toLocaleDateString("pt-BR")}
                     </td>
