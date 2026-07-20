@@ -727,6 +727,7 @@ export type Database = {
           free_avatar_url: string | null
           free_display_name: string | null
           free_profile_enabled: boolean
+          free_username: string | null
           full_name: string | null
           id: string
           instagram_handle: string | null
@@ -790,6 +791,7 @@ export type Database = {
           free_avatar_url?: string | null
           free_display_name?: string | null
           free_profile_enabled?: boolean
+          free_username?: string | null
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
@@ -853,6 +855,7 @@ export type Database = {
           free_avatar_url?: string | null
           free_display_name?: string | null
           free_profile_enabled?: boolean
+          free_username?: string | null
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
