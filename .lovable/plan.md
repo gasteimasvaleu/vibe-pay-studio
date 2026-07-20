@@ -1,44 +1,23 @@
 ## Objetivo
-Aplicar o novo branding "monetisexy." (moneti em preto + sexy. no gradiente roxo) na navbar das páginas `/` e `/cadastro`, remover os elementos da navbar na página `/cadastro` mantendo apenas o logo, e atualizar o nome no footer.
+No desktop (`/`), o card promocional (`HeroCard`) precisa ter a mesma altura vertical do card de login ao lado, replicando o mesmo tratamento já aplicado em `/cadastro`.
 
-## Escopo
-1. **Navbar — página `/cadastro`**: modo minimal. Apenas o logo "monetisexy." deve aparecer, centralizado/alinhado. Remover links de navegação, botões de idioma/entrar/criar conta e menu mobile.
-2. **Navbar — página `/`**: manter todos os elementos atuais, apenas trocar o texto do logo para "monetisexy." com as cores solicitadas.
-3. **Footer**: trocar o texto "monetisex" por "monetisexy." com as mesmas cores.
+## Situação atual
+- `/cadastro`: passa `fullHeight` ao `HeroCard` e o grid usa `h-full` — o card promocional se estica igual ao formulário.
+- `/`: `HeroCard` é usado sem `fullHeight`, então ele cai no modo `aspect-square` e fica menor que o `LoginCard`. Além disso, o grid usa `items-center`, o que impede que as colunas cresçam para a mesma altura.
 
-## Implementação
-
-### 1. Componente `src/components/site/Navbar.tsx`
-- Adicionar prop opcional `minimal?: boolean`.
-- Reescrever o logo para renderizar:
-  - `<span className="text-black">moneti</span>`
-  - `<span className="text-gradient-primary">sexy.</span>`
-- Quando `minimal === true`:
-  - Ocultar `<nav>` de links.
-  - Ocultar a área de botões (idioma, Entrar, Criar conta).
-  - Ocultar o botão de menu mobile.
-  - Manter o container com `justify-center` (ou equivalente) para centralizar o logo.
-- Quando `minimal === false` (padrão): manter layout atual, apenas com o novo texto de logo.
-
-### 2. Componente `src/components/site/Layout.tsx`
-- Receber e repassar a prop `minimal` para `<Navbar minimal={minimal} />`.
-- Manter `Footer` inalterado em relação a essa prop.
-
-### 3. Página `src/routes/cadastro.tsx`
-- Alterar `<SiteLayout>` para `<SiteLayout minimal>`.
-
-### 4. Componente `src/components/site/Footer.tsx`
-- Substituir o bloco de logo por:
-  - `<span className="text-2xl font-black tracking-tight text-card-foreground">moneti<span className="text-gradient-primary">sexy.</span></span>`
-- Verificar se a cor preta fica legível sobre o fundo branco do card flutuante; ajustar para `text-black` se necessário, respeitando o tema.
+## Implementação (`src/routes/index.tsx`)
+1. No `<section>` hero:
+   - Remover `items-center` do grid para permitir que as duas colunas ocupem a mesma altura (com `h-full`, grid alinha por padrão em `stretch`).
+2. Coluna esquerda (login):
+   - Envolver `<LoginCard />` em um wrapper `className="animate-fade-in h-full"` e garantir que `LoginCard` renderize com `h-full` (ou envolver com `<div className="h-full">`) para que o card ocupe toda a altura da coluna. Se `LoginCard` já tem largura/altura próprias, apenas o wrapper `h-full` basta — o `HeroCard` do outro lado se ajustará à mesma altura por conta do grid stretch.
+3. Coluna direita (promocional):
+   - Envolver em `<div className="hidden lg:block h-full">` (mantendo apenas no desktop, como em `/cadastro`) e passar `<HeroCard fullHeight />`.
 
 ## Validação
-- Verificar visualmente nas rotas `/` e `/cadastro` que:
-  - O logo exibe "monetisexy." corretamente.
-  - Em `/cadastro` não há links, botões ou menu mobile visíveis.
-  - O footer exibe o novo nome em todas as páginas que o utilizam.
-- Rodar `bunx tsc --noEmit` (ou o typecheck do projeto) para garantir que a prop `minimal` está tipada corretamente.
+- Screenshot de `/` em viewport desktop confirmando que os dois cards têm exatamente a mesma altura.
+- Screenshot em mobile confirmando que o `HeroCard` continua oculto (mantido apenas no desktop) ou, se preferir mantê-lo em mobile como está hoje, manter `aspect-square` no mobile via classes responsivas.
+- `tsgo` passa.
 
-## Observações
-- Não serão alterados arquivos auto-gerados (ex.: `routeTree.gen.ts`) nem rotas nomeadas como `my-monetisex-stats`.
-- Outras ocorrências do texto "monetisex" (ex.: meta tag em `account-status.tsx`) não estão no escopo desta tarefa, a menos que o usuário peça consistência total.
+## Observação
+- Não altero o `HeroCard.tsx` nem `/cadastro` — a prop `fullHeight` já existe e faz exatamente o que precisamos.
+- Confirmar preferência: manter o `HeroCard` visível no mobile (como hoje) ou ocultá-lo igual a `/cadastro`? Por padrão do plano vou **manter visível no mobile** (mantendo o comportamento atual da home), aplicando `fullHeight` só no desktop via wrapper responsivo. Se quiser ocultar no mobile, me avise.
