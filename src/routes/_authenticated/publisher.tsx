@@ -814,7 +814,9 @@ function PublisherPage() {
             {step === 1 ? "Enviando mídia" : "Criando publicação"}
           </h1>
         </div>
+        <ActiveProfileBadge />
       </header>
+
 
       <input
         ref={fileInputRef}
