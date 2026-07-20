@@ -22,7 +22,7 @@ export function HeroCard({
           fullHeight ? "h-full" : "aspect-square"
         )}
       >
-        <div className="pt-10 pb-8 text-center pointer-events-none bg-white">
+        <div className="pt-8 pb-6 text-center pointer-events-none bg-white">
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
             {title}
             <br />
@@ -38,7 +38,7 @@ export function HeroCard({
             className="w-full h-full object-contain"
           />
         </div>
-        <div className="p-8 pt-6 pointer-events-none bg-white">
+        <div className="p-6 pt-4 pointer-events-none bg-white">
           <p className="text-sm text-center text-foreground">{description}</p>
         </div>
       </div>
