@@ -39,7 +39,8 @@ export function ScrollLanding() {
     offset: ["start start", "end end"],
   });
 
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.25], [0.15, 0.55]);
+
+
 
   const glassOpacity = useTransform(scrollYProgress, [0.1, 0.3], [0, 1]);
   const glassY = useTransform(scrollYProgress, [0.1, 0.3], [60, 0]);
