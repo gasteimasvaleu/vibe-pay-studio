@@ -46,18 +46,6 @@ export function Navbar({ minimal = false }: { minimal?: boolean }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {logo}
 
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-
         <div className="hidden md:flex items-center gap-3">
           <button className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wider">
             <Globe className="w-4 h-4" /> PT
