@@ -96,92 +96,104 @@ function CadastroPage() {
 
   return (
     <SiteLayout>
-      <div className="flex items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md">
-          <div className="rounded-3xl border border-border bg-surface p-6 md:p-10">
-            <AccountTypeTabs value={accountType} onChange={setAccountType} />
+      <section className="relative overflow-hidden -mt-16 pt-16">
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{ background: "var(--gradient-radial)" }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="order-2 lg:order-1">
+            <div className="w-full max-w-md mx-auto lg:mx-0">
+              <div className="rounded-3xl border border-border bg-surface p-6 md:p-10">
+                <AccountTypeTabs value={accountType} onChange={setAccountType} />
 
-            <h1 className="mt-8 text-2xl md:text-3xl font-black tracking-tight">Crie sua conta</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{copy}</p>
+                <h1 className="mt-8 text-2xl md:text-3xl font-black tracking-tight">Crie sua conta</h1>
+                <p className="mt-2 text-sm text-muted-foreground">{copy}</p>
 
-            <form onSubmit={onSubmit} className="mt-8 space-y-4">
-              <Field
-                label="Nome de usuário"
-                type="text"
-                placeholder="seunome"
-                value={username}
-                onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
-                minLength={USERNAME_MIN}
-                maxLength={USERNAME_MAX}
-                hint={`${username.length}/${USERNAME_MAX} — letras, números e _`}
-              />
-              <Field
-                label="E-mail"
-                type="email"
-                placeholder="voce@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <Field
-                label="Senha"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+                <form onSubmit={onSubmit} className="mt-8 space-y-4">
+                  <Field
+                    label="Nome de usuário"
+                    type="text"
+                    placeholder="seunome"
+                    value={username}
+                    onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
+                    minLength={USERNAME_MIN}
+                    maxLength={USERNAME_MAX}
+                    hint={`${username.length}/${USERNAME_MAX} — letras, números e _`}
+                  />
+                  <Field
+                    label="E-mail"
+                    type="email"
+                    placeholder="voce@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <Field
+                    label="Senha"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
 
-              <PasswordRules rules={rules} />
+                  <PasswordRules rules={rules} />
 
-              <label className="flex items-start gap-3 text-sm text-muted-foreground pt-2">
-                <input
-                  type="checkbox"
-                  required
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-1 accent-primary"
-                />
-                <span>
-                  Ao se cadastrar na Monetisexy, você atesta que leu e concorda com nossos{" "}
-                  <a href="#" className="text-primary hover:underline">Termos</a> e{" "}
-                  <a href="#" className="text-primary hover:underline">Privacidade</a> e confirma que tem pelo menos 18 anos de idade.
-                </span>
-              </label>
+                  <label className="flex items-start gap-3 text-sm text-muted-foreground pt-2">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={agreed}
+                      onChange={(e) => setAgreed(e.target.checked)}
+                      className="mt-1 accent-primary"
+                    />
+                    <span>
+                      Ao se cadastrar na Monetisexy, você atesta que leu e concorda com nossos{" "}
+                      <a href="#" className="text-primary hover:underline">Termos</a> e{" "}
+                      <a href="#" className="text-primary hover:underline">Privacidade</a> e confuses_connector_gateway
+                      confirma que tem pelo menos 18 anos de idade.
+                    </span>
+                  </label>
 
-              <button
-                type="submit"
-                disabled={loading || !canSubmit}
-                className="w-full py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Criando..." : "Confirmar"}
-              </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !canSubmit}
+                    className="w-full py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Criando..." : "Confirmar"}
+                  </button>
 
-              {errorMsg && (
-                <p role="alert" className="text-sm text-red-500">
-                  {errorMsg}
+                  {errorMsg && (
+                    <p role="alert" className="text-sm text-red-500">
+                      {errorMsg}
+                    </p>
+                  )}
+                </form>
+
+                <Divider />
+
+                <div className="space-y-3">
+                  <SocialButton
+                    label={googleLoading ? "Redirecionando..." : "Continuar com Google"}
+                    disabled={googleLoading}
+                    onClick={handleGoogle}
+                  />
+                </div>
+
+                <p className="mt-8 text-center text-sm text-muted-foreground">
+                  Já tem conta?{" "}
+                  <Link to="/entrar" className="text-primary hover:underline font-semibold">
+                    Entrar
+                  </Link>
                 </p>
-              )}
-
-            </form>
-
-            <Divider />
-
-            <div className="space-y-3">
-              <SocialButton
-                label={googleLoading ? "Redirecionando..." : "Continuar com Google"}
-                disabled={googleLoading}
-                onClick={handleGoogle}
-              />
+              </div>
             </div>
+          </div>
 
-            <p className="mt-8 text-center text-sm text-muted-foreground">
-              Já tem conta?{" "}
-              <Link to="/entrar" className="text-primary hover:underline font-semibold">
-                Entrar
-              </Link>
-            </p>
+          <div className="order-1 lg:order-2 hidden lg:block">
+            <HeroCard />
           </div>
         </div>
-      </div>
+      </section>
     </SiteLayout>
   );
 }
