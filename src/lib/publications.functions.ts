@@ -677,6 +677,8 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
         .order("published_at", { ascending: false })
         .limit(limit);
 
+      if (data.creatorProfileId) pubQuery = pubQuery.eq("creator_profile_id", data.creatorProfileId);
+
       if (filter === "paid") {
         pubQuery = pubQuery.eq("visibility", "paid").gt("price_cents", 0);
       }
