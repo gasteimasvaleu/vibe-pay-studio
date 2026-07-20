@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const { data: profile } = await supabase
       .from("profiles")
       .select(
-        "account_type, username, avatar_url, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at",
+        "account_type, username, avatar_url, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at, free_profile_enabled, active_view, free_display_name, free_avatar_url",
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -27,7 +27,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const accountType = (profile?.account_type ?? "subscriber") as AccountType;
     const username =
       profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    const avatarUrl = profile?.avatar_url ?? null;
+    const freeProfileEnabled = profile?.free_profile_enabled === true;
+    const activeView = (profile?.active_view ?? "creator") as "creator" | "free";
+    // Modo de exibição efetivo: creator pago em modo "free" renderiza a UI de assinante.
+    const inFreeMode =
+      accountType === "creator" && freeProfileEnabled && activeView === "free";
+    const avatarUrl = inFreeMode
+      ? profile?.free_avatar_url ?? profile?.avatar_url ?? null
+      : profile?.avatar_url ?? null;
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
     // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
@@ -73,6 +80,9 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       accountType,
       creatorNextStep,
       creatorOnboardingStarted,
+      freeProfileEnabled,
+      activeView,
+      inFreeMode,
     };
   },
   component: DashboardPage,
@@ -86,8 +96,29 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
-  const { username, avatarUrl, accountType, creatorNextStep, creatorOnboardingStarted } =
-    Route.useRouteContext();
+  const {
+    username,
+    avatarUrl,
+    accountType,
+    creatorNextStep,
+    creatorOnboardingStarted,
+    freeProfileEnabled,
+    inFreeMode,
+  } = Route.useRouteContext();
+
+  // Creator pago no modo gratuito → renderiza a UI de assinante com botão
+  // "Voltar ao perfil creator".
+  if (accountType === "creator" && inFreeMode) {
+    return (
+      <SubscriberDashboard
+        username={username}
+        avatarUrl={avatarUrl}
+        creatorNextStep={creatorNextStep}
+        creatorOnboardingStarted={creatorOnboardingStarted}
+        linkedCreatorMode
+      />
+    );
+  }
 
   if (isCreatorLike(accountType)) {
     return (
@@ -95,6 +126,7 @@ function DashboardPage() {
         username={username}
         avatarUrl={avatarUrl}
         variant={accountType === "free_creator" ? "free_creator" : "creator"}
+        freeProfileEnabled={freeProfileEnabled}
       />
     );
   }

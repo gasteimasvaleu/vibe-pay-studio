@@ -7,25 +7,36 @@ import { supabase } from "@/integrations/supabase/client";
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const { data: accountType } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ["bottom-nav-account-type"],
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return "subscriber" as const;
-      const { data: profile } = await supabase
+      if (!userData.user) {
+        return { account_type: "subscriber", active_view: "creator", free_profile_enabled: false } as const;
+      }
+      const { data } = await supabase
         .from("profiles")
-        .select("account_type")
+        .select("account_type, active_view, free_profile_enabled")
         .eq("user_id", userData.user.id)
         .maybeSingle();
-      return (profile?.account_type ?? "subscriber") as
-        | "subscriber"
-        | "creator"
-        | "free_creator";
+      return {
+        account_type: (data?.account_type ?? "subscriber") as
+          | "subscriber"
+          | "creator"
+          | "free_creator",
+        active_view: (data?.active_view ?? "creator") as "creator" | "free",
+        free_profile_enabled: data?.free_profile_enabled === true,
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const isSubscriber = accountType === "subscriber";
+  const accountType = profile?.account_type ?? "subscriber";
+  const inFreeMode =
+    accountType === "creator" &&
+    profile?.free_profile_enabled === true &&
+    profile?.active_view === "free";
+  const isSubscriber = accountType === "subscriber" || inFreeMode;
 
   return (
     <nav

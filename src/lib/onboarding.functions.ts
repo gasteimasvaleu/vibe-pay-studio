@@ -280,7 +280,9 @@ const freeCreatorSchema = z.object({
     .trim()
     .min(3)
     .max(30)
-    .regex(/^[a-z0-9_.]+$/),
+    .regex(/^[a-z0-9_.]+$/)
+    .optional()
+    .nullable(),
   displayName: z.string().trim().min(1).max(60),
   bio: z.string().trim().max(500).optional().nullable(),
   avatarUrl: z.string().url().max(2048).optional().nullable(),
@@ -293,18 +295,32 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Bloqueia downgrade: creator pago não pode virar free_creator.
     const { data: current, error: readErr } = await supabase
       .from("profiles")
-      .select("account_type")
+      .select("account_type, username")
       .eq("user_id", userId)
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
+
+    // Creator pago: ativa o "modo perfil gratuito" vinculado à mesma conta.
+    // Não altera username, account_type nem o perfil creator original.
     if (current?.account_type === "creator") {
-      throw new Error("already_creator");
+      const { error: upErr } = await supabase
+        .from("profiles")
+        .update({
+          free_profile_enabled: true,
+          active_view: "free",
+          free_display_name: data.displayName,
+          free_avatar_url: data.avatarUrl ?? null,
+        })
+        .eq("user_id", userId);
+      if (upErr) throw new Error(upErr.message);
+      return { ok: true, username: current.username, mode: "linked" as const };
     }
 
-    // Handle único: rejeita se já em uso por outro usuário.
+    // Assinante/free_creator: cria/atualiza um perfil gratuito real.
+    if (!data.handle) throw new Error("handle_required");
+
     const { data: taken, error: takenErr } = await supabase
       .from("profiles")
       .select("user_id")
@@ -328,5 +344,5 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
       .eq("user_id", userId);
     if (upErr) throw new Error(upErr.message);
 
-    return { ok: true, username: data.handle };
+    return { ok: true, username: data.handle, mode: "created" as const };
   });

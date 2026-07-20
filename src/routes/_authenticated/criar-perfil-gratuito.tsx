@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -63,6 +63,34 @@ function CriarPerfilGratuitoPage() {
   const createProfile = useServerFn(createFreeCreatorProfile);
   const [step, setStep] = useState<1 | 2>(1);
   const [submitting, setSubmitting] = useState(false);
+  const [accountType, setAccountType] = useState<
+    "subscriber" | "creator" | "free_creator" | null
+  >(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setAccountType(
+        (p?.account_type ?? "subscriber") as
+          | "subscriber"
+          | "creator"
+          | "free_creator",
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isLinkedMode = accountType === "creator";
 
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
@@ -76,7 +104,10 @@ function CriarPerfilGratuitoPage() {
 
   const handleValid = /^[a-z0-9_.]{3,30}$/.test(handle.trim().toLowerCase());
   const canSubmit =
-    displayName.trim().length > 0 && handleValid && !submitting && uploading === null;
+    displayName.trim().length > 0 &&
+    (isLinkedMode || handleValid) &&
+    !submitting &&
+    uploading === null;
 
   const initials =
     (displayName.trim() || "CA")
@@ -126,8 +157,6 @@ function CriarPerfilGratuitoPage() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // Salva capa apenas se for URL http(s) (asset do projeto ou signed URL do Storage);
-      // blob: previews locais não persistem.
       const coverUrl =
         selectedCover && /^https?:\/\//i.test(selectedCover)
           ? selectedCover
@@ -136,25 +165,28 @@ function CriarPerfilGratuitoPage() {
             : null;
       await createProfile({
         data: {
-          handle: handle.trim().toLowerCase(),
+          handle: isLinkedMode ? null : handle.trim().toLowerCase(),
           displayName: displayName.trim(),
           bio: bio.trim() || null,
           avatarUrl,
           coverUrl,
         },
       });
-      toast.success("Perfil criado!");
+      toast.success(
+        isLinkedMode
+          ? "Perfil gratuito ativado! Você está no modo assinante."
+          : "Perfil criado!",
+      );
       navigate({ to: "/dashboard" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao criar perfil";
       if (msg === "handle_taken") toast.error("Este @ já está em uso.");
-      else if (msg === "already_creator")
-        toast.error("Sua conta já é creator pago.");
       else toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -168,7 +200,11 @@ function CriarPerfilGratuitoPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-semibold text-foreground truncate">
-          {step === 1 ? "Crie seu perfil gratuito" : "Personalizando perfil"}
+          {step === 1
+            ? isLinkedMode
+              ? "Ativar perfil gratuito"
+              : "Crie seu perfil gratuito"
+            : "Personalizando perfil"}
         </h1>
       </header>
 
@@ -238,22 +274,30 @@ function CriarPerfilGratuitoPage() {
                 placeholder="Nome de perfil"
                 className="rounded-md bg-muted/60 border-0 h-12 px-5 text-sm"
               />
-              <div className="relative">
-                <div className="flex items-center rounded-md bg-muted/60 h-12 pl-5 pr-2 text-sm focus-within:ring-2 focus-within:ring-ring">
-                  <span className="select-none text-muted-foreground pr-0.5">monetisexy.com/</span>
-                  <input
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
-                    placeholder="seuusuario"
-                    className="flex-1 bg-transparent border-0 outline-none h-full text-sm text-foreground placeholder:text-muted-foreground"
-                  />
+              {!isLinkedMode && (
+                <div className="relative">
+                  <div className="flex items-center rounded-md bg-muted/60 h-12 pl-5 pr-2 text-sm focus-within:ring-2 focus-within:ring-ring">
+                    <span className="select-none text-muted-foreground pr-0.5">monetisexy.com/</span>
+                    <input
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase())}
+                      placeholder="seuusuario"
+                      className="flex-1 bg-transparent border-0 outline-none h-full text-sm text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+                  {handle.length > 0 && !handleValid && (
+                    <p className="text-xs text-destructive mt-1 px-4">
+                      Use 3-30 caracteres: letras minúsculas, números, _ ou .
+                    </p>
+                  )}
                 </div>
-                {handle.length > 0 && !handleValid && (
-                  <p className="text-xs text-destructive mt-1 px-4">
-                    Use 3-30 caracteres: letras minúsculas, números, _ ou .
-                  </p>
-                )}
-              </div>
+              )}
+              {isLinkedMode && (
+                <p className="text-xs text-muted-foreground px-1">
+                  Perfil gratuito vinculado à sua conta creator — sem novo @.
+                  Você poderá alternar entre creator e assinante a qualquer momento.
+                </p>
+              )}
 
             </div>
 
@@ -342,7 +386,9 @@ function CriarPerfilGratuitoPage() {
               className="w-full rounded-md bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center justify-center gap-2"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {submitting ? "Criando..." : "Criar Conta"}
+              {submitting
+                ? (isLinkedMode ? "Ativando..." : "Criando...")
+                : (isLinkedMode ? "Ativar perfil gratuito" : "Criar Conta")}
             </button>
           )}
         </div>
