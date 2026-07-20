@@ -3,7 +3,7 @@ import { Instagram, Youtube, Twitter } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-background pt-8 pb-6">
+    <footer className="bg-[#AE87EC] pt-8 pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
           <div className="p-8 md:p-10">
