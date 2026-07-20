@@ -227,6 +227,7 @@ function AdminUsers() {
                         )}
                       </div>
                     </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
                       {new Date(u.created_at).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-3 py-2">
