@@ -611,6 +611,7 @@ export const getUserPostsGrid = createServerFn({ method: "POST" })
         .order("published_at", { ascending: false })
         .limit(limit + 1);
 
+      if (data.creatorProfileId) query = query.eq("creator_profile_id", data.creatorProfileId);
       if (data.userId !== context.userId) {
         // já filtrado archived_at, nada extra
       }
