@@ -331,6 +331,72 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          chat_welcome_enabled: boolean
+          chat_welcome_media: Json
+          chat_welcome_message: string | null
+          chat_welcome_price_cents: number
+          chat_welcome_tag: string | null
+          cover_url: string | null
+          created_at: string
+          discount_quarterly: number
+          discount_semiannual: number
+          display_name: string | null
+          id: string
+          kind: string
+          kyc_status: string
+          price_monthly: number | null
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          chat_welcome_enabled?: boolean
+          chat_welcome_media?: Json
+          chat_welcome_message?: string | null
+          chat_welcome_price_cents?: number
+          chat_welcome_tag?: string | null
+          cover_url?: string | null
+          created_at?: string
+          discount_quarterly?: number
+          discount_semiannual?: number
+          display_name?: string | null
+          id?: string
+          kind: string
+          kyc_status?: string
+          price_monthly?: number | null
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          chat_welcome_enabled?: boolean
+          chat_welcome_media?: Json
+          chat_welcome_message?: string | null
+          chat_welcome_price_cents?: number
+          chat_welcome_tag?: string | null
+          cover_url?: string | null
+          created_at?: string
+          discount_quarterly?: number
+          discount_semiannual?: number
+          display_name?: string | null
+          id?: string
+          kind?: string
+          kyc_status?: string
+          price_monthly?: number | null
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       creator_streak_days: {
         Row: {
           chat_replies: number
@@ -694,6 +760,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          active_profile_id: string | null
           active_view: string
           address_cep: string | null
           address_city: string | null
@@ -758,6 +825,7 @@ export type Database = {
         }
         Insert: {
           account_type?: string
+          active_profile_id?: string | null
           active_view?: string
           address_cep?: string | null
           address_city?: string | null
@@ -822,6 +890,7 @@ export type Database = {
         }
         Update: {
           account_type?: string
+          active_profile_id?: string | null
           active_view?: string
           address_cep?: string | null
           address_city?: string | null
@@ -884,7 +953,15 @@ export type Database = {
           video_call_price_cents?: number
           x_handle?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_profile_id_fkey"
+            columns: ["active_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotions: {
         Row: {
