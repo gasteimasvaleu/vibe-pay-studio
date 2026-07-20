@@ -8,8 +8,9 @@ import {
   listAdminUsers,
   unbanUser,
 } from "@/lib/admin-dashboard.functions";
+import { adminRefreshKyc } from "@/lib/onboarding.functions";
 import { Card } from "@/components/ui/card";
-import { Loader2, Ban, ShieldCheck } from "lucide-react";
+import { Loader2, Ban, ShieldCheck, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
