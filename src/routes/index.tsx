@@ -324,12 +324,14 @@ function HomePage() {
           className="absolute inset-0 opacity-70"
           style={{ background: "var(--gradient-radial)" }}
         />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="animate-fade-in">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          <div className="animate-fade-in h-full">
             <LoginCard />
           </div>
 
-          <HeroCard />
+          <div className="hidden lg:block h-full">
+            <HeroCard fullHeight />
+          </div>
         </div>
       </section>
     </SiteLayout>
