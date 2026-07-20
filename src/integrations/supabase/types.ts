@@ -694,6 +694,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          active_view: string
           address_cep: string | null
           address_city: string | null
           address_complement: string | null
@@ -723,6 +724,9 @@ export type Database = {
           discount_semiannual: number
           display_name: string | null
           emails_enabled: boolean
+          free_avatar_url: string | null
+          free_display_name: string | null
+          free_profile_enabled: boolean
           full_name: string | null
           id: string
           instagram_handle: string | null
@@ -753,6 +757,7 @@ export type Database = {
         }
         Insert: {
           account_type?: string
+          active_view?: string
           address_cep?: string | null
           address_city?: string | null
           address_complement?: string | null
@@ -782,6 +787,9 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           emails_enabled?: boolean
+          free_avatar_url?: string | null
+          free_display_name?: string | null
+          free_profile_enabled?: boolean
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
@@ -812,6 +820,7 @@ export type Database = {
         }
         Update: {
           account_type?: string
+          active_view?: string
           address_cep?: string | null
           address_city?: string | null
           address_complement?: string | null
@@ -841,6 +850,9 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           emails_enabled?: boolean
+          free_avatar_url?: string | null
+          free_display_name?: string | null
+          free_profile_enabled?: boolean
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
