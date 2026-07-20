@@ -36,7 +36,26 @@ function AdminUsers() {
   const listFn = useServerFn(listAdminUsers);
   const banFn = useServerFn(banUser);
   const unbanFn = useServerFn(unbanUser);
+  const refreshKycFn = useServerFn(adminRefreshKyc);
   const qc = useQueryClient();
+  const [kycBusy, setKycBusy] = useState<string | null>(null);
+
+  async function handleRefreshKyc(userId: string) {
+    setKycBusy(userId);
+    try {
+      const r = await refreshKycFn({ data: { userId } });
+      if (r.ok) {
+        toast.success(`KYC atualizado: ${r.status}`);
+        qc.invalidateQueries({ queryKey: ["admin-users"] });
+      } else {
+        toast.error(r.message ?? "Falha ao consultar KYC");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha");
+    } finally {
+      setKycBusy(null);
+    }
+  }
 
   const q = useQuery({
     queryKey: ["admin-users", term, role, banned, page],
