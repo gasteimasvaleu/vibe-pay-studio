@@ -7,7 +7,6 @@ import { sanitizeUsername, USERNAME_MIN, USERNAME_MAX } from "@/lib/utils";
 import {
   getAuthErrorMessage,
   routeAfterAuth,
-  signInWithGoogle,
   signUpWithEmail,
   type AccountType,
 } from "@/lib/auth";
@@ -30,7 +29,6 @@ function CadastroPage() {
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const rules = useMemo(
@@ -69,23 +67,6 @@ function CadastroPage() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setErrorMsg(null);
-    setGoogleLoading(true);
-    try {
-      await signInWithGoogle({ accountType, username: username || undefined });
-      navigate({ to: "/" });
-    } catch (err) {
-      setErrorMsg(
-        err instanceof Error
-          ? getAuthErrorMessage(err.message)
-          : "Erro ao entrar com Google.",
-      );
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -167,16 +148,6 @@ function CadastroPage() {
                     </p>
                   )}
                 </form>
-
-                <Divider />
-
-                <div className="space-y-3">
-                  <SocialButton
-                    label={googleLoading ? "Redirecionando..." : "Continuar com Google"}
-                    disabled={googleLoading}
-                    onClick={handleGoogle}
-                  />
-                </div>
 
                 <p className="mt-8 text-center text-sm text-muted-foreground">
                   Já tem conta?{" "}
@@ -278,33 +249,3 @@ function Field({
   );
 }
 
-function Divider() {
-  return (
-    <div className="flex items-center gap-4 my-6">
-      <div className="flex-1 h-px bg-border" />
-      <span className="text-xs label-caps text-muted-foreground">ou</span>
-      <div className="flex-1 h-px bg-border" />
-    </div>
-  );
-}
-
-function SocialButton({
-  disabled,
-  label,
-  onClick,
-}: {
-  disabled?: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
-    >
-      {label}
-    </button>
-  );
-}
