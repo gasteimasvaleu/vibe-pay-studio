@@ -374,6 +374,7 @@ const getUserPublicationsSchema = z.object({
   userId: z.string().uuid(),
   limit: z.number().int().min(1).max(50).optional(),
   cursor: z.string().datetime().optional(),
+  creatorProfileId: z.string().uuid().optional(),
 });
 
 export const getUserPublications = createServerFn({ method: "POST" })
@@ -396,6 +397,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
       .order("published_at", { ascending: false })
       .limit(limit + 1);
 
+    if (data.creatorProfileId) query = query.eq("creator_profile_id", data.creatorProfileId);
     query = query.is("archived_at", null);
     void currentUserId;
 
@@ -583,6 +585,7 @@ const gridSchema = z.object({
   userId: z.string().uuid(),
   limit: z.number().int().min(1).max(60).optional(),
   cursor: z.string().optional(),
+  creatorProfileId: z.string().uuid().optional(),
 });
 
 export type GridMediaFilter = "all" | "photos" | "videos" | "paid";
@@ -608,6 +611,7 @@ export const getUserPostsGrid = createServerFn({ method: "POST" })
         .order("published_at", { ascending: false })
         .limit(limit + 1);
 
+      if (data.creatorProfileId) query = query.eq("creator_profile_id", data.creatorProfileId);
       if (data.userId !== context.userId) {
         // já filtrado archived_at, nada extra
       }
@@ -672,6 +676,8 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
         .lte("published_at", new Date().toISOString())
         .order("published_at", { ascending: false })
         .limit(limit);
+
+      if (data.creatorProfileId) pubQuery = pubQuery.eq("creator_profile_id", data.creatorProfileId);
 
       if (filter === "paid") {
         pubQuery = pubQuery.eq("visibility", "paid").gt("price_cents", 0);
