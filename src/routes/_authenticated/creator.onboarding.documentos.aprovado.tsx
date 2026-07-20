@@ -5,7 +5,9 @@ import { CheckCircle2, Sparkles, Rocket, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding } from "@/lib/onboarding.functions";
-import heroImg from "@/assets/onboarding-aprovado.jpg";
+
+const heroImg =
+  "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-021784545806860aaaf13501739a5ff290af8d9343e27fc9037e4_0_1784545870764_ebce0aa8.png";
 
 export const Route = createFileRoute(
   "/_authenticated/creator/onboarding/documentos/aprovado",
