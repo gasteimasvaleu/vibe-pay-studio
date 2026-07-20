@@ -2329,6 +2329,7 @@ export type Database = {
             Returns: Json
           }
       release_matured_earnings: { Args: never; Returns: number }
+      resolve_active_profile: { Args: { _user_id: string }; Returns: string }
       revoke_all_other_sessions: { Args: never; Returns: number }
       revoke_session: { Args: { p_session_id: string }; Returns: undefined }
     }
