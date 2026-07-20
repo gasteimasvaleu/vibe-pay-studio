@@ -39,7 +39,8 @@ export function ScrollLanding() {
     offset: ["start start", "end end"],
   });
 
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.25], [0.15, 0.55]);
+
+
 
   const glassOpacity = useTransform(scrollYProgress, [0.1, 0.3], [0, 1]);
   const glassY = useTransform(scrollYProgress, [0.1, 0.3], [60, 0]);
@@ -68,19 +69,8 @@ export function ScrollLanding() {
           preload="auto"
         />
 
-        {/* Dark overlay (progressive) */}
-        <motion.div
-          className="absolute inset-0 bg-black"
-          style={{ opacity: overlayOpacity }}
-        />
-        {/* Vignette + purple wash for depth */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 40%, rgba(60,20,120,0.15), rgba(0,0,0,0.55) 80%)",
-          }}
-        />
+
+
 
         {/* Glass promo cards (mid-layer) */}
         <motion.div
