@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { BadgeCheck } from "lucide-react";
 
@@ -8,6 +9,7 @@ export function ProfileHeaderCard({
   levelBadge = "+100",
   showProfileLink = true,
   avatarUrl,
+  footer,
 }: {
   username: string;
   isCreator: boolean;
@@ -15,6 +17,7 @@ export function ProfileHeaderCard({
   levelBadge?: string;
   showProfileLink?: boolean;
   avatarUrl?: string | null;
+  footer?: ReactNode;
 }) {
   const displayName = username
     .replace(/[_-]+/g, " ")
@@ -79,6 +82,7 @@ export function ProfileHeaderCard({
           </p>
         </div>
       </div>
+      {footer}
     </section>
   );
 }
