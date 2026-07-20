@@ -127,11 +127,50 @@ function useRange() {
   return { range, setRange };
 }
 
+function useActiveProfileMode() {
+  return useQuery({
+    queryKey: ["stats-active-profile-mode"],
+    queryFn: async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return { activeView: "creator" as const, canSwitch: false };
+      const { data } = await supabase
+        .from("profiles")
+        .select("active_view, account_type, free_profile_enabled")
+        .eq("user_id", uid)
+        .maybeSingle();
+      const canSwitch =
+        data?.account_type === "free_creator" ||
+        (data?.account_type === "creator" && data?.free_profile_enabled === true);
+      return {
+        activeView: (data?.active_view ?? "creator") as "creator" | "free",
+        canSwitch,
+      };
+    },
+    staleTime: 30_000,
+  });
+}
+
+function FreeProfileStatsNotice() {
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 text-sm text-foreground">
+      <p className="font-semibold mb-1">Você está no perfil gratuito</p>
+      <p className="text-muted-foreground">
+        As estatísticas de faturamento, assinantes e recebimentos são exclusivas do <strong>perfil pago</strong>.
+        Alterne para o perfil pago no dashboard para visualizar seu Monetisexy.
+      </p>
+    </div>
+  );
+}
+
 function MyMonetisexyStatsPage() {
   const router = useRouter();
   const [mainTab, setMainTab] = useState<(typeof MAIN_TABS)[number]>("Visão geral");
   const [subTab, setSubTab] = useState<(typeof SUB_TABS)[number]>("Faturamento");
   const { range, setRange } = useRange();
+  const { data: mode } = useActiveProfileMode();
+  const isFreeMode = mode?.activeView === "free";
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
@@ -151,7 +190,12 @@ function MyMonetisexyStatsPage() {
       </header>
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
+        {isFreeMode ? (
+          <FreeProfileStatsNotice />
+        ) : (
+          <>
         <RangeSelector range={range} onChange={setRange} />
+
 
         <div className="space-y-3">
           <TabsRow tabs={MAIN_TABS} active={mainTab} onChange={setMainTab} />
@@ -190,8 +234,11 @@ function MyMonetisexyStatsPage() {
             </div>
           </div>
         )}
+          </>
+        )}
       </main>
     </div>
+
   );
 }
 
