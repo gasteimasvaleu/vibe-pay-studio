@@ -386,7 +386,9 @@ function CriarPerfilGratuitoPage() {
               className="w-full rounded-md bg-primary text-primary-foreground py-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition flex items-center justify-center gap-2"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {submitting ? "Criando..." : "Criar Conta"}
+              {submitting
+                ? (isLinkedMode ? "Ativando..." : "Criando...")
+                : (isLinkedMode ? "Ativar perfil gratuito" : "Criar Conta")}
             </button>
           )}
         </div>
