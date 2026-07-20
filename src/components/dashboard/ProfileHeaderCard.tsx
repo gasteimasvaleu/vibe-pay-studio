@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { BadgeCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ProfileHeaderCard({
   username,
