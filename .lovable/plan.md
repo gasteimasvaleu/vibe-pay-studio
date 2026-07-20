@@ -1,30 +1,32 @@
-## Objetivo
-Reestilizar o botão de alternância de perfil gratuito (footer do `ProfileHeaderCard`) para que fique dentro de um card interno com background branco e a mesma borda arredondada do card de perfil, mantendo a aparência e comportamento de botão, conforme screenshot de referência.
+## Diagnóstico
 
-## Contexto atual
-- O componente `ProfileHeaderCard` recebe um `footer` que é renderizado dentro da `<section>` principal do card.
-- Em `DashboardShell.tsx`, o `footer` é um `<button>` com fundo bege (`bg-[hsl(38_60%_94%)]`), borda superior `border-t` e sem margem interna, ocupando toda a largura do card.
-- O screenshot mostra um botão arredondado, com fundo claro/bege, avatar pequeno, texto e ícone de setas, aparentemente como um sub-card dentro do card de perfil.
+A penalização do Asaas ("recurso temporariamente alterado para a URL informada no cabeçalho Location") indica que o endpoint `https://vibe-pay-studio.lovable.app/api/public/webhooks/asaas` está respondendo com **302/307 + Location** em vez de `200`.
 
-## Mudanças propostas
-1. **Em `src/components/dashboard/DashboardShell.tsx`**:
-   - Envolver o `<button>` de switch em um container que simule um card interno: `rounded-2xl border bg-white shadow-sm` (mesma borda do card de perfil).
-   - Adicionar margem interna (`mx-5 mb-5`) para que o sub-card fique dentro do card de perfil com respiro.
-   - Ajustar o `<button>` interno para ter `rounded-2xl` (ou `rounded-xl`), `bg-white` (ou manter o tom bege do screenshot, a decidir), `w-full`, `px-4 py-3`, e estados de hover/active para parecer um botão clicável.
-   - Manter avatar, spinner, label e ícone `ArrowLeftRight` exatamente como estão.
-   - Preservar `disabled` e `loading`.
+Isso acontece porque o projeto agora tem domínio customizado (`monetisexy.com`) e o subdomínio `vibe-pay-studio.lovable.app` redireciona para o domínio principal. Webhooks do Asaas **não seguem redirects** — cada 3xx é contado como falha e após várias falhas o webhook é penalizado/pausado.
 
-2. **Em `src/components/dashboard/ProfileHeaderCard.tsx`**:
-   - Verificar se a estrutura do card principal (`rounded-2xl border bg-card shadow-[var(--shadow-card)]`) permite o sub-card encaixar visualmente.
-   - Se necessário, ajustar o padding inferior da área do corpo para evitar colisão com o novo sub-card.
+O handler em `src/routes/api/public/webhooks/asaas.ts` está correto (retorna 200 com token válido). O problema é puramente de URL configurada no painel do Asaas.
 
-## Critérios de aceitação
-- O botão de perfil gratuito aparece como um card arredondado dentro do card de perfil.
-- Background branco (ou tom claro conforme screenshot) e borda visível.
-- Comportamento de botão mantido: hover, cursor pointer, disabled/loading.
-- Texto e ícone preservados.
-- Sem regressões no layout do card de perfil.
+## Correção (no painel do Asaas, não no código)
 
-## Arquivos envolvidos
-- `src/components/dashboard/DashboardShell.tsx`
-- `src/components/dashboard/ProfileHeaderCard.tsx` (possível ajuste de espaçamento)
+1. Acessar Asaas → Integrações → Webhooks → "Monetisexy 2".
+2. Trocar a URL de:
+   - `https://vibe-pay-studio.lovable.app/api/public/webhooks/asaas`
+
+   Para uma URL que responde 200 direto, nesta ordem de preferência:
+   - **`https://monetisexy.com/api/public/webhooks/asaas`** (domínio final, mais estável e sem redirect)
+   - Alternativa: `https://project--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app/api/public/webhooks/asaas` (URL estável de produção do Lovable, imune a rename)
+3. Salvar e clicar em **Reativar/Retomar** o webhook (a penalização precisa ser desfeita manualmente após corrigir a URL).
+4. Reenviar os eventos pendentes na fila (o Asaas oferece botão "Reenviar" nos eventos com falha) — o handler é idempotente (dedupe por `event_id` em `asaas_events`), então reenvios são seguros.
+
+## Verificação
+
+- Testar com `curl -I -X POST https://monetisexy.com/api/public/webhooks/asaas` — deve retornar `401 unauthorized` (sem token), **não** `301/302/307`. Isso confirma que a URL responde direto sem redirect.
+- Após reativar, acompanhar a fila do webhook no Asaas — os próximos eventos devem sair com `200 OK`.
+
+## Observação sobre o evento recebido
+
+O payload que você mostrou é `PAYMENT_OVERDUE` do pagamento `pay_jceii8j5115xhoxp` (unlock da publicação `2c3ea175-…`). Após corrigir a URL e reenviar, o handler vai marcar o `publication_unlocks` correspondente como `cancelled` automaticamente (via `TERMINAL_CANCELLED`).
+
+## Não é necessário mudar código
+
+Nenhuma edição em `src/routes/api/public/webhooks/asaas.ts` — o handler já está correto. A ação é 100% de configuração no painel do Asaas.
