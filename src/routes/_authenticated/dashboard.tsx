@@ -32,8 +32,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     // Modo de exibição efetivo: creator pago em modo "free" renderiza a UI de assinante.
     const inFreeMode =
       accountType === "creator" && freeProfileEnabled && activeView === "free";
+    // No modo free vinculado a um creator, priorizamos o avatar do perfil creator
+    // para reforçar a relação entre as duas visões.
     const avatarUrl = inFreeMode
-      ? profile?.free_avatar_url ?? profile?.avatar_url ?? null
+      ? profile?.avatar_url ?? profile?.free_avatar_url ?? null
       : profile?.avatar_url ?? null;
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
