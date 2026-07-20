@@ -171,6 +171,119 @@ const veriffStatusMap: Record<string, KycStatus> = {
   created: "processing",
 };
 
+/**
+ * Consulta o Veriff em dois endpoints e devolve o status normalizado.
+ * Loga erros de forma visível (não silencia com warn).
+ */
+async function fetchVeriffStatus(sessionId: string): Promise<KycStatus | null> {
+  const apiKey = process.env.VERIFF_API_KEY;
+  const apiSecret = process.env.VERIFF_API_SECRET;
+  if (!apiKey || !apiSecret) return null;
+  const { createHmac } = await import("crypto");
+  const signature = createHmac("sha256", apiSecret).update(sessionId).digest("hex");
+  const headers = {
+    "Content-Type": "application/json",
+    "X-AUTH-CLIENT": apiKey,
+    "X-HMAC-SIGNATURE": signature,
+  };
+
+  // 1) Endpoint de decisão
+  try {
+    const res = await fetch(
+      `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`,
+      { method: "GET", headers },
+    );
+    if (res.ok) {
+      const payload = (await res.json()) as {
+        verification?: { status?: string } | null;
+      };
+      const v = payload.verification?.status;
+      if (v && veriffStatusMap[v]) return veriffStatusMap[v];
+      console.warn("[veriff] decision empty/unknown status", { sessionId, payload });
+    } else {
+      const body = await res.text().catch(() => "");
+      console.error("[veriff] decision fetch non-ok", {
+        sessionId,
+        status: res.status,
+        body: body.slice(0, 500),
+      });
+    }
+  } catch (err) {
+    console.error("[veriff] decision fetch threw", { sessionId, err: String(err) });
+  }
+
+  // 2) Fallback: endpoint de sessão
+  try {
+    const res = await fetch(
+      `https://stationapi.veriff.com/v1/sessions/${sessionId}`,
+      { method: "GET", headers },
+    );
+    if (res.ok) {
+      const payload = (await res.json()) as {
+        verification?: { status?: string } | null;
+        status?: string;
+      };
+      const v = payload.verification?.status ?? payload.status;
+      if (v && veriffStatusMap[v]) return veriffStatusMap[v];
+      console.warn("[veriff] session empty/unknown status", { sessionId, payload });
+    } else {
+      const body = await res.text().catch(() => "");
+      console.error("[veriff] session fetch non-ok", {
+        sessionId,
+        status: res.status,
+        body: body.slice(0, 500),
+      });
+    }
+  } catch (err) {
+    console.error("[veriff] session fetch threw", { sessionId, err: String(err) });
+  }
+
+  return null;
+}
+
+/**
+ * Aplica no banco a transição de kyc_status. Se virar 'verified',
+ * promove a conta a creator e dispara o email de "free -> paid".
+ * O gatilho `ensure_paid_creator_profile` cuida do creator_profile + active_profile_id.
+ */
+async function applyKycTransition(
+  supabaseAny: any,
+  userId: string,
+  next: KycStatus,
+): Promise<{ verifiedAt: string | null }> {
+  const update: {
+    kyc_status: KycStatus;
+    kyc_verified_at?: string;
+    account_type?: string;
+    onboarding_completed_at?: string;
+  } = { kyc_status: next };
+  let verifiedAt: string | null = null;
+  if (next === "verified") {
+    const now = new Date().toISOString();
+    update.kyc_verified_at = now;
+    update.account_type = "creator";
+    update.onboarding_completed_at = now;
+    verifiedAt = now;
+  }
+  const { error: upErr } = await supabaseAny
+    .from("profiles")
+    .update(update)
+    .eq("user_id", userId);
+  if (upErr) {
+    console.error("[onboarding] applyKycTransition update failed", upErr);
+    throw new Error(upErr.message);
+  }
+  if (next === "verified") {
+    try {
+      const events = await import("./email-events.server");
+      await events.notifyFreeToPaid(userId);
+    } catch (err) {
+      console.error("[onboarding] notifyFreeToPaid failed", err);
+    }
+  }
+  return { verifiedAt };
+}
+
 export const getKycStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -185,69 +298,16 @@ export const getKycStatus = createServerFn({ method: "GET" })
     let verifiedAt = data?.kyc_verified_at ?? null;
     const sessionId = data?.veriff_session_id ?? null;
 
-    // Fallback: if webhook didn't arrive yet, ask Veriff directly.
     if ((status === "processing" || status === "not_started") && sessionId) {
-      const apiKey = process.env.VERIFF_API_KEY;
-      const apiSecret = process.env.VERIFF_API_SECRET;
-      if (apiKey && apiSecret) {
-        try {
-          const { createHmac } = await import("crypto");
-          const signature = createHmac("sha256", apiSecret).update(sessionId).digest("hex");
-          const res = await fetch(
-            `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "X-AUTH-CLIENT": apiKey,
-                "X-HMAC-SIGNATURE": signature,
-              },
-            },
-          );
-          if (res.ok) {
-            const payload = (await res.json()) as {
-              verification?: { status?: string } | null;
-            };
-            const veriffStatus = payload.verification?.status;
-            if (veriffStatus && veriffStatusMap[veriffStatus]) {
-              const next = veriffStatusMap[veriffStatus];
-              if (next !== status) {
-                const update: {
-                  kyc_status: KycStatus;
-                  kyc_verified_at?: string;
-                  account_type?: string;
-                  onboarding_completed_at?: string;
-                } = { kyc_status: next };
-                if (next === "verified") {
-                  const now = new Date().toISOString();
-                  update.kyc_verified_at = now;
-                  update.account_type = "creator";
-                  update.onboarding_completed_at = now;
-                  verifiedAt = now;
-                }
-                const { error: upErr } = await context.supabase
-                  .from("profiles")
-                  .update(update)
-                  .eq("user_id", context.userId);
-                if (!upErr) {
-                  status = next;
-                  if (next === "verified") {
-                    try {
-                      const events = await import("./email-events.server");
-                      await events.notifyFreeToPaid(context.userId);
-                    } catch (err) {
-                      console.error("[onboarding] notifyFreeToPaid failed", err);
-                    }
-                  }
-                }
-              }
-            }
-          } else {
-            console.warn("[veriff] decision fetch non-ok", res.status);
-          }
-        } catch (err) {
-          console.warn("[veriff] decision fetch failed", err);
-        }
+      const next = await fetchVeriffStatus(sessionId);
+      if (next && next !== status) {
+        const { verifiedAt: newVerifiedAt } = await applyKycTransition(
+          context.supabase,
+          context.userId,
+          next,
+        );
+        status = next;
+        if (newVerifiedAt) verifiedAt = newVerifiedAt;
       }
     }
 
@@ -256,6 +316,47 @@ export const getKycStatus = createServerFn({ method: "GET" })
       verified_at: verifiedAt,
       session_id: sessionId,
     };
+  });
+
+/**
+ * Admin: força reconsulta do KYC no Veriff para um usuário específico
+ * e sincroniza no banco. Útil para destravar contas quando o webhook falha.
+ */
+export const adminRefreshKyc = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ userId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin, error: roleErr } = await context.supabase.rpc(
+      "has_role",
+      { _user_id: context.userId, _role: "admin" },
+    );
+    if (roleErr) throw new Error(roleErr.message);
+    if (!isAdmin) throw new Error("forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile, error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .select("kyc_status, veriff_session_id")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!profile?.veriff_session_id) {
+      return { ok: false as const, message: "Sem session_id do Veriff." };
+    }
+
+    const next = await fetchVeriffStatus(profile.veriff_session_id);
+    if (!next) {
+      return {
+        ok: false as const,
+        message: "Veriff não retornou um status válido. Veja os logs do servidor.",
+      };
+    }
+    if (next !== profile.kyc_status) {
+      await applyKycTransition(supabaseAdmin, data.userId, next);
+    }
+    return { ok: true as const, status: next };
   });
 
 export const completeOnboarding = createServerFn({ method: "POST" })
