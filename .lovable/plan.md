@@ -1,29 +1,36 @@
-Redesign visual do componente `Footer` para atender ao novo estilo solicitado.
+## Objetivo
+Replicar na página `/cadastro` o card lateral promocional que hoje aparece ao lado do formulário de login na página inicial (`/`).
 
-## O que será feito
+## Estado atual
+- `src/routes/index.tsx` renderiza um layout de duas colunas: `LoginCard` à esquerda e, à direita, um card branco com título "Monetisexy, do seu jeito.", imagem `hero-illustration.jpg` e descrição.
+- `src/routes/cadastro.tsx` renderiza apenas o formulário de cadastro centralizado em uma única coluna, sem o card lateral.
 
-1. **Trocar o background do footer** de `bg-black` para `bg-white` (usando `bg-card` para respeitar o tema claro/escuro, já que no tema claro `--card` é branco).
-2. **Ajustar as cores do texto interno** para garantir legibilidade sobre fundo branco:
-   - Títulos das colunas (`label-caps`) passam de `text-foreground` para um tom escuro sólido (`text-foreground` já é escuro no tema claro, mas vamos garantir contraste).
-   - Links e descrição passam de `text-muted-foreground` para um cinza escuro legível (`text-muted-foreground` no tema claro já é `oklch(0.5...)`, que é legível; manteremos, mas vamos trocar o hover para `text-foreground`).
-   - Logo mantém o gradiente roxo.
-   - Ícones sociais ajustados para cinza escuro com hover no primário.
-3. **Envolver o footer em um card flutuante**:
-   - Adicionar um wrapper interno com `bg-white`, `rounded-3xl`, `border`, `shadow-card` e margens (`mx-4 mb-6` ou `mx-6 mb-8`) para criar o efeito de card flutuante sobre a página.
-   - Manter o `max-w-7xl mx-auto` dentro do card para o conteúdo.
-   - Remover o `border-t` do `<footer>` original, pois o card já terá borda arredondada.
-4. **Ajustar o container da página** (`SiteLayout`) para garantir que o card flutuante tenha espaço visual: adicionar padding inferior no `<main>` ou margem no footer.
-5. **Verificar o tema escuro**: garantir que, no dark mode, o card continue usando `bg-card` (que vira escuro) e as cores de texto continuem legíveis. O efeito flutuante deve se manter.
+## Alterações propostas
 
-## Arquivos envolvidos
+### 1. Extrair componente reutilizável
+Criar `src/components/site/HeroCard.tsx` contendo o card promocional atualmente inline em `src/routes/index.tsx`.
 
-- `src/components/site/Footer.tsx` — alterações principais de estilo.
-- `src/components/site/Layout.tsx` — ajuste de espaçamento inferior se necessário.
+- Preservar imagem `heroBg`, título, descrição, estilos (`bg-white`, `rounded-[2.5rem]`, `shadow-card`, etc.).
+- Aceitar props opcionais para título/descrição caso seletores futuros queiram variar o texto.
+
+### 2. Refatorar `src/routes/index.tsx`
+- Substituir o bloco do card lateral pela importação e uso de `<HeroCard />`.
+- Garantir que o visual final permaneça idêntico ao atual.
+
+### 3. Atualizar `src/routes/cadastro.tsx`
+- Trocar o container atual (`flex items-center justify-center`) por um layout de duas colunas responsivo, igual ao da home:
+  - Em telas grandes (`lg:grid-cols-2`): formulário à esquerda, `<HeroCard />` à direita.
+  - Em telas menores: formulário em uma coluna (o card pode ficar oculto ou empilhado abaixo, conforme decisão visual padrão do projeto).
+- Ajustar padding/margens para alinhar com a home (`py-16 md:py-24`, `max-w-7xl`, etc.).
+- Manter todos os comportamentos do formulário de cadastro intactos (tabs, validação, Google, etc.).
 
 ## Critérios de aceitação
+- A página `/cadastro` exibe o mesmo card lateral da página inicial.
+- A página inicial continua funcionando e com o mesmo visual.
+- O formulário de cadastro mantém todas as funcionalidades existentes.
+- Layout responsivo: em mobile o card não quebra a usabilidade do formulário.
 
-- Footer renderiza com fundo branco no tema claro.
-- Todo o texto interno é legível sobre o fundo branco.
-- Footer está visualmente dentro de um card com bordas arredondadas e sombra, criando efeito flutuante.
-- Não há regressão no tema escuro.
-- Build passa sem erros.
+## Arquivos envolvidos
+- `src/components/site/HeroCard.tsx` (novo)
+- `src/routes/index.tsx` (refatorado)
+- `src/routes/cadastro.tsx` (refatorado)

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
-import heroBg from "@/assets/hero-illustration.jpg";
+import { HeroCard } from "@/components/site/HeroCard";
 import { useState } from "react";
 import {
   motion,
@@ -329,28 +329,7 @@ function HomePage() {
             <LoginCard />
           </div>
 
-          <div className="relative">
-            <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-white shadow-card border border-border flex flex-col items-center">
-              <div className="pt-8 pb-2 text-center pointer-events-none bg-white">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter leading-[0.95]">
-                  Monetisexy,<br />
-                  <span className="text-gradient-primary">do seu jeito.</span>
-                </h1>
-              </div>
-              <img
-                src={heroBg}
-                alt="Ilustração Monetisexy"
-                width={1200}
-                height={1200}
-                className="w-full h-[58%] object-cover mt-4"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none bg-white">
-                <p className="text-sm text-center text-foreground">
-                  A maior plataforma de creator economy do Brasil. Crie seu perfil, publique conteúdo exclusivo e receba via Pix.
-                </p>
-              </div>
-            </div>
-          </div>
+          <HeroCard />
         </div>
       </section>
     </SiteLayout>
