@@ -126,7 +126,7 @@ function LoginCard() {
           {/* Header */}
           <div className="relative text-center mb-8">
             <img
-              src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisex2..png"
+              src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/monetisexy4..png"
               alt="Monetisexy"
               className="mx-auto mb-4 h-12 w-auto object-contain drop-shadow-lg"
             />
