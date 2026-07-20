@@ -13,11 +13,6 @@ export function Navbar({ minimal = false }: { minimal?: boolean }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLinks = [
-    { to: "/como-funciona", label: "Como Funciona" },
-    { to: "/sobre", label: "Sobre" },
-    { to: "/blog", label: "Blog" },
-  ];
 
   const logo = (
     <Link to="/" className="flex items-center gap-2">
