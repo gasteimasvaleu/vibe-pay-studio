@@ -234,8 +234,11 @@ function MyMonetisexyStatsPage() {
             </div>
           </div>
         )}
+          </>
+        )}
       </main>
     </div>
+
   );
 }
 
