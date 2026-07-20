@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Rocket, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { GooeyLoader } from "@/components/onboarding/GooeyLoader";
 import { completeOnboarding } from "@/lib/onboarding.functions";
@@ -72,54 +71,16 @@ function AprovadoPage() {
           painel.
         </p>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-3 text-left">
-          <NextCard
-            icon={<Sparkles className="w-4 h-4" />}
-            title="Publique seu primeiro conteúdo"
-            desc="Fotos, vídeos ou textos exclusivos."
-          />
-          <NextCard
-            icon={<Users className="w-4 h-4" />}
-            title="Convide sua audiência"
-            desc="Compartilhe seu link nas redes."
-          />
-          <NextCard
-            icon={<Rocket className="w-4 h-4" />}
-            title="Acompanhe seus ganhos"
-            desc="Métricas e pagamentos no painel."
-          />
-        </div>
-
-        <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-10 mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
-            className="px-8 py-3.5 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
+            className="w-full px-8 py-3.5 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition"
           >
             Ir para o painel
           </button>
         </div>
       </div>
     </OnboardingShell>
-  );
-}
-
-function NextCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-      <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-600">
-        {icon}
-      </span>
-      <h3 className="mt-3 text-sm font-semibold text-neutral-900">{title}</h3>
-      <p className="mt-1 text-xs text-neutral-600 leading-relaxed">{desc}</p>
-    </div>
   );
 }
