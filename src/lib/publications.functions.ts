@@ -585,6 +585,7 @@ const gridSchema = z.object({
   userId: z.string().uuid(),
   limit: z.number().int().min(1).max(60).optional(),
   cursor: z.string().optional(),
+  creatorProfileId: z.string().uuid().optional(),
 });
 
 export type GridMediaFilter = "all" | "photos" | "videos" | "paid";
