@@ -29,13 +29,15 @@ export function HeroCard({
             <span className="text-gradient-primary">{highlight}</span>
           </h1>
         </div>
-        <img
-          src={heroBg}
-          alt="Ilustração Monetisexy"
-          width={1200}
-          height={1200}
-          className="w-full flex-1 min-h-0 object-cover"
-        />
+        <div className="flex-1 min-h-0 w-full px-8 md:px-12 flex items-center justify-center overflow-hidden">
+          <img
+            src={heroBg}
+            alt="Ilustração Monetisexy"
+            width={1200}
+            height={1200}
+            className="w-full h-full object-contain"
+          />
+        </div>
         <div className="p-8 pt-6 pointer-events-none bg-white">
           <p className="text-sm text-center text-foreground">{description}</p>
         </div>
