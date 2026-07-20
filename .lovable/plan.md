@@ -1,24 +1,25 @@
-Objetivo: na versão desktop da página `/cadastro`, fazer o card de cadastro e o card promocional (`HeroCard`) terem o mesmo tamanho, e aumentar o espaçamento entre o texto superior / inferior e a imagem no card promocional.
+## Problema
+A imagem dentro do `HeroCard` não está visualmente centralizada; o espaço do lado direito está maior, indicando que o crop (`object-cover`) ou o posicionamento da ilustração está desequilibrado no container.
 
-## Alterações previstas
+## Diagnóstico
+- O componente renderiza a imagem com `w-full flex-1 min-h-0 object-cover`.
+- `object-cover` corta a imagem para preencher o container, mas se a ilustração não tiver foco central, o crop pode parecer deslocado.
+- O card não possui padding interno na área da imagem, então a imagem cola nas bordas arredondadas.
 
-### 1. `src/routes/cadastro.tsx` — igualar altura dos cards
-- Remover o `max-w-md` do container do card de cadastro para que ele ocupe toda a largura da coluna.
-- Fazer o card de cadastro preencher a altura disponível da coluna (`h-full`) e usar `flex flex-col` para distribuir o conteúdo.
-- Ajustar o grid/ container para que ambas as colunas cresçam juntas sem quebrar o layout responsivo.
-- Garantir que, em telas menores (`< lg`), o card continue funcionando normalmente (sem altura forçada que corte conteúdo).
+## Plano de ação
+1. **Verificar o asset** `src/assets/hero-illustration.jpg` para confirmar se o conteúdo visual está centralizado ou se o arquivo possui margem maior à direita.
+2. **Ajustar o layout do `HeroCard`** para garantir centralização visual:
+   - Envolver a `<img>` em um container interno com padding simétrico (`px-6` ou similar) para que a imagem fique centralizada dentro do card.
+   - Alterar de `object-cover` para `object-contain` (com fundo branco) OU manter `object-cover` e garantir `object-center` com um wrapper que force proporção e centralização.
+   - Garantir que o container da imagem use `flex-1`, `overflow-hidden` e `rounded` para respeitar as bordas do card.
+3. **Testar responsivamente** em `/cadastro` (onde `fullHeight=true`) e na página inicial (onde o card é quadrado) para garantir que a centralização funcione nos dois casos sem distorcer o layout.
+4. **Validar** via preview/screenshot que o espaçamento lateral ficou simétrico.
 
-### 2. `src/components/site/HeroCard.tsx` — aumentar espaçamentos
-- Aumentar o espaçamento entre o título superior e a imagem (`pt`/`pb`/`mt`).
-- Aumentar o espaçamento entre a imagem e o texto inferior (`p`/`pt`/`pb`).
-- Ajustar a altura da imagem para não vazar do card ao aumentar os espaçamentos (por exemplo, reduzir `h-[58%]` para `h-[52%]` ou usar `flex-1` para que a imagem ocupe o espaço restante de forma flexível).
-- Manter o card com `aspect-square` e o visual atual (bordas arredondadas, sombra, fundo branco).
+## Arquivos envolvidos
+- `src/components/site/HeroCard.tsx`
+- `src/assets/hero-illustration.jpg` (apenas inspeção visual)
+- `src/routes/cadastro.tsx` (contexto de uso fullHeight)
+- `src/routes/index.tsx` (contexto de uso quadrado)
 
-### 3. Validação
-- Rodar `tsgo` / typecheck para garantir que não haja erros de tipo.
-- Capturar um screenshot da página em viewport desktop para confirmar que os cards estão alinhados e os espaçamentos estão visivelmente maiores.
-
-## Não está no escopo
-- Alterar o conteúdo do card promocional.
-- Modificar funcionalidade do formulário de cadastro.
-- Mudar cores, fontes ou animações do card de login.
+## Resultado esperado
+Imagem centralizada com espaçamento igual dos dois lados dentro do card promocional, tanto na página inicial quanto na página de cadastro.
