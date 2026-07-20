@@ -75,7 +75,7 @@ export function LoginCard() {
 
   return (
     <div
-      className="relative"
+      className="relative h-full"
       style={{ perspective: "1200px" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -83,7 +83,7 @@ export function LoginCard() {
       <motion.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         transition={{ type: "spring", stiffness: 150, damping: 20 }}
-        className="relative"
+        className="relative h-full"
       >
         <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-br from-purple-500/40 via-fuchsia-500/20 to-indigo-500/40 blur-xl opacity-70" />
 
@@ -110,7 +110,7 @@ export function LoginCard() {
           />
         </div>
 
-        <div className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a0b2e]/95 via-[#2a1250]/95 to-[#1a0b2e]/95 backdrop-blur-2xl p-8 shadow-2xl overflow-hidden">
+        <div className="relative h-full flex flex-col rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a0b2e]/95 via-[#2a1250]/95 to-[#1a0b2e]/95 backdrop-blur-2xl p-8 shadow-2xl overflow-hidden">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:20px_20px]" />
 
           <div className="relative text-center mb-8">
@@ -124,7 +124,8 @@ export function LoginCard() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="relative space-y-4">
+          <form onSubmit={handleSubmit} className="relative flex-1 flex flex-col space-y-4">
+
             <style>{`
               input[data-auth-input]:-webkit-autofill,
               input[data-auth-input]:-webkit-autofill:hover,
