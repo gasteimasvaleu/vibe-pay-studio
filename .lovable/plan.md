@@ -1,11 +1,35 @@
-## Decisão confirmada: monetização no perfil gratuito
+## Publicações Agendadas — nova página `/publicacoes-agendadas`
 
-**Comportamento desejado:** perfis gratuitos de creator podem publicar conteúdo pago (posts avulsos/PPV e desafios), sem bloqueio de monetização.
+### 1. Server functions (`src/lib/publications.functions.ts`)
 
-**Estado atual do sistema:**
-- O publisher (`/publisher`) exibe o toggle "Publicação paga" e "Desafio" para qualquer creator, independentemente do perfil ativo ser pago ou gratuito.
-- A função `createPublication` não restringe `visibility = paid/challenge` por tipo de perfil.
-- O banco possui o trigger `publications_fill_profile()`, que preenche `publications.creator_profile_id` com o perfil ativo do autor no momento da publicação. Ou seja, se o autor está no modo gratuito, o post pago fica vinculado ao perfil gratuito.
-- O trigger `publication_unlocks_sync_transaction()` usa o `creator_profile_id` da publicação para gerar a `transaction` de desbloqueio, então a receva do PPV é atribuída ao perfil gratuito correto.
+- `getScheduledPublications({ limit, cursor })` — lista posts do autor com `scheduled_at > now()`, ordenados por `scheduled_at asc`. Retorna `{ items, nextCursor }`.
+- `reschedulePublication({ id, scheduledAt })` — atualiza `scheduled_at` (valida futuro).
+- `publishScheduledNow({ id })` — seta `scheduled_at = null` e `published_at = now()`.
+- `cancelScheduledPublication({ id })` — deleta o post agendado (ou marca como rascunho — vou usar delete para simplificar, já que o post ainda não foi visto).
 
-**Ação:** nenhuma alteração de código necessária. O requisito já está atendido.
+Todas com `.middleware([requireSupabaseAuth])` e checando `author_id = userId`.
+
+### 2. Nova rota `src/routes/_authenticated/publicacoes-agendadas.tsx`
+
+Espelha `postsarquivados.tsx`:
+- Header com botão voltar + título "Publicações agendadas".
+- Lista infinita usando `useInfiniteQuery`.
+- Cada item mostra: mídia (thumb), texto, `scheduled_at` formatado, badge de preço se pago.
+- Menu (⋯) por item com ações: **Publicar agora**, **Reagendar** (abre dialog com `<input type="datetime-local">`), **Cancelar agendamento** (confirm).
+- Empty state: "Você não tem publicações agendadas."
+
+### 3. Card no dashboard
+
+Adicionar em `src/components/dashboard/CreatorDashboard.tsx`, no grupo "Área do Criador", logo abaixo de "Acervo":
+
+```
+ActionCard
+  icon: Clock
+  title: "Agendados"
+  description: "Veja e edite suas publicações agendadas"
+  to: "/publicacoes-agendadas"
+```
+
+### 4. Sem mudanças de schema
+
+Todos os campos já existem (`publications.scheduled_at`, `published_at`, `author_id`, `pinned`, `pricing_mode`, etc). Filtro no feed já respeita `published_at <= now()`.
