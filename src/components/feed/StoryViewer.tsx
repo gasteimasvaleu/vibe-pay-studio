@@ -29,14 +29,18 @@ export function StoryViewer({
   onChanged: () => void;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchStories = useServerFn(getCreatorStories);
   const markViewed = useServerFn(markStoryViewed);
   const walletPay = useServerFn(payWithWallet);
   const removeStory = useServerFn(deleteStory);
+  const replyToStory = useServerFn(sendStoryReply);
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
@@ -45,6 +49,7 @@ export function StoryViewer({
     queryFn: () => fetchStories({ data: { creatorId: creatorId as string } }),
     enabled: !!creatorId && open,
   });
+
 
   const stories = storiesQuery.data ?? [];
   const current: StoryItem | undefined = stories[index];
