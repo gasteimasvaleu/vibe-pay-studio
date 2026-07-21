@@ -50,6 +50,14 @@ export function StoryViewer({
     if (open) setIndex(0);
   }, [open, creatorId]);
 
+  useEffect(() => {
+    if (!open) return;
+    openOverlay();
+    return () => closeOverlay();
+  }, [open]);
+
+
+
   const advance = () => {
     if (index < stories.length - 1) setIndex((i) => i + 1);
     else onOpenChange(false);
