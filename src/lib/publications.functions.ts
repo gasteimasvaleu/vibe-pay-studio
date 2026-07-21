@@ -502,6 +502,13 @@ export const getUserPublications = createServerFn({ method: "POST" })
     ]);
 
     const authorUsername = authorRow?.username ?? null;
+    const authorDisplayName = (authorRow as { display_name?: string | null } | null)?.display_name ?? null;
+    const authorAvatarUrl = (authorRow as { avatar_url?: string | null } | null)?.avatar_url ?? null;
+    const identityMaps = await resolveCreatorIdentities(client, {
+      creatorProfileIds: page.map((p) => (p as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: [data.userId],
+    });
+
     const likeCounts = new Map<string, number>();
     (likeRows ?? []).forEach((r) => {
       likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
