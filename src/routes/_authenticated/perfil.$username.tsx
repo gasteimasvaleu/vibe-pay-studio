@@ -788,7 +788,7 @@ function PerfilPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/chat" })}
-                className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="h-9 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
                 <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
