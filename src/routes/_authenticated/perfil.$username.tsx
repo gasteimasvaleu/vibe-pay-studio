@@ -62,12 +62,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual")
+      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
       .eq("username", params.username)
       .maybeSingle();
 
     if (!profile) throw notFound();
     if (profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
+
 
     const [
       { count: postsCount },
