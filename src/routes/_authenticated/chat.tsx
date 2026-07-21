@@ -131,9 +131,13 @@ function ChatLayout() {
   }, [meId]);
 
   const filteredThreads = useMemo(() => {
-    if (!onlineOnly) return threads;
-    return threads.filter((t) => onlineUsers.has(t.partnerId));
-  }, [threads, onlineOnly, onlineUsers]);
+    let out = threads;
+    // Silenciados: quando ativo, mostra APENAS silenciados; quando inativo, esconde silenciados da lista principal
+    out = filters.muted ? out.filter((t) => t.isMuted) : out.filter((t) => !t.isMuted);
+    if (filters.unread) out = out.filter((t) => t.unreadCount > 0);
+    if (onlineOnly) out = out.filter((t) => onlineUsers.has(t.partnerId));
+    return out;
+  }, [threads, onlineOnly, onlineUsers, filters.muted, filters.unread]);
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground">
