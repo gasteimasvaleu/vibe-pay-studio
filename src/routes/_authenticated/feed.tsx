@@ -174,6 +174,14 @@ function FeedPage() {
             </p>
           </motion.section>
 
+          {/* Stories */}
+          <StoriesCarousel
+            currentUserId={userId}
+            currentUsername={username}
+            currentAvatarUrl={avatarUrl}
+            canPublish={accountType === "creator" || accountType === "free_creator"}
+          />
+
           {/* Feed items */}
           {feedQuery.isLoading ? (
             <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
