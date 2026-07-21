@@ -214,6 +214,8 @@ function MyMonetisexyStatsPage() {
           <AlcancePanel range={range} />
         ) : mainTab === "Assinantes" ? (
           <AssinantesPanel range={range} />
+        ) : mainTab === "Superfãs" ? (
+          <SuperfasPanel />
         ) : subTab === "Resumo" ? (
           <ResumoPanel range={range} />
         ) : (
