@@ -48,6 +48,7 @@ export function CreatorDashboard({
   const [signingOut, setSigningOut] = useState(false);
   const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const switchView = useServerFn(setActiveProfileView);
 
