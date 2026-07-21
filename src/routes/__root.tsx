@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ensureCurrentUserProfile } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeInit } from "@/components/theme-init";
 import { TopBanner } from "@/components/ui/top-banner";
 import { Toaster as SonnerToaster } from "sonner";
