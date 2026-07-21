@@ -1,63 +1,26 @@
-# Padronização de botões para altura fina (h-9)
+# Melhorias na página Alterar Senha
 
-## Objetivo
-Deixar todos os botões do app com a mesma altura fina e elegante dos botões "Salvar"/"Cancelar" da tela `/settings/details` (36px / `h-9`), removendo overrides grossos espalhados pelo código.
+Cobrir dois casos que hoje passam sem tratamento adequado em `/settings/change-password`.
 
-## Escopo confirmado
-- **Altura alvo:** `h-9` (36px).
-- **Alvos:** apenas componente `<Button>` do shadcn (não inclui `<button>` nativos).
-- **Sem exceções:** CTAs de pagamento, publicar, assinar etc. também passam para `h-9`.
+## 1. Contas OAuth (Google) — bloquear com mensagem clara
 
-## Diagnóstico atual
-- O componente base `src/components/ui/button.tsx` já tem `default: h-9 px-4 py-2`.
-- Porém, ~28 instâncias de `<Button>` sobrescrevem a altura com `h-10`, `h-11` ou `h-12`.
-- A maioria dos overrides usa classes explícitas como `h-12 rounded-md bg-gradient-primary...`.
+- Detectar se o usuário logado tem provedor de senha (`email`) entre os `identities` do Supabase (`supabase.auth.getUser()` → `user.identities[].provider`).
+- Se **não** tiver o provedor `email` (ex.: entrou só via Google):
+  - Substituir o formulário por um estado informativo dentro do mesmo card:
+    - Título: "Alteração de senha indisponível"
+    - Texto: "Você entrou com Google. Sua senha é gerenciada pela sua conta Google — altere-a diretamente lá."
+    - Botão secundário "Abrir conta Google" → `https://myaccount.google.com/security`.
+  - Não renderizar campos de senha nem botão de salvar.
+- Se tiver ambos (email + google), manter o formulário normal.
 
-## Passos
+## 2. Impedir senha nova igual à atual
 
-### 1. Ajustar escala do componente Button
-Atualizar as variantes `size` em `src/components/ui/button.tsx` para manter a proporção fina em todos os tamanhos:
-- `default`: `h-9 px-4 py-2` (mantém).
-- `sm`: `h-8 px-3 text-xs` (mantém).
-- `lg`: mudar de `h-10` para `h-9 px-6` (para não haver botão grande no design system).
-- `icon`: `h-9 w-9` (mantém).
+- Validação client-side: no schema Zod (ou no submit), comparar `newPassword` com `currentPassword`; se iguais, exibir erro no campo "Nova senha": "A nova senha deve ser diferente da atual."
+- Reforço no submit: mesmo check antes de chamar `updateUser`, para caso o usuário edite os campos após validação.
+- Manter as regras de complexidade existentes.
 
-### 2. Remover overrides de altura em <Button>
-Percorrer os ~28 arquivos e remover os tokens de altura explícitos (`h-10`, `h-11`, `h-12`) dos `className` do `<Button>`, preservando cores, gradientes, arredondamento e largura.
+## Detalhes técnicos
 
-Arquivos identificados com overrides:
-- `src/routes/_authenticated/account-status.tsx`
-- `src/routes/_authenticated/bugreport.tsx`
-- `src/routes/_authenticated/chat-agendamento.tsx`
-- `src/routes/_authenticated/content-leak-report.tsx`
-- `src/routes/_authenticated/mywallet.extrato.tsx`
-- `src/routes/_authenticated/mywallet.index.tsx`
-- `src/routes/_authenticated/mywallet.recarregar.tsx`
-- `src/routes/_authenticated/publisher.tsx`
-- `src/routes/_authenticated/settings.language.tsx`
-- `src/routes/_authenticated/settings.myprofile.tsx`
-- `src/routes/_authenticated/settings.personal.tsx`
-- `src/routes/_authenticated/settings.two-factor.setup.tsx`
-- `src/routes/_authenticated/settings.two-factor.verify.tsx`
-- `src/components/banco/CadastrarBancoForm.tsx`
-- `src/components/payments/ChallengeContributeSheet.tsx`
-- `src/components/payments/SubscribeDialog.tsx`
-- `src/components/payments/TipDialog.tsx`
-- `src/components/publisher/VaultPickerSheet.tsx`
-
-### 3. Verificar botões com `size="lg"`
-Buscar usos de `size="lg"` no `<Button>` e, se houver, trocar para `size="default"` ou remover, já que `lg` deixará de ter altura diferente.
-
-### 4. Ajustes visuais de acompanhamento
-- Em botões que ficavam com texto grande (`text-base`, `text-lg`), reduzir para `text-sm` para manter a proporção fina.
-- Verificar se algum botão perde legibilidade após redução (especialmente CTAs com gradiente).
-
-### 5. Validação
-- Rodar `tsc` para garantir que nenhuma alteração quebrou tipos.
-- Verificar visualmente telas críticas: publisher, carteira, perfil, configurações, pagamento.
-
-## Resultado esperado
-Todos os `<Button>` do app terão altura consistente de 36px, criando um visual mais leve, alinhado e "chique", conforme o exemplo da tela atual.
-
-## Nota
-Botões nativos (`<button>`) e elementos decorativos (ícones redondos, inputs) não serão alterados, conforme solicitado.
+- Arquivo único afetado: `src/routes/_authenticated/settings.change-password.tsx`.
+- Detecção de provedor via `supabase.auth.getUser()` no mount (useEffect + estado `hasPasswordProvider: boolean | null`); enquanto `null`, mostrar skeleton do card.
+- Sem migrações, sem novas server functions, sem mudanças em outras telas.
