@@ -362,7 +362,7 @@ export const followCreator = createServerFn({ method: "POST" })
           followee_id: target.user_id,
           creator_profile_id: target.id,
         },
-        { onConflict: "follower_id,followee_id,creator_profile_id", ignoreDuplicates: true },
+        { onConflict: "follower_id,creator_profile_id", ignoreDuplicates: true },
       );
     if (error) throw new Error(error.message);
     return { ok: true, creatorProfileId: target.id };
@@ -379,9 +379,7 @@ export const unfollowCreator = createServerFn({ method: "POST" })
       .from("follows")
       .delete()
       .eq("follower_id", userId)
-      .eq("followee_id", target.user_id);
-    // Apaga tanto a linha específica do perfil quanto qualquer legado sem creator_profile_id.
-    q = q.or(`creator_profile_id.eq.${target.id},creator_profile_id.is.null`);
+      .eq("creator_profile_id", target.id);
     const { error } = await q;
     if (error) throw new Error(error.message);
     return { ok: true };

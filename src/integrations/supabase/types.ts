@@ -549,19 +549,19 @@ export type Database = {
       follows: {
         Row: {
           created_at: string
-          creator_profile_id: string | null
+          creator_profile_id: string
           followee_id: string
           follower_id: string
         }
         Insert: {
           created_at?: string
-          creator_profile_id?: string | null
+          creator_profile_id: string
           followee_id: string
           follower_id: string
         }
         Update: {
           created_at?: string
-          creator_profile_id?: string | null
+          creator_profile_id?: string
           followee_id?: string
           follower_id?: string
         }

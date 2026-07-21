@@ -20,7 +20,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -48,6 +48,7 @@ export function CreatorDashboard({
   const [signingOut, setSigningOut] = useState(false);
   const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const switchView = useServerFn(setActiveProfileView);
 
@@ -69,6 +70,7 @@ export function CreatorDashboard({
     try {
       await switchView({ data: { view: "free" } });
       await queryClient.invalidateQueries();
+      await router.invalidate();
       navigate({ to: "/dashboard" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
@@ -82,6 +84,7 @@ export function CreatorDashboard({
     try {
       await switchView({ data: { view: "creator" } });
       await queryClient.invalidateQueries();
+      await router.invalidate();
       navigate({ to: "/dashboard" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
