@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
 
 function SettingsCreatorPage() {
   const router = useRouter();
-  const { username, accountType } = Route.useRouteContext();
+  const { username, accountType, avatarUrl } = Route.useRouteContext();
   const displayName =
     username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
   const isSubscriber = accountType === "subscriber";
