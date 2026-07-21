@@ -572,7 +572,7 @@ function TopBadgeCard() {
         </div>
       </div>
 
-      <Link to="/dashboard" className="block text-center rounded-md border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
+      <Link to="/banco" className="block text-center rounded-md border border-border py-3 text-sm font-semibold hover:bg-accent transition-colors">
         Acessar Meu Banco
       </Link>
     </div>
