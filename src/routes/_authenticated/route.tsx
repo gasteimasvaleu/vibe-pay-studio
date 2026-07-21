@@ -2,6 +2,18 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/site/BottomNav";
 import { TopNav } from "@/components/site/TopNav";
+import { useFullscreenOverlay } from "@/hooks/useFullscreenOverlay";
+
+function AuthenticatedLayout() {
+  const overlayActive = useFullscreenOverlay();
+  return (
+    <div className={overlayActive ? "" : "pb-24"}>
+      {!overlayActive && <TopNav />}
+      <Outlet />
+      {!overlayActive && <BottomNav />}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -12,11 +24,6 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.session.user };
   },
-  component: () => (
-    <div className="pb-24">
-      <TopNav />
-      <Outlet />
-      <BottomNav />
-    </div>
-  ),
+  component: AuthenticatedLayout,
 });
+
