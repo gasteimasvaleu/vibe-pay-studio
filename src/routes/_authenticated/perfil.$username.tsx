@@ -280,8 +280,9 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount, followersCount } =
     Route.useLoaderData();
+
   const router = useRouter();
   const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
