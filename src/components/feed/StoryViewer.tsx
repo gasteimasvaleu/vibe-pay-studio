@@ -135,102 +135,123 @@ export function StoryViewer({
 
   if (!open || !creatorId) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col">
-      {/* Progress bars */}
-      <div className="flex gap-1 p-3 pt-4">
-        {stories.map((_, i) => (
-          <div key={i} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
-            <div
-              id={`story-progress-${i}`}
-              className="h-full bg-white"
-              style={{ width: i < index ? "100%" : "0%" }}
-            />
-          </div>
-        ))}
-      </div>
+  const creatorUsername = current?.creator_username ?? "";
+  const creatorAvatarUrl = current?.creator_avatar_url ?? null;
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pb-2">
-        <div className="text-white text-sm font-medium">
-          {current ? new Date(current.published_at).toLocaleString("pt-BR") : ""}
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center">
+      <div className="relative flex flex-col w-full h-full md:h-[min(92vh,900px)] md:w-[min(92vw,calc(92vh*9/16))] md:aspect-[9/16] md:rounded-2xl md:overflow-hidden md:shadow-2xl bg-black">
+        {/* Progress bars */}
+        <div className="absolute top-0 inset-x-0 z-20 flex gap-1.5 px-3 pt-3">
+          {stories.map((_, i) => (
+            <div key={i} className="flex-1 h-1 bg-white/25 rounded-full overflow-hidden">
+              <div
+                id={`story-progress-${i}`}
+                className="h-full bg-white"
+                style={{ width: i < index ? "100%" : "0%" }}
+              />
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          {current?.is_self && (
+
+        {/* Header */}
+        <div className="absolute top-6 inset-x-0 z-20 flex items-center justify-between px-3 pt-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden shrink-0 grid place-items-center">
+              {creatorAvatarUrl ? (
+                <img src={creatorAvatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-white/70 text-xs font-semibold">
+                  {creatorUsername.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="text-white text-sm font-semibold truncate">@{creatorUsername}</div>
+              <div className="text-white/60 text-[11px] leading-tight truncate">
+                {current ? new Date(current.published_at).toLocaleString("pt-BR") : ""}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {current?.is_self && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                aria-label="Apagar"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={() => onOpenChange(false)}
               className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-              aria-label="Apagar"
+              aria-label="Fechar"
             >
-              <Trash2 className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+          {storiesQuery.isLoading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          ) : !current ? (
+            <div className="text-white/80 text-sm">Nenhum story disponível.</div>
+          ) : current.unlocked && current.media_url ? (
+            current.media_type === "video" ? (
+              <video
+                key={current.id}
+                src={current.media_url}
+                className="h-full w-full object-cover"
+                autoPlay
+                playsInline
+                onEnded={advance}
+                controls={false}
+              />
+            ) : (
+              <img
+                key={current.id}
+                src={current.media_url}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            )
+          ) : (
+            <LockedOverlay
+              thumbUrl={current.thumb_url}
+              priceCents={current.price_cents}
+              unlocking={unlocking}
+              onUnlock={handleUnlock}
+            />
           )}
+
+          {/* Tap zones */}
           <button
             type="button"
-            onClick={() => onOpenChange(false)}
-            className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 relative flex items-center justify-center">
-        {storiesQuery.isLoading ? (
-          <Loader2 className="h-8 w-8 animate-spin text-white" />
-        ) : !current ? (
-          <div className="text-white/80 text-sm">Nenhum story disponível.</div>
-        ) : current.unlocked && current.media_url ? (
-          current.media_type === "video" ? (
-            <video
-              key={current.id}
-              src={current.media_url}
-              className="max-h-full max-w-full"
-              autoPlay
-              playsInline
-              onEnded={advance}
-              controls={false}
-            />
-          ) : (
-            <img
-              key={current.id}
-              src={current.media_url}
-              alt=""
-              className="max-h-full max-w-full object-contain"
-            />
-          )
-        ) : (
-          <LockedOverlay
-            thumbUrl={current.thumb_url}
-            priceCents={current.price_cents}
-            unlocking={unlocking}
-            onUnlock={handleUnlock}
+            className="absolute inset-y-0 left-0 w-1/3 z-10"
+            onClick={back}
+            aria-label="Anterior"
           />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 w-1/3 z-10"
+            onClick={advance}
+            aria-label="Próximo"
+          />
+        </div>
+
+        {/* Caption */}
+        {current?.caption && (
+          <div className="absolute bottom-0 inset-x-0 z-20 px-4 py-3 text-white text-sm bg-gradient-to-t from-black/70 to-transparent">
+            {current.caption}
+          </div>
         )}
-
-        {/* Tap zones */}
-        <button
-          type="button"
-          className="absolute inset-y-0 left-0 w-1/3"
-          onClick={back}
-          aria-label="Anterior"
-        />
-        <button
-          type="button"
-          className="absolute inset-y-0 right-0 w-1/3"
-          onClick={advance}
-          aria-label="Próximo"
-        />
       </div>
-
-      {/* Caption */}
-      {current?.caption && (
-        <div className="px-4 py-3 text-white text-sm bg-black/40">{current.caption}</div>
-      )}
     </div>
   );
 }
