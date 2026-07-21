@@ -150,6 +150,9 @@ export type FeedItem = {
   id: string;
   author_id: string;
   author_username: string | null;
+  author_display_name: string | null;
+  author_avatar_url: string | null;
+  author_profile_kind: "paid" | "free" | null;
   caption: string | null;
   visibility: "public" | "paid" | "challenge";
   price_cents: number | null;
@@ -172,6 +175,7 @@ export type FeedItem = {
   is_owner: boolean;
   archived_at: string | null;
 };
+
 
 
 
