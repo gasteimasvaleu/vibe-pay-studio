@@ -21,6 +21,7 @@ import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
+import { Route as AuthenticatedPublicacoesAgendadasRouteImport } from './routes/_authenticated/publicacoes-agendadas'
 import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
 import { Route as AuthenticatedPostsarquivadosRouteImport } from './routes/_authenticated/postsarquivados'
@@ -151,6 +152,12 @@ const AuthenticatedPublisherRoute = AuthenticatedPublisherRouteImport.update({
   path: '/publisher',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPublicacoesAgendadasRoute =
+  AuthenticatedPublicacoesAgendadasRouteImport.update({
+    id: '/publicacoes-agendadas',
+    path: '/publicacoes-agendadas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPromotionsRoute = AuthenticatedPromotionsRouteImport.update({
   id: '/promotions',
   path: '/promotions',
@@ -572,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
+  '/publicacoes-agendadas': typeof AuthenticatedPublicacoesAgendadasRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/search': typeof AuthenticatedSearchRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
@@ -651,6 +659,7 @@ export interface FileRoutesByTo {
   '/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/promotion': typeof AuthenticatedPromotionRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
+  '/publicacoes-agendadas': typeof AuthenticatedPublicacoesAgendadasRoute
   '/publisher': typeof AuthenticatedPublisherRoute
   '/search': typeof AuthenticatedSearchRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
@@ -732,6 +741,7 @@ export interface FileRoutesById {
   '/_authenticated/postsarquivados': typeof AuthenticatedPostsarquivadosRoute
   '/_authenticated/promotion': typeof AuthenticatedPromotionRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
+  '/_authenticated/publicacoes-agendadas': typeof AuthenticatedPublicacoesAgendadasRoute
   '/_authenticated/publisher': typeof AuthenticatedPublisherRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
@@ -816,6 +826,7 @@ export interface FileRouteTypes {
     | '/postsarquivados'
     | '/promotion'
     | '/promotions'
+    | '/publicacoes-agendadas'
     | '/publisher'
     | '/search'
     | '/subscriptions'
@@ -895,6 +906,7 @@ export interface FileRouteTypes {
     | '/postsarquivados'
     | '/promotion'
     | '/promotions'
+    | '/publicacoes-agendadas'
     | '/publisher'
     | '/search'
     | '/subscriptions'
@@ -975,6 +987,7 @@ export interface FileRouteTypes {
     | '/_authenticated/postsarquivados'
     | '/_authenticated/promotion'
     | '/_authenticated/promotions'
+    | '/_authenticated/publicacoes-agendadas'
     | '/_authenticated/publisher'
     | '/_authenticated/search'
     | '/_authenticated/subscriptions'
@@ -1130,6 +1143,13 @@ declare module '@tanstack/react-router' {
       path: '/publisher'
       fullPath: '/publisher'
       preLoaderRoute: typeof AuthenticatedPublisherRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/publicacoes-agendadas': {
+      id: '/_authenticated/publicacoes-agendadas'
+      path: '/publicacoes-agendadas'
+      fullPath: '/publicacoes-agendadas'
+      preLoaderRoute: typeof AuthenticatedPublicacoesAgendadasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/promotions': {
@@ -1764,6 +1784,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPostsarquivadosRoute: typeof AuthenticatedPostsarquivadosRoute
   AuthenticatedPromotionRoute: typeof AuthenticatedPromotionRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
+  AuthenticatedPublicacoesAgendadasRoute: typeof AuthenticatedPublicacoesAgendadasRoute
   AuthenticatedPublisherRoute: typeof AuthenticatedPublisherRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
@@ -1815,6 +1836,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPostsarquivadosRoute: AuthenticatedPostsarquivadosRoute,
   AuthenticatedPromotionRoute: AuthenticatedPromotionRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
+  AuthenticatedPublicacoesAgendadasRoute:
+    AuthenticatedPublicacoesAgendadasRoute,
   AuthenticatedPublisherRoute: AuthenticatedPublisherRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
@@ -1887,13 +1910,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

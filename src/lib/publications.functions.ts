@@ -1290,3 +1290,122 @@ export const getChallengeStatus = createServerFn({ method: "POST" })
     };
   });
 
+// ============================================================================
+// Publicações agendadas: apenas do próprio usuário logado.
+// ============================================================================
+
+const getScheduledSchema = z.object({
+  limit: z.number().int().min(1).max(50).optional(),
+  cursor: z.string().datetime().optional(),
+});
+
+export type ScheduledPublicationItem = {
+  id: string;
+  caption: string | null;
+  visibility: "public" | "paid" | "challenge";
+  price_cents: number | null;
+  scheduled_at: string;
+  media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
+};
+
+export const getScheduledPublications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => getScheduledSchema.parse(d ?? {}))
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ items: ScheduledPublicationItem[]; nextCursor: string | null }> => {
+      const limit = data.limit ?? 20;
+      const nowIso = new Date().toISOString();
+
+      let query = context.supabase
+        .from("publications")
+        .select("id, caption, visibility, price_cents, scheduled_at")
+        .eq("author_id", context.userId)
+        .is("archived_at", null)
+        .not("scheduled_at", "is", null)
+        .gt("scheduled_at", nowIso)
+        .order("scheduled_at", { ascending: true })
+        .limit(limit + 1);
+
+      if (data.cursor) query = query.gt("scheduled_at", data.cursor);
+
+      const { data: pubs, error } = await query;
+      if (error) throw new Error(error.message);
+      const rows = (pubs ?? []) as Array<{
+        id: string;
+        caption: string | null;
+        visibility: string;
+        price_cents: number | null;
+        scheduled_at: string;
+      }>;
+
+      const page = rows.slice(0, limit);
+      const nextCursor =
+        rows.length > limit ? page[page.length - 1]?.scheduled_at ?? null : null;
+
+      if (page.length === 0) return { items: [], nextCursor: null };
+
+      const ids = page.map((p) => p.id);
+      const { data: mediaRows } = await context.supabase
+        .from("publication_media")
+        .select("id, publication_id, url, type, position")
+        .in("publication_id", ids)
+        .order("position", { ascending: true });
+
+      const items: ScheduledPublicationItem[] = page.map((p) => ({
+        id: p.id,
+        caption: p.caption,
+        visibility: p.visibility as ScheduledPublicationItem["visibility"],
+        price_cents: p.price_cents,
+        scheduled_at: p.scheduled_at,
+        media: (mediaRows ?? [])
+          .filter((m) => m.publication_id === p.id)
+          .map((m) => ({
+            id: m.id,
+            url: m.url,
+            type: m.type as "image" | "video",
+            position: m.position,
+          })),
+      }));
+
+      return { items, nextCursor };
+    },
+  );
+
+export const reschedulePublication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    publicationIdSchema.extend({ scheduledAt: z.string().datetime() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const when = new Date(data.scheduledAt);
+    if (when.getTime() <= Date.now()) {
+      throw new Error("A data agendada deve ser no futuro");
+    }
+    const iso = when.toISOString();
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ scheduled_at: iso, published_at: iso })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, scheduled_at: iso };
+  });
+
+export const publishScheduledNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => publicationIdSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertPublicationOwner(context.supabase, data.id, context.userId);
+    const nowIso = new Date().toISOString();
+    const { error } = await context.supabase
+      .from("publications")
+      .update({ scheduled_at: null, published_at: nowIso })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+

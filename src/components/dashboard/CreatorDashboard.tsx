@@ -3,6 +3,8 @@ import {
   BadgePercent,
   Bookmark,
   Bug,
+  Clock,
+
   FolderPlus,
   HelpCircle,
   Landmark,
@@ -192,11 +194,18 @@ export function CreatorDashboard({
             to="/vault"
           />
           <ActionCard
+            icon={<Clock className="h-5 w-5" />}
+            title="Agendados"
+            description="Veja e edite suas publicações agendadas"
+            to="/publicacoes-agendadas"
+          />
+          <ActionCard
             icon={<Radio className="h-5 w-5" />}
             title="Live (em breve)"
             description="Transmita ao vivo para assinantes"
             disabled
           />
+
           <ActionCard
             icon={<Bug className="h-5 w-5" />}
             title="Reportar bug"
