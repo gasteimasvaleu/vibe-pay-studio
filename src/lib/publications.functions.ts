@@ -256,10 +256,7 @@ export const getFeed = createServerFn({ method: "POST" })
         .select("id, publication_id, url, type, position")
         .in("publication_id", ids)
         .order("position", { ascending: true }),
-      client
-        .from("profiles")
-        .select("user_id, username")
-        .in("user_id", authorIds),
+      Promise.resolve({ data: [] as any[] }),
       client
         .from("publication_likes")
         .select("publication_id")
@@ -301,10 +298,13 @@ export const getFeed = createServerFn({ method: "POST" })
             data: [] as Array<{ publication_id: string; amount_cents: number; position: number }>,
           }),
     ]);
+    void profileRows;
 
-    const profileMap = new Map(
-      (profileRows ?? []).map((r) => [r.user_id, r.username]),
-    );
+    const identityMaps = await resolveCreatorIdentities(client, {
+      creatorProfileIds: page.map((p) => (p as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: authorIds,
+    });
+
     const likeCounts = new Map<string, number>();
     (likeRows ?? []).forEach((r) => {
       likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
