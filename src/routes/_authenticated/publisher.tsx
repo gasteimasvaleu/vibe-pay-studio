@@ -960,7 +960,7 @@ function PublisherPage() {
         <div className="max-w-3xl mx-auto px-4 py-3">
           {step === 1 ? (
             <Button
-              className="w-full h-12 rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+              className="w-full rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
               disabled={!canContinue}
               onClick={() => setStep(2)}
             >
@@ -970,7 +970,7 @@ function PublisherPage() {
             </Button>
           ) : (
             <Button
-              className="w-full h-12 rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+              className="w-full rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
               disabled={mutation.isPending || !canContinue}
               onClick={onPost}
             >
@@ -1488,7 +1488,7 @@ function StepCompose({
             variant="outline"
             onClick={onStartAudio}
             disabled={audio.status !== "idle" && audio.status !== "error"}
-            className="h-12 rounded-md bg-card"
+            className="rounded-md bg-card"
           >
             <Mic className="h-4 w-4 mr-2" />
             Gravar áudio
@@ -1857,7 +1857,7 @@ function ScheduleDialog({
         </Tabs>
         <Button
           onClick={handleApply}
-          className="w-full h-12 mt-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className="w-full mt-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Aplicar
         </Button>
@@ -2135,7 +2135,7 @@ function ChallengeTiersSheet({
           <Button
             onClick={handleConfirm}
             disabled={!valid}
-            className="w-full h-12 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold disabled:opacity-50"
+            className="w-full rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold disabled:opacity-50"
           >
             Confirmar
           </Button>

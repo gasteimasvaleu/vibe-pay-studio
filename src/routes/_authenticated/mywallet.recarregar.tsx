@@ -232,7 +232,7 @@ function RecarregarPage() {
             <Button
               onClick={handleContinue}
               disabled={loading || belowMin}
-              className="mt-10 w-full h-12 rounded-md bg-gradient-primary text-primary-foreground"
+              className="mt-10 w-full rounded-md bg-gradient-primary text-primary-foreground"
             >
               {loading ? (
                 <>

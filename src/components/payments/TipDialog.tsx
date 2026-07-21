@@ -218,7 +218,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
             <Button
               onClick={submit}
               disabled={disableSubmit}
-              className="w-full h-11 rounded-md bg-gradient-primary text-primary-foreground"
+              className="w-full rounded-md bg-gradient-primary text-primary-foreground"
             >
               {loading ? (
                 <>

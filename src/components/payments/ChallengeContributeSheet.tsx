@@ -229,7 +229,7 @@ export function ChallengeContributeSheet({
                 tiers.length === 0 ||
                 status?.myContributionCents != null
               }
-              className="w-full h-11 rounded-md font-semibold"
+              className="w-full rounded-md font-semibold"
             >
               {loading ? (
                 <>

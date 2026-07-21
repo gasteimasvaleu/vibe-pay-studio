@@ -164,7 +164,7 @@ function SettingsMyProfilePage() {
             type="button"
             variant="outline"
             onClick={handleCopyLink}
-            className="mt-2 h-11 px-6 rounded-md gap-2"
+            className="mt-2 px-6 rounded-md gap-2"
           >
             <Copy className="h-4 w-4" />
             Copiar meu link Monetisexy
@@ -231,7 +231,7 @@ function SettingsMyProfilePage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={deleting}
-                className="h-12 px-8 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="px-8 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {deleting ? "Excluindo…" : "Continuar"}
               </Button>

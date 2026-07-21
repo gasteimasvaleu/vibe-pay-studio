@@ -87,7 +87,7 @@ function LanguagePage() {
             type="button"
             onClick={onSave}
             disabled={!canSave}
-            className="w-full rounded-md h-12 text-base"
+            className="w-full rounded-md text-base"
           >
             Salvar
           </Button>

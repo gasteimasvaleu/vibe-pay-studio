@@ -297,7 +297,7 @@ export function CadastrarBancoForm({
         <Button
           type="button"
           variant="outline"
-          className="h-12 rounded-md"
+          className="rounded-md"
           onClick={onClose}
           disabled={loading}
         >
@@ -306,7 +306,7 @@ export function CadastrarBancoForm({
         <Button
           type="submit"
           disabled={loading || !kycVerified}
-          className="h-12 rounded-md bg-gradient-primary text-primary-foreground"
+          className="rounded-md bg-gradient-primary text-primary-foreground"
         >
           {loading ? "Salvando..." : "Salvar"}
         </Button>

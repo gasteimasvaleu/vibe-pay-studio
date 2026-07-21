@@ -155,7 +155,7 @@ function TwoFactorSetupPage() {
             variant="outline"
             onClick={copyCode}
             disabled={!secret}
-            className="h-12 rounded-md"
+            className="rounded-md"
           >
             Copiar Código
           </Button>
@@ -163,7 +163,7 @@ function TwoFactorSetupPage() {
             type="button"
             onClick={goNext}
             disabled={!factorId || loading}
-            className="h-12 rounded-md bg-gradient-primary text-primary-foreground"
+            className="rounded-md bg-gradient-primary text-primary-foreground"
           >
             Avançar
           </Button>

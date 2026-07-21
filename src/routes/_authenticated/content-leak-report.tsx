@@ -253,7 +253,7 @@ function ContentLeakReportPage() {
           <Button
             type="submit"
             disabled={!canSubmit}
-            className="h-12 w-full rounded-md text-base"
+            className="w-full rounded-md text-base"
           >
             {submitting ? (
               <span className="inline-flex items-center gap-2">
