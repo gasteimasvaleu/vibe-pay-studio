@@ -341,11 +341,19 @@ export const getFeed = createServerFn({ method: "POST" })
           type: m.type as "image" | "video",
           position: m.position,
         }));
+      const identity = pickIdentity(identityMaps, {
+        creator_profile_id: (p as { creator_profile_id: string | null }).creator_profile_id,
+        user_id: p.author_id,
+      });
       return {
         id: p.id,
         author_id: p.author_id,
-        author_username: profileMap.get(p.author_id) ?? null,
+        author_username: identity.username,
+        author_display_name: identity.display_name,
+        author_avatar_url: identity.avatar_url,
+        author_profile_kind: identity.kind,
         caption: p.caption,
+
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
