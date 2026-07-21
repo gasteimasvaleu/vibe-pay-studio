@@ -205,9 +205,10 @@ export const getFeed = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, preview_url",
+        "id, author_id, creator_profile_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, preview_url",
       )
       .in("author_id", allowedAuthors)
+
       .lte("published_at", new Date().toISOString())
       .is("archived_at", null)
       .order("pinned", { ascending: false })
