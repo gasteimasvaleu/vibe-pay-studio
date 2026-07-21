@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, account_type")
+      .select("username, account_type, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
     const username =
@@ -39,8 +39,9 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
       | "subscriber"
       | "creator"
       | "free_creator";
-    return { username, accountType };
+    return { username, accountType, avatarUrl: profile?.avatar_url ?? null };
   },
+
   component: SettingsCreatorPage,
 });
 
