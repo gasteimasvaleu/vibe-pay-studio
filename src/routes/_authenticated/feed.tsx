@@ -37,12 +37,14 @@ export const Route = createFileRoute("/_authenticated/feed")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("account_type, username")
+      .select("account_type, username, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
     return {
+      userId: user.id,
       username: profile?.username ?? user.email?.split("@")[0] ?? "voce",
       accountType: profile?.account_type ?? "subscriber",
+      avatarUrl: (profile?.avatar_url as string | null) ?? null,
     };
   },
   component: FeedPage,
