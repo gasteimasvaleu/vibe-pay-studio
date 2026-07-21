@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { ArrowLeft, Check } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, Check, KeyRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,20 @@ function ChangePasswordPage() {
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasPasswordProvider, setHasPasswordProvider] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!active) return;
+      const identities = data.user?.identities ?? [];
+      setHasPasswordProvider(identities.some((i) => i.provider === "email"));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const rules = useMemo(
     () => ({
@@ -40,11 +54,13 @@ function ChangePasswordPage() {
     [next],
   );
   const passwordValid = Object.values(rules).every(Boolean);
+  const sameAsCurrent = next.length > 0 && next === current;
 
   const canSubmit =
     current.length > 0 &&
     passwordValid &&
     confirm === next &&
+    !sameAsCurrent &&
     !loading;
 
   const canCancel =
@@ -52,6 +68,10 @@ function ChangePasswordPage() {
 
   const handleSave = async () => {
     if (!canSubmit || !email) return;
+    if (sameAsCurrent) {
+      toast.error("A nova senha deve ser diferente da atual.");
+      return;
+    }
     setLoading(true);
     try {
       const { error: reauthError } = await supabase.auth.signInWithPassword({
@@ -84,6 +104,7 @@ function ChangePasswordPage() {
     setConfirm("");
   };
 
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative z-10 border-b border-border bg-white">
@@ -104,48 +125,82 @@ function ChangePasswordPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3">
-        <PasswordField
-          value={current}
-          onChange={setCurrent}
-          placeholder="Senha atual"
-          autoComplete="current-password"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <PasswordField
-            value={next}
-            onChange={setNext}
-            placeholder="Nova Senha"
-            autoComplete="new-password"
-          />
-          <PasswordField
-            value={confirm}
-            onChange={setConfirm}
-            placeholder="Repetir a nova senha"
-            autoComplete="new-password"
-          />
-        </div>
+        {hasPasswordProvider === null ? (
+          <div className="rounded-2xl bg-muted h-14 animate-pulse" />
+        ) : hasPasswordProvider === false ? (
+          <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted grid place-items-center">
+              <KeyRound className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <h2 className="text-base font-semibold text-foreground">
+              Alteração de senha indisponível
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Você entrou com Google. Sua senha é gerenciada pela sua conta Google — altere-a diretamente lá.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                window.open("https://myaccount.google.com/security", "_blank", "noopener,noreferrer")
+              }
+            >
+              Abrir conta Google
+            </Button>
+          </div>
+        ) : (
+          <>
+            <PasswordField
+              value={current}
+              onChange={setCurrent}
+              placeholder="Senha atual"
+              autoComplete="current-password"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PasswordField
+                value={next}
+                onChange={setNext}
+                placeholder="Nova Senha"
+                autoComplete="new-password"
+              />
+              <PasswordField
+                value={confirm}
+                onChange={setConfirm}
+                placeholder="Repetir a nova senha"
+                autoComplete="new-password"
+              />
+            </div>
 
-        <PasswordRules rules={rules} />
+            {sameAsCurrent && (
+              <p className="text-xs text-destructive pl-1">
+                A nova senha deve ser diferente da atual.
+              </p>
+            )}
 
-        <div className="flex flex-col gap-3 pt-2">
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            {loading ? "Salvando…" : "Salvar"}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleCancel}
-            disabled={!canCancel}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Cancelar
-          </Button>
-        </div>
+            <PasswordRules rules={rules} />
+
+            <div className="flex flex-col gap-3 pt-2">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={!canSubmit}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {loading ? "Salvando…" : "Salvar"}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleCancel}
+                disabled={!canCancel}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </>
+        )}
       </main>
+
     </div>
   );
 }
