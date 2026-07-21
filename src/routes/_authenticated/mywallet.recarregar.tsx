@@ -90,10 +90,8 @@ function RecarregarPage() {
   };
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
-      <div className="absolute inset-0 bg-card" />
-
-      <header className="relative z-10 border-b border-border bg-card">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             onClick={() => (checkout ? setCheckout(null) : router.history.back())}
