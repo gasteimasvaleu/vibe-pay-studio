@@ -288,7 +288,7 @@ export const startPaidVideoCall = createServerFn({ method: "POST" })
         duration_minutes: duration,
         price_cents: price,
         status: "accepted",
-        payment_status: price > 0 ? "paid" : "waived",
+        payment_status: price > 0 ? "paid" : "paid",
         provider: "daily",
       })
       .select("id, status, payment_status, duration_minutes, price_cents")
@@ -317,7 +317,7 @@ export const joinVideoCall = createServerFn({ method: "POST" })
       throw new Error("not a participant");
     if (call.status === "completed" || call.status === "cancelled" || call.status === "declined")
       throw new Error("call is not active");
-    if (call.payment_status !== "paid" && call.payment_status !== "waived")
+    if (call.payment_status !== "paid" && call.payment_status !== "paid")
       throw new Error("call is not paid");
 
     const { dailyEnsureRoom, dailyCreateToken } = await import("./video-calls.server");
