@@ -146,6 +146,8 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
 export type StoryItem = {
   id: string;
   creator_id: string;
+  creator_username: string;
+  creator_avatar_url: string | null;
   media_type: "image" | "video";
   price_cents: number;
   caption: string | null;
