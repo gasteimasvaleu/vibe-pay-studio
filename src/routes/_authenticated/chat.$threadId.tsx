@@ -21,6 +21,8 @@ import { PriceDialog } from "@/components/chat/PriceDialog";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
+import { VideoCallHeaderButton } from "@/components/chat/VideoCallHeaderButton";
+
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -273,11 +275,18 @@ function ChatThreadView() {
         <div className="h-10 w-10 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
           {(data?.partner.username ?? "??").slice(0, 2).toUpperCase()}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="font-semibold truncate text-foreground">
             @{data?.partner.username ?? "…"}
           </div>
         </div>
+        {data?.partner && (
+          <VideoCallHeaderButton
+            partnerId={data.partner.userId}
+            partnerUsername={data.partner.username}
+          />
+        )}
+
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
