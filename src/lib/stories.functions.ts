@@ -184,23 +184,29 @@ async function signedFor(
 export const getCreatorStories = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ creatorId: z.string().uuid() }).parse(data),
+    z
+      .object({
+        creatorId: z.string().uuid(),
+        creatorProfileId: z.string().uuid().nullable().optional(),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }): Promise<StoryItem[]> => {
-    const { data: stories, error } = await context.supabase
+    let q = context.supabase
       .from("stories")
       .select(
-        "id, creator_id, media_path, thumb_path, media_type, price_cents, caption, published_at, expires_at",
+        "id, creator_id, creator_profile_id, media_path, thumb_path, media_type, price_cents, caption, published_at, expires_at",
       )
       .eq("creator_id", data.creatorId)
-      .gt("expires_at", new Date().toISOString())
-      .order("published_at", { ascending: true });
+      .gt("expires_at", new Date().toISOString());
+    if (data.creatorProfileId) q = q.eq("creator_profile_id", data.creatorProfileId);
+    const { data: stories, error } = await q.order("published_at", { ascending: true });
     if (error) throw new Error(error.message);
     if (!stories || stories.length === 0) return [];
 
     const ids = stories.map((s) => s.id);
     const isSelfCreator = data.creatorId === context.userId;
-    const [{ data: unlocks }, { data: views }, { data: profile }, { data: subRow }, { data: viewCounts }] = await Promise.all([
+    const [{ data: unlocks }, { data: views }, { data: subRow }, { data: viewCounts }] = await Promise.all([
       context.supabase
         .from("story_unlocks")
         .select("story_id")
@@ -212,11 +218,6 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         .select("story_id")
         .eq("viewer_id", context.userId)
         .in("story_id", ids),
-      context.supabase
-        .from("profiles")
-        .select("username, avatar_url")
-        .eq("user_id", data.creatorId)
-        .maybeSingle(),
       isSelfCreator
         ? Promise.resolve({ data: null as any })
         : context.supabase
@@ -235,15 +236,18 @@ export const getCreatorStories = createServerFn({ method: "GET" })
             .in("story_id", ids)
         : Promise.resolve({ data: [] as { story_id: string }[] }),
     ]);
+    const identityMaps = await resolveCreatorIdentities(context.supabase, {
+      creatorProfileIds: stories.map((s) => (s as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: [data.creatorId],
+    });
     const unlockedSet = new Set((unlocks ?? []).map((u) => u.story_id));
     const viewedSet = new Set((views ?? []).map((v) => v.story_id));
-    const creatorUsername = (profile?.username as string | undefined) ?? "creator";
-    const creatorAvatarUrl = (profile?.avatar_url as string | null | undefined) ?? null;
     const viewerIsSubscriber = isSelfCreator ? true : !!subRow;
     const viewCountMap = new Map<string, number>();
     for (const v of (viewCounts ?? []) as { story_id: string }[]) {
       viewCountMap.set(v.story_id, (viewCountMap.get(v.story_id) ?? 0) + 1);
     }
+
 
     const results: StoryItem[] = [];
     for (const s of stories) {
