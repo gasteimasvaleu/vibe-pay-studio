@@ -158,21 +158,8 @@ function FeedPage() {
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
-          {/* Welcome */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#1a0b2e]/90 via-[#2a1250]/90 to-[#1a0b2e]/90 backdrop-blur-xl p-6 md:p-8"
-          >
-            <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-fuchsia-500/30 blur-3xl" />
-            <p className="text-xs uppercase tracking-widest text-white/70">Feed</p>
-            <h1 className="mt-1 text-2xl md:text-3xl font-black tracking-tight">
-              Olá, @{username} 👋
-            </h1>
-            <p className="mt-2 text-sm text-white/80 max-w-md">
-              Aqui você acompanha o que os creators que você segue estão postando em tempo real.
-            </p>
-          </motion.section>
+
+
 
           {/* Stories */}
           <StoriesCarousel
