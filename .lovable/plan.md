@@ -1,19 +1,18 @@
-## Ajustar cores do dialog "Arquivar postagem"
+## Objetivo
+Ajustar o ícone de alerta exibido no dialog de confirmação de arquivar/desarquivar post para usar as cores padrão do app (roxo/lilás `primary`), em vez do âmbar atual.
 
-O dialog de confirmação em `src/components/feed/PublicationOptionsMenu.tsx` (também usado para "Desarquivar") tem o botão "Confirmar" com um gradiente laranja→rosa que não segue o design system do app.
+## Local
+- Arquivo: `src/components/feed/PublicationOptionsMenu.tsx`
+- Linha aproximada: 318
 
-### Mudança
+## Alteração proposta
+No elemento que envolve o ícone `AlertTriangle`, substituir as classes âmbar pelas cores do tema:
 
-No botão "Confirmar" (linha 337), trocar:
+- `bg-amber-100` → `bg-primary/10`
+- `text-amber-500` → `text-primary`
 
-```
-bg-gradient-to-r from-orange-400 via-orange-500 to-pink-400 text-white font-semibold shadow-lg shadow-orange-500/30 hover:opacity-95
-```
+Isso alinha o ícone ao padrão visual do app e mantém consistência com o botão "Confirmar" já ajustado anteriormente.
 
-pelo estilo padrão roxo do app usando tokens semânticos:
-
-```
-bg-primary text-primary-foreground font-semibold hover:bg-primary/90
-```
-
-Nada mais é alterado — o ícone de alerta (âmbar), o botão "Cancelar" (outline) e o texto continuam iguais.
+## Verificação
+- Revisar visualmente o dialog de arquivar post no preview para confirmar que o ícone aparece na cor roxa padrão.
+- Garantir que não haja regressão no layout ou contraste do dialog.
