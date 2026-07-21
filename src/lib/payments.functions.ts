@@ -355,6 +355,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
         .from("story_unlocks")
         .insert({
           story_id: story.id,
+          creator_id: story.creator_id,
           buyer_id: userId,
           amount_cents: story.price_cents,
           provider: providerTag,
@@ -362,6 +363,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
         })
         .select("id")
         .single();
+
       if (uErr) throw new Error(uErr.message);
       unlockId = inserted.id;
     }
