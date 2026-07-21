@@ -187,7 +187,7 @@ function ExtratoPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Popover open={itemOpen} onOpenChange={setItemOpen}>
             <PopoverTrigger asChild>

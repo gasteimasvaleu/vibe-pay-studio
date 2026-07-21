@@ -214,7 +214,7 @@ function MyWalletPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
         <section>
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] flex items-center gap-4">
             <div className="flex-1 min-w-0">
