@@ -144,17 +144,39 @@ export function StoryViewer({
     if (!current || unlocking) return;
     setUnlocking(true);
     try {
-      await walletPay({ data: { kind: "story_unlock", storyId: current.id } });
-      toast.success("Story desbloqueado!");
-      await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
-      await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-      onChanged();
+      if (selectedMethod === "WALLET") {
+        await walletPay({ data: { kind: "story_unlock", storyId: current.id } });
+        toast.success("Story desbloqueado!");
+        await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+        await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onChanged();
+      } else {
+        const res = await createStoryPayment({
+          data: { storyId: current.id, method: selectedMethod },
+        });
+        setCheckout({
+          paymentIntentId: res.paymentIntentId,
+          method: res.method,
+          pixQrCode: res.pixQrCode ?? null,
+          pixCopyPaste: res.pixCopyPaste ?? null,
+          invoiceUrl: res.invoiceUrl ?? null,
+        });
+      }
     } catch (e: any) {
       toast.error(translatePaymentError(e, "Falha ao desbloquear"));
     } finally {
       setUnlocking(false);
     }
   };
+
+  const handleCheckoutPaid = async () => {
+    setCheckout(null);
+    await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+    await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+    onChanged();
+    toast.success("Story desbloqueado!");
+  };
+
 
   const handleDelete = async () => {
     if (!current || deleting) return;
