@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
-import { ArrowLeft, Check } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, Check, KeyRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,20 @@ function ChangePasswordPage() {
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasPasswordProvider, setHasPasswordProvider] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!active) return;
+      const identities = data.user?.identities ?? [];
+      setHasPasswordProvider(identities.some((i) => i.provider === "email"));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const rules = useMemo(
     () => ({
@@ -40,11 +54,13 @@ function ChangePasswordPage() {
     [next],
   );
   const passwordValid = Object.values(rules).every(Boolean);
+  const sameAsCurrent = next.length > 0 && next === current;
 
   const canSubmit =
     current.length > 0 &&
     passwordValid &&
     confirm === next &&
+    !sameAsCurrent &&
     !loading;
 
   const canCancel =
@@ -52,6 +68,10 @@ function ChangePasswordPage() {
 
   const handleSave = async () => {
     if (!canSubmit || !email) return;
+    if (sameAsCurrent) {
+      toast.error("A nova senha deve ser diferente da atual.");
+      return;
+    }
     setLoading(true);
     try {
       const { error: reauthError } = await supabase.auth.signInWithPassword({
@@ -83,6 +103,7 @@ function ChangePasswordPage() {
     setNext("");
     setConfirm("");
   };
+
 
   return (
     <div className="min-h-screen bg-background">
