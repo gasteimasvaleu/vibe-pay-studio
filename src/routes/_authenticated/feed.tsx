@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { CircularSteps } from "@/components/feed/CircularSteps";
+import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
