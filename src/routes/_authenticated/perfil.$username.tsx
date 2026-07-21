@@ -176,6 +176,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
+        restrictFriendships: !!profile.restrict_friendships,
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
@@ -186,7 +187,9 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       videosCount: videosCount ?? 0,
       lockedCount: lockedCount ?? 0,
       likesCount: likesCount ?? 0,
+      followersCount,
     };
+
   },
 
 
