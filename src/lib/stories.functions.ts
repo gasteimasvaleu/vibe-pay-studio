@@ -255,11 +255,16 @@ export const getCreatorStories = createServerFn({ method: "GET" })
       const unlocked = isSelf || (s.price_cents ?? 0) === 0 || unlockedSet.has(s.id);
       const mediaUrl = unlocked ? await signedFor(context.supabase, s.media_path) : null;
       const thumbUrl = await signedFor(context.supabase, s.thumb_path ?? s.media_path);
+      const identity = pickIdentity(identityMaps, {
+        creator_profile_id: (s as { creator_profile_id: string | null }).creator_profile_id,
+        user_id: s.creator_id,
+      });
       results.push({
         id: s.id,
         creator_id: s.creator_id,
-        creator_username: creatorUsername,
-        creator_avatar_url: creatorAvatarUrl,
+        creator_username: identity.username ?? "creator",
+        creator_avatar_url: identity.avatar_url,
+
         media_type: s.media_type as "image" | "video",
         price_cents: s.price_cents ?? 0,
         caption: s.caption ?? null,
