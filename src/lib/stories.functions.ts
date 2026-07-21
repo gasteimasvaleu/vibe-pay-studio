@@ -189,7 +189,7 @@ export const getCreatorStories = createServerFn({ method: "GET" })
     if (!stories || stories.length === 0) return [];
 
     const ids = stories.map((s) => s.id);
-    const [{ data: unlocks }, { data: views }] = await Promise.all([
+    const [{ data: unlocks }, { data: views }, { data: profile }] = await Promise.all([
       context.supabase
         .from("story_unlocks")
         .select("story_id")
@@ -201,9 +201,16 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         .select("story_id")
         .eq("viewer_id", context.userId)
         .in("story_id", ids),
+      context.supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("user_id", data.creatorId)
+        .maybeSingle(),
     ]);
     const unlockedSet = new Set((unlocks ?? []).map((u) => u.story_id));
     const viewedSet = new Set((views ?? []).map((v) => v.story_id));
+    const creatorUsername = (profile?.username as string | undefined) ?? "creator";
+    const creatorAvatarUrl = (profile?.avatar_url as string | null | undefined) ?? null;
 
     const results: StoryItem[] = [];
     for (const s of stories) {
@@ -214,6 +221,8 @@ export const getCreatorStories = createServerFn({ method: "GET" })
       results.push({
         id: s.id,
         creator_id: s.creator_id,
+        creator_username: creatorUsername,
+        creator_avatar_url: creatorAvatarUrl,
         media_type: s.media_type as "image" | "video",
         price_cents: s.price_cents ?? 0,
         caption: s.caption ?? null,
