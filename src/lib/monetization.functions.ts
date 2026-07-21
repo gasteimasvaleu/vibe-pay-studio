@@ -10,41 +10,68 @@ const PLAN_DAYS: Record<Plan, number> = {
 };
 
 /**
- * Cria/renova a assinatura de um criador.
- * Sem gateway real: cria como `pending` (provider='manual').
- * Para simular pagamento imediato, chame `activateSubscription`.
+ * Resolve o creator_profile alvo a partir de (creatorProfileId | creatorId).
+ * Sempre retorna a linha completa de creator_profiles.
+ */
+async function resolveTargetProfile(
+  supabase: any,
+  input: { creatorProfileId?: string; creatorId?: string },
+) {
+  if (input.creatorProfileId) {
+    const { data, error } = await supabase
+      .from("creator_profiles")
+      .select("id, user_id, kind, price_monthly, discount_quarterly, discount_semiannual")
+      .eq("id", input.creatorProfileId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+  if (input.creatorId) {
+    // Fallback: procura o perfil pago vinculado ao user_id. Se só existir free, retorna o free.
+    const { data, error } = await supabase
+      .from("creator_profiles")
+      .select("id, user_id, kind, price_monthly, discount_quarterly, discount_semiannual")
+      .eq("user_id", input.creatorId);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as any[];
+    return rows.find((r) => r.kind === "paid") ?? rows[0] ?? null;
+  }
+  return null;
+}
+
+/**
+ * Cria/renova assinatura de um creator.
+ * Bloqueia perfis kind='free' (não vendem assinatura).
  */
 export const subscribeToCreator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string; plan?: Plan }) => ({
+  .inputValidator((data: { creatorId?: string; creatorProfileId?: string; plan?: Plan }) => ({
     creatorId: data.creatorId,
+    creatorProfileId: data.creatorProfileId,
     plan: (data.plan ?? "monthly") as Plan,
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    if (userId === data.creatorId) {
+    const target = await resolveTargetProfile(supabase, data);
+    if (!target) throw new Error("Perfil de criador não encontrado.");
+    if (target.user_id === userId) {
       throw new Error("Você não pode assinar seu próprio perfil.");
     }
-
-    const { data: creator, error: creatorError } = await supabase
-      .from("profiles")
-      .select("price_monthly, discount_quarterly, discount_semiannual")
-      .eq("user_id", data.creatorId)
-      .maybeSingle();
-
-    if (creatorError) throw new Error(creatorError.message);
-    if (!creator?.price_monthly) {
+    if (target.kind === "free") {
+      throw new Error("Este perfil é gratuito e não vende assinatura.");
+    }
+    if (!target.price_monthly || Number(target.price_monthly) <= 0) {
       throw new Error("Este criador ainda não configurou o preço da assinatura.");
     }
 
-    const monthlyCents = Math.round(Number(creator.price_monthly) * 100);
+    const monthlyCents = Math.round(Number(target.price_monthly) * 100);
     let priceCents = monthlyCents;
     if (data.plan === "quarterly") {
-      const pct = creator.discount_quarterly ?? 0;
+      const pct = target.discount_quarterly ?? 0;
       priceCents = Math.round(monthlyCents * 3 * (1 - pct / 100));
     } else if (data.plan === "semiannual") {
-      const pct = creator.discount_semiannual ?? 0;
+      const pct = target.discount_semiannual ?? 0;
       priceCents = Math.round(monthlyCents * 6 * (1 - pct / 100));
     }
 
@@ -55,7 +82,8 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
-        creator_id: data.creatorId,
+        creator_id: target.user_id,
+        creator_profile_id: target.id,
         plan: data.plan,
         price_cents_paid: priceCents,
         status: "pending",
@@ -69,10 +97,6 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
     return { id: sub.id, priceCents, plan: data.plan };
   });
 
-/**
- * Marca uma assinatura como `active` (simula callback de pagamento).
- * O trigger no banco cria automaticamente a `transaction` correspondente.
- */
 export const activateSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { subscriptionId: string }) => data)
@@ -88,9 +112,6 @@ export const activateSubscription = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/**
- * Desativa renovação automática. Mantém acesso até o fim do ciclo pago.
- */
 export const cancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { subscriptionId: string }) => data)
@@ -108,6 +129,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
 export type MySubscription = {
   id: string;
   creatorId: string;
+  creatorProfileId: string | null;
   creatorUsername: string | null;
   creatorDisplayName: string | null;
   creatorAvatarUrl: string | null;
@@ -120,44 +142,52 @@ export type MySubscription = {
   startedAt: string;
 };
 
-/**
- * Lista assinaturas do usuário logado com dados do creator.
- */
 export const listMySubscriptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MySubscription[]> => {
     const { supabase, userId } = context;
     const { data: subs, error } = await supabase
       .from("subscriptions")
-      .select("id, creator_id, plan, price_cents_paid, status, auto_renew, current_period_end, started_at")
+      .select(
+        "id, creator_id, creator_profile_id, plan, price_cents_paid, status, auto_renew, current_period_end, started_at",
+      )
       .eq("subscriber_id", userId)
       .order("started_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = subs ?? [];
     if (!rows.length) return [];
 
+    const cpIds = Array.from(
+      new Set(rows.map((r) => r.creator_profile_id).filter(Boolean) as string[]),
+    );
     const creatorIds = Array.from(new Set(rows.map((r) => r.creator_id as string)));
-    const { data: profs, error: profError } = await supabase
-      .from("profiles")
-      .select("user_id, username, display_name, avatar_url, account_type")
-      .in("user_id", creatorIds);
-    if (profError) throw new Error(profError.message);
 
-    const byId = Object.fromEntries((profs ?? []).map((p) => [p.user_id as string, p]));
+    const [cpRes, profRes] = await Promise.all([
+      cpIds.length
+        ? supabase
+            .from("creator_profiles")
+            .select("id, username, display_name, avatar_url, kind")
+            .in("id", cpIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabase
+        .from("profiles")
+        .select("user_id, username, display_name, avatar_url, account_type")
+        .in("user_id", creatorIds),
+    ]);
+
+    const byCp = Object.fromEntries(((cpRes as any).data ?? []).map((r: any) => [r.id, r]));
+    const byUid = Object.fromEntries(((profRes as any).data ?? []).map((r: any) => [r.user_id, r]));
 
     return rows.map((r) => {
-      const p = byId[r.creator_id as string] as {
-        username?: string | null;
-        display_name?: string | null;
-        avatar_url?: string | null;
-        account_type?: string | null;
-      } | undefined;
+      const cp = r.creator_profile_id ? byCp[r.creator_profile_id as string] : undefined;
+      const p = byUid[r.creator_id as string];
       return {
         id: r.id as string,
         creatorId: r.creator_id as string,
-        creatorUsername: p?.username ?? null,
-        creatorDisplayName: p?.display_name ?? null,
-        creatorAvatarUrl: p?.avatar_url ?? null,
+        creatorProfileId: (r.creator_profile_id as string) ?? null,
+        creatorUsername: cp?.username ?? p?.username ?? null,
+        creatorDisplayName: cp?.display_name ?? p?.display_name ?? null,
+        creatorAvatarUrl: cp?.avatar_url ?? p?.avatar_url ?? null,
         creatorAccountType: p?.account_type ?? null,
         plan: r.plan as string,
         priceCents: r.price_cents_paid ?? 0,
@@ -170,19 +200,45 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
   });
 
 /**
- * Lista assinantes ativos do criador logado (para /follow).
+ * Lista assinantes ativos do PERFIL ATIVO do criador logado.
+ * Perfis kind='free' nunca têm assinantes.
  */
 export const listMySubscribers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: subs, error } = await supabase
+
+    // Resolve o creator_profile ativo.
+    const [profRes, cpRes] = await Promise.all([
+      supabase.from("profiles").select("active_profile_id").eq("user_id", userId).maybeSingle(),
+      supabase.from("creator_profiles").select("id, kind").eq("user_id", userId),
+    ]);
+    const cps = ((cpRes.data ?? []) as any[]);
+    const activeId = profRes.data?.active_profile_id ?? null;
+    const active =
+      cps.find((r) => r.id === activeId) ??
+      cps.find((r) => r.kind === "paid") ??
+      cps[0] ??
+      null;
+
+    // Perfil gratuito não tem assinantes.
+    if (!active || active.kind === "free") return [];
+
+    let query = supabase
       .from("subscriptions")
-      .select("id, subscriber_id, plan, price_cents_paid, started_at, current_period_end, status")
-      .eq("creator_id", userId)
+      .select(
+        "id, subscriber_id, creator_profile_id, plan, price_cents_paid, started_at, current_period_end, status",
+      )
       .in("status", ["active", "cancelled"])
       .gt("current_period_end", new Date().toISOString())
       .order("started_at", { ascending: false });
+
+    // Escopa ao perfil ativo se houver, senão cai para user_id (legado).
+    query = active.id
+      ? query.eq("creator_profile_id", active.id)
+      : query.eq("creator_id", userId);
+
+    const { data: subs, error } = await query;
     if (error) throw new Error(error.message);
     const rows = subs ?? [];
     if (!rows.length) return [];
@@ -210,12 +266,6 @@ export const listMySubscribers = createServerFn({ method: "GET" })
     });
   });
 
-
-/**
- * Envia um mimo (gorjeta) ao criador em um post opcional.
- * Sem gateway real: cria como `paid` no modo manual para já refletir no dashboard.
- * Quando o PSP for integrado, muda para `pending` e o webhook faz virar `paid`.
- */
 export const tipCreator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { creatorId: string; amountCents: number; message?: string; publicationId?: string }) => {
@@ -253,11 +303,6 @@ export const tipCreator = createServerFn({ method: "POST" })
     return { id: tip.id };
   });
 
-/**
- * Desbloqueia uma publicação paga.
- * Sem gateway real: registra `paid` no modo manual; trigger cria a `transaction`
- * e a garantia de 60 dias de acesso.
- */
 export const unlockPublication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { publicationId: string }) => data)
@@ -296,63 +341,70 @@ export const unlockPublication = createServerFn({ method: "POST" })
   });
 
 /**
- * Seguir um creator (grátis, independente de assinatura).
+ * Seguir um creator. Aceita creatorProfileId (preferido) ou creatorId (legado
+ * = perfil pago do usuário).
  */
 export const followCreator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string }) => data)
+  .inputValidator((data: { creatorId?: string; creatorProfileId?: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (userId === data.creatorId) {
+    const target = await resolveTargetProfile(supabase, data);
+    if (!target) throw new Error("Perfil não encontrado.");
+    if (target.user_id === userId) {
       throw new Error("Você não pode seguir a si mesmo.");
     }
     const { error } = await supabase
       .from("follows")
       .upsert(
-        { follower_id: userId, followee_id: data.creatorId },
-        { onConflict: "follower_id,followee_id", ignoreDuplicates: true },
+        {
+          follower_id: userId,
+          followee_id: target.user_id,
+          creator_profile_id: target.id,
+        },
+        { onConflict: "follower_id,followee_id,creator_profile_id", ignoreDuplicates: true },
       );
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, creatorProfileId: target.id };
   });
 
-/**
- * Deixar de seguir um creator. Não afeta assinaturas.
- */
 export const unfollowCreator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string }) => data)
+  .inputValidator((data: { creatorId?: string; creatorProfileId?: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase
+    const target = await resolveTargetProfile(supabase, data);
+    if (!target) throw new Error("Perfil não encontrado.");
+    let q = supabase
       .from("follows")
       .delete()
       .eq("follower_id", userId)
-      .eq("followee_id", data.creatorId);
+      .eq("followee_id", target.user_id);
+    // Apaga tanto a linha específica do perfil quanto qualquer legado sem creator_profile_id.
+    q = q.or(`creator_profile_id.eq.${target.id},creator_profile_id.is.null`);
+    const { error } = await q;
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 /**
- * Assinatura gratuita para creators com price_monthly = 0/null.
- * Cria assinatura ativa com valor zero.
+ * Assinatura gratuita (para creators com price_monthly = 0/null).
+ * Só permitida em perfis pagos que optaram por não cobrar; nunca em kind='free'.
  */
 export const subscribeFree = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string }) => data)
+  .inputValidator((data: { creatorId?: string; creatorProfileId?: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (userId === data.creatorId) {
+    const target = await resolveTargetProfile(supabase, data);
+    if (!target) throw new Error("Perfil não encontrado.");
+    if (target.user_id === userId) {
       throw new Error("Você não pode assinar seu próprio perfil.");
     }
-
-    const { data: creator, error: creatorError } = await supabase
-      .from("profiles")
-      .select("price_monthly")
-      .eq("user_id", data.creatorId)
-      .maybeSingle();
-    if (creatorError) throw new Error(creatorError.message);
-    if (creator?.price_monthly && Number(creator.price_monthly) > 0) {
+    if (target.kind === "free") {
+      throw new Error("Este perfil é gratuito e não vende assinatura.");
+    }
+    if (target.price_monthly && Number(target.price_monthly) > 0) {
       throw new Error("Este creator possui assinatura paga.");
     }
 
@@ -363,7 +415,8 @@ export const subscribeFree = createServerFn({ method: "POST" })
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
-        creator_id: data.creatorId,
+        creator_id: target.user_id,
+        creator_profile_id: target.id,
         plan: "monthly",
         price_cents_paid: 0,
         status: "active",
@@ -374,5 +427,3 @@ export const subscribeFree = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-
-
