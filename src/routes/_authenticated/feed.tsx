@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/feed")({
 });
 
 function FeedPage() {
-  const { username } = Route.useRouteContext();
+  const { username, userId, accountType, avatarUrl } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
