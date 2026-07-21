@@ -122,7 +122,7 @@ function TwoFactorPage() {
           {!loading && !isActive ? (
             <Link
               to="/settings/two-factor/setup"
-              className="flex items-center justify-center w-full h-12 rounded-md bg-gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              className="flex items-center justify-center w-full h-9 rounded-md bg-gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
             >
               Habilitar
             </Link>
@@ -149,7 +149,7 @@ function TwoFactorPage() {
               variant="destructive"
               onClick={() => setConfirmOpen(true)}
               disabled={busy}
-              className="w-full h-12 rounded-md"
+              className="w-full h-9 rounded-md"
             >
               Remover 2FA
             </Button>

@@ -254,7 +254,7 @@ function CreatorGatedNotFound() {
 
           <Link
             to="/creator/onboarding/assinatura"
-            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
+            className="mt-7 inline-flex w-full items-center justify-center h-9 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
           >
             Criar perfil de creator
           </Link>
@@ -778,7 +778,7 @@ function PerfilPage() {
                   setTipPubId(undefined);
                   setTipOpen(true);
                 }}
-                className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="h-9 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
                 <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <DollarSign className="h-4 w-4" strokeWidth={1.75} />
@@ -788,7 +788,7 @@ function PerfilPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/chat" })}
-                className="h-10 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="h-9 flex items-center justify-center gap-3 rounded-2xl bg-secondary border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
                 <span className="h-7 w-7 rounded-full border border-black grid place-items-center">
                   <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
@@ -1073,7 +1073,7 @@ function PlanPill({
     <button
       type="button"
       onClick={onClick}
-      className="w-full h-12 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
+      className="w-full h-9 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
     >
       <span>{label}</span>
       <span>{price}</span>
@@ -1218,7 +1218,7 @@ function SubscriptionOfferCard({
       <button
         type="button"
         onClick={onSubscribe}
-        className="w-full h-11 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
+        className="w-full h-9 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
       >
         Assinar agora {format(promotion.promoPrice)}
       </button>

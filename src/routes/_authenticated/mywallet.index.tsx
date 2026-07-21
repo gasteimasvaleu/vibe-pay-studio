@@ -373,7 +373,7 @@ function MyWalletPage() {
                     <Button
                       onClick={() => addCardMut.mutate()}
                       disabled={addCardMut.isPending}
-                      className="h-11 px-8 rounded-md bg-gradient-primary text-primary-foreground"
+                      className="h-9 px-8 rounded-md bg-gradient-primary text-primary-foreground"
                     >
                       {addCardMut.isPending ? (
                         <>

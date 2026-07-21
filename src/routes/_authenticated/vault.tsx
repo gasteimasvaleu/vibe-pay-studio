@@ -1001,14 +1001,14 @@ function VaultPage() {
                       items: pickedItems.map((i) => ({ source: i.source, id: i.id })),
                     })
                   }
-                  className="h-11 px-8 rounded-full border-2 border-border text-muted-foreground font-semibold transition-colors enabled:bg-primary enabled:text-primary-foreground enabled:border-primary enabled:hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 px-8 rounded-full border-2 border-border text-muted-foreground font-semibold transition-colors enabled:bg-primary enabled:text-primary-foreground enabled:border-primary enabled:hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {createCatMut.isPending ? "Criando…" : "Confirmar"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setAddCategoryOpen(false)}
-                  className="h-11 px-8 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
+                  className="h-9 px-8 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
                 >
                   Cancelar
                 </button>
@@ -1113,7 +1113,7 @@ function VaultPage() {
                     setPickerSelected(new Set());
                     setDialogView("form");
                   }}
-                  className="h-11 px-6 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
+                  className="h-9 px-6 rounded-full border-2 border-foreground/80 text-foreground font-semibold hover:bg-accent transition-colors"
                 >
                   Cancelar
                 </button>
@@ -1142,7 +1142,7 @@ function VaultPage() {
                     setPickedItems(merged);
                     setDialogView("form");
                   }}
-                  className="h-11 px-8 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                  className="h-9 px-8 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
                 >
                   Concluído{pickerSelected.size > 0 ? ` (${pickerSelected.size})` : ""}
                 </button>
@@ -1433,7 +1433,7 @@ function EnviosEmpty({ onUpload, uploading }: { onUpload: () => void; uploading:
           type="button"
           disabled={uploading}
           onClick={onUpload}
-          className="h-10 px-4 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+          className="h-9 px-4 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
         >
           <Upload className="h-4 w-4" />
           {uploading ? "Enviando..." : "Enviar arquivos"}
