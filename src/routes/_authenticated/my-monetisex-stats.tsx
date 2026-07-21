@@ -175,9 +175,8 @@ function MyMonetisexyStatsPage() {
   const isFreeMode = mode?.activeView === "free";
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
-      <div className="absolute inset-0 bg-card" />
-      <header className="sticky top-0 z-20 border-b border-border bg-card">
+    <div className="min-h-screen text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             onClick={() => router.history.back()}
@@ -191,7 +190,8 @@ function MyMonetisexyStatsPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
+
         {isFreeMode ? (
           <FreeProfileStatsNotice />
         ) : (
