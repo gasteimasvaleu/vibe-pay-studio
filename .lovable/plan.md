@@ -1,18 +1,26 @@
-## Objetivo
-Ajustar o ícone de alerta exibido no dialog de confirmação de arquivar/desarquivar post para usar as cores padrão do app (roxo/lilás `primary`), em vez do âmbar atual.
+## Alteração
 
-## Local
-- Arquivo: `src/components/feed/PublicationOptionsMenu.tsx`
-- Linha aproximada: 318
+No array `steps` em `src/routes/_authenticated/feed.tsx` (linhas 202-224), substituir os 3 passos atuais pelos 5 passos dos screenshots:
 
-## Alteração proposta
-No elemento que envolve o ícone `AlertTriangle`, substituir as classes âmbar pelas cores do tema:
+1. **Passo 1 — Você chegou!**
+   "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar."
 
-- `bg-amber-100` → `bg-primary/10`
-- `text-amber-500` → `text-primary`
+2. **Passo 2 — Em Alta**
+   "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais."
 
-Isso alinha o ícone ao padrão visual do app e mantém consistência com o botão "Confirmar" já ajustado anteriormente.
+3. **Passo 3 — Conheça o Mural**
+   "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais."
 
-## Verificação
-- Revisar visualmente o dialog de arquivar post no preview para confirmar que o ícone aparece na cor roxa padrão.
-- Garantir que não haja regressão no layout ou contraste do dialog.
+4. **Passo 4 — Se interessou?**
+   "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles."
+
+5. **Passo 5 — Assinou?**
+   "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador."
+
+## Imagens (`src`)
+
+Os screenshots enviados são referências do produto Privacy (marca concorrente) e não devem ser embutidos como assets do app. Manter `src: "/placeholder.svg"` nos 5 passos até você fornecer imagens próprias.
+
+## Escopo
+
+Somente edição do array `steps` em `feed.tsx`. Nenhuma alteração em `CircularSteps.tsx` ou lógica.
