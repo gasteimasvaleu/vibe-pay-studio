@@ -139,12 +139,21 @@ export function CreatorDashboard({
             />
           )}
           {variant === "creator" && (
-            <ActionCard
-              icon={<UserPlus className="h-5 w-5" />}
-              title="Perfil Gratuito"
-              description="Seu perfil gratuito no ar em um clique."
-              to="/criar-perfil-gratuito"
-            />
+            freeProfileEnabled ? (
+              <ActionCard
+                icon={<UserPlus className="h-5 w-5" />}
+                title="Perfil Gratuito"
+                description="Você já tem um perfil gratuito ativo"
+                disabled
+              />
+            ) : (
+              <ActionCard
+                icon={<UserPlus className="h-5 w-5" />}
+                title="Perfil Gratuito"
+                description="Seu perfil gratuito no ar em um clique."
+                to="/criar-perfil-gratuito"
+              />
+            )
           )}
           <ActionCard
             icon={<LineChart className="h-5 w-5" />}
