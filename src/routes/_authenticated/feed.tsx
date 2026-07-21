@@ -205,35 +205,35 @@ function FeedPage() {
                     title: "Você chegou!",
                     description:
                       "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar.",
-                    src: "/placeholder.svg",
+                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622024885_9b463187_1784622025991_241a55cc.png",
                   },
                   {
                     subtitle: "Passo 2",
                     title: "Em Alta",
                     description:
                       "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais.",
-                    src: "/placeholder.svg",
+                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622105669_f17e2279_1784622106666_13d91818.png",
                   },
                   {
                     subtitle: "Passo 3",
                     title: "Conheça o Mural",
                     description:
                       "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais.",
-                    src: "/placeholder.svg",
+                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622441232_336327f6_1784622442736_9e654942.png",
                   },
                   {
                     subtitle: "Passo 4",
                     title: "Se interessou?",
                     description:
                       "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles.",
-                    src: "/placeholder.svg",
+                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622583046_6307d7aa_1784622584052_e08a8ea3.png",
                   },
                   {
                     subtitle: "Passo 5",
                     title: "Assinou?",
                     description:
                       "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador.",
-                    src: "/placeholder.svg",
+                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622801840_727ff900_1784622802895_bfe312fe.png",
                   },
                 ]}
               />
