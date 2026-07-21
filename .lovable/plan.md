@@ -1,39 +1,55 @@
-## Diagnóstico (confirmado via logs)
+## Objetivo
 
-O polling do frontend está funcionando, mas o Veriff está devolvendo `{"status":"success","verification":null}` no endpoint `/v1/sessions/{id}/decision` — ou seja, **a decisão em nível de sessão ainda não foi emitida**, mesmo com Attempt #1 marcado como APPROVED no painel. O fallback `/v1/sessions/{id}` retorna 404 (endpoint inválido nessa API). Resultado: a página fica presa em "processing".
+Criar uma página neutra para ser configurada como **Callback URL** no painel do Veriff. Ela apenas informa que a verificação está em andamento e instrui o usuário a fechar a aba — a aba original do app (em `/creator/onboarding/documentos/verificando`) continua fazendo polling e redireciona sozinha para `/aprovado` quando o webhook Decision chegar.
 
-Nos webhooks recebidos (screenshot) só aparecem eventos de tipo **Event** (`started`, `submitted`). O **Decision webhook** (o único que dispara `approved`) não foi entregue — ou porque a URL de Decision webhook não está configurada no painel Veriff, ou porque a sessão ainda não foi finalizada no lado deles.
+Assim não há duplicidade: o Veriff manda o usuário para uma tela de "fim de fluxo Veriff", e o app resolve o restante na aba de origem.
 
-## O que corrigir
+## Fluxo final
 
-### 1. Consultar o endpoint de attempts (fix principal, código)
-
-Adicionar em `src/lib/onboarding.functions.ts` → `fetchVeriffStatus` um terceiro fallback antes de desistir:
-
-```
-GET https://stationapi.veriff.com/v1/sessions/{sessionId}/attempts
-```
-
-Cada item tem `status` (`approved`, `declined`, `resubmission_requested`, `expired`, `abandoned`, `submitted`, `started`). Pegar o attempt mais recente (por `updatedAt`/`createdAt`) e mapear via `veriffStatusMap` já existente. Isso destrava contas onde o admin aprovou um attempt manualmente antes da decisão de sessão ser publicada.
-
-Trocar também o fallback quebrado `/v1/sessions/{id}` (que retorna 404) por esse endpoint de attempts — remove o log de erro em loop.
-
-### 2. Ação manual no painel Veriff (fora do código)
-
-Confirmar em Veriff → Integrations → Webhooks que existe uma URL cadastrada para o tipo **Decision** (não só **Event**), apontando para:
-
-```
-https://monetisexy.com/api/public/webhooks/veriff-decision
+```text
+Aba app                                Aba Veriff (popup/redirect)
+────────                                ────────────────────────
+/documentos/index  ──cria sessão──►
+/documentos/verificando  (polling)      Veriff faz selfie/docs
+                                        ↓ conclui
+                                        Callback URL do Veriff:
+                                        /creator/onboarding/documentos/veriff-concluido
+                                        "Pode fechar esta janela"
+                                        ↓ usuário fecha
+/documentos/verificando (segue polling)
+   webhook Decision chega ► kyc_status = verified
+/documentos/aprovado  ← navegação automática pelo polling
 ```
 
-Sem isso, mesmo quando a decisão sair, o app só descobre por polling.
+## Mudanças
 
-### 3. Destravar a conta atual
+1. **Nova rota** `src/routes/_authenticated/creator.onboarding.documentos.veriff-concluido.tsx`
+   - Rota autenticada (o usuário já está logado; o Veriff só redireciona no mesmo browser).
+   - `head()` com `title: "Verificação enviada · Monetisexy"` e `robots: noindex`.
+   - UI minimalista dentro do `OnboardingShell` (ou layout simples), com:
+     - Ícone de check/relógio.
+     - Título: "Verificação enviada com sucesso"
+     - Texto: "Recebemos seus documentos e estamos analisando. Pode fechar esta janela — vamos avisar no app assim que estiver tudo pronto."
+     - Botão primário: **"Fechar esta janela"** → `window.close()`.
+     - Fallback (caso o browser bloqueie `window.close()` porque a aba não foi aberta por script): botão secundário **"Voltar ao painel"** → navega para `/dashboard` na própria aba.
+   - Nenhuma chamada de servidor. A página é puramente informativa; o status real é resolvido em `/verificando` e via webhook.
 
-Após o deploy, o próprio polling da página vai encontrar o attempt `approved` e promover a conta. Se quiser destravar imediatamente sem esperar, uso `adminRefreshKyc` (já existe) no dashboard admin com o `userId` afetado — ele vai passar pelo mesmo caminho corrigido.
+2. **Ajuste do `return_url` enviado ao Veriff** em `src/routes/_authenticated/creator.onboarding.documentos.index.tsx`
+   - Trocar `const returnUrl = \`${window.location.origin}/creator/onboarding/documentos/verificando\`;`
+     por `const returnUrl = \`${window.location.origin}/creator/onboarding/documentos/veriff-concluido\`;`
+   - Continuamos navegando na aba do app para `/creator/onboarding/documentos/verificando` logo após criar a sessão (linha 42), sem mudança — é ela que segue com o polling.
 
-## Arquivos afetados
+3. **Painel do Veriff (configuração manual, fora do código)**
+   - Callback URL: `https://monetisexy.com/creator/onboarding/documentos/veriff-concluido`
+   - Decision Webhook: `https://monetisexy.com/api/public/webhooks/veriff-decision` (já configurado com domínio próprio).
 
-- `src/lib/onboarding.functions.ts` — adicionar consulta a `/attempts`, remover fallback quebrado `/v1/sessions/{id}`.
+## O que NÃO muda
 
-Sem mudanças de schema, sem mudanças de UI.
+- `/documentos/verificando` continua idêntica (polling + fallback "Verificar agora" + botão "Voltar ao painel").
+- `/documentos/aprovado` continua idêntica (idempotente, chama `completeOnboarding`).
+- `createIdentityVerificationSession`, `getKycStatus`, webhook `veriff-decision.ts`, `applyKycTransition` — nenhum ajuste no servidor.
+
+## Notas técnicas
+
+- `window.close()` só funciona de forma confiável quando a aba foi aberta por `window.open()`. Se o Veriff foi aberto por redirect na mesma aba, `close()` é ignorado — por isso o botão fallback "Voltar ao painel" leva para `/dashboard`. Nesse caso o usuário continua no app e o polling em `/verificando` (se ainda aberto em outra aba) resolve; se não houver aba com `/verificando`, o próximo carregamento de `/dashboard` já reflete o status (o webhook Decision atualiza `kyc_status` no banco).
+- Rota autenticada é OK: o cookie de sessão do Supabase é compartilhado entre abas do mesmo domínio, então o retorno do Veriff no mesmo browser mantém login.
