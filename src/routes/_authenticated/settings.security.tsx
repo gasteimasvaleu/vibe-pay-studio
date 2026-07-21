@@ -84,15 +84,17 @@ function SecurityPage() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => toast.info("Em breve")}
-                className="flex items-center justify-center gap-2 rounded-md bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors"
+                disabled={p.comingSoon}
+                onClick={() => toast.info(p.comingSoon ? "Em breve" : "Em breve")}
+                className="flex items-center justify-center gap-2 rounded-md bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-background/60"
               >
                 {p.icon}
                 <span>
-                  {p.name} · {p.connected ? "conectado" : "não conectado"}
+                  {p.name} · {p.comingSoon ? "Em breve" : p.connected ? "conectado" : "não conectado"}
                 </span>
               </button>
             ))}
+
           </div>
         </div>
       </main>
