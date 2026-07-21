@@ -266,7 +266,7 @@ function BancoPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Cards de saldo */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
