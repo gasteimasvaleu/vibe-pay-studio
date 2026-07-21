@@ -332,7 +332,7 @@ function PersonalPage() {
             type="button"
             onClick={handleSave}
             disabled={!dirty || saving}
-            className="w-full h-12 rounded-md text-base font-semibold bg-primary"
+            className="w-full rounded-md text-base font-semibold bg-primary"
           >
             {saving ? "Salvando..." : "Salvar"}
           </Button>
@@ -341,7 +341,7 @@ function PersonalPage() {
             variant="outline"
             onClick={handleCancel}
             disabled={!dirty || saving}
-            className="w-full h-12 rounded-md text-base font-semibold"
+            className="w-full rounded-md text-base font-semibold"
           >
             Cancelar
           </Button>

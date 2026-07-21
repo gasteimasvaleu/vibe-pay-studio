@@ -241,7 +241,7 @@ function BugReportPage() {
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="w-full h-12 rounded-md text-base font-semibold"
+          className="w-full rounded-md text-base font-semibold"
         >
           {submitting ? (
             <>

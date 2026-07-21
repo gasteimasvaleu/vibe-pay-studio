@@ -1,37 +1,63 @@
+# Padronização de botões para altura fina (h-9)
+
 ## Objetivo
-Garantir que a página `/settings/social` verifique a disponibilidade do `@` não apenas na tabela `profiles`, mas também em `creator_profiles`, evitando colisões de identificadores entre os dois modelos de perfil.
+Deixar todos os botões do app com a mesma altura fina e elegante dos botões "Salvar"/"Cancelar" da tela `/settings/details` (36px / `h-9`), removendo overrides grossos espalhados pelo código.
 
-## Problema atual
-- A server function `checkUsernameAvailability` (`src/lib/profile.functions.ts`) consulta apenas `profiles.username`.
-- A tabela `creator_profiles` também possui a coluna `username` e pode conter handles iguais a `profiles`, gerando duplicidade.
+## Escopo confirmado
+- **Altura alvo:** `h-9` (36px).
+- **Alvos:** apenas componente `<Button>` do shadcn (não inclui `<button>` nativos).
+- **Sem exceções:** CTAs de pagamento, publicar, assinar etc. também passam para `h-9`.
 
-## Escopo da mudança
-1. **Backend**: atualizar `checkUsernameAvailability` para verificar a existência do username em ambas as tabelas (`profiles` e `creator_profiles`).
-2. **Backend**: atualizar `updateProfileIdentity` para garantir que, ao salvar, o username escolhido não colida com nenhuma das duas tabelas.
-3. **Frontend**: manter o mesmo UX da página (`Verificando…`, `Disponível`, `Já está em uso`), sem alterações visuais.
-4. **Opcional**: considerar se o username do `creator_profiles` ativo do próprio usuário deve ser tratado como "self" (identificador atual), para não bloquear reutilização do próprio `@`.
+## Diagnóstico atual
+- O componente base `src/components/ui/button.tsx` já tem `default: h-9 px-4 py-2`.
+- Porém, ~28 instâncias de `<Button>` sobrescrevem a altura com `h-10`, `h-11` ou `h-12`.
+- A maioria dos overrides usa classes explícitas como `h-12 rounded-md bg-gradient-primary...`.
 
-## Como funciona hoje
-- O usuário digita o `@` no campo.
-- A cada mudança, após debounce de 400 ms, chama `checkUsernameAvailability`.
-- A server function valida formato e nomes reservados, depois faz `select user_id from profiles where username = $1`.
-- Se o username pertence ao usuário logado, retorna `isSelf: true`; se pertence a outro, retorna `taken`; se não existe, retorna `available`.
+## Passos
 
-## Como vai funcionar após a mudança
-- O mesmo fluxo de debounce e status visuais será preservado.
-- A server function fará duas consultas (ou uma consulta unificada via `union`) em `profiles` e `creator_profiles`.
-- Se o username existir em qualquer uma das tabelas e não pertencer ao usuário logado, será considerado `taken`.
-- Se existir apenas em um perfil vinculado ao próprio usuário (seja `profiles` ou `creator_profiles`), será considerado `self`.
+### 1. Ajustar escala do componente Button
+Atualizar as variantes `size` em `src/components/ui/button.tsx` para manter a proporção fina em todos os tamanhos:
+- `default`: `h-9 px-4 py-2` (mantém).
+- `sm`: `h-8 px-3 text-xs` (mantém).
+- `lg`: mudar de `h-10` para `h-9 px-6` (para não haver botão grande no design system).
+- `icon`: `h-9 w-9` (mantém).
 
-## Arquivos envolvidos
-- `src/lib/profile.functions.ts` — lógica de verificação e salvamento.
-- `src/routes/_authenticated/settings.social.tsx` — nenhuma mudança funcional esperada, apenas garantir que os novos status continuem sendo exibidos corretamente.
+### 2. Remover overrides de altura em <Button>
+Percorrer os ~28 arquivos e remover os tokens de altura explícitos (`h-10`, `h-11`, `h-12`) dos `className` do `<Button>`, preservando cores, gradientes, arredondamento e largura.
 
-## Critérios de aceitação
-- [ ] Username existente em `creator_profiles` (de outro usuário) aparece como "Já está em uso".
-- [ ] Username existente em `profiles` (de outro usuário) continua aparecendo como "Já está em uso".
-- [ ] Username próprio em `profiles` ou `creator_profiles` aparece como "Este é seu identificador atual".
-- [ ] Tentativa de salvar um username já usado em outra tabela retorna erro apropriado e não gera exceção não tratada.
+Arquivos identificados com overrides:
+- `src/routes/_authenticated/account-status.tsx`
+- `src/routes/_authenticated/bugreport.tsx`
+- `src/routes/_authenticated/chat-agendamento.tsx`
+- `src/routes/_authenticated/content-leak-report.tsx`
+- `src/routes/_authenticated/mywallet.extrato.tsx`
+- `src/routes/_authenticated/mywallet.index.tsx`
+- `src/routes/_authenticated/mywallet.recarregar.tsx`
+- `src/routes/_authenticated/publisher.tsx`
+- `src/routes/_authenticated/settings.language.tsx`
+- `src/routes/_authenticated/settings.myprofile.tsx`
+- `src/routes/_authenticated/settings.personal.tsx`
+- `src/routes/_authenticated/settings.two-factor.setup.tsx`
+- `src/routes/_authenticated/settings.two-factor.verify.tsx`
+- `src/components/banco/CadastrarBancoForm.tsx`
+- `src/components/payments/ChallengeContributeSheet.tsx`
+- `src/components/payments/SubscribeDialog.tsx`
+- `src/components/payments/TipDialog.tsx`
+- `src/components/publisher/VaultPickerSheet.tsx`
 
-## Riscos e observações
-- É necessário confirmar se a política de RLS permite ao usuário autenticado ler `creator_profiles.username` de outros usuários. Caso contrário, a verificação deverá ser feita via `supabaseAdmin` dentro do server function (já que é uma validação de segurança, não exposição de dados).
+### 3. Verificar botões com `size="lg"`
+Buscar usos de `size="lg"` no `<Button>` e, se houver, trocar para `size="default"` ou remover, já que `lg` deixará de ter altura diferente.
+
+### 4. Ajustes visuais de acompanhamento
+- Em botões que ficavam com texto grande (`text-base`, `text-lg`), reduzir para `text-sm` para manter a proporção fina.
+- Verificar se algum botão perde legibilidade após redução (especialmente CTAs com gradiente).
+
+### 5. Validação
+- Rodar `tsc` para garantir que nenhuma alteração quebrou tipos.
+- Verificar visualmente telas críticas: publisher, carteira, perfil, configurações, pagamento.
+
+## Resultado esperado
+Todos os `<Button>` do app terão altura consistente de 36px, criando um visual mais leve, alinhado e "chique", conforme o exemplo da tela atual.
+
+## Nota
+Botões nativos (`<button>`) e elementos decorativos (ícones redondos, inputs) não serão alterados, conforme solicitado.

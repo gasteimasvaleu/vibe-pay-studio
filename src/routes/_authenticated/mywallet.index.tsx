@@ -237,7 +237,7 @@ function MyWalletPage() {
               </Link>
               <Button
                 asChild
-                className="mt-4 h-11 px-6 rounded-md bg-gradient-primary text-primary-foreground"
+                className="mt-4 px-6 rounded-md bg-gradient-primary text-primary-foreground"
               >
                 <Link to="/mywallet/recarregar">Recarregar</Link>
               </Button>

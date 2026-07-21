@@ -162,7 +162,7 @@ function AccountStatusPage() {
             type="button"
             variant="outline"
             onClick={goBack}
-            className="h-12 rounded-md border-foreground/20 text-foreground hover:bg-accent"
+            className="rounded-md border-foreground/20 text-foreground hover:bg-accent"
           >
             Cancelar
           </Button>
@@ -170,7 +170,7 @@ function AccountStatusPage() {
             type="button"
             onClick={handleSave}
             disabled={!selected}
-            className="h-12 rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50"
+            className="rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50"
           >
             Definir status
           </Button>

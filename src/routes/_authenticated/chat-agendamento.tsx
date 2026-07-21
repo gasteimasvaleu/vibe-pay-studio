@@ -392,7 +392,7 @@ function Composer({
               <Button
                 type="button"
                 disabled={activeFilters.size === 0}
-                className="w-full h-12 rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold"
+                className="w-full rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold"
               >
                 Aplicar filtro
               </Button>
@@ -469,7 +469,7 @@ function Composer({
                   <Button
                     type="button"
                     disabled={!canContinue}
-                    className="rounded-md px-6 h-10 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
+                    className="rounded-md px-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
                   >
                     Continuar
                   </Button>

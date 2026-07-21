@@ -258,7 +258,7 @@ function ExtratoPage() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-12 rounded-md px-5 font-normal justify-start gap-3 bg-secondary hover:bg-secondary/80 border-0"
+                className="rounded-md px-5 font-normal justify-start gap-3 bg-secondary hover:bg-secondary/80 border-0"
               >
                 <CalendarIcon className="h-4 w-4 opacity-70 shrink-0" />
                 <span className={cn(!range?.from && "text-muted-foreground")}>

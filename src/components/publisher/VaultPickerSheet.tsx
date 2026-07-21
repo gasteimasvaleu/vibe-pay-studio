@@ -322,7 +322,7 @@ export function VaultPickerSheet({
 
         <div className="border-t p-3">
           <Button
-            className="w-full h-11 rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
+            className="w-full rounded-md bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 text-white font-semibold disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
             disabled={!canConfirm}
             onClick={handleConfirm}
           >

@@ -122,7 +122,7 @@ function TwoFactorVerifyPage() {
             type="button"
             onClick={handleVerify}
             disabled={code.length !== 6 || verifying}
-            className="h-12 w-full rounded-md bg-gradient-primary text-primary-foreground"
+            className="w-full rounded-md bg-gradient-primary text-primary-foreground"
           >
             {verifying ? "Verificando…" : "Habilitar Autenticação"}
           </Button>
