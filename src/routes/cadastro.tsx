@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { SiteLayout } from "@/components/site/Layout";
 import { HeroCard } from "@/components/site/HeroCard";
 import { useMemo, useState, type FormEvent } from "react";
