@@ -17,7 +17,6 @@ export const EMAIL_KIND_LABELS: Record<EmailKind, string> = {
   post_sales: "Vendas de postagens",
   subscription_sales: "Vendas por inscrições",
   content_purchase: "Compra de conteúdo",
-  creator_referrals: "Indicações de criador de conteúdo",
 };
 
 export const EMAIL_KIND_DESCRIPTIONS: Record<EmailKind, string> = {
@@ -29,8 +28,6 @@ export const EMAIL_KIND_DESCRIPTIONS: Record<EmailKind, string> = {
     "Enviado ao criador quando alguém ativa uma assinatura do seu perfil.",
   content_purchase:
     "Recibo enviado ao comprador quando ele desbloqueia uma publicação ou mensagem.",
-  creator_referrals:
-    "Enviado a quem indicou o perfil quando o indicado se torna criador.",
 };
 
 export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
@@ -38,7 +35,6 @@ export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
   content_purchase: ["creatorName", "amountBRL", "publicationUrl", "what"],
   subscription_sales: ["subscriberName", "amountBRL", "planLabel", "dashboardUrl"],
   free_to_paid: ["creatorName", "creatorUrl"],
-  creator_referrals: ["referredName", "creatorUrl"],
 };
 
 const APP_BASE_URL_CLIENT = "https://monetisexy.com";
@@ -64,10 +60,6 @@ export const SAMPLE_VARS: Record<EmailKind, Record<string, string>> = {
   free_to_paid: {
     creatorName: "Diego Alves",
     creatorUrl: `${APP_BASE_URL_CLIENT}/perfil/diegoalves`,
-  },
-  creator_referrals: {
-    referredName: "Eduarda Melo",
-    creatorUrl: `${APP_BASE_URL_CLIENT}/perfil/eduarda`,
   },
 };
 
