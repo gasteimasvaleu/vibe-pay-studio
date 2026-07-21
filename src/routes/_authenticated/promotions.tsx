@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, useSuspenseQuery, queryOptions } from "@ta
 import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { endPromotion, listMyPromotions } from "@/lib/promotions.functions";
+import { deletePromotion, endPromotion, listMyPromotions } from "@/lib/promotions.functions";
 
 const promotionsQueryOptions = queryOptions({
   queryKey: ["my-promotions"],
@@ -52,6 +52,7 @@ function PromotionsListPage() {
   const queryClient = useQueryClient();
   const { data: promotions } = useSuspenseQuery(promotionsQueryOptions);
   const endPromotionFn = useServerFn(endPromotion);
+  const deletePromotionFn = useServerFn(deletePromotion);
 
   const hasActive = promotions.some((p) => p.is_active);
   const [tab, setTab] = useState<Tab>(hasActive ? "active" : "inactive");
@@ -66,6 +67,17 @@ function PromotionsListPage() {
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Erro ao encerrar oferta");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePromotionFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Oferta apagada");
+      queryClient.invalidateQueries({ queryKey: ["my-promotions"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao apagar oferta");
     },
   });
 
@@ -129,6 +141,12 @@ function PromotionsListPage() {
                 promotion={p}
                 onEnd={() => endMutation.mutate(p.id)}
                 ending={endMutation.isPending && endMutation.variables === p.id}
+                onDelete={() => {
+                  if (window.confirm("Apagar esta oferta? Esta ação não pode ser desfeita.")) {
+                    deleteMutation.mutate(p.id);
+                  }
+                }}
+                deleting={deleteMutation.isPending && deleteMutation.variables === p.id}
               />
             ))}
             {tab === "active" && (
@@ -152,10 +170,14 @@ function PromotionCard({
   promotion,
   onEnd,
   ending,
+  onDelete,
+  deleting,
 }: {
   promotion: PromotionRow;
   onEnd: () => void;
   ending: boolean;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const active = promotion.is_active;
@@ -220,7 +242,7 @@ function PromotionCard({
         </span>
       </div>
 
-      {active && (
+      {active ? (
         <button
           type="button"
           onClick={onEnd}
@@ -228,6 +250,15 @@ function PromotionCard({
           className="mt-4 w-full py-3 rounded-md border border-border bg-background text-foreground font-semibold hover:bg-muted transition disabled:opacity-50"
         >
           {ending ? "Encerrando..." : "Encerrar oferta"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deleting}
+          className="mt-4 w-full py-3 rounded-md border border-destructive/40 bg-background text-destructive font-semibold hover:bg-destructive/10 transition disabled:opacity-50"
+        >
+          {deleting ? "Apagando..." : "Apagar oferta"}
         </button>
       )}
     </article>
