@@ -1,22 +1,26 @@
-## Objetivo
-Aproximar o card branco de confirmação de e-mail da navbar superior, tanto no desktop quanto no mobile, na rota `/cadastro/confirme-email`.
+## Verificação da função "Reenviar e-mail"
 
-## Estado atual
-- Arquivo: `src/routes/cadastro.confirme-email.tsx`
-- O container do card usa `py-16` (linha 92), criando um espaçamento vertical grande entre a navbar e o card.
+### Estado atual
+A página `/cadastro/confirme-email` já possui a função implementada no cliente:
 
-## Plano de ação
-1. **Ajustar padding vertical do container**  
-   Substituir `py-16` por `py-8` no `<div className="flex items-center justify-center px-4 py-16">` para reduzir a distância entre o card e a navbar em ambos os breakpoints.
+- Chama `supabase.auth.resend({ type: "signup", email })`.
+- Possui cooldown de 30 segundos.
+- Exibe estados de carregamento, sucesso e erro.
 
-2. **Verificar responsividade**  
-   Como o layout já é responsivo (imagem 16:9 no topo no mobile e 1:1 à esquerda no desktop), a redução do padding vertical afeta os dois casos de forma uniforme, sem quebrar a estrutura do card.
+### Riscos que podem fazer parecer que não funciona
+1. **Supabase Auth pode estar com "Confirm email" desativado** — nesse caso o e-mail de signup nunca é enviado e `resend` pode retornar erro.
+2. **Rate limit do Supabase** — tentativas repetidas em curto prazo podem ser bloqueadas.
+3. **Domínio de e-mail não configurado / em sandbox** — e-mails podem ir para spam ou ser suprimidos.
+4. **Erros não mapeados** — `getAuthErrorMessage` pode não traduzir todos os códigos do `resend`.
 
-3. **Validar no preview**  
-   Conferir visualmente no preview que o card subiu e ficou mais próximo da navbar, mantendo legibilidade e sem colar demais.
+### Plano
+1. **Auditar o fluxo de cadastro** (`src/routes/cadastro.index.tsx` e `src/lib/auth.ts`) para garantir que o e-mail usado no reenvio é o mesmo da conta criada.
+2. **Verificar a configuração do Supabase Auth** via dashboard/API para confirmar que `confirm_email` está habilitado e que há um template de confirmação ativo.
+3. **Melhorar o tratamento de erros** no `handleResend` para exibir mensagens específicas dos códigos de erro do Supabase (`over_email_send_rate_limit`, `email_not_confirmed`, etc.).
+4. **Adicionar teste/validação** simulando o clique em "Reenviar e-mail" e verificando se a chamada ao Supabase é disparada corretamente.
+5. **(Opcional) Se o projeto usar e-mail customizado**, garantir que o domínio e templates estejam configurados; caso contrário, manter o comportamento padrão do Supabase.
 
-## Arquivo envolvido
-- `src/routes/cadastro.confirme-email.tsx`
-
-## Resultado esperado
-Card de confirmação de e-mail visualmente mais próximo da navbar, com espaçamento mais equilibrado em desktop e mobile.
+### Entregáveis
+- `src/routes/cadastro.confirme-email.tsx` com tratamento de erro aprimorado.
+- Log de diagnóstico da configuração de auth (confirm_email, rate limits).
+- Instruções sobre como testar o reenvio sem depender de caixa de entrada real.
