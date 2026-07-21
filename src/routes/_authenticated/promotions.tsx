@@ -170,10 +170,18 @@ function PromotionCard({
   promotion,
   onEnd,
   ending,
+function PromotionCard({
+  promotion,
+  onEnd,
+  ending,
+  onDelete,
+  deleting,
 }: {
   promotion: PromotionRow;
   onEnd: () => void;
   ending: boolean;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const active = promotion.is_active;
