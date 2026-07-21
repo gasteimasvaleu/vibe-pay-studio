@@ -41,7 +41,7 @@ function mapRow(row: any): ActiveCreatorProfile {
     x: row.x_handle ?? null,
     chatWelcomeEnabled: !!row.chat_welcome_enabled,
     chatWelcomeMessage: row.chat_welcome_message ?? null,
-    chatWelcomeMedia: row.chat_welcome_media ?? [],
+    chatWelcomeMedia: Array.isArray(row.chat_welcome_media) ? row.chat_welcome_media : [],
     chatWelcomeTag: row.chat_welcome_tag ?? null,
     chatWelcomePriceCents: row.chat_welcome_price_cents ?? 0,
   };
