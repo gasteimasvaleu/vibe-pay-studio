@@ -106,7 +106,7 @@ export const getEmailPreferences = createServerFn({ method: "GET" })
     const { data, error } = await (supabase as any)
       .from("email_preferences")
       .select(
-        "free_to_paid, post_sales, subscription_sales, content_purchase, creator_referrals",
+        "free_to_paid, post_sales, subscription_sales, content_purchase",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -117,7 +117,6 @@ export const getEmailPreferences = createServerFn({ method: "GET" })
       post_sales: data.post_sales !== false,
       subscription_sales: data.subscription_sales !== false,
       content_purchase: data.content_purchase !== false,
-      creator_referrals: data.creator_referrals !== false,
     };
   });
 
