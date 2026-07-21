@@ -1,0 +1,271 @@
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { X, Lock, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  getCreatorStories,
+  markStoryViewed,
+  deleteStory,
+  type StoryItem,
+} from "@/lib/stories.functions";
+import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { Button } from "@/components/ui/button";
+import { translatePaymentError } from "@/lib/payment-limits";
+
+export function StoryViewer({
+  creatorId,
+  open,
+  onOpenChange,
+  onChanged,
+}: {
+  creatorId: string | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onChanged: () => void;
+}) {
+  const qc = useQueryClient();
+  const fetchStories = useServerFn(getCreatorStories);
+  const markViewed = useServerFn(markStoryViewed);
+  const walletPay = useServerFn(payWithWallet);
+  const removeStory = useServerFn(deleteStory);
+
+  const [index, setIndex] = useState(0);
+  const [unlocking, setUnlocking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const progressRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+
+  const storiesQuery = useQuery({
+    queryKey: ["creator-stories", creatorId],
+    queryFn: () => fetchStories({ data: { creatorId: creatorId as string } }),
+    enabled: !!creatorId && open,
+  });
+
+  const stories = storiesQuery.data ?? [];
+  const current: StoryItem | undefined = stories[index];
+
+  useEffect(() => {
+    if (open) setIndex(0);
+  }, [open, creatorId]);
+
+  const advance = () => {
+    if (index < stories.length - 1) setIndex((i) => i + 1);
+    else onOpenChange(false);
+  };
+  const back = () => {
+    if (index > 0) setIndex((i) => i - 1);
+  };
+
+  // Mark viewed + progress bar for unlocked stories
+  useEffect(() => {
+    if (!open || !current) return;
+    if (current.unlocked) {
+      void markViewed({ data: { storyId: current.id } }).catch(() => {});
+    }
+    progressRef.current = 0;
+    const el = document.getElementById(`story-progress-${index}`);
+    if (!el) return;
+    if (!current.unlocked) {
+      el.style.width = "0%";
+      return;
+    }
+    const isVideo = current.media_type === "video";
+    if (isVideo) return; // video advances on ended
+    const duration = 5000;
+    const start = performance.now();
+    const tick = (t: number) => {
+      const pct = Math.min(100, ((t - start) / duration) * 100);
+      el.style.width = `${pct}%`;
+      if (pct >= 100) {
+        advance();
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, open, current?.id, current?.unlocked]);
+
+  const handleUnlock = async () => {
+    if (!current || unlocking) return;
+    setUnlocking(true);
+    try {
+      await walletPay({ data: { kind: "story_unlock", storyId: current.id } });
+      toast.success("Story desbloqueado!");
+      await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+      await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+      onChanged();
+    } catch (e: any) {
+      toast.error(translatePaymentError(e, "Falha ao desbloquear"));
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!current || deleting) return;
+    if (!confirm("Apagar este story?")) return;
+    setDeleting(true);
+    try {
+      await removeStory({ data: { id: current.id } });
+      toast.success("Story apagado");
+      await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+      onChanged();
+      if (stories.length <= 1) onOpenChange(false);
+      else setIndex((i) => Math.max(0, i - 1));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao apagar");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (!open || !creatorId) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col">
+      {/* Progress bars */}
+      <div className="flex gap-1 p-3 pt-4">
+        {stories.map((_, i) => (
+          <div key={i} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
+            <div
+              id={`story-progress-${i}`}
+              className="h-full bg-white"
+              style={{ width: i < index ? "100%" : "0%" }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pb-2">
+        <div className="text-white text-sm font-medium">
+          {current ? new Date(current.published_at).toLocaleString("pt-BR") : ""}
+        </div>
+        <div className="flex items-center gap-2">
+          {current?.is_self && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              aria-label="Apagar"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            aria-label="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 relative flex items-center justify-center">
+        {storiesQuery.isLoading ? (
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        ) : !current ? (
+          <div className="text-white/80 text-sm">Nenhum story disponível.</div>
+        ) : current.unlocked && current.media_url ? (
+          current.media_type === "video" ? (
+            <video
+              key={current.id}
+              src={current.media_url}
+              className="max-h-full max-w-full"
+              autoPlay
+              playsInline
+              onEnded={advance}
+              controls={false}
+            />
+          ) : (
+            <img
+              key={current.id}
+              src={current.media_url}
+              alt=""
+              className="max-h-full max-w-full object-contain"
+            />
+          )
+        ) : (
+          <LockedOverlay
+            thumbUrl={current.thumb_url}
+            priceCents={current.price_cents}
+            unlocking={unlocking}
+            onUnlock={handleUnlock}
+          />
+        )}
+
+        {/* Tap zones */}
+        <button
+          type="button"
+          className="absolute inset-y-0 left-0 w-1/3"
+          onClick={back}
+          aria-label="Anterior"
+        />
+        <button
+          type="button"
+          className="absolute inset-y-0 right-0 w-1/3"
+          onClick={advance}
+          aria-label="Próximo"
+        />
+      </div>
+
+      {/* Caption */}
+      {current?.caption && (
+        <div className="px-4 py-3 text-white text-sm bg-black/40">{current.caption}</div>
+      )}
+    </div>
+  );
+}
+
+function LockedOverlay({
+  thumbUrl,
+  priceCents,
+  unlocking,
+  onUnlock,
+}: {
+  thumbUrl: string | null;
+  priceCents: number;
+  unlocking: boolean;
+  onUnlock: () => void;
+}) {
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {thumbUrl && (
+        <img
+          src={thumbUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-40"
+        />
+      )}
+      <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-3xl bg-black/50 border border-white/10 backdrop-blur">
+        <div className="h-14 w-14 rounded-full bg-white/10 grid place-items-center">
+          <Lock className="h-6 w-6 text-white" />
+        </div>
+        <div className="text-center">
+          <p className="text-white font-semibold">Story exclusivo</p>
+          <p className="text-white/70 text-sm mt-1">
+            Desbloqueie por R$ {(priceCents / 100).toFixed(2).replace(".", ",")}
+          </p>
+        </div>
+        <Button onClick={onUnlock} disabled={unlocking} className="min-w-[180px]">
+          {unlocking ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Desbloqueando...
+            </>
+          ) : (
+            "Desbloquear com carteira"
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
