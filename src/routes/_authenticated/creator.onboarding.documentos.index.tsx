@@ -26,7 +26,7 @@ function DocumentosPage() {
     setLoading(true);
 
     try {
-      const returnUrl = `${window.location.origin}/creator/onboarding/documentos/verificando`;
+      const returnUrl = `${window.location.origin}/creator/onboarding/documentos/veriff-concluido`;
       const result = await createSession({ data: { return_url: returnUrl } });
       if (!result.ok) {
         setError(result.message);
