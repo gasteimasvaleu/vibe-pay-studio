@@ -35,7 +35,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { AppTopBar } from "@/components/site/AppTopBar";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
@@ -141,9 +140,8 @@ function ChatLayout() {
   }, [threads, onlineOnly, onlineUsers, filters.muted, filters.unread]);
 
   return (
-    <div className="min-h-[100svh] bg-background text-foreground">
-      <AppTopBar />
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-[calc(100svh-61px)]">
+    <div className="min-h-svh bg-background text-foreground">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-svh">
         <aside
           className={cn(
             "border-r border-border bg-card/80 backdrop-blur-xl",
@@ -226,7 +224,7 @@ function ChatLayout() {
           </div>
         </aside>
 
-        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-[calc(100svh-61px)]")}>
+        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-svh")}>
           <Outlet />
         </section>
       </div>
