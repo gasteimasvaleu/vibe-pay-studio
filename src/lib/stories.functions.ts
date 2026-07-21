@@ -91,7 +91,7 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
 
     const { data: stories, error } = await context.supabase
       .from("stories")
-      .select("id, creator_id, published_at")
+      .select("id, creator_id, creator_profile_id, published_at")
       .in("creator_id", authorIds)
       .gt("expires_at", new Date().toISOString())
       .order("published_at", { ascending: false });
@@ -106,31 +106,31 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
       .in("story_id", storyIds);
     const seen = new Set((views ?? []).map((v) => v.story_id));
 
-    const uniqueCreators = Array.from(new Set(stories.map((s) => s.creator_id)));
-    const { data: profiles } = await context.supabase
-      .from("profiles")
-      .select("user_id, username, avatar_url")
-      .in("user_id", uniqueCreators);
-    const profileMap = new Map(
-      (profiles ?? []).map((p) => [
-        p.user_id,
-        { username: p.username as string, avatar_url: (p.avatar_url ?? null) as string | null },
-      ]),
-    );
+    const identityMaps = await resolveCreatorIdentities(context.supabase, {
+      creatorProfileIds: stories.map((s) => (s as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: stories.map((s) => s.creator_id),
+    });
 
     const grouped = new Map<string, StoryRingItem>();
     for (const s of stories) {
-      const existing = grouped.get(s.creator_id);
+      const cpId = (s as { creator_profile_id: string | null }).creator_profile_id;
+      const key = cpId ?? s.creator_id;
+      const existing = grouped.get(key);
       const isUnseen = !seen.has(s.id);
       if (existing) {
         existing.count += 1;
         if (isUnseen) existing.unseen += 1;
       } else {
-        const prof = profileMap.get(s.creator_id);
-        grouped.set(s.creator_id, {
+        const identity = pickIdentity(identityMaps, {
+          creator_profile_id: cpId,
+          user_id: s.creator_id,
+        });
+        grouped.set(key, {
           creator_id: s.creator_id,
-          username: prof?.username ?? "creator",
-          avatar_url: prof?.avatar_url ?? null,
+          creator_profile_id: cpId,
+          username: identity.username ?? "creator",
+          display_name: identity.display_name,
+          avatar_url: identity.avatar_url,
           latest_at: s.published_at,
           count: 1,
           unseen: isUnseen ? 1 : 0,
@@ -138,6 +138,7 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
         });
       }
     }
+
 
     return Array.from(grouped.values()).sort((a, b) => {
       // self first, then unseen desc, then latest
