@@ -89,6 +89,7 @@ export function StoryViewer({
     }
     const isVideo = current.media_type === "video";
     if (isVideo) return; // video advances on ended
+    if (replyText.length > 0 || sendingReply) return; // pause while composing reply
     const duration = 5000;
     const start = performance.now();
     const tick = (t: number) => {
@@ -105,7 +106,31 @@ export function StoryViewer({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, open, current?.id, current?.unlocked]);
+  }, [index, open, current?.id, current?.unlocked, replyText.length === 0, sendingReply]);
+
+  // Reset composer when moving to next story
+  useEffect(() => {
+    setReplyText("");
+  }, [index, creatorId]);
+
+  const handleSendReply = async () => {
+    if (!current || sendingReply) return;
+    const content = replyText.trim();
+    if (!content) return;
+    setSendingReply(true);
+    try {
+      const res = await replyToStory({ data: { storyId: current.id, content } });
+      toast.success("Resposta enviada");
+      setReplyText("");
+      onOpenChange(false);
+      navigate({ to: "/chat/$threadId", params: { threadId: res.threadId } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao enviar resposta");
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
 
   const handleUnlock = async () => {
     if (!current || unlocking) return;
