@@ -1,7 +1,25 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Search, ChevronDown } from "lucide-react";
+import { useDeferredValue, useMemo, useState } from "react";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronDown,
+  Crown,
+  ExternalLink,
+  Search,
+  User,
+  XCircle,
+} from "lucide-react";
+import { formatBRL } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
@@ -10,6 +28,16 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import {
+  listMySubscriptions,
+  cancelSubscription,
+  type MySubscription,
+} from "@/lib/monetization.functions";
+
+const subscriptionsQueryOptions = queryOptions({
+  queryKey: ["mySubscriptions"],
+  queryFn: () => listMySubscriptions(),
+});
 
 export const Route = createFileRoute("/_authenticated/subscriptions")({
   head: () => ({
@@ -18,6 +46,19 @@ export const Route = createFileRoute("/_authenticated/subscriptions")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(subscriptionsQueryOptions),
+  pendingComponent: SubscriptionsPending,
+  errorComponent: ({ error }) => (
+    <div className="p-8 text-center text-sm text-destructive" role="alert">
+      Erro ao carregar assinaturas: {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="p-8 text-center text-sm text-muted-foreground">
+      Nenhuma assinatura encontrada.
+    </div>
+  ),
   component: SubscriptionsPage,
 });
 
@@ -36,42 +77,188 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "nome_desc", label: "Nome (Z-A)" },
 ];
 
+const PLAN_LABELS: Record<string, string> = {
+  monthly: "Mensal",
+  quarterly: "Trimestral",
+  semiannual: "Semestral",
+};
+
+function isActive(sub: MySubscription) {
+  const now = new Date();
+  const end = new Date(sub.currentPeriodEnd);
+  if (sub.status === "active") return true;
+  if (sub.status === "cancelled" && end > now) return true;
+  return false;
+}
+
+function isExpired(sub: MySubscription) {
+  const now = new Date();
+  const end = new Date(sub.currentPeriodEnd);
+  if (sub.status === "expired") return true;
+  if (end <= now) return true;
+  return false;
+}
+
+function formatDate(iso: string) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function SubscriptionsPending() {
+  return (
+    <div className="min-h-screen text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+          <Skeleton className="h-9 w-9 rounded-full" />
+          <Skeleton className="h-5 w-32" />
+          <span className="w-9" />
+        </div>
+      </header>
+      <main className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+        <Skeleton className="h-12 w-full rounded-2xl" />
+        <div className="mt-5 flex gap-2">
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-16 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
+            <Skeleton className="h-8 w-16 rounded-md" />
+          </div>
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+        <div className="mt-10 space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
 function SubscriptionsPage() {
   const router = useRouter();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const fn = useServerFn(listMySubscriptions);
+  const cancelFn = useServerFn(cancelSubscription);
+
+  const { data } = useSuspenseQuery({
+    ...subscriptionsQueryOptions,
+    queryFn: () => fn(),
+  });
+
   const [tab, setTab] = useState<TabKey>("ativas");
   const [filter, setFilter] = useState<FilterKey>("todas");
   const [sort, setSort] = useState<SortKey>("proxima_expiracao");
   const [query, setQuery] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
 
-  const items = useMemo(() => [] as { id: string; name: string }[], []);
-  const filtered = items.filter((i) =>
-    i.name.toLowerCase().includes(query.trim().toLowerCase()),
-  );
+  const deferredQ = useDeferredValue(query);
+
+  const cancelMutation = useMutation({
+    mutationFn: (subscriptionId: string) =>
+      cancelFn({ data: { subscriptionId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mySubscriptions"] });
+    },
+  });
+
+  const filtered = useMemo(() => {
+    let rows = [...data];
+
+    // Aba
+    if (tab === "ativas") {
+      rows = rows.filter(isActive);
+    } else {
+      rows = rows.filter(isExpired);
+    }
+
+    // Filtro de preço
+    if (filter === "gratuitas") {
+      rows = rows.filter((s) => s.priceCents === 0);
+    } else if (filter === "pagas") {
+      rows = rows.filter((s) => s.priceCents > 0);
+    }
+
+    // Busca
+    const q = deferredQ.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter(
+        (s) =>
+          (s.creatorDisplayName ?? "").toLowerCase().includes(q) ||
+          (s.creatorUsername ?? "").toLowerCase().includes(q),
+      );
+    }
+
+    // Ordenação
+    rows.sort((a, b) => {
+      switch (sort) {
+        case "proxima_expiracao":
+          return (
+            new Date(a.currentPeriodEnd).getTime() -
+            new Date(b.currentPeriodEnd).getTime()
+          );
+        case "distante_expiracao":
+          return (
+            new Date(b.currentPeriodEnd).getTime() -
+            new Date(a.currentPeriodEnd).getTime()
+          );
+        case "nome_asc": {
+          const na = (a.creatorDisplayName || a.creatorUsername || "").toLowerCase();
+          const nb = (b.creatorDisplayName || b.creatorUsername || "").toLowerCase();
+          return na.localeCompare(nb);
+        }
+        case "nome_desc": {
+          const na = (a.creatorDisplayName || a.creatorUsername || "").toLowerCase();
+          const nb = (b.creatorDisplayName || b.creatorUsername || "").toLowerCase();
+          return nb.localeCompare(na);
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return rows;
+  }, [data, tab, filter, deferredQ, sort]);
 
   const sortButtonLabel =
     sort === "proxima_expiracao"
       ? "Ordenar"
       : (SORT_OPTIONS.find((o) => o.key === sort)?.label ?? "Ordenar");
 
+  const emptyMessage =
+    tab === "ativas"
+      ? "Você ainda não tem assinaturas ativas."
+      : "Nenhuma assinatura expirada.";
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-24">
-        {/* Header */}
-        <div className="relative flex items-center justify-center py-2">
+    <div className="min-h-screen text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
+        <div className="relative mx-auto flex max-w-2xl items-center justify-center px-4 py-3">
           <button
             type="button"
             aria-label="Voltar"
             onClick={() => router.history.back()}
-            className="absolute left-0 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="absolute left-4 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">Assinaturas</h1>
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Assinaturas
+          </h1>
         </div>
+      </header>
 
+      <main className="mx-auto w-full max-w-2xl px-4 pt-4 pb-24">
         {/* Busca */}
-        <div className="relative mt-4">
+        <div className="relative mt-2">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
@@ -144,7 +331,7 @@ function SubscriptionsPage() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-md border border-border px-4 py-1.5 text-sm hover:bg-accent"
+                className="inline-flex h-9 items-center gap-1 rounded-md border border-border px-4 text-sm hover:bg-accent"
               >
                 {sortButtonLabel}
                 <ChevronDown
@@ -187,7 +374,9 @@ function SubscriptionsPage() {
                       <span
                         className={cn(
                           "grid h-5 w-5 place-items-center rounded-full border-2",
-                          active ? "border-primary" : "border-muted-foreground/40",
+                          active
+                            ? "border-primary"
+                            : "border-muted-foreground/40",
                         )}
                       >
                         {active && (
@@ -204,26 +393,153 @@ function SubscriptionsPage() {
 
         {/* Lista / estado vazio */}
         <div className="mt-10">
-          {filtered.length === 0 ? (
+          {data.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-              {tab === "ativas"
-                ? "Você ainda não tem assinaturas ativas."
-                : "Nenhuma assinatura expirada."}
+              Você ainda não tem assinaturas.
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+              {deferredQ.trim()
+                ? "Nenhum resultado para sua busca."
+                : emptyMessage}
             </div>
           ) : (
             <ul className="space-y-3">
-              {filtered.map((i) => (
-                <li
-                  key={i.id}
-                  className="rounded-2xl border border-border bg-card p-4"
-                >
-                  {i.name}
-                </li>
-              ))}
+              {filtered.map((sub) => {
+                const name =
+                  sub.creatorDisplayName || sub.creatorUsername || "Creator";
+                const initial = name.slice(0, 1).toUpperCase();
+                const clickable = !!sub.creatorUsername;
+                const expired = isExpired(sub);
+                const cancelled = sub.status === "cancelled";
+                const paid = sub.priceCents > 0;
+
+                return (
+                  <li
+                    key={sub.id}
+                    className="rounded-2xl border border-border bg-card p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        disabled={!clickable}
+                        onClick={() =>
+                          clickable &&
+                          navigate({
+                            to: "/perfil/$username",
+                            params: { username: sub.creatorUsername! },
+                          })
+                        }
+                        className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground disabled:cursor-default"
+                      >
+                        {sub.creatorAvatarUrl ? (
+                          <img
+                            src={sub.creatorAvatarUrl}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          initial
+                        )}
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground truncate">
+                              {name}
+                            </p>
+                            {sub.creatorUsername && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                @{sub.creatorUsername}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                            {paid ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                <Crown className="h-3 w-3" />
+                                {formatBRL(sub.priceCents)}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                <User className="h-3 w-3" />
+                                Grátis
+                              </span>
+                            )}
+
+                            {expired ? (
+                              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                Expirada
+                              </span>
+                            ) : cancelled ? (
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                Cancelada
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                                Ativa
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {cancelled
+                              ? `Acesso até ${formatDate(sub.currentPeriodEnd)}`
+                              : expired
+                                ? `Expirou em ${formatDate(sub.currentPeriodEnd)}`
+                                : `Renova em ${formatDate(sub.currentPeriodEnd)}`}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Crown className="h-3.5 w-3.5" />
+                            {PLAN_LABELS[sub.plan] ?? sub.plan}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-9 gap-1 rounded-lg"
+                            disabled={!clickable}
+                            onClick={() =>
+                              clickable &&
+                              navigate({
+                                to: "/perfil/$username",
+                                params: { username: sub.creatorUsername! },
+                              })
+                            }
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Ir ao perfil
+                          </Button>
+
+                          {!expired && !cancelled && paid && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 gap-1 rounded-lg"
+                              disabled={cancelMutation.isPending}
+                              onClick={() => cancelMutation.mutate(sub.id)}
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancelar renovação
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

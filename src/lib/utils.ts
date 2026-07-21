@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatBRL(cents: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format((cents ?? 0) / 100);
+}
+
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 20;
 
