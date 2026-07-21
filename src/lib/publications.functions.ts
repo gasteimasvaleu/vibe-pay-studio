@@ -403,7 +403,8 @@ export const getUserPublications = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
+        "id, author_id, creator_profile_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
+
       )
 
       .eq("author_id", data.userId)
