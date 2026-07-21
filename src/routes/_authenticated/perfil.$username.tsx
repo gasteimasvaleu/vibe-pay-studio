@@ -636,14 +636,12 @@ function PerfilPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    toast.success("Perfil silenciado.");
-                    setMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                  disabled={muteBusy}
+                  onClick={handleToggleMute}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60"
                 >
                   <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                  Silenciar perfil
+                  {isMutedState ? "Deixar de silenciar" : "Silenciar perfil"}
                 </button>
                 {!profile.restrictFriendships && (
                   <button
