@@ -144,7 +144,7 @@ function ScheduledPostsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative z-10 border-b border-border bg-card">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
