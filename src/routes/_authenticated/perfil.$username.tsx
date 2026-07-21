@@ -734,6 +734,8 @@ function PerfilPage() {
             </SocialButton>
           </div>
 
+          <FriendsStrip userId={profile.userId} isOwner={isOwner} />
+
 
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
