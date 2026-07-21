@@ -78,6 +78,8 @@ import {
 } from "@/lib/stats.functions";
 import { getCreatorEarningsSummary } from "@/lib/finance.functions";
 import { setPublicationPinned, setPublicationArchived } from "@/lib/publications.functions";
+import { listMyIncomingFriends, setFriendshipVisibility } from "@/lib/friends.functions";
+import { Switch } from "@/components/ui/switch";
 
 
 const searchSchema = z.object({
