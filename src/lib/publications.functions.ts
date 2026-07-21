@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
+
 
 const mediaItemSchema = z.object({
   storagePath: z.string().min(1),
@@ -148,6 +150,9 @@ export type FeedItem = {
   id: string;
   author_id: string;
   author_username: string | null;
+  author_display_name: string | null;
+  author_avatar_url: string | null;
+  author_profile_kind: "paid" | "free" | null;
   caption: string | null;
   visibility: "public" | "paid" | "challenge";
   price_cents: number | null;
@@ -170,6 +175,7 @@ export type FeedItem = {
   is_owner: boolean;
   archived_at: string | null;
 };
+
 
 
 
@@ -199,9 +205,10 @@ export const getFeed = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, preview_url",
+        "id, author_id, creator_profile_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, preview_url",
       )
       .in("author_id", allowedAuthors)
+
       .lte("published_at", new Date().toISOString())
       .is("archived_at", null)
       .order("pinned", { ascending: false })
@@ -249,10 +256,7 @@ export const getFeed = createServerFn({ method: "POST" })
         .select("id, publication_id, url, type, position")
         .in("publication_id", ids)
         .order("position", { ascending: true }),
-      client
-        .from("profiles")
-        .select("user_id, username")
-        .in("user_id", authorIds),
+      Promise.resolve({ data: [] as any[] }),
       client
         .from("publication_likes")
         .select("publication_id")
@@ -294,10 +298,13 @@ export const getFeed = createServerFn({ method: "POST" })
             data: [] as Array<{ publication_id: string; amount_cents: number; position: number }>,
           }),
     ]);
+    void profileRows;
 
-    const profileMap = new Map(
-      (profileRows ?? []).map((r) => [r.user_id, r.username]),
-    );
+    const identityMaps = await resolveCreatorIdentities(client, {
+      creatorProfileIds: page.map((p) => (p as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: authorIds,
+    });
+
     const likeCounts = new Map<string, number>();
     (likeRows ?? []).forEach((r) => {
       likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
@@ -334,11 +341,19 @@ export const getFeed = createServerFn({ method: "POST" })
           type: m.type as "image" | "video",
           position: m.position,
         }));
+      const identity = pickIdentity(identityMaps, {
+        creator_profile_id: (p as { creator_profile_id: string | null }).creator_profile_id,
+        user_id: p.author_id,
+      });
       return {
         id: p.id,
         author_id: p.author_id,
-        author_username: profileMap.get(p.author_id) ?? null,
+        author_username: identity.username,
+        author_display_name: identity.display_name,
+        author_avatar_url: identity.avatar_url,
+        author_profile_kind: identity.kind,
         caption: p.caption,
+
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
@@ -388,7 +403,8 @@ export const getUserPublications = createServerFn({ method: "POST" })
     let query = client
       .from("publications")
       .select(
-        "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
+        "id, author_id, creator_profile_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
+
       )
 
       .eq("author_id", data.userId)
@@ -486,6 +502,13 @@ export const getUserPublications = createServerFn({ method: "POST" })
     ]);
 
     const authorUsername = authorRow?.username ?? null;
+    const authorDisplayName = (authorRow as { display_name?: string | null } | null)?.display_name ?? null;
+    const authorAvatarUrl = (authorRow as { avatar_url?: string | null } | null)?.avatar_url ?? null;
+    const identityMaps = await resolveCreatorIdentities(client, {
+      creatorProfileIds: page.map((p) => (p as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: [data.userId],
+    });
+
     const likeCounts = new Map<string, number>();
     (likeRows ?? []).forEach((r) => {
       likeCounts.set(r.publication_id, (likeCounts.get(r.publication_id) ?? 0) + 1);
@@ -522,11 +545,19 @@ export const getUserPublications = createServerFn({ method: "POST" })
           type: m.type as "image" | "video",
           position: m.position,
         }));
+      const identity = pickIdentity(identityMaps, {
+        creator_profile_id: (p as { creator_profile_id: string | null }).creator_profile_id,
+        user_id: p.author_id,
+      });
       return {
         id: p.id,
         author_id: p.author_id,
-        author_username: authorUsername,
+        author_username: identity.username ?? authorUsername,
+        author_display_name: identity.display_name ?? authorDisplayName,
+        author_avatar_url: identity.avatar_url ?? authorAvatarUrl,
+        author_profile_kind: identity.kind,
         caption: p.caption,
+
         visibility: p.visibility as FeedItem["visibility"],
         price_cents: p.price_cents,
         challenge_cents: p.challenge_cents,
@@ -1195,7 +1226,11 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           id: p.id,
           author_id: p.author_id,
           author_username: authorUsername,
+          author_display_name: (profileRow as { display_name?: string | null } | null)?.display_name ?? null,
+          author_avatar_url: (profileRow as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+          author_profile_kind: null,
           caption: p.caption,
+
           visibility: p.visibility as FeedItem["visibility"],
           price_cents: p.price_cents,
           challenge_cents: p.challenge_cents,

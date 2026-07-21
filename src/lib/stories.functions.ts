@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
+
 
 const SIGNED_URL_TTL = 60 * 60; // 1h
 
@@ -64,13 +66,16 @@ export const deleteStory = createServerFn({ method: "POST" })
 
 export type StoryRingItem = {
   creator_id: string;
+  creator_profile_id: string | null;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
   latest_at: string;
   count: number;
   unseen: number;
   is_self: boolean;
 };
+
 
 export const getFeedStoryRings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -86,7 +91,7 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
 
     const { data: stories, error } = await context.supabase
       .from("stories")
-      .select("id, creator_id, published_at")
+      .select("id, creator_id, creator_profile_id, published_at")
       .in("creator_id", authorIds)
       .gt("expires_at", new Date().toISOString())
       .order("published_at", { ascending: false });
@@ -101,31 +106,31 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
       .in("story_id", storyIds);
     const seen = new Set((views ?? []).map((v) => v.story_id));
 
-    const uniqueCreators = Array.from(new Set(stories.map((s) => s.creator_id)));
-    const { data: profiles } = await context.supabase
-      .from("profiles")
-      .select("user_id, username, avatar_url")
-      .in("user_id", uniqueCreators);
-    const profileMap = new Map(
-      (profiles ?? []).map((p) => [
-        p.user_id,
-        { username: p.username as string, avatar_url: (p.avatar_url ?? null) as string | null },
-      ]),
-    );
+    const identityMaps = await resolveCreatorIdentities(context.supabase, {
+      creatorProfileIds: stories.map((s) => (s as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: stories.map((s) => s.creator_id),
+    });
 
     const grouped = new Map<string, StoryRingItem>();
     for (const s of stories) {
-      const existing = grouped.get(s.creator_id);
+      const cpId = (s as { creator_profile_id: string | null }).creator_profile_id;
+      const key = cpId ?? s.creator_id;
+      const existing = grouped.get(key);
       const isUnseen = !seen.has(s.id);
       if (existing) {
         existing.count += 1;
         if (isUnseen) existing.unseen += 1;
       } else {
-        const prof = profileMap.get(s.creator_id);
-        grouped.set(s.creator_id, {
+        const identity = pickIdentity(identityMaps, {
+          creator_profile_id: cpId,
+          user_id: s.creator_id,
+        });
+        grouped.set(key, {
           creator_id: s.creator_id,
-          username: prof?.username ?? "creator",
-          avatar_url: prof?.avatar_url ?? null,
+          creator_profile_id: cpId,
+          username: identity.username ?? "creator",
+          display_name: identity.display_name,
+          avatar_url: identity.avatar_url,
           latest_at: s.published_at,
           count: 1,
           unseen: isUnseen ? 1 : 0,
@@ -133,6 +138,7 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
         });
       }
     }
+
 
     return Array.from(grouped.values()).sort((a, b) => {
       // self first, then unseen desc, then latest
@@ -178,23 +184,29 @@ async function signedFor(
 export const getCreatorStories = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ creatorId: z.string().uuid() }).parse(data),
+    z
+      .object({
+        creatorId: z.string().uuid(),
+        creatorProfileId: z.string().uuid().nullable().optional(),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }): Promise<StoryItem[]> => {
-    const { data: stories, error } = await context.supabase
+    let q = context.supabase
       .from("stories")
       .select(
-        "id, creator_id, media_path, thumb_path, media_type, price_cents, caption, published_at, expires_at",
+        "id, creator_id, creator_profile_id, media_path, thumb_path, media_type, price_cents, caption, published_at, expires_at",
       )
       .eq("creator_id", data.creatorId)
-      .gt("expires_at", new Date().toISOString())
-      .order("published_at", { ascending: true });
+      .gt("expires_at", new Date().toISOString());
+    if (data.creatorProfileId) q = q.eq("creator_profile_id", data.creatorProfileId);
+    const { data: stories, error } = await q.order("published_at", { ascending: true });
     if (error) throw new Error(error.message);
     if (!stories || stories.length === 0) return [];
 
     const ids = stories.map((s) => s.id);
     const isSelfCreator = data.creatorId === context.userId;
-    const [{ data: unlocks }, { data: views }, { data: profile }, { data: subRow }, { data: viewCounts }] = await Promise.all([
+    const [{ data: unlocks }, { data: views }, { data: subRow }, { data: viewCounts }] = await Promise.all([
       context.supabase
         .from("story_unlocks")
         .select("story_id")
@@ -206,11 +218,6 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         .select("story_id")
         .eq("viewer_id", context.userId)
         .in("story_id", ids),
-      context.supabase
-        .from("profiles")
-        .select("username, avatar_url")
-        .eq("user_id", data.creatorId)
-        .maybeSingle(),
       isSelfCreator
         ? Promise.resolve({ data: null as any })
         : context.supabase
@@ -229,15 +236,18 @@ export const getCreatorStories = createServerFn({ method: "GET" })
             .in("story_id", ids)
         : Promise.resolve({ data: [] as { story_id: string }[] }),
     ]);
+    const identityMaps = await resolveCreatorIdentities(context.supabase, {
+      creatorProfileIds: stories.map((s) => (s as { creator_profile_id: string | null }).creator_profile_id),
+      userIds: [data.creatorId],
+    });
     const unlockedSet = new Set((unlocks ?? []).map((u) => u.story_id));
     const viewedSet = new Set((views ?? []).map((v) => v.story_id));
-    const creatorUsername = (profile?.username as string | undefined) ?? "creator";
-    const creatorAvatarUrl = (profile?.avatar_url as string | null | undefined) ?? null;
     const viewerIsSubscriber = isSelfCreator ? true : !!subRow;
     const viewCountMap = new Map<string, number>();
     for (const v of (viewCounts ?? []) as { story_id: string }[]) {
       viewCountMap.set(v.story_id, (viewCountMap.get(v.story_id) ?? 0) + 1);
     }
+
 
     const results: StoryItem[] = [];
     for (const s of stories) {
@@ -245,11 +255,16 @@ export const getCreatorStories = createServerFn({ method: "GET" })
       const unlocked = isSelf || (s.price_cents ?? 0) === 0 || unlockedSet.has(s.id);
       const mediaUrl = unlocked ? await signedFor(context.supabase, s.media_path) : null;
       const thumbUrl = await signedFor(context.supabase, s.thumb_path ?? s.media_path);
+      const identity = pickIdentity(identityMaps, {
+        creator_profile_id: (s as { creator_profile_id: string | null }).creator_profile_id,
+        user_id: s.creator_id,
+      });
       results.push({
         id: s.id,
         creator_id: s.creator_id,
-        creator_username: creatorUsername,
-        creator_avatar_url: creatorAvatarUrl,
+        creator_username: identity.username ?? "creator",
+        creator_avatar_url: identity.avatar_url,
+
         media_type: s.media_type as "image" | "video",
         price_cents: s.price_cents ?? 0,
         caption: s.caption ?? null,
