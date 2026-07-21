@@ -208,15 +208,27 @@ export function StoryViewer({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {current?.is_self && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-                aria-label="Apagar"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <>
+                <div
+                  className="h-9 px-3 grid place-items-center rounded-full bg-white/10 text-white text-xs font-semibold"
+                  aria-label="Visualizações"
+                  title="Visualizações"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Eye className="h-4 w-4" />
+                    {current.view_count}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  aria-label="Apagar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
             )}
             <button
               type="button"
@@ -227,6 +239,7 @@ export function StoryViewer({
               <X className="h-5 w-5" />
             </button>
           </div>
+
         </div>
 
         {/* Content */}
