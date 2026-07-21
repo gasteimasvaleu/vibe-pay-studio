@@ -254,7 +254,7 @@ function CreatorGatedNotFound() {
 
           <Link
             to="/creator/onboarding/assinatura"
-            className="mt-7 inline-flex w-full items-center justify-center h-12 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
+            className="mt-7 inline-flex w-full items-center justify-center h-9 rounded-md bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-fuchsia-500/30 hover:opacity-95 transition-opacity"
           >
             Criar perfil de creator
           </Link>
