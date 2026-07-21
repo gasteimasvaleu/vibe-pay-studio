@@ -20,6 +20,14 @@ export type ChatWelcomeMedia = {
   url?: string | null;
 };
 
+export type ChatStoryReply = {
+  storyId: string;
+  mediaType: "image" | "video";
+  caption: string | null;
+  thumbPath: string | null;
+  thumbUrl?: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -33,8 +41,10 @@ export type ChatMessage = {
     welcome?: boolean;
     tag?: string | null;
     media?: ChatWelcomeMedia[];
+    storyReply?: ChatStoryReply;
   } | null;
 };
+
 
 export type PartnerProfile = {
   userId: string;
