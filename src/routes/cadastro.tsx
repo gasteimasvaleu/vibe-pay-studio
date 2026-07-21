@@ -24,6 +24,7 @@ export const Route = createFileRoute("/cadastro")({
 
 function CadastroPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [accountType, setAccountType] = useState<AccountType>("subscriber");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -54,13 +55,19 @@ function CadastroPage() {
     try {
       const data = await signUpWithEmail({ accountType, email, password, username });
 
+      // Limpa qualquer cache de um usuário anterior antes de navegar.
+      queryClient.clear();
+
       if (data.session) {
+        console.info("[cadastro] signup com sessão → routeAfterAuth");
         await routeAfterAuth(navigate);
         return;
       }
 
-      navigate({ to: "/cadastro/confirme-email", search: { email } });
+      console.info("[cadastro] signup sem sessão → /cadastro/confirme-email");
+      await navigate({ to: "/cadastro/confirme-email", search: { email } });
     } catch (err) {
+      console.error("[cadastro] falha no signup", err);
       setErrorMsg(
         err instanceof Error
           ? getAuthErrorMessage(err.message)
