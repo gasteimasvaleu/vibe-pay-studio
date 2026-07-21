@@ -1226,7 +1226,11 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           id: p.id,
           author_id: p.author_id,
           author_username: authorUsername,
+          author_display_name: (profileRow as { display_name?: string | null } | null)?.display_name ?? null,
+          author_avatar_url: (profileRow as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+          author_profile_kind: null,
           caption: p.caption,
+
           visibility: p.visibility as FeedItem["visibility"],
           price_cents: p.price_cents,
           challenge_cents: p.challenge_cents,
