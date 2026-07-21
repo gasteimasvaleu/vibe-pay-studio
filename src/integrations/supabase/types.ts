@@ -356,12 +356,15 @@ export type Database = {
           discount_semiannual: number
           display_name: string | null
           id: string
+          instagram_handle: string | null
           kind: string
           kyc_status: string
           price_monthly: number | null
+          tiktok_handle: string | null
           updated_at: string
           user_id: string
           username: string
+          x_handle: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -377,12 +380,15 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           id?: string
+          instagram_handle?: string | null
           kind: string
           kyc_status?: string
           price_monthly?: number | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id: string
           username: string
+          x_handle?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -398,12 +404,15 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           id?: string
+          instagram_handle?: string | null
           kind?: string
           kyc_status?: string
           price_monthly?: number | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
           username?: string
+          x_handle?: string | null
         }
         Relationships: []
       }
@@ -2517,6 +2526,39 @@ export type Database = {
             Returns: Json
           }
       release_matured_earnings: { Args: never; Returns: number }
+      resolve_active_creator_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string | null
+          bio: string | null
+          chat_welcome_enabled: boolean
+          chat_welcome_media: Json
+          chat_welcome_message: string | null
+          chat_welcome_price_cents: number
+          chat_welcome_tag: string | null
+          cover_url: string | null
+          created_at: string
+          discount_quarterly: number
+          discount_semiannual: number
+          display_name: string | null
+          id: string
+          instagram_handle: string | null
+          kind: string
+          kyc_status: string
+          price_monthly: number | null
+          tiktok_handle: string | null
+          updated_at: string
+          user_id: string
+          username: string
+          x_handle: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "creator_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_active_profile: { Args: { _user_id: string }; Returns: string }
       revoke_all_other_sessions: { Args: never; Returns: number }
       revoke_session: { Args: { p_session_id: string }; Returns: undefined }
