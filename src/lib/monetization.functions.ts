@@ -362,7 +362,7 @@ export const followCreator = createServerFn({ method: "POST" })
           followee_id: target.user_id,
           creator_profile_id: target.id,
         },
-        { onConflict: "follower_id,followee_id,creator_profile_id", ignoreDuplicates: true },
+        { onConflict: "follower_id,creator_profile_id", ignoreDuplicates: true },
       );
     if (error) throw new Error(error.message);
     return { ok: true, creatorProfileId: target.id };
