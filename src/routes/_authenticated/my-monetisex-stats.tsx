@@ -107,7 +107,7 @@ export const Route = createFileRoute("/_authenticated/my-monetisex-stats")({
   component: MyMonetisexyStatsPage,
 });
 
-const MAIN_TABS = ["Visão geral", "Extratos", "Engajamento", "Alcance", "Assinantes"] as const;
+const MAIN_TABS = ["Visão geral", "Extratos", "Engajamento", "Alcance", "Assinantes", "Superfãs"] as const;
 const SUB_TABS = ["Faturamento", "Destaques", "Sequência de atividades", "Resumo"] as const;
 
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
