@@ -1,22 +1,11 @@
-## Objetivo
-Ajustar o background das páginas da carteira (`/mywallet`, `/mywallet/extrato`, `/mywallet/recarregar`) para usar o padrão do restante do app (`bg-background` com header `bg-background/90 backdrop-blur`), corrigindo a diferença visual reportada.
+Objetivo: alterar o botão/link "Ver todas as transações" no final da página `/mywallet` para usar a cor padrão do app, ocupar a mesma largura horizontal dos elementos acima e ficar centralizado.
 
-## Estado atual verificado
-- `src/routes/_authenticated/mywallet.index.tsx` (linhas 200–203): usa `<div className="absolute inset-0 bg-card" />` e `header bg-card`.
-- `src/routes/_authenticated/mywallet.extrato.tsx` (linhas 173–176): mesmo padrão de fundo `bg-card`.
-- `src/routes/_authenticated/mywallet.recarregar.tsx` (linhas 93–96): mesmo padrão de fundo `bg-card`.
-- Páginas de referência como `/banco` e `/follow` usam `min-h-screen bg-background` e `header bg-background/90 backdrop-blur`.
+Local: `src/routes/_authenticated/mywallet.index.tsx`, linha ~503 (componente `<Button asChild variant="outline" ...>`).
 
-## Alterações propostas
-1. Em cada um dos três arquivos de rota da carteira:
-   - Substituir o wrapper `relative min-h-screen text-foreground overflow-hidden` + `absolute inset-0 bg-card` por `min-h-screen bg-background text-foreground`.
-   - Substituir o header `relative z-10 border-b border-border bg-card` por `sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur`.
-   - Remover classes `relative z-10` desnecessárias do `<main>` (o sticky header já resolve o empilhamento).
+Alterações:
+1. Trocar `variant="outline"` para `variant="default"` — isso aplica `bg-primary` e `text-primary-foreground`, a cor padrão do app.
+2. Remover as classes customizadas de cor/borda (`text-primary border-primary hover:text-primary hover:bg-primary/10`).
+3. Adicionar `w-full` para que o botão ocupe toda a largura da seção, igual à lista de transações acima.
+4. Manter o conteúdo centralizado (o botão já usa `justify-center` internamente; adicionar `text-center` de redundância se desejado).
 
-## Arquivos afetados
-- `src/routes/_authenticated/mywallet.index.tsx`
-- `src/routes/_authenticated/mywallet.extrato.tsx`
-- `src/routes/_authenticated/mywallet.recarregar.tsx`
-
-## Validação
-Após a alteração, verificar visualmente no preview que as três rotas da carteira exibem o mesmo fundo e comportamento de header das páginas `/banco` e `/follow`, tanto no tema claro quanto no escuro.
+Resultado esperado: botão roxo/lilás (cor primária), texto na cor de contraste, alinhado à largura dos cards/listas acima e centralizado.
