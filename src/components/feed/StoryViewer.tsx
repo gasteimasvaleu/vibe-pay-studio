@@ -291,16 +291,62 @@ export function StoryViewer({
           />
         </div>
 
-        {/* Caption */}
-        {current?.caption && (
-          <div className="absolute bottom-0 inset-x-0 z-20 px-4 py-3 text-white text-sm bg-gradient-to-t from-black/70 to-transparent">
-            {current.caption}
+        {/* Caption + reply / subscribe CTA */}
+        {current && (current.caption || (!current.is_self && current.unlocked)) && (
+          <div className="absolute bottom-0 inset-x-0 z-20 px-4 pt-6 pb-4 bg-gradient-to-t from-black/85 via-black/50 to-transparent space-y-3">
+            {current.caption && (
+              <div className="text-white text-sm">{current.caption}</div>
+            )}
+            {!current.is_self && current.unlocked && current.viewer_is_subscriber && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleSendReply();
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Responder para @${creatorUsername}…`}
+                  maxLength={4000}
+                  disabled={sendingReply}
+                  className="flex-1 h-11 rounded-full bg-white/10 text-white placeholder:text-white/50 px-4 text-sm border border-white/20 focus:outline-none focus:border-white/60 focus:bg-white/15"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingReply || !replyText.trim()}
+                  className="h-11 w-11 grid place-items-center rounded-full bg-white text-black disabled:opacity-40"
+                  aria-label="Enviar resposta"
+                >
+                  {sendingReply ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <SendHorizontal className="h-5 w-5" />
+                  )}
+                </button>
+              </form>
+            )}
+            {!current.is_self && current.unlocked && !current.viewer_is_subscriber && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate({ to: "/perfil/$username", params: { username: creatorUsername } });
+                }}
+                className="w-full h-11 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+              >
+                Assine @{creatorUsername} para enviar mensagem
+              </button>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
+
 
 function LockedOverlay({
   thumbUrl,
