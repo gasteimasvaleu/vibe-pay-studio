@@ -645,7 +645,18 @@ function PerfilPage() {
             <h2 className="text-2xl font-black tracking-tight text-foreground">{displayName}</h2>
             <BadgeCheck className="h-6 w-6 text-fuchsia-400 fill-fuchsia-400/20" />
           </div>
-          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>@{profile.username}</span>
+            {followersCount !== null && (
+              <span className="flex items-center gap-1">
+                <span className="font-semibold text-foreground">
+                  {new Intl.NumberFormat("pt-BR").format(followersCount)}
+                </span>
+                {followersCount === 1 ? "seguidor" : "seguidores"}
+              </span>
+            )}
+          </div>
+
 
           {/* Mobile stats */}
           <div className="sm:hidden flex items-center gap-4 text-xs text-muted-foreground">
