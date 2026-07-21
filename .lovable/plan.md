@@ -1,51 +1,45 @@
-## Diagnóstico (confirmado no banco)
+## Confirmado
+- Seguidores e assinantes são **por `creator_profile_id`**.
+- Perfil `kind='free'` **não vende assinatura**: sem preço, sem checkout, sem card de assinatura, sem aba "Assinantes" no dashboard quando o perfil ativo é free. Só segue/seguidores.
 
-Os dois perfis do `caiorobbb@gmail.com` existem:
-- `profiles`: `account_type=creator`, `free_profile_enabled=true`, `active_view=creator`, `active_profile_id` → creator_profile pago.
-- `creator_profiles`:
-  - `kind=paid`, username `monetisex`
-  - `kind=free`, username `monetisexy2`, display_name `Monetisexy 2`
+## Fase 1 — `creator_profiles` como fonte da verdade
+- Migration de backfill idempotente para as linhas `creator_profiles` existentes, copiando de `profiles.*` (paid) e `profiles.free_*` (free): `username`, `display_name`, `avatar_url`, `cover_url`, `bio`, `price_monthly`, `discount_*`, `chat_welcome_*`, redes sociais.
+- Validar colisões e adicionar `UNIQUE(username)` em `creator_profiles`.
+- Constraint: `price_monthly` deve ser `NULL` quando `kind='free'` (trigger de validação, não CHECK).
+- Helper server `resolveActiveCreatorProfile(userId)` — retorna a linha ativa de `creator_profiles`.
 
-Não é estado antigo. A alternância grava corretamente em `active_view` + `active_profile_id`. O problema é de **leitura**: quase todas as superfícies (feed, stories, chat, comentários, tips, follow, subscriptions, header de `/profile/:username`) resolvem a identidade do creator por `profiles.username / avatar_url`, ignorando o `creator_profile` da linha e o `active_profile_id` do usuário logado.
+## Fase 2 — Leituras de identidade migradas
+Trocar leituras de `profiles.username/avatar_url/display_name/bio/cover_url` + fallback `free_*` por `creator_profiles` via `active_profile_id`:
+- `dashboard.tsx`, `TopNav`, `BottomNav`, `publisher.tsx`, `CreatorDashboard.switchBar`.
+- Loaders de `profile.$username.tsx` e `perfil.$username.tsx`: lookup por `creator_profiles.username` (deduz `user_id`, `kind`, `creator_profile_id`).
 
-Só `dashboard`, `profile.$username`, `publisher` e `my-monetisex-stats` estão cientes de `active_profile_id`/`creator_profiles`.
+## Fase 3 — Contadores e listas escopadas ao perfil
+- `perfil.$username` loader: `postsCount`, `mediaCount`, `photos/videos/lockedCount`, `likesCount` filtrados por `creator_profile_id`.
+- `/profile/$username`: estender filtro a mídias.
+- `/my-monetisex-stats`, `/follow`, dashboard cards: escopar por `creator_profile_id`.
 
-## Objetivo
+## Fase 4 — Follows por perfil, assinaturas só no pago
+- `monetization.functions.followCreator / unfollowCreator / isFollowing`: recebem `creatorProfileId`; escrevem/leem `follows.creator_profile_id`. Seguir o pago **não** segue o gratuito.
+- `listMySubscribers / listMyFollowees` e `stats.functions`: agrupar por `creator_profile_id`.
+- `perfil.$username` loader: `followRow`, `followersCount` por `creator_profile_id`.
+- **Assinaturas (só perfil pago):**
+  - Loaders/UI de `perfil.$username` e `profile.$username`: quando `kind='free'`, esconder card de assinatura/preço, ocultar aba "Assinantes" e não chamar `activeSub`.
+  - `subscribe.functions` / checkout: rejeitar tentativa contra `creator_profile_id` com `kind='free'` (guard server + UI escondida).
+  - Dashboard: aba/seções "Assinantes", "Top assinantes", "Receita de assinatura" ocultas quando perfil ativo é free.
+  - `/subscriptions` do assinante continua igual (lista o que já foi assinado, sempre em perfis pagos).
 
-Ao alternar entre perfil pago e gratuito:
-1. As **próprias publicações/stories/mensagens** publicadas em cada modo aparecem com o username/nome/avatar do creator_profile daquele modo (feed, stories, chat, comentários, tips).
-2. O **header de `/profile/:username`** mostra os dados do creator_profile correspondente à URL, não do `profiles`.
-3. **Follow e Subscriptions** listam o creator pela identidade do creator_profile assinado/seguido, não pelo `profiles`.
-4. Novas publicações/stories/tips/mensagens/follows criados no modo ativo passam a ser atribuídos ao `active_profile_id` correto no momento da escrita (fechando o gap para o futuro).
+## Fase 5 — Escrita de configurações no `creator_profiles`
+- `settings/myprofile` (nome, bio, avatar, cover), `settings/social-media`, `settings/chat-settings` → gravam na linha `creator_profiles` correspondente a `active_profile_id`.
+- `settings/subscription` (preço + descontos) → **só habilitada** quando perfil ativo é `paid`; grava em `creator_profiles`.
+- `criar-perfil-gratuito.tsx`: cria/atualiza `creator_profiles(kind='free')` (sem `price_monthly`) e aponta `profiles.active_profile_id`; para de gravar em `free_username/free_display_name/free_avatar_url`.
 
-## Passos
+## Fase 6 — Aposentar campos legados
+- Após migração das leituras: remover `profiles.free_username/free_display_name/free_avatar_url`.
+- `profiles.username/avatar_url/cover_url/bio/price_monthly/discount_*/chat_welcome_*` viram somente-histórico; código passa a ler exclusivamente de `creator_profiles`.
 
-1. **Fetchers de leitura (server functions)** — trocar o join de identidade de `profiles` para `creator_profiles` pela FK já existente na linha (`creator_profile_id` / equivalente):
-   - `publications.functions.ts` (feed, perfil, agendadas, arquivadas)
-   - `stories.functions.ts` (carrossel + viewer)
-   - `chat.functions.ts` (threads + mensagens: contraparte do creator)
-   - `publications` comments (autor quando é creator)
-   - `tips.functions.ts` (remetente/destinatário creator)
-   - `monetization.functions.ts` → `listMySubscriptions` (já lê profiles; passar a resolver pelo creator_profile assinado)
-   - `friends.functions.ts` / `follow` (`listMySubscribers`)
-   - `profile.$username` header
-   
-   Regra: se a linha já referencia `creator_profiles.id`, exibir `creator_profiles.username / display_name / avatar_url` daquela linha. Fallback para `profiles` só quando a linha for anterior à migração 1:N.
-
-2. **Escritas (atribuição no momento da criação)** — garantir que toda escrita usa o `active_profile_id` do momento:
-   - publicar publicação, publicar story, enviar mensagem/tip, seguir/curtir. Auditar cada `createServerFn` de escrita e substituir "resolver creator_profile pelo user_id (implícito paid)" por "usar `profiles.active_profile_id` do autor autenticado". Reutilizar helper único.
-
-3. **Invalidations no toggle** — em `setActiveProfileView` o cliente já chama `queryClient.invalidateQueries()`. Adicionar invalidação explícita dos query keys de feed/stories/chat/subscriptions/follow para evitar UI presa em cache.
-
-4. **QA no perfil de teste**: com `caiorobbb@gmail.com` alternar paid↔free e verificar que feed, stories, `/profile/monetisex` vs `/profile/monetisexy2`, chat, tips, follow e subscriptions mostram o nome/avatar correto por linha.
-
-### Fora de escopo
-
-- Não mexer no schema. As FKs `*_creator_profile_id` já existem da refatoração 1:N.
-- Não alterar `profiles.username` (identidade da conta continua sendo o username pago).
-
-### Detalhes técnicos
-
-- Padrão de select nos server fns: substituir `profiles!inner(username, display_name, avatar_url)` por `creator_profiles!inner(username, display_name, avatar_url, kind)` usando a FK da própria tabela (publications/stories/tips/subscriptions/follows/chat_threads).
-- Onde só existe `creator_id` (user_id) sem FK direta ao creator_profile, resolver via view SQL leve ou join extra em `creator_profiles` filtrando por `active_view` do dono — evitar isso: preferir usar a FK já persistida na linha, que é a fonte da verdade histórica.
-- Helper novo `getActiveCreatorProfileId(userId)` reutilizado nas escritas.
+## Detalhes técnicos
+- Novo utilitário server `resolveActiveCreatorProfile(userId)`; `resolveCreatorIdentities` (já existe) continua para leituras em lote.
+- Rotas: `dashboard`, `perfil.$username`, `profile.$username`, `publisher`, `follow`, `my-monetisex-stats`, `subscriptions`, `criar-perfil-gratuito`, `settings.*`.
+- Backend: `monetization.functions`, `subscribe.functions`, `profile.functions`, `onboarding.functions`, `stats.functions`, `email-events.server`, `restrictions.functions`.
+- Guards duplos (server + UI) para bloquear qualquer assinatura contra perfil free.
+- Risco: colisão de `username` entre `profiles` e `creator_profiles` — a migration valida antes de aplicar `UNIQUE`.
