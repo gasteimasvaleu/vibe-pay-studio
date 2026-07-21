@@ -393,15 +393,25 @@ function LockedOverlay({
   thumbUrl,
   priceCents,
   unlocking,
+  method,
+  onMethodChange,
   onUnlock,
 }: {
   thumbUrl: string | null;
   priceCents: number;
   unlocking: boolean;
+  method: PaymentMethod;
+  onMethodChange: (m: PaymentMethod) => void;
   onUnlock: () => void;
 }) {
+  const label =
+    method === "WALLET"
+      ? "Desbloquear com carteira"
+      : method === "PIX"
+        ? "Pagar com PIX"
+        : "Pagar com cartão";
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative w-full h-full flex items-center justify-center px-4">
       {thumbUrl && (
         <img
           src={thumbUrl}
@@ -409,7 +419,7 @@ function LockedOverlay({
           className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-40"
         />
       )}
-      <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-3xl bg-black/50 border border-white/10 backdrop-blur">
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
         <div className="h-14 w-14 rounded-full bg-white/10 grid place-items-center">
           <Lock className="h-6 w-6 text-white" />
         </div>
@@ -419,15 +429,23 @@ function LockedOverlay({
             Desbloqueie por R$ {(priceCents / 100).toFixed(2).replace(".", ",")}
           </p>
         </div>
-        <Button onClick={onUnlock} disabled={unlocking} className="min-w-[180px]">
+        <div className="w-full" onClick={(e) => e.stopPropagation()}>
+          <PaymentMethodPicker
+            value={method}
+            onChange={onMethodChange}
+            amountCents={priceCents}
+          />
+        </div>
+        <Button onClick={onUnlock} disabled={unlocking} className="w-full">
           {unlocking ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Desbloqueando...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...
             </>
           ) : (
-            "Desbloquear com carteira"
+            label
           )}
         </Button>
+
       </div>
     </div>
   );
