@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { CircularSteps } from "@/components/feed/CircularSteps";
+import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -36,19 +37,21 @@ export const Route = createFileRoute("/_authenticated/feed")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("account_type, username")
+      .select("account_type, username, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
     return {
+      userId: user.id,
       username: profile?.username ?? user.email?.split("@")[0] ?? "voce",
       accountType: profile?.account_type ?? "subscriber",
+      avatarUrl: (profile?.avatar_url as string | null) ?? null,
     };
   },
   component: FeedPage,
 });
 
 function FeedPage() {
-  const { username } = Route.useRouteContext();
+  const { username, userId, accountType, avatarUrl } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
@@ -170,6 +173,14 @@ function FeedPage() {
               Aqui você acompanha o que os creators que você segue estão postando em tempo real.
             </p>
           </motion.section>
+
+          {/* Stories */}
+          <StoriesCarousel
+            currentUserId={userId}
+            currentUsername={username}
+            currentAvatarUrl={avatarUrl}
+            canPublish={accountType === "creator" || accountType === "free_creator"}
+          />
 
           {/* Feed items */}
           {feedQuery.isLoading ? (

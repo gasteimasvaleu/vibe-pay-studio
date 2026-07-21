@@ -1610,6 +1610,130 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          creator_id: string
+          creator_profile_id: string | null
+          expires_at: string
+          id: string
+          media_path: string
+          media_type: string
+          price_cents: number
+          published_at: string
+          thumb_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          creator_id: string
+          creator_profile_id?: string | null
+          expires_at?: string
+          id?: string
+          media_path: string
+          media_type: string
+          price_cents?: number
+          published_at?: string
+          thumb_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          creator_id?: string
+          creator_profile_id?: string | null
+          expires_at?: string
+          id?: string
+          media_path?: string
+          media_type?: string
+          price_cents?: number
+          published_at?: string
+          thumb_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      story_unlocks: {
+        Row: {
+          amount_cents: number
+          buyer_id: string
+          created_at: string
+          creator_id: string
+          creator_profile_id: string | null
+          id: string
+          provider: string
+          provider_ref: string | null
+          status: string
+          story_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          buyer_id: string
+          created_at?: string
+          creator_id: string
+          creator_profile_id?: string | null
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          story_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          buyer_id?: string
+          created_at?: string
+          creator_id?: string
+          creator_profile_id?: string | null
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          story_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_unlocks_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriber_restrictions: {
         Row: {
           created_at: string
@@ -2255,6 +2379,7 @@ export type Database = {
         Args: { _publication_id: string }
         Returns: boolean
       }
+      can_see_story: { Args: { _story_id: string }; Returns: boolean }
       can_send_email: {
         Args: { _kind: string; _user_id: string }
         Returns: boolean
@@ -2325,6 +2450,20 @@ export type Database = {
               _message_id?: string
               _plan?: string
               _publication_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount_cents?: number
+              _creator_id?: string
+              _creator_profile_id?: string
+              _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+              _story_id?: string
             }
             Returns: Json
           }
