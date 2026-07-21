@@ -22,10 +22,10 @@ export function homeForAccountType(_accountType?: AccountType | string | null) {
 export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) {
-    navigate({ to: "/entrar" });
+    await navigate({ to: "/entrar" });
     return;
   }
-  navigate({ to: "/feed" });
+  await navigate({ to: "/feed" });
 }
 
 export function getAuthErrorMessage(message: string) {
