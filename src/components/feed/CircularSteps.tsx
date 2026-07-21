@@ -262,22 +262,8 @@ export function CircularSteps({
             >
               <ArrowRight className="h-5 w-5" />
             </button>
-            <div className="ml-2 flex gap-1.5">
-              {steps.map((_, i) => (
-                <span
-                  key={i}
-                  className="h-1.5 rounded-full transition-all"
-                  style={{
-                    width: i === activeIndex ? 20 : 6,
-                    background:
-                      i === activeIndex
-                        ? "linear-gradient(90deg,#d946ef,#9333ea)"
-                        : "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-                  }}
-                />
-              ))}
-            </div>
           </div>
+
         </div>
       </div>
     </div>
