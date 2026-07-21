@@ -22,7 +22,9 @@ type Provider = {
   name: string;
   connected: boolean;
   icon: React.ReactNode;
+  comingSoon?: boolean;
 };
+
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
@@ -45,9 +47,10 @@ const AppleIcon = () => (
 
 const PROVIDERS: Provider[] = [
   { id: "google", name: "Google", connected: true, icon: <GoogleIcon /> },
-  { id: "twitter", name: "Twitter", connected: false, icon: <XIcon /> },
-  { id: "apple", name: "Apple", connected: false, icon: <AppleIcon /> },
+  { id: "twitter", name: "Twitter", connected: false, icon: <XIcon />, comingSoon: true },
+  { id: "apple", name: "Apple", connected: false, icon: <AppleIcon />, comingSoon: true },
 ];
+
 
 function SecurityPage() {
   const router = useRouter();
@@ -81,15 +84,17 @@ function SecurityPage() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => toast.info("Em breve")}
-                className="flex items-center justify-center gap-2 rounded-md bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors"
+                disabled={p.comingSoon}
+                onClick={() => toast.info(p.comingSoon ? "Em breve" : "Em breve")}
+                className="flex items-center justify-center gap-2 rounded-md bg-background/60 hover:bg-background px-5 py-3 text-sm text-foreground border border-border transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-background/60"
               >
                 {p.icon}
                 <span>
-                  {p.name} · {p.connected ? "conectado" : "não conectado"}
+                  {p.name} · {p.comingSoon ? "Em breve" : p.connected ? "conectado" : "não conectado"}
                 </span>
               </button>
             ))}
+
           </div>
         </div>
       </main>
