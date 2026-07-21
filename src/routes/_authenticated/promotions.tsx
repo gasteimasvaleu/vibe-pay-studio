@@ -141,6 +141,12 @@ function PromotionsListPage() {
                 promotion={p}
                 onEnd={() => endMutation.mutate(p.id)}
                 ending={endMutation.isPending && endMutation.variables === p.id}
+                onDelete={() => {
+                  if (window.confirm("Apagar esta oferta? Esta ação não pode ser desfeita.")) {
+                    deleteMutation.mutate(p.id);
+                  }
+                }}
+                deleting={deleteMutation.isPending && deleteMutation.variables === p.id}
               />
             ))}
             {tab === "active" && (
