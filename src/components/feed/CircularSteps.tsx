@@ -161,7 +161,7 @@ export function CircularSteps({
         {/* Images */}
         <div
           ref={imageContainerRef}
-          className="relative mx-auto w-full max-w-sm"
+          className="relative mx-auto w-full max-w-md lg:max-w-lg"
           style={{ aspectRatio: "1 / 1", perspective: "1000px" }}
         >
           {steps.map((step, index) => (
