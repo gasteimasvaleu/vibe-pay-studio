@@ -90,6 +90,7 @@ import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
 import { Route as AuthenticatedCreatorOnboardingDocumentosIndexRouteImport } from './routes/_authenticated/creator.onboarding.documentos.index'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
+import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
 import { Route as AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.aprovado'
 
 const SobreRoute = SobreRouteImport.update({
@@ -547,6 +548,12 @@ const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
     path: '/verificando',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
+const AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute =
+  AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport.update({
+    id: '/veriff-concluido',
+    path: '/veriff-concluido',
+    getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
   AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport.update({
     id: '/aprovado',
@@ -634,6 +641,7 @@ export interface FileRoutesByFullPath {
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
+  '/creator/onboarding/documentos/veriff-concluido': typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
@@ -711,6 +719,7 @@ export interface FileRoutesByTo {
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
+  '/creator/onboarding/documentos/veriff-concluido': typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute
   '/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
@@ -796,6 +805,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/_authenticated/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
+  '/_authenticated/creator/onboarding/documentos/veriff-concluido': typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute
   '/_authenticated/creator/onboarding/documentos/verificando': typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   '/_authenticated/creator/onboarding/documentos/': typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
@@ -881,6 +891,7 @@ export interface FileRouteTypes {
     | '/settings/device-management/'
     | '/settings/two-factor/'
     | '/creator/onboarding/documentos/aprovado'
+    | '/creator/onboarding/documentos/veriff-concluido'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos/'
   fileRoutesByTo: FileRoutesByTo
@@ -958,6 +969,7 @@ export interface FileRouteTypes {
     | '/settings/device-management'
     | '/settings/two-factor'
     | '/creator/onboarding/documentos/aprovado'
+    | '/creator/onboarding/documentos/veriff-concluido'
     | '/creator/onboarding/documentos/verificando'
     | '/creator/onboarding/documentos'
   id:
@@ -1042,6 +1054,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/device-management/'
     | '/_authenticated/settings/two-factor/'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
+    | '/_authenticated/creator/onboarding/documentos/veriff-concluido'
     | '/_authenticated/creator/onboarding/documentos/verificando'
     | '/_authenticated/creator/onboarding/documentos/'
   fileRoutesById: FileRoutesById
@@ -1628,6 +1641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
+    '/_authenticated/creator/onboarding/documentos/veriff-concluido': {
+      id: '/_authenticated/creator/onboarding/documentos/veriff-concluido'
+      path: '/veriff-concluido'
+      fullPath: '/creator/onboarding/documentos/veriff-concluido'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport
+      parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
+    }
     '/_authenticated/creator/onboarding/documentos/aprovado': {
       id: '/_authenticated/creator/onboarding/documentos/aprovado'
       path: '/aprovado'
@@ -1745,6 +1765,7 @@ const AuthenticatedSettingsTwoFactorRouteWithChildren =
 
 interface AuthenticatedCreatorOnboardingDocumentosRouteChildren {
   AuthenticatedCreatorOnboardingDocumentosAprovadoRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
+  AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute
   AuthenticatedCreatorOnboardingDocumentosVerificandoRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRoute
   AuthenticatedCreatorOnboardingDocumentosIndexRoute: typeof AuthenticatedCreatorOnboardingDocumentosIndexRoute
 }
@@ -1753,6 +1774,8 @@ const AuthenticatedCreatorOnboardingDocumentosRouteChildren: AuthenticatedCreato
   {
     AuthenticatedCreatorOnboardingDocumentosAprovadoRoute:
       AuthenticatedCreatorOnboardingDocumentosAprovadoRoute,
+    AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute:
+      AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute,
     AuthenticatedCreatorOnboardingDocumentosVerificandoRoute:
       AuthenticatedCreatorOnboardingDocumentosVerificandoRoute,
     AuthenticatedCreatorOnboardingDocumentosIndexRoute:
