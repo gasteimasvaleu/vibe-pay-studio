@@ -84,6 +84,7 @@ export function CreatorDashboard({
     try {
       await switchView({ data: { view: "creator" } });
       await queryClient.invalidateQueries();
+      await router.invalidate();
       navigate({ to: "/dashboard" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao trocar de perfil");
