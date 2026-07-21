@@ -376,9 +376,17 @@ export function StoryViewer({
           </div>
         )}
       </div>
+      <PaymentModal
+        open={!!checkout}
+        onOpenChange={(v) => { if (!v) setCheckout(null); }}
+        title="Desbloquear story"
+        checkout={checkout}
+        onPaid={handleCheckoutPaid}
+      />
     </div>
   );
 }
+
 
 
 function LockedOverlay({
