@@ -205,30 +205,40 @@ function ActiveProfileBadge() {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
       if (!uid) return null;
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("active_view, free_profile_enabled, account_type, username, free_username, display_name, free_display_name, avatar_url, free_avatar_url")
-        .eq("user_id", uid)
-        .maybeSingle();
-      return prof;
+      const [{ data: prof }, { data: cps }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("active_view, active_profile_id, free_profile_enabled, account_type, username, avatar_url")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase
+          .from("creator_profiles")
+          .select("id, kind, username, display_name, avatar_url")
+          .eq("user_id", uid),
+      ]);
+      const rows = ((cps ?? []) as Array<{ id: string; kind: string; username: string; display_name: string | null; avatar_url: string | null }>);
+      const active =
+        rows.find((r) => r.id === prof?.active_profile_id) ??
+        rows.find((r) => (prof?.active_view === "free" ? r.kind === "free" : r.kind === "paid")) ??
+        rows[0] ??
+        null;
+      return { prof, active, rows };
     },
     staleTime: 30_000,
   });
 
   if (!data) return null;
+  const prof = data.prof;
+  const active = data.active;
   const canSwitch =
-    data.account_type === "free_creator" ||
-    (data.account_type === "creator" && data.free_profile_enabled === true);
-  if (!canSwitch) return null;
+    prof?.account_type === "free_creator" ||
+    (prof?.account_type === "creator" && (prof?.free_profile_enabled === true || data.rows.some((r) => r.kind === "free")));
+  if (!canSwitch || !active) return null;
 
-  const isFree = data.active_view === "free";
-  const label = isFree
-    ? `@${data.free_username ?? "perfil-gratuito"}`
-    : `@${data.username ?? "perfil"}`;
-  const name = isFree
-    ? data.free_display_name ?? "Perfil gratuito"
-    : data.display_name ?? "Perfil pago";
-  const avatar = isFree ? data.free_avatar_url : data.avatar_url;
+  const isFree = active.kind === "free";
+  const label = `@${active.username ?? "perfil"}`;
+  const name = active.display_name ?? (isFree ? "Perfil gratuito" : "Perfil pago");
+  const avatar = active.avatar_url ?? prof?.avatar_url ?? null;
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-2">
