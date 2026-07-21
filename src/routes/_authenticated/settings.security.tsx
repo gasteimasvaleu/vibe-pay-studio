@@ -22,7 +22,9 @@ type Provider = {
   name: string;
   connected: boolean;
   icon: React.ReactNode;
+  comingSoon?: boolean;
 };
+
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
