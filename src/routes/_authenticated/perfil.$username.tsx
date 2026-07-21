@@ -306,6 +306,40 @@ function PerfilPage() {
   const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
   const subscribeFreeFn = useServerFn(subscribeFree);
+  const addFriendFn = useServerFn(addFriend);
+  const removeFriendFn = useServerFn(removeFriend);
+  const isFriendServerFn = useServerFn(isFriendFn);
+
+  const friendQueryKey = ["friends", "is", viewerId, profile.userId] as const;
+  const friendQuery = useQuery({
+    queryKey: friendQueryKey,
+    queryFn: () => isFriendServerFn({ data: { friendUserId: profile.userId } }),
+    enabled: !isOwner,
+  });
+  const isFriendState = !!friendQuery.data?.isFriend;
+  const [friendBusy, setFriendBusy] = useState(false);
+
+  const handleToggleFriend = async () => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      if (isFriendState) {
+        await removeFriendFn({ data: { friendUserId: profile.userId } });
+        toast.success("Amigo removido.");
+      } else {
+        await addFriendFn({ data: { friendUserId: profile.userId } });
+        toast.success(`Você adicionou ${profile.displayName ?? profile.username} como amigo!`);
+      }
+      await queryClient.invalidateQueries({ queryKey: friendQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["friends", "public", viewerId] });
+      await queryClient.invalidateQueries({ queryKey: ["friends", "public", profile.userId] });
+      setMenuOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao atualizar amizade");
+    } finally {
+      setFriendBusy(false);
+    }
+  };
 
 
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
