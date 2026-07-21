@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
+
 
 const SIGNED_URL_TTL = 60 * 60; // 1h
 
