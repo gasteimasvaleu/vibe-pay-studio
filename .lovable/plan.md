@@ -1,21 +1,23 @@
-Adaptar `src/components/feed/CircularSteps.tsx` para o modelo de UX do componente `CircularTestimonials` de referência, mantendo os 5 passos, cores roxas do app e imagens já configuradas em `/feed`.
+## Objetivo
+Reposicionar o indicador de bolinhas (pontos de progresso) do componente `CircularSteps` para ficar **acima** do texto "Passo X" (subtitle), centralizado. As setas de navegação (◀ ▶) permanecem na posição atual (abaixo do texto), ocupando sozinhas a linha onde antes estavam junto das bolinhas.
 
-## Mudanças em `src/components/feed/CircularSteps.tsx`
+## Arquivo
+`src/components/feed/CircularSteps.tsx`
 
-1. **Imagens de fundo mais inclinadas**
-   - Aumentar `rotateY` das imagens laterais de `20deg` / `-20deg` para `15deg` / `-15deg` mas combinar com maior deslocamento vertical (`translateY -maxStickUp`) e opacidade total (`1`) — seguindo o modelo referência (efeito de cartas empilhadas mais inclinadas atrás).
-   - Ajustar `maxStickUp = gap * 0.8` (referência) para inclinação mais pronunciada.
-   - Reduzir `scale` lateral de `0.7` para `0.85` (referência) para que as imagens de trás fiquem visíveis nas laterais, aparecendo mais como no screenshot.
-   - Manter `borderRadius`, `border` e `boxShadow` atuais (padrão do app).
+## Mudanças
 
-2. **Tamanho maior das imagens**
-   - Aumentar `max-w-sm` do container para `max-w-md` (ou `max-w-lg` no desktop).
-   - Aumentar `width` interno de `72%` para `82%`.
+1. **Remover** o bloco de bolinhas (`<div className="ml-2 flex gap-1.5">...</div>`, linhas 249–263) de dentro da row de navegação.
+2. **Inserir** esse mesmo bloco logo antes do `<p>` do subtitle (linha 189), dentro do `motion.div` — porém como as bolinhas não devem re-animar a cada troca de passo, colocá-lo **fora** do `AnimatePresence`, como primeiro filho da coluna "Content" (`src/components/feed/CircularSteps.tsx` linha 180). Assim ficam fixas no topo da coluna de texto.
+3. Ajustar o wrapper das bolinhas para centralizar: trocar `ml-2 flex gap-1.5` por `flex justify-center gap-1.5` (mantendo cores/tamanho atuais das barras).
+4. **Manter** a row das setas (`flex items-center gap-3` na linha 220) intacta, apenas sem o bloco de bolinhas — as duas setas ocupam a posição onde a linha completa (setas + bolinhas) estava.
 
-3. **Preservar**
-   - Os 5 passos e seus textos.
-   - Cores roxas (`--primary`, gradiente `#d946ef → #9333ea`).
-   - As 5 imagens do Supabase já mapeadas em `src/routes/_authenticated/feed.tsx`.
-   - Setas, dots de paginação, animação de palavras com framer-motion.
+## Resultado visual
+```text
+[● ● ● ● ●]        <- bolinhas centralizadas
+PASSO 3
+Título
+Descrição...
+[◀] [▶]            <- setas na mesma posição atual
+```
 
-Nenhuma outra alteração fora deste arquivo.
+Sem alterações em lógica, cores, dados ou outros componentes.
