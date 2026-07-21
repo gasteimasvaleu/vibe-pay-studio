@@ -242,7 +242,7 @@ function PromotionCard({
         </span>
       </div>
 
-      {active && (
+      {active ? (
         <button
           type="button"
           onClick={onEnd}
@@ -250,6 +250,15 @@ function PromotionCard({
           className="mt-4 w-full py-3 rounded-md border border-border bg-background text-foreground font-semibold hover:bg-muted transition disabled:opacity-50"
         >
           {ending ? "Encerrando..." : "Encerrar oferta"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deleting}
+          className="mt-4 w-full py-3 rounded-md border border-destructive/40 bg-background text-destructive font-semibold hover:bg-destructive/10 transition disabled:opacity-50"
+        >
+          {deleting ? "Apagando..." : "Apagar oferta"}
         </button>
       )}
     </article>
