@@ -126,7 +126,7 @@ export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
   content_purchase: ["creatorName", "amountBRL", "publicationUrl", "what"],
   subscription_sales: ["subscriberName", "amountBRL", "planLabel", "dashboardUrl"],
   free_to_paid: ["creatorName", "creatorUrl"],
-  creator_referrals: ["referredName", "creatorUrl"],
+  
 };
 
 /**
