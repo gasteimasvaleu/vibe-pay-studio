@@ -77,10 +77,12 @@ function SettingsCreatorPage() {
           className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-card hover:bg-accent transition-colors"
         >
           <Avatar className="h-16 w-16">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
             <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
               {displayName.slice(0, 1).toUpperCase()}
             </AvatarFallback>
           </Avatar>
+
           <div className="flex-1 min-w-0">
             <p className="text-lg font-bold text-foreground truncate">
               {displayName}
