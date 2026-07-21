@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { X, Lock, Trash2, Loader2 } from "lucide-react";
+import { X, Lock, Trash2, Loader2, Eye, SendHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import {
   getCreatorStories,
@@ -10,9 +11,11 @@ import {
   deleteStory,
   type StoryItem,
 } from "@/lib/stories.functions";
+import { sendStoryReply } from "@/lib/chat.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
+
 
 export function StoryViewer({
   creatorId,
@@ -26,14 +29,18 @@ export function StoryViewer({
   onChanged: () => void;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchStories = useServerFn(getCreatorStories);
   const markViewed = useServerFn(markStoryViewed);
   const walletPay = useServerFn(payWithWallet);
   const removeStory = useServerFn(deleteStory);
+  const replyToStory = useServerFn(sendStoryReply);
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
@@ -42,6 +49,7 @@ export function StoryViewer({
     queryFn: () => fetchStories({ data: { creatorId: creatorId as string } }),
     enabled: !!creatorId && open,
   });
+
 
   const stories = storiesQuery.data ?? [];
   const current: StoryItem | undefined = stories[index];
@@ -81,6 +89,7 @@ export function StoryViewer({
     }
     const isVideo = current.media_type === "video";
     if (isVideo) return; // video advances on ended
+    if (replyText.length > 0 || sendingReply) return; // pause while composing reply
     const duration = 5000;
     const start = performance.now();
     const tick = (t: number) => {
@@ -97,7 +106,31 @@ export function StoryViewer({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, open, current?.id, current?.unlocked]);
+  }, [index, open, current?.id, current?.unlocked, replyText.length === 0, sendingReply]);
+
+  // Reset composer when moving to next story
+  useEffect(() => {
+    setReplyText("");
+  }, [index, creatorId]);
+
+  const handleSendReply = async () => {
+    if (!current || sendingReply) return;
+    const content = replyText.trim();
+    if (!content) return;
+    setSendingReply(true);
+    try {
+      const res = await replyToStory({ data: { storyId: current.id, content } });
+      toast.success("Resposta enviada");
+      setReplyText("");
+      onOpenChange(false);
+      navigate({ to: "/chat/$threadId", params: { threadId: res.threadId } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao enviar resposta");
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
 
   const handleUnlock = async () => {
     if (!current || unlocking) return;
@@ -175,15 +208,27 @@ export function StoryViewer({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {current?.is_self && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-                aria-label="Apagar"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <>
+                <div
+                  className="h-9 px-3 grid place-items-center rounded-full bg-white/10 text-white text-xs font-semibold"
+                  aria-label="Visualizações"
+                  title="Visualizações"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Eye className="h-4 w-4" />
+                    {current.view_count}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  aria-label="Apagar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
             )}
             <button
               type="button"
@@ -194,6 +239,7 @@ export function StoryViewer({
               <X className="h-5 w-5" />
             </button>
           </div>
+
         </div>
 
         {/* Content */}
@@ -245,16 +291,62 @@ export function StoryViewer({
           />
         </div>
 
-        {/* Caption */}
-        {current?.caption && (
-          <div className="absolute bottom-0 inset-x-0 z-20 px-4 py-3 text-white text-sm bg-gradient-to-t from-black/70 to-transparent">
-            {current.caption}
+        {/* Caption + reply / subscribe CTA */}
+        {current && (current.caption || (!current.is_self && current.unlocked)) && (
+          <div className="absolute bottom-0 inset-x-0 z-20 px-4 pt-6 pb-4 bg-gradient-to-t from-black/85 via-black/50 to-transparent space-y-3">
+            {current.caption && (
+              <div className="text-white text-sm">{current.caption}</div>
+            )}
+            {!current.is_self && current.unlocked && current.viewer_is_subscriber && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleSendReply();
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Responder para @${creatorUsername}…`}
+                  maxLength={4000}
+                  disabled={sendingReply}
+                  className="flex-1 h-11 rounded-full bg-white/10 text-white placeholder:text-white/50 px-4 text-sm border border-white/20 focus:outline-none focus:border-white/60 focus:bg-white/15"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingReply || !replyText.trim()}
+                  className="h-11 w-11 grid place-items-center rounded-full bg-white text-black disabled:opacity-40"
+                  aria-label="Enviar resposta"
+                >
+                  {sendingReply ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <SendHorizontal className="h-5 w-5" />
+                  )}
+                </button>
+              </form>
+            )}
+            {!current.is_self && current.unlocked && !current.viewer_is_subscriber && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate({ to: "/perfil/$username", params: { username: creatorUsername } });
+                }}
+                className="w-full h-11 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+              >
+                Assine @{creatorUsername} para enviar mensagem
+              </button>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
+
 
 function LockedOverlay({
   thumbUrl,

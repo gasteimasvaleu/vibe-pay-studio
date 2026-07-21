@@ -130,16 +130,16 @@ function ChatThreadView() {
             price_cents: number | null;
             metadata: unknown;
           };
+          const meta = m.metadata as { media?: unknown[]; storyReply?: unknown } | null;
           const hasMedia =
-            !!m.metadata &&
-            typeof m.metadata === "object" &&
-            Array.isArray((m.metadata as { media?: unknown[] }).media) &&
-            (m.metadata as { media: unknown[] }).media.length > 0;
-          if (hasMedia) {
-            // Media messages need server-signed URLs; refetch.
+            !!meta && Array.isArray(meta.media) && (meta.media as unknown[]).length > 0;
+          const hasStoryReply = !!meta && !!meta.storyReply;
+          if (hasMedia || hasStoryReply) {
+            // Needs server-signed URLs; refetch.
             queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
             return;
           }
+
           queryClient.setQueryData<ThreadData>(
             ["chat", "messages", threadId],
             (old) => {
@@ -342,9 +342,48 @@ function ChatThreadView() {
                     Boas-vindas{m.metadata.tag ? ` · ${m.metadata.tag}` : ""}
                   </div>
                 )}
+                {m.metadata?.storyReply && (
+                  <div
+                    className={cn(
+                      "mb-2 flex items-stretch gap-2 rounded-lg overflow-hidden border-l-2 pl-2 py-1",
+                      mine ? "border-primary-foreground/60 bg-black/10" : "border-primary/70 bg-primary/5",
+                    )}
+                  >
+                    {m.metadata.storyReply.thumbUrl ? (
+                      <img
+                        src={m.metadata.storyReply.thumbUrl}
+                        alt=""
+                        className="h-14 w-10 rounded object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="h-14 w-10 rounded bg-black/20 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <div
+                        className={cn(
+                          "text-[10px] uppercase tracking-wide font-semibold",
+                          mine ? "text-primary-foreground/80" : "text-primary",
+                        )}
+                      >
+                        {mine ? "Você respondeu ao story" : "Respondeu ao seu story"}
+                      </div>
+                      {m.metadata.storyReply.caption && (
+                        <div
+                          className={cn(
+                            "text-xs truncate mt-0.5",
+                            mine ? "text-primary-foreground/70" : "text-muted-foreground",
+                          )}
+                        >
+                          {m.metadata.storyReply.caption}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {m.content && (
                   <div className="whitespace-pre-wrap break-words">{m.content}</div>
                 )}
+
                 {m.metadata?.media && m.metadata.media.length > 0 && (
                   <div className="mt-2 grid gap-2 grid-cols-2">
                     {m.metadata.media.map((mm, idx) =>

@@ -20,6 +20,14 @@ export type ChatWelcomeMedia = {
   url?: string | null;
 };
 
+export type ChatStoryReply = {
+  storyId: string;
+  mediaType: "image" | "video";
+  caption: string | null;
+  thumbPath: string | null;
+  thumbUrl?: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -33,8 +41,10 @@ export type ChatMessage = {
     welcome?: boolean;
     tag?: string | null;
     media?: ChatWelcomeMedia[];
+    storyReply?: ChatStoryReply;
   } | null;
 };
+
 
 export type PartnerProfile = {
   userId: string;
@@ -185,9 +195,12 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       // Collect media paths across messages and sign in one batch
       const allPaths: string[] = [];
+      const storyThumbPaths: string[] = [];
       for (const m of msgs ?? []) {
         const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
         for (const it of media) if (it?.path) allPaths.push(it.path);
+        const sr = (m as any).metadata?.storyReply as ChatStoryReply | undefined;
+        if (sr?.thumbPath) storyThumbPaths.push(sr.thumbPath);
       }
       const urlByPath = new Map<string, string>();
       if (allPaths.length > 0) {
@@ -196,6 +209,16 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           .createSignedUrls(Array.from(new Set(allPaths)), 60 * 60);
         for (const s of signed ?? []) {
           if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+        }
+      }
+      const storyUrlByPath = new Map<string, string>();
+      if (storyThumbPaths.length > 0) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: signed } = await supabaseAdmin.storage
+          .from("stories")
+          .createSignedUrls(Array.from(new Set(storyThumbPaths)), 60 * 60);
+        for (const s of signed ?? []) {
+          if (s.path && s.signedUrl) storyUrlByPath.set(s.path, s.signedUrl);
         }
       }
 
@@ -215,6 +238,13 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
                 url: urlByPath.get(it.path) ?? null,
               }))
             : undefined;
+          const rawSr = meta?.storyReply as ChatStoryReply | undefined;
+          const storyReply: ChatStoryReply | undefined = rawSr
+            ? {
+                ...rawSr,
+                thumbUrl: rawSr.thumbPath ? storyUrlByPath.get(rawSr.thumbPath) ?? null : null,
+              }
+            : undefined;
           return {
             id: m.id,
             threadId: m.thread_id,
@@ -225,13 +255,14 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
             priceCents: price > 0 ? price : null,
             unlocked: price <= 0 || mine || unlockedSet.has(m.id),
             metadata: meta
-              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media }
+              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media, storyReply }
               : null,
           };
         }),
       };
     },
   );
+
 
 export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -270,6 +301,70 @@ export const sendMessage = createServerFn({ method: "POST" })
       unlocked: true,
     };
   });
+
+export const sendStoryReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        storyId: z.string().uuid(),
+        content: z.string().min(1).max(4000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ threadId: string; messageId: string }> => {
+    const { supabase, userId } = context;
+    // Load story (RLS: viewer must be able to see it — creators/subscribers/unlockers via story policies)
+    const { data: story, error: sErr } = await supabase
+      .from("stories")
+      .select("id, creator_id, media_type, media_path, thumb_path, caption")
+      .eq("id", data.storyId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!story) throw new Error("Story não encontrado");
+    if (story.creator_id === userId) throw new Error("Você não pode responder ao próprio story");
+
+    // Enforce active subscription
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("subscriber_id", userId)
+      .eq("creator_id", story.creator_id)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .limit(1)
+      .maybeSingle();
+    if (!sub) throw new Error("Você precisa ser assinante para responder");
+
+    // Ensure thread
+    const { data: threadId, error: tErr } = await supabase.rpc("get_or_create_thread", {
+      other_user: story.creator_id,
+    });
+    if (tErr) throw new Error(tErr.message);
+
+    const storyReply: ChatStoryReply = {
+      storyId: story.id,
+      mediaType: story.media_type as "image" | "video",
+      caption: (story.caption as string | null) ?? null,
+      thumbPath: (story.thumb_path ?? story.media_path) as string | null,
+    };
+
+    const { data: row, error } = await supabase
+      .from("chat_messages")
+      .insert({
+        thread_id: threadId as string,
+        sender_id: userId,
+        content: data.content,
+        price_cents: 0,
+        metadata: { storyReply } as unknown as never,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { threadId: threadId as string, messageId: row.id };
+  });
+
+
 
 
 export const markThreadRead = createServerFn({ method: "POST" })
