@@ -149,6 +149,39 @@ function centsToBrl(cents: number): number {
   return Math.round(cents) / 100;
 }
 
+// Sanitiza textos enviados ao Asaas (aparecem na tela do PIX / fatura do cartão).
+// Remove termos sensíveis para não expor conteúdo adulto no extrato bancário do pagador.
+const ASAAS_FORBIDDEN_PATTERNS: RegExp[] = [
+  /\bsex\w*/gi,
+  /\bsexy\b/gi,
+  /\bsexo\b/gi,
+  /\bsexand\w*/gi,
+  /\bporn\w*/gi,
+  /\bnude\w*/gi,
+  /\bnud[ae]z\b/gi,
+  /\bxxx\b/gi,
+  /\bhot\b/gi,
+  /\bfetich\w*/gi,
+  /\bputari\w*/gi,
+  /\bputa\w*/gi,
+  /\bgostos\w*/gi,
+  /\bsafad\w*/gi,
+  /\btes[aã]o\b/gi,
+  /\bpelad\w*/gi,
+  /\bnua\b/gi,
+  /\bnu\b/gi,
+];
+
+export function sanitizeAsaasText(input: string, maxLen = 60): string {
+  let out = (input ?? "").normalize("NFC");
+  for (const re of ASAAS_FORBIDDEN_PATTERNS) {
+    out = out.replace(re, "");
+  }
+  out = out.replace(/\s+/g, " ").trim();
+  if (out.length === 0) out = "MTX";
+  return out.slice(0, maxLen);
+}
+
 // ---------- Customers ----------
 
 export type AsaasCustomer = {
