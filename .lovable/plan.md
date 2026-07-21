@@ -1,52 +1,28 @@
-## Causa raiz única
+## Problema
 
-O app não escuta `supabase.auth.onAuthStateChange` em lugar nenhum. Isso faz:
+No TanStack Router (roteamento flat), quando existem os arquivos `cadastro.tsx` **e** `cadastro.confirme-email.tsx`, o primeiro passa a ser tratado como **layout pai** do segundo. Como `cadastro.tsx` renderiza a própria página de cadastro (sem `<Outlet />`), ao navegar para `/cadastro/confirme-email`:
 
-1. **Cadastro trava** — o `navigate()` acontece antes do gate `_authenticated` enxergar a sessão nova, e sem listener nada re-avalia.
-2. **Admin fantasma** — o `useQuery(["my-roles"])` da `TopNav` mantém `isAdmin: true` do usuário anterior no cache, e ninguém invalida.
-3. **"Dono" fantasma do perfil** — o `loader` de `/perfil/$username` roda uma vez com o `viewerId` antigo; sem `router.invalidate()` no SIGNED_IN/OUT, `isOwner` continua verdadeiro para o dono anterior.
+- A URL muda corretamente (você viu isso no preview).
+- Mas o componente renderizado continua sendo o formulário de cadastro, porque o "filho" nunca é montado — não há `<Outlet />` no pai.
 
-Recarregar a página resolve tudo (a sessão nova entra do zero), o que confirma o diagnóstico.
+Isso explica exatamente o sintoma: URL nova, visual antigo.
 
-## O que vou fazer
+## Correção
 
-### 1. `src/routes/__root.tsx` — adicionar o listener global de auth
+Transformar `/cadastro` em rota folha renomeando o arquivo, para que `cadastro.tsx` e `cadastro.confirme-email.tsx` passem a ser **irmãos** (ambos folhas), e não pai/filho.
 
-Dentro do componente root, um `useEffect` que assina `onAuthStateChange` uma única vez e reage só a transições de identidade:
+Passos:
 
-```tsx
-useEffect(() => {
-  const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-    if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-    router.invalidate();                       // re-roda loaders (perfil, feed, etc.)
-    if (event !== "SIGNED_OUT") queryClient.invalidateQueries(); // limpa cache de roles, wallet, etc.
-  });
-  return () => sub.subscription.unsubscribe();
-}, [router, queryClient]);
-```
+1. Renomear `src/routes/cadastro.tsx` → `src/routes/cadastro.index.tsx`.
+   - O TanStack passa a resolver `/cadastro` pelo `cadastro.index.tsx` e `/cadastro/confirme-email` pelo arquivo já existente, sem relação de layout entre eles.
+2. Atualizar o `createFileRoute("/cadastro")` dentro do arquivo renomeado para `createFileRoute("/cadastro/")` (path da index).
+3. Deixar o `routeTree.gen.ts` ser regerado automaticamente pelo plugin — não editar manualmente.
 
-Isso resolve os três sintomas de uma vez.
+Nenhuma outra alteração de conteúdo. Os fluxos de submit e navegação (`navigate({ to: "/cadastro/confirme-email", search: { email } })`) continuam iguais.
 
-### 2. `src/components/site/TopNav.tsx` — tirar o `useEffect` de leitura única
+## Verificação
 
-Trocar o `useEffect` inicial por uma escuta ativa da sessão (`onAuthStateChange` local que também repopula `signedIn`, `avatarUrl`, iniciais). Assim, se alguém trocar de conta em outra aba (ou dentro da mesma), a navbar reflete na hora — sem depender de F5. O `useQuery(["my-roles"])` já vai ser invalidado pelo listener global do passo 1.
-
-### 3. `src/routes/cadastro.tsx` + `src/lib/auth.ts` — deixar o pós-signup determinístico
-
-- Em `signUpWithEmail`, quando o Supabase devolve `data.session` preenchido, aguardar um `getUser()` OK antes de retornar (elimina a corrida com o gate `_authenticated`).
-- Em `cadastro.tsx.onSubmit`, `await navigate({...})` (a função retorna Promise) e adicionar um `console.info` explícito nos dois branches ("com sessão → /feed" e "sem sessão → /confirme-email") para eu ter sinal se travar de novo.
-- Ao concluir signup com sessão, chamar `queryClient.clear()` **antes** de navegar, para não herdar cache de um usuário anterior que porventura estivesse logado na aba.
-
-### 4. Verificação pós-build
-
-- Deslogar → cadastrar assinante de teste → confirmar redirect (para `/feed` ou `/cadastro/confirme-email`, conforme setting do Supabase).
-- Estando logado como `caiorobbb`, deslogar e logar como `sexandoapp7`, sem F5:
-  - O ícone escudo (admin) deve **sumir** imediatamente.
-  - Visitar `/perfil/monetisex` deve mostrar o CTA "Assinar", **não** as ações de owner.
-- Rodar `getMyRoles` server-fn é desnecessário mexer — o comportamento correto virá da invalidação de cache.
-
-## Fora do escopo
-
-- Não vou alterar a configuração do Supabase (confirmação de e-mail) nem criar novas policies. O bug é 100% cliente.
-- Não vou reescrever o gate `_authenticated/route.tsx` (integração-gerenciado).
-- Não vou tocar em RLS — o perfil é public-readable de propósito; a "edição" que você viu era só a UI mostrando controles de owner com base num `viewerId` desatualizado, o backend continua barrando qualquer write via RLS/policies (dono real: `caiorobbb`).
+- Após o rename, criar uma conta e confirmar que:
+  - a URL muda para `/cadastro/confirme-email?email=...`
+  - o card exibido é o de "Confirme seu e-mail" (não mais o formulário).
+- Voltar para `/cadastro` continua mostrando o formulário normalmente.

@@ -12,7 +12,7 @@ import {
   type AccountType,
 } from "@/lib/auth";
 
-export const Route = createFileRoute("/cadastro")({
+export const Route = createFileRoute("/cadastro/")({
   head: () => ({
     meta: [
       { title: "Criar conta · Monetisexy" },

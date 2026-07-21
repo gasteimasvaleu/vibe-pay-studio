@@ -12,9 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
-import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CadastroIndexRouteImport } from './routes/cadastro.index'
 import { Route as CadastroConfirmeEmailRouteImport } from './routes/cadastro.confirme-email'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
@@ -109,11 +109,6 @@ const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
   path: '/como-funciona',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CadastroRoute = CadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -123,10 +118,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastroIndexRoute = CadastroIndexRouteImport.update({
+  id: '/cadastro/',
+  path: '/cadastro/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CadastroConfirmeEmailRoute = CadastroConfirmeEmailRouteImport.update({
-  id: '/confirme-email',
-  path: '/confirme-email',
-  getParentRoute: () => CadastroRoute,
+  id: '/cadastro/confirme-email',
+  path: '/cadastro/confirme-email',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthConfirmRoute = AuthConfirmRouteImport.update({
   id: '/auth/confirm',
@@ -570,7 +570,6 @@ const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -600,6 +599,7 @@ export interface FileRoutesByFullPath {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/cadastro/': typeof CadastroIndexRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -655,7 +655,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -682,6 +681,7 @@ export interface FileRoutesByTo {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/cadastro': typeof CadastroIndexRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -736,7 +736,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/cadastro': typeof CadastroRouteWithChildren
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/sobre': typeof SobreRoute
@@ -766,6 +765,7 @@ export interface FileRoutesById {
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
+  '/cadastro/': typeof CadastroIndexRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -823,7 +823,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/cadastro'
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
@@ -853,6 +852,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/cadastro/'
     | '/admin/bugs'
     | '/admin/emails'
     | '/admin/leaks'
@@ -908,7 +908,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/cadastro'
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
@@ -935,6 +934,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/cadastro'
     | '/admin/bugs'
     | '/admin/emails'
     | '/admin/leaks'
@@ -988,7 +988,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/cadastro'
     | '/como-funciona'
     | '/entrar'
     | '/sobre'
@@ -1018,6 +1017,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vault'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
+    | '/cadastro/'
     | '/_authenticated/admin/bugs'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/leaks'
@@ -1075,11 +1075,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  CadastroRoute: typeof CadastroRouteWithChildren
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   SobreRoute: typeof SobreRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
+  CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
+  CadastroIndexRoute: typeof CadastroIndexRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
@@ -1108,13 +1109,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComoFuncionaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cadastro': {
-      id: '/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof CadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -1129,12 +1123,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastro/': {
+      id: '/cadastro/'
+      path: '/cadastro'
+      fullPath: '/cadastro/'
+      preLoaderRoute: typeof CadastroIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cadastro/confirme-email': {
       id: '/cadastro/confirme-email'
-      path: '/confirme-email'
+      path: '/cadastro/confirme-email'
       fullPath: '/cadastro/confirme-email'
       preLoaderRoute: typeof CadastroConfirmeEmailRouteImport
-      parentRoute: typeof CadastroRoute
+      parentRoute: typeof rootRouteImport
     }
     '/auth/confirm': {
       id: '/auth/confirm'
@@ -1928,26 +1929,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface CadastroRouteChildren {
-  CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
-}
-
-const CadastroRouteChildren: CadastroRouteChildren = {
-  CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
-}
-
-const CadastroRouteWithChildren = CadastroRoute._addFileChildren(
-  CadastroRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  CadastroRoute: CadastroRouteWithChildren,
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   SobreRoute: SobreRoute,
   AuthConfirmRoute: AuthConfirmRoute,
+  CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
+  CadastroIndexRoute: CadastroIndexRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
