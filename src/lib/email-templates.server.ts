@@ -14,8 +14,7 @@ export type EmailKind =
   | "free_to_paid"
   | "post_sales"
   | "subscription_sales"
-  | "content_purchase"
-  | "creator_referrals";
+  | "content_purchase";
 
 export type EmailVars = Record<string, string | number | null | undefined>;
 
@@ -94,12 +93,6 @@ export const DEFAULT_TEMPLATES: Record<
 <p style="margin:0 0 12px;">Um perfil que você segue passou a monetizar conteúdo exclusivo.</p>
 <p><a href="{{creatorUrl}}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;display:inline-block;">Ver perfil</a></p>`,
   },
-  creator_referrals: {
-    subject: "Sua indicação virou criador no Monetisexy 🎉",
-    body_html: `<h1 style="font-size:20px;margin:0 0 12px;">Sua indicação foi ativada</h1>
-<p style="margin:0 0 12px;"><strong>{{referredName}}</strong> se tornou criador usando seu link de indicação.</p>
-<p><a href="{{creatorUrl}}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;display:inline-block;">Ver perfil</a></p>`,
-  },
 };
 
 /** Sample values usados no preview do admin e no envio de teste. */
@@ -125,10 +118,6 @@ export const SAMPLE_VARS: Record<EmailKind, EmailVars> = {
     creatorName: "Diego Alves",
     creatorUrl: `${APP_BASE_URL}/perfil/diegoalves`,
   },
-  creator_referrals: {
-    referredName: "Eduarda Melo",
-    creatorUrl: `${APP_BASE_URL}/perfil/eduarda`,
-  },
 };
 
 /** Variáveis disponíveis por kind (usado pela UI do admin). */
@@ -137,7 +126,7 @@ export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
   content_purchase: ["creatorName", "amountBRL", "publicationUrl", "what"],
   subscription_sales: ["subscriberName", "amountBRL", "planLabel", "dashboardUrl"],
   free_to_paid: ["creatorName", "creatorUrl"],
-  creator_referrals: ["referredName", "creatorUrl"],
+  
 };
 
 /**

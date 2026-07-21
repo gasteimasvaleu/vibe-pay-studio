@@ -17,7 +17,6 @@ export type EmailPreferences = {
   post_sales: boolean;
   subscription_sales: boolean;
   content_purchase: boolean;
-  creator_referrals: boolean;
 };
 
 const PRIVACY_KEYS = [
@@ -35,7 +34,6 @@ const EMAIL_KEYS = [
   "post_sales",
   "subscription_sales",
   "content_purchase",
-  "creator_referrals",
 ] as const;
 
 const PRIVACY_DEFAULTS: PrivacySettings = {
@@ -53,7 +51,6 @@ const EMAIL_DEFAULTS: EmailPreferences = {
   post_sales: true,
   subscription_sales: true,
   content_purchase: true,
-  creator_referrals: true,
 };
 
 export const getPrivacySettings = createServerFn({ method: "GET" })
@@ -109,7 +106,7 @@ export const getEmailPreferences = createServerFn({ method: "GET" })
     const { data, error } = await (supabase as any)
       .from("email_preferences")
       .select(
-        "free_to_paid, post_sales, subscription_sales, content_purchase, creator_referrals",
+        "free_to_paid, post_sales, subscription_sales, content_purchase",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -120,7 +117,6 @@ export const getEmailPreferences = createServerFn({ method: "GET" })
       post_sales: data.post_sales !== false,
       subscription_sales: data.subscription_sales !== false,
       content_purchase: data.content_purchase !== false,
-      creator_referrals: data.creator_referrals !== false,
     };
   });
 

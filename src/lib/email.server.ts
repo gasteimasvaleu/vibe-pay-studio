@@ -13,8 +13,7 @@ export type EmailKind =
   | "free_to_paid"
   | "post_sales"
   | "subscription_sales"
-  | "content_purchase"
-  | "creator_referrals";
+  | "content_purchase";
 
 export type SendEmailInput = {
   userId: string;
@@ -115,6 +114,3 @@ export async function resolveUserEmail(userId: string): Promise<string | null> {
   }
 }
 
-// TODO(creator_referrals): dispara quando um perfil indicado (referred_by)
-// se torna criador. Aguardando coluna `profiles.referred_by` para acionar via
-// `sendTransactionalEmail({ kind: "creator_referrals", ... })`.
