@@ -810,8 +810,8 @@ function BancoPage() {
               Veja seu saldo, gerencie suas formas de pagamento e acompanhe suas
               transações
             </p>
-            <Button variant="outline" className="mt-4 rounded-md">
-              Acessar carteira
+            <Button variant="default" className="mt-4 rounded-md" asChild>
+              <Link to="/mywallet">Acessar carteira</Link>
             </Button>
           </div>
         </section>
