@@ -51,6 +51,22 @@ export function getAuthErrorMessage(message: string) {
     return "Este e-mail já está cadastrado.";
   }
 
+  if (normalized.includes("over_email_send_rate_limit")) {
+    return "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.";
+  }
+
+  if (normalized.includes("email_address_invalid")) {
+    return "O endereço de e-mail informado é inválido.";
+  }
+
+  if (normalized.includes("email_not_confirmed") || normalized.includes("not confirmed")) {
+    return "Este e-mail ainda não foi confirmado. Verifique sua caixa de entrada.";
+  }
+
+  if (normalized.includes("user_not_found") || normalized.includes("user not found")) {
+    return "Não encontramos uma conta com este e-mail. Faça o cadastro novamente.";
+  }
+
   if (normalized.includes("password")) {
     return "A senha não atende aos requisitos de segurança.";
   }
