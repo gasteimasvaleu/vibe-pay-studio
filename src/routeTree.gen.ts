@@ -88,6 +88,7 @@ import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
+import { Route as AuthenticatedChatCallCallIdRouteImport } from './routes/_authenticated/chat.call.$callId'
 import { Route as AuthenticatedCreatorOnboardingDocumentosIndexRouteImport } from './routes/_authenticated/creator.onboarding.documentos.index'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
@@ -536,6 +537,12 @@ const AuthenticatedCreatorOnboardingAssinaturaRoute =
     path: '/creator/onboarding/assinatura',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedChatCallCallIdRoute =
+  AuthenticatedChatCallCallIdRouteImport.update({
+    id: '/call/$callId',
+    path: '/call/$callId',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingDocumentosIndexRoute =
   AuthenticatedCreatorOnboardingDocumentosIndexRouteImport.update({
     id: '/',
@@ -629,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
+  '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -708,6 +716,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
+  '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
@@ -793,6 +802,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
+  '/_authenticated/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -879,6 +889,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/chat/'
     | '/mywallet/'
+    | '/chat/call/$callId'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
@@ -958,6 +969,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/mywallet'
+    | '/chat/call/$callId'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
     | '/settings/device-management/removed'
@@ -1042,6 +1054,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/chat/'
     | '/_authenticated/mywallet/'
+    | '/_authenticated/chat/call/$callId'
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
@@ -1627,6 +1640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat/call/$callId': {
+      id: '/_authenticated/chat/call/$callId'
+      path: '/call/$callId'
+      fullPath: '/chat/call/$callId'
+      preLoaderRoute: typeof AuthenticatedChatCallCallIdRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/creator/onboarding/documentos/': {
       id: '/_authenticated/creator/onboarding/documentos/'
       path: '/'
@@ -1697,11 +1717,13 @@ const AuthenticatedBancoRouteWithChildren =
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
+  AuthenticatedChatCallCallIdRoute: typeof AuthenticatedChatCallCallIdRoute
 }
 
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+  AuthenticatedChatCallCallIdRoute: AuthenticatedChatCallCallIdRoute,
 }
 
 const AuthenticatedChatRouteWithChildren =
