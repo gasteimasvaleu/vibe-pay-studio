@@ -202,23 +202,37 @@ function FeedPage() {
                 steps={[
                   {
                     subtitle: "Passo 1",
-                    title: "Descubra creators",
+                    title: "Você chegou!",
                     description:
-                      "Explore perfis em alta e encontre quem combina com você.",
+                      "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar.",
                     src: "/placeholder.svg",
                   },
                   {
                     subtitle: "Passo 2",
-                    title: "Assine e desbloqueie",
+                    title: "Em Alta",
                     description:
-                      "Assinaturas, PPV, tips e chat privado num só lugar.",
+                      "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais.",
                     src: "/placeholder.svg",
                   },
                   {
                     subtitle: "Passo 3",
-                    title: "Interaja de verdade",
+                    title: "Conheça o Mural",
                     description:
-                      "Comente, mande tips e participe de desafios exclusivos.",
+                      "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais.",
+                    src: "/placeholder.svg",
+                  },
+                  {
+                    subtitle: "Passo 4",
+                    title: "Se interessou?",
+                    description:
+                      "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles.",
+                    src: "/placeholder.svg",
+                  },
+                  {
+                    subtitle: "Passo 5",
+                    title: "Assinou?",
+                    description:
+                      "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador.",
                     src: "/placeholder.svg",
                   },
                 ]}
