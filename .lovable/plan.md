@@ -1,58 +1,72 @@
-# Fazer todos os toggles de /settings/privacy-options funcionarem
+## Sistema de Amigos (unilateral, com flag de visibilidade)
 
-Sete toggles hoje persistem no banco; três não têm efeito e dois têm efeito parcial. Este plano fecha as lacunas sem remover nada da UI.
+### 1. Banco de dados (migração)
 
-## 1. `restrict_search_br` / `restrict_search_country` — filtro por país (geo-IP)
+Nova tabela `public.friendships`:
+- `id uuid pk`
+- `owner_id uuid` — quem adicionou (fonte)
+- `friend_id uuid` — quem foi adicionado (destino)
+- `created_at timestamptz`
+- `visible boolean default true` — controlado pelo destino (o "amigo") por linha, caso queira ocultar apenas essa relação; combina com a flag global `profiles.restrict_friendships`
+- `unique (owner_id, friend_id)`, `check (owner_id <> friend_id)`
+- índices em `owner_id` e `friend_id`
 
-**Hoje:** ambos se comportam como o global (comentário TODO em `search.tsx`).
+GRANTs para `authenticated` e `service_role`, RLS habilitado.
 
-**Fazer:**
-- Nova server function `resolveViewerCountry()` (`src/lib/geo.functions.ts`): lê `cf-ipcountry` via `getRequestHeader` (mesmo mecanismo já em `stats.functions.ts`). Retorna `{ country: string | null }`.
-- Adicionar coluna `profiles.country` (2 letras ISO) — preenchida no cadastro/onboarding a partir de `cf-ipcountry`. Migração cria a coluna nullable e um backfill best-effort a partir do último `profile_views.country` do próprio dono.
-- Em `src/routes/_authenticated/search.tsx` (loader):
-  - Chamar `resolveViewerCountry()` no início.
-  - `restrict_search_br`: filtrar `restrict_search_br.eq.false` **apenas** quando viewer country = `"BR"`; caso contrário, ignorar a flag.
-  - `restrict_search_country`: filtrar `restrict_search_country.eq.false OR country != <viewer_country>` — ou seja, esconder apenas quando viewer_country == owner_country.
-  - Sempre expor o próprio perfil ao viewer (já feito hoje).
-- Se `cf-ipcountry` ausente (dev/local): aplicar comportamento equivalente ao global (fallback conservador, hoje já é assim).
+Políticas RLS:
+- SELECT: qualquer autenticado pode ler uma linha se:
+  - é o `owner_id` ou `friend_id` (dono da relação), OU
+  - `visible = true` E o `friend_id` NÃO tem `profiles.restrict_friendships = true` (visão pública)
+- INSERT: `auth.uid() = owner_id` e destino não bloqueou o solicitante via `subscriber_restrictions`/bloqueio (checagem simples).
+- UPDATE: apenas o `friend_id` pode alterar `visible` da sua própria linha.
+- DELETE: `owner_id` (desfazer) ou `friend_id` (remover-se da lista alheia).
 
-## 2. `show_followers` — exibir contagem de seguidores no perfil
+### 2. Server functions (`src/lib/friends.functions.ts`)
 
-**Hoje:** contador não é mostrado, toggle sem efeito.
+- `addFriend({ friendUserId })` — insere linha (idempotente via ON CONFLICT DO NOTHING).
+- `removeFriend({ friendUserId })` — deleta onde `owner_id = me`.
+- `isFriend({ friendUserId })` → boolean (para estado do botão).
+- `listPublicFriends({ userId, limit })` — retorna amigos visíveis do perfil (join em `profiles` para pegar avatar/username/display_name), respeitando `restrict_friendships` do destino e a flag `visible` da linha.
+- `listMyIncomingFriends({ limit, cursor })` — para a aba Superfãs: retorna quem me adicionou (`friend_id = me`), com dados do owner + toggle de visibilidade da linha.
+- `setFriendshipVisibility({ ownerUserId, visible })` — o destinatário alterna a visibilidade da linha que outro criador criou apontando pra ele.
 
-**Fazer:**
-- Estender `getProfileByUsername` (arquivo do perfil público) para retornar `followers_count: number | null`:
-  - `count` sobre `public.follows` where `following_user_id = <profile.user_id>`.
-  - Se `profile.show_followers === false` **e** viewer != dono do perfil → retornar `null`.
-- Em `src/routes/_authenticated/perfil.$username.tsx`, renderizar linha de stats: `"{followers_count} seguidores"` quando não-null; ocultar quando null. Colocar junto ao bloco de stats existente (avatar/cover/stats section, ~linha 582).
-- Dono sempre vê o número (para poder decidir se quer ocultar).
+### 3. UI — Perfil público (`src/routes/_authenticated/perfil.$username.tsx`)
 
-## 3. `restrict_mentions` — já funcional; validar edge case
+- Substituir o toast do botão "Adicionar amigo" por chamada real a `addFriend`/`removeFriend` com estado (ícone e label alternam entre "Adicionar amigo" e "Remover amigo") via `useQuery(isFriend)`.
+- Novo componente `FriendsStrip` renderizado logo abaixo da linha de ícones sociais da bio:
+  - Título discreto "Amigos" + contagem
+  - Lista horizontal scrollável de avatares circulares (nome abaixo), cada um linkando para `/perfil/$username`
+  - Fonte: `listPublicFriends({ userId: profile.userId })`
+  - Renderiza somente se `count > 0`
+  - Aparece igualmente no perfil do owner e no perfil do friend (por padrão), respeitando `restrict_friendships` global do destino e `visible` da linha
+  - Se dono do perfil visitando o próprio → mostra pequeno botão "Gerenciar" que abre a aba Superfãs (para controle de visibilidade)
 
-**Hoje:** honrado no lookup `@mention` de `search.tsx`.
+### 4. UI — Dashboard "Meu Monetisexy" (`src/routes/_authenticated/my-monetisex-stats.tsx`)
 
-**Fazer:** revisar o publicador para garantir que a resolução de `@usuario` no `PublisherComposer` também passe pelo mesmo endpoint filtrado (o autocomplete). Se já usa `search.tsx`/`searchMentions`, nada a alterar; se não, apontar para o mesmo filtro. Verificação sem mudança se já estiver correto.
+- Adicionar nova aba principal **"Superfãs"** em `MAIN_TABS` (após "Assinantes").
+- Painel `SuperfasPanel`:
+  - Lista de criadores que me adicionaram como amigo (`listMyIncomingFriends`)
+  - Cada linha: avatar, @username, display_name, "Amigo desde", link "Ver perfil" e um `Switch` "Mostrar publicamente" (chama `setFriendshipVisibility` para essa linha)
+  - Estado vazio com CTA explicativa sobre cross-promotion
+  - Busca por nome/username
+  - Nota informativa sobre a flag global `restrict_friendships` em Privacidade (com deep-link)
 
-## 4. `restrict_friendships` — remover botão "Adicionar amigo" quando ativo
+### 5. Integração com privacidade existente
 
-**Hoje:** botão "Adicionar amigo" no menu do perfil só dispara um toast; toggle sem efeito.
+- Manter `profiles.restrict_friendships` (já existe) como "kill switch" global: quando true, `listPublicFriends` NUNCA retorna o usuário como amigo em perfis de terceiros, e o botão "Adicionar amigo" continua oculto no perfil dele.
+- A nova coluna `friendships.visible` é ajuste por-relação, independente do global.
 
-**Fazer (escopo mínimo, sem construir sistema de amizades):**
-- Em `perfil.$username.tsx`: quando `profile.restrict_friendships === true` e viewer != dono, **ocultar** o item "Adicionar amigo" no popover.
-- Descrição do toggle continua coerente (perfil não aparece como amigo).
-- Registrar TODO: quando um sistema real de amizades for construído, o mesmo flag governará a listagem `friends_of(user_id)`.
+### Detalhes técnicos
 
-## 5. `emails_enabled` — já funcional
+- Todas as functions usam `requireSupabaseAuth`; consulta pública via `context.supabase` respeitando RLS.
+- Cache: `queryKey: ['friends', 'public', userId]` e `['friends', 'incoming']`; invalidar após add/remove/toggle.
+- `FriendsStrip` faz `ensureQueryData` no loader do perfil para SSR-friendly (o loader já é `_authenticated`).
+- Sem alterações em outras tabelas nem em pagamento.
 
-Verificado: `sendTransactionalEmail` chama RPC `can_send_email` que respeita `profiles.emails_enabled`. Nada a fazer.
+### Arquivos afetados
 
-## Ordem de execução
-
-1. Migração: adicionar `profiles.country text` + backfill.
-2. `src/lib/geo.functions.ts` (nova).
-3. Atualizar `src/routes/_authenticated/search.tsx` loader com país do viewer + lógica dos dois filtros.
-4. Estender fetcher do perfil para expor `followers_count` respeitando `show_followers`.
-5. Ajustes de UI em `perfil.$username.tsx` (contador + ocultar "Adicionar amigo").
-6. Preencher `profiles.country` no fluxo de cadastro/onboarding a partir de `cf-ipcountry` (server fn de criação/atualização de perfil já existente).
-
-Nenhuma tela nova; nenhuma dependência externa nova (Cloudflare já entrega `cf-ipcountry`). Resend/gateway já configurado para e-mails.
+- (novo) `supabase/migrations/*_friendships.sql`
+- (novo) `src/lib/friends.functions.ts`
+- (novo) `src/components/profile/FriendsStrip.tsx`
+- `src/routes/_authenticated/perfil.$username.tsx` (botão real + strip)
+- `src/routes/_authenticated/my-monetisex-stats.tsx` (aba Superfãs)
