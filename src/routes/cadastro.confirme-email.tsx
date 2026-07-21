@@ -37,6 +37,23 @@ function ConfirmeEmailPage() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
+  // Ao montar, verifica se o usuário já confirmou o e-mail (ex: abriu o link em outra aba).
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!mounted || !data.user) return;
+      if (data.user.email_confirmed_at || data.user.confirmed_at) {
+        console.info("[confirme-email] e-mail já confirmado ao montar → routeAfterAuth");
+        await routeAfterAuth(navigate);
+      }
+    };
+    check();
+    return () => {
+      mounted = false;
+    };
+  }, [navigate]);
+
   const handleAlreadyConfirmed = async () => {
     setErrorMsg(null);
     setInfo(null);
@@ -71,14 +88,18 @@ function ConfirmeEmailPage() {
     setInfo(null);
     setResending(true);
     try {
+      console.info("[confirme-email] reenviando confirmação para", email);
       const { error } = await supabase.auth.resend({ type: "signup", email });
       if (error) {
+        console.error("[confirme-email] erro no resend:", error.name, error.message, error.status);
         setErrorMsg(getAuthErrorMessage(error.message));
         return;
       }
+      console.info("[confirme-email] reenvio bem-sucedido");
       setInfo("Enviamos um novo e-mail. Confira sua caixa de entrada e o spam.");
       setCooldown(30);
     } catch (err) {
+      console.error("[confirme-email] exceção no resend:", err);
       setErrorMsg(
         err instanceof Error ? getAuthErrorMessage(err.message) : "Não foi possível reenviar.",
       );
