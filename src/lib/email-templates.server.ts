@@ -118,10 +118,6 @@ export const SAMPLE_VARS: Record<EmailKind, EmailVars> = {
     creatorName: "Diego Alves",
     creatorUrl: `${APP_BASE_URL}/perfil/diegoalves`,
   },
-  creator_referrals: {
-    referredName: "Eduarda Melo",
-    creatorUrl: `${APP_BASE_URL}/perfil/eduarda`,
-  },
 };
 
 /** Variáveis disponíveis por kind (usado pela UI do admin). */
