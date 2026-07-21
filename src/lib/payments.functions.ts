@@ -301,6 +301,115 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     };
   });
 
+// ---------------- Story unlock (PIX / Cartão) ----------------
+
+export const createStoryUnlockPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { storyId: string; method: Method; card?: CardInput }) => data,
+  )
+  .handler(async ({ data, context }): Promise<CheckoutResult> => {
+    const { supabase, userId } = context;
+    const { data: story, error } = await supabase
+      .from("stories")
+      .select("id, creator_id, price_cents, expires_at")
+      .eq("id", data.storyId)
+      .single();
+    if (error || !story) throw new Error("story não encontrado");
+    if (story.creator_id === userId) throw new Error("não é possível desbloquear seu próprio story");
+    if (!story.price_cents || story.price_cents <= 0) throw new Error("story sem preço");
+    if (story.expires_at && new Date(story.expires_at).getTime() < Date.now()) {
+      throw new Error("story expirado");
+    }
+
+    const walletId = await getCreatorWallet(supabase, story.creator_id);
+    const customerId = await ensureCustomerId(supabase, userId);
+
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(story.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
+    const { data: existing } = await supabase
+      .from("story_unlocks")
+      .select("id, status")
+      .eq("story_id", story.id)
+      .eq("buyer_id", userId)
+      .maybeSingle();
+
+    let unlockId: string;
+    if (existing) {
+      if (existing.status === "paid") throw new Error("story já desbloqueado");
+      const { error: updErr } = await supabase
+        .from("story_unlocks")
+        .update({
+          amount_cents: story.price_cents,
+          provider: providerTag,
+          status: "pending",
+          provider_ref: null,
+        })
+        .eq("id", existing.id);
+      if (updErr) throw new Error(updErr.message);
+      unlockId = existing.id;
+    } else {
+      const { data: inserted, error: uErr } = await supabase
+        .from("story_unlocks")
+        .insert({
+          story_id: story.id,
+          creator_id: story.creator_id,
+          buyer_id: userId,
+          amount_cents: story.price_cents,
+          provider: providerTag,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (uErr) throw new Error(uErr.message);
+      unlockId = inserted.id;
+    }
+
+    const payment = await asaas.createPayment({
+      customerId,
+      billingType: data.method,
+      amountCents: story.price_cents,
+      description: `Desbloqueio story ${story.id.slice(0, 8)}`,
+      externalReference: `story_unlock:${unlockId}`,
+      creatorWalletId: walletId,
+      netCreatorCents,
+      ...buildCardArgs(data.card),
+    });
+
+    await supabase
+      .from("story_unlocks")
+      .update({ provider_ref: payment.id })
+      .eq("id", unlockId);
+
+    let pixQr = null;
+    if (data.method === "PIX") {
+      pixQr = await asaas.getPixQrCode(payment.id);
+    }
+
+    const intentId = await recordIntent(supabase, {
+      asaasPayment: payment,
+      method: data.method,
+      referenceTable: "story_unlocks",
+      referenceId: unlockId,
+      pixQr,
+    });
+
+    return {
+      paymentIntentId: intentId,
+      asaasPaymentId: payment.id,
+      status: payment.status,
+      method: data.method,
+      invoiceUrl: payment.invoiceUrl ?? null,
+      pixQrCode: pixQr?.encodedImage ?? null,
+      pixCopyPaste: pixQr?.payload ?? null,
+    };
+  });
+
+
+
 // ---------------- Challenge contribution (PIX only) ----------------
 
 export const createChallengeContributionPayment = createServerFn({ method: "POST" })

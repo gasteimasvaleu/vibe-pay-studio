@@ -13,8 +13,12 @@ import {
 } from "@/lib/stories.functions";
 import { sendStoryReply } from "@/lib/chat.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { createStoryUnlockPayment } from "@/lib/payments.functions";
 import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
+import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
+import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+
 
 
 export function StoryViewer({
@@ -35,14 +39,18 @@ export function StoryViewer({
   const walletPay = useServerFn(payWithWallet);
   const removeStory = useServerFn(deleteStory);
   const replyToStory = useServerFn(sendStoryReply);
+  const createStoryPayment = useServerFn(createStoryUnlockPayment);
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+
 
   const storiesQuery = useQuery({
     queryKey: ["creator-stories", creatorId],
@@ -136,17 +144,39 @@ export function StoryViewer({
     if (!current || unlocking) return;
     setUnlocking(true);
     try {
-      await walletPay({ data: { kind: "story_unlock", storyId: current.id } });
-      toast.success("Story desbloqueado!");
-      await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
-      await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-      onChanged();
+      if (selectedMethod === "WALLET") {
+        await walletPay({ data: { kind: "story_unlock", storyId: current.id } });
+        toast.success("Story desbloqueado!");
+        await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+        await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onChanged();
+      } else {
+        const res = await createStoryPayment({
+          data: { storyId: current.id, method: selectedMethod },
+        });
+        setCheckout({
+          paymentIntentId: res.paymentIntentId,
+          method: res.method,
+          pixQrCode: res.pixQrCode ?? null,
+          pixCopyPaste: res.pixCopyPaste ?? null,
+          invoiceUrl: res.invoiceUrl ?? null,
+        });
+      }
     } catch (e: any) {
       toast.error(translatePaymentError(e, "Falha ao desbloquear"));
     } finally {
       setUnlocking(false);
     }
   };
+
+  const handleCheckoutPaid = async () => {
+    setCheckout(null);
+    await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+    await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+    onChanged();
+    toast.success("Story desbloqueado!");
+  };
+
 
   const handleDelete = async () => {
     if (!current || deleting) return;
@@ -272,8 +302,11 @@ export function StoryViewer({
               thumbUrl={current.thumb_url}
               priceCents={current.price_cents}
               unlocking={unlocking}
+              method={selectedMethod}
+              onMethodChange={setSelectedMethod}
               onUnlock={handleUnlock}
             />
+
           )}
 
           {/* Tap zones */}
@@ -343,24 +376,42 @@ export function StoryViewer({
           </div>
         )}
       </div>
+      <PaymentModal
+        open={!!checkout}
+        onOpenChange={(v) => { if (!v) setCheckout(null); }}
+        title="Desbloquear story"
+        checkout={checkout}
+        onPaid={handleCheckoutPaid}
+      />
     </div>
   );
 }
+
 
 
 function LockedOverlay({
   thumbUrl,
   priceCents,
   unlocking,
+  method,
+  onMethodChange,
   onUnlock,
 }: {
   thumbUrl: string | null;
   priceCents: number;
   unlocking: boolean;
+  method: PaymentMethod;
+  onMethodChange: (m: PaymentMethod) => void;
   onUnlock: () => void;
 }) {
+  const label =
+    method === "WALLET"
+      ? "Desbloquear com carteira"
+      : method === "PIX"
+        ? "Pagar com PIX"
+        : "Pagar com cartão";
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative w-full h-full flex items-center justify-center px-4">
       {thumbUrl && (
         <img
           src={thumbUrl}
@@ -368,7 +419,7 @@ function LockedOverlay({
           className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-40"
         />
       )}
-      <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-3xl bg-black/50 border border-white/10 backdrop-blur">
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
         <div className="h-14 w-14 rounded-full bg-white/10 grid place-items-center">
           <Lock className="h-6 w-6 text-white" />
         </div>
@@ -378,15 +429,23 @@ function LockedOverlay({
             Desbloqueie por R$ {(priceCents / 100).toFixed(2).replace(".", ",")}
           </p>
         </div>
-        <Button onClick={onUnlock} disabled={unlocking} className="min-w-[180px]">
+        <div className="w-full" onClick={(e) => e.stopPropagation()}>
+          <PaymentMethodPicker
+            value={method}
+            onChange={onMethodChange}
+            amountCents={priceCents}
+          />
+        </div>
+        <Button onClick={onUnlock} disabled={unlocking} className="w-full">
           {unlocking ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Desbloqueando...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...
             </>
           ) : (
-            "Desbloquear com carteira"
+            label
           )}
         </Button>
+
       </div>
     </div>
   );

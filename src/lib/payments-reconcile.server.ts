@@ -20,7 +20,9 @@ type ReferenceTable =
   | "tips"
   | "chat_message_unlocks"
   | "video_calls"
+  | "story_unlocks"
   | "wallet_topups";
+
 
 async function markStatusPaid(
   supabaseAdmin: SupabaseAdminLike,

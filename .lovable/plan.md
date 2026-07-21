@@ -1,62 +1,37 @@
-## Reações e resposta a Stories
+## Situação atual
 
-Adicionar interações no `StoryViewer` conforme o perfil do usuário:
-- Contador de views ao lado do ícone do story (visível para o dono)
-- Campo de resposta que abre chat direto (assinantes)
-- Renderização especial da mensagem "respondeu ao story" no chat
-- CTA para assinar (não-assinantes que desbloquearam)
+Hoje o desbloqueio de story só usa **saldo da carteira** (`walletPay({ kind: "story_unlock" })`). Publicações, chat, tips, assinaturas, video call e recarga já têm PIX + cartão via Asaas. Falta a mesma opção para stories.
 
----
+## O que muda
 
-### 1. Contador de views no header
+O `LockedOverlay` do `StoryViewer` deixa de chamar direto a carteira e passa a abrir o **mesmo seletor de método de pagamento** usado em publicações: **Carteira / PIX / Cartão salvo / Novo cartão**. Se houver saldo na carteira, ele continua sendo a opção padrão em destaque.
 
-- Em `getCreatorStories` (`src/lib/stories.functions.ts`), adicionar `view_count` ao `StoryItem` — `count(*)` em `story_views` filtrado por `story_id` (apenas o dono precisa deste dado, mas pode retornar sempre).
-- No `StoryViewer`, ao lado do avatar/username, quando `current.is_self`, mostrar ícone 👁 + número.
+Fluxo por método:
+- **Carteira** → `payWithWallet` (comportamento atual, débito imediato).
+- **PIX** → gera QR + copia-e-cola, abre `PaymentModal` com `PixCheckout`; webhook Asaas marca `story_unlocks.status = paid`.
+- **Cartão** (salvo ou novo) → cria charge no Asaas, abre `CardCheckout`; webhook confirma.
 
-### 2. Verificação de assinatura ativa
+Ao confirmar pagamento (qualquer método), o viewer invalida `["creator-stories", creatorId]` e `["subscriber-wallet"]`, o story destrava e o auto-avanço retoma.
 
-Adicionar helper no `stories.functions.ts` que retorna, para cada story carregado, se o viewer é assinante ativo do criador:
-- Consulta única: `subscriptions` onde `subscriber_id = userId`, `creator_id = data.creatorId`, `status = 'active'`, `current_period_end > now()`.
-- Retornar campo `viewer_is_subscriber: boolean` no `StoryItem` (mesmo valor para todos os stories do mesmo criador).
-- `is_self` já conta como "pode responder" (o dono não vê barra).
+## Implementação
 
-### 3. Barra de resposta no rodapé (assinante)
+1. **`src/lib/payments.functions.ts`** — nova server fn `createStoryUnlockPayment({ storyId, method, card? })`, espelhando `createUnlockPayment`:
+   - Valida story existente, não é auto-desbloqueio, `price_cents > 0`.
+   - Upsert em `story_unlocks` com `status = "pending"` e `provider = asaas_pix|asaas_card`.
+   - `asaas.createPayment` com `externalReference = "story_unlock:<id>"` e split para a carteira do creator (`computeCreatorNetCents`).
+   - `recordIntent` com `referenceTable: "story_unlocks"`.
 
-No `StoryViewer`, abaixo da caption:
-- Se `unlocked && !is_self && viewer_is_subscriber`: input "Enviar mensagem…" + botão Enviar.
-- Ao enviar:
-  1. `openThreadWith({ userId: creator_id })` → obtém `threadId`.
-  2. Nova server function `sendStoryReply({ storyId, threadId, content })` em `chat.functions.ts` que:
-     - Insere `chat_messages` com `content` e `metadata = { story_reply: { storyId, thumbUrl, mediaType, caption } }`.
-     - `thumb_path` já existe (mesmo para vídeos — é o primeiro frame capturado no publish). Persistimos o `thumb_path` (não a URL assinada) e assinamos ao ler.
-  3. Toast "Resposta enviada" + fecha o viewer e navega para `/chat/$threadId`.
-- Enquanto envia, pausar o auto-advance (setar flag que zera o RAF loop).
+2. **`src/lib/payments-reconcile.server.ts`** — adicionar `"story_unlocks"` ao tipo `ReferenceTable`. `markStatusPaid` já funciona (coluna `status`, valor `paid`). Opcional: `notifyStoryUnlock` no futuro.
 
-### 4. Render da resposta no chat
+3. **`src/components/feed/StoryViewer.tsx` / `LockedOverlay`** — trocar o botão único "Desbloquear" por abrir o `PaymentMethodPicker` já existente. Ao escolher:
+   - `WALLET` → fluxo atual (`payWithWallet`).
+   - `PIX`/`CREDIT_CARD` → chamar `createStoryUnlockPayment`, montar `CheckoutData` e abrir `PaymentModal`. `onPaid` invalida queries e fecha o modal — o story destrava sem fechar o viewer.
 
-Em `getThreadWithPartner` (`chat.functions.ts`):
-- Estender `ChatMessage.metadata` com `storyReply?: { thumbUrl, mediaType, caption }`.
-- Coletar `thumb_path` de `metadata.storyReply` junto com os paths de mídia atuais e assinar em lote no bucket `stories`.
+4. **Nada muda no schema** — `story_unlocks` já tem colunas `status`, `provider`, `provider_ref`, `amount_cents`. Tabela e RLS existentes cobrem os dois novos métodos.
 
-Na UI do chat (`chat.$threadId.tsx` — bolha de mensagem):
-- Se `metadata.storyReply` presente: renderizar acima do texto um card compacto — thumbnail 60×90px + label "Você respondeu ao story" (para o remetente) ou "Respondeu ao seu story" (para o destinatário) + caption truncada.
+## Detalhes técnicos
 
-### 5. CTA para não-assinante que desbloqueou
-
-No `StoryViewer`, se `unlocked && !is_self && !viewer_is_subscriber`:
-- Renderizar botão `w-full` abaixo da caption com texto "Assine @username para enviar uma mensagem" que navega para `/{creator_username}` (perfil público).
-- Como precisamos do username, já vem em `current.creator_username`.
-
----
-
-### Detalhes técnicos
-
-**Arquivos alterados:**
-- `src/lib/stories.functions.ts` — adicionar `view_count` e `viewer_is_subscriber` em `StoryItem` e no handler de `getCreatorStories`.
-- `src/lib/chat.functions.ts` — nova server fn `sendStoryReply`; estender leitura para assinar `thumb_path` do bucket `stories` e expor `metadata.storyReply`.
-- `src/components/feed/StoryViewer.tsx` — header com contador (dono), rodapé condicional (input assinante / CTA não-assinante), lógica de envio + navegação.
-- `src/routes/_authenticated/chat.$threadId.tsx` — renderizar card de story-reply nas bolhas de mensagem.
-
-**Sem migrations:** o `metadata` de `chat_messages` já é `jsonb` aberto; `thumb_path` já é populado pelo publish para imagens e vídeos.
-
-**Sem alterações de RLS:** `sendStoryReply` reusa a inserção existente via `context.supabase` (RLS de `chat_messages` já valida participação na thread).
+- Reaproveitar `PaymentMethodPicker`, `PaymentModal`, `PixCheckout`, `CardCheckout` sem mudanças.
+- `buildCardArgs` e `ensureCustomerId` já existem em `payments.functions.ts`.
+- Webhook `/api/public/webhooks/asaas` não precisa de mudança: ele lê `metadata.referenceTable` do `payment_intents` e chama `applyPaidIntent`, que passará a aceitar `story_unlocks`.
+- CPF continua obrigatório para PIX/cartão (mesmo `cpf_required` das outras compras); carteira segue não exigindo.
