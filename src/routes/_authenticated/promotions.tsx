@@ -52,6 +52,7 @@ function PromotionsListPage() {
   const queryClient = useQueryClient();
   const { data: promotions } = useSuspenseQuery(promotionsQueryOptions);
   const endPromotionFn = useServerFn(endPromotion);
+  const deletePromotionFn = useServerFn(deletePromotion);
 
   const hasActive = promotions.some((p) => p.is_active);
   const [tab, setTab] = useState<Tab>(hasActive ? "active" : "inactive");
@@ -66,6 +67,17 @@ function PromotionsListPage() {
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Erro ao encerrar oferta");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePromotionFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Oferta apagada");
+      queryClient.invalidateQueries({ queryKey: ["my-promotions"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao apagar oferta");
     },
   });
 
