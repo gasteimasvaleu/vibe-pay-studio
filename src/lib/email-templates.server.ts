@@ -93,12 +93,6 @@ export const DEFAULT_TEMPLATES: Record<
 <p style="margin:0 0 12px;">Um perfil que você segue passou a monetizar conteúdo exclusivo.</p>
 <p><a href="{{creatorUrl}}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;display:inline-block;">Ver perfil</a></p>`,
   },
-  creator_referrals: {
-    subject: "Sua indicação virou criador no Monetisexy 🎉",
-    body_html: `<h1 style="font-size:20px;margin:0 0 12px;">Sua indicação foi ativada</h1>
-<p style="margin:0 0 12px;"><strong>{{referredName}}</strong> se tornou criador usando seu link de indicação.</p>
-<p><a href="{{creatorUrl}}" style="background:#111827;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;display:inline-block;">Ver perfil</a></p>`,
-  },
 };
 
 /** Sample values usados no preview do admin e no envio de teste. */
