@@ -574,17 +574,20 @@ function PerfilPage() {
                   <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Silenciar perfil
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    toast.success(`Solicitação de amizade enviada para ${displayName}!`);
-                    setMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
-                >
-                  <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                  Adicionar amigo
-                </button>
+                {!profile.restrictFriendships && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast.success(`Solicitação de amizade enviada para ${displayName}!`);
+                      setMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                  >
+                    <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                    Adicionar amigo
+                  </button>
+                )}
+
               </nav>
             </PopoverContent>
           </Popover>
