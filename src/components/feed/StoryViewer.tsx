@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { X, Lock, Trash2, Loader2 } from "lucide-react";
@@ -48,6 +49,14 @@ export function StoryViewer({
   useEffect(() => {
     if (open) setIndex(0);
   }, [open, creatorId]);
+
+  useEffect(() => {
+    if (!open) return;
+    openOverlay();
+    return () => closeOverlay();
+  }, [open]);
+
+
 
   const advance = () => {
     if (index < stories.length - 1) setIndex((i) => i + 1);

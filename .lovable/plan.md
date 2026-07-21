@@ -1,8 +1,11 @@
-## Remover card de boas-vindas do feed
+## Ocultar navbars durante exibição de story
 
-O card "Feed / Olá, @username 👋" no topo de `/feed` (linhas 162–175 de `src/routes/_authenticated/feed.tsx`) será removido, já que o `StoriesCarousel` agora ocupa o topo da página.
+Quando o `StoryViewer` estiver aberto (em tela cheia), esconder `TopNav` e `BottomNav` do layout `_authenticated`.
 
 ### Alterações
 
-- `src/routes/_authenticated/feed.tsx`: remover o `<motion.section>` de boas-vindas, deixando o `StoriesCarousel` como primeiro elemento do `<main>`.
-- Sem mudanças em dados, componentes ou lógica. `CircularSteps` (empty state) permanece intacto.
+- Criar `src/hooks/useFullscreenOverlay.ts`: pequeno store baseado em `useSyncExternalStore` que expõe `useFullscreenOverlay()` (boolean) e helpers `openOverlay()` / `closeOverlay()`.
+- `src/components/feed/StoryViewer.tsx`: chamar `openOverlay()` quando `open` vira `true` e `closeOverlay()` quando fecha (via `useEffect` com cleanup).
+- `src/routes/_authenticated/route.tsx`: ler `useFullscreenOverlay()` e renderizar `<TopNav />` e `<BottomNav />` condicionalmente (ocultos quando ativo). O `<Outlet />` continua renderizado.
+
+Sem alterações de dados ou lógica de negócio.
