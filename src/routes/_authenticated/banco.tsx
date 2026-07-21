@@ -242,10 +242,9 @@ function BancoPage() {
 
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
-      <div className="absolute inset-0 bg-card" />
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
 
-      <header className="relative z-10 border-b border-border bg-card">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             onClick={() => router.history.back()}
@@ -267,7 +266,7 @@ function BancoPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Cards de saldo */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
