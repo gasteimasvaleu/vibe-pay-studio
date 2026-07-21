@@ -107,6 +107,13 @@ export async function signUpWithEmail({
 
   if (data.user && data.session) {
     await ensureCurrentUserProfile({ accountType, username });
+    // Aguarda o Supabase confirmar a sessão nova antes de resolver, para evitar
+    // corrida com o gate `_authenticated` (que lê `getUser()` no beforeLoad).
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      // Silencioso: se falhar, o listener global em __root.tsx invalida na sequência.
+    }
   }
 
   return data;
