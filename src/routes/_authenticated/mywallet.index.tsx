@@ -497,8 +497,8 @@ function MyWalletPage() {
 
           <Button
             asChild
-            variant="outline"
-            className="rounded-md text-primary border-primary hover:text-primary hover:bg-primary/10"
+            variant="default"
+            className="w-full"
           >
             <Link to="/mywallet/extrato">Ver todas as transações</Link>
           </Button>
