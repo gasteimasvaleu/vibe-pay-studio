@@ -399,7 +399,7 @@ function ChatSettingsPage() {
           type="button"
           onClick={() => updateMutation.mutate()}
           disabled={!canSave}
-          className="w-full rounded-md h-12 text-base"
+          className="w-full rounded-md h-9 text-base"
         >
           {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
