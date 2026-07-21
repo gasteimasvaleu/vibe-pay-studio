@@ -151,13 +151,9 @@ function SubscriptionsPage() {
   const router = useRouter();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fn = useServerFn(listMySubscriptions);
   const cancelFn = useServerFn(cancelSubscription);
 
-  const { data } = useSuspenseQuery({
-    ...subscriptionsQueryOptions,
-    queryFn: () => fn(),
-  });
+  const { data } = useSuspenseQuery(subscriptionsQueryOptions);
 
   const [tab, setTab] = useState<TabKey>("ativas");
   const [filter, setFilter] = useState<FilterKey>("todas");
