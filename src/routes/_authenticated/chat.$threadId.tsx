@@ -130,16 +130,16 @@ function ChatThreadView() {
             price_cents: number | null;
             metadata: unknown;
           };
+          const meta = m.metadata as { media?: unknown[]; storyReply?: unknown } | null;
           const hasMedia =
-            !!m.metadata &&
-            typeof m.metadata === "object" &&
-            Array.isArray((m.metadata as { media?: unknown[] }).media) &&
-            (m.metadata as { media: unknown[] }).media.length > 0;
-          if (hasMedia) {
-            // Media messages need server-signed URLs; refetch.
+            !!meta && Array.isArray(meta.media) && (meta.media as unknown[]).length > 0;
+          const hasStoryReply = !!meta && !!meta.storyReply;
+          if (hasMedia || hasStoryReply) {
+            // Needs server-signed URLs; refetch.
             queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
             return;
           }
+
           queryClient.setQueryData<ThreadData>(
             ["chat", "messages", threadId],
             (old) => {
