@@ -1,40 +1,19 @@
-## Objetivo
+## Problema
 
-Impedir que qualquer termo sensível (ex.: "sexando", "sexy", nome de plano criado pelo usuário, apelido do criador) apareça na tela do PIX / fatura do cartão / extrato bancário do pagador.
+Em `src/routes/_authenticated/my-monetisex-stats.tsx` a página injeta uma camada de fundo `bg-card` (linha 179) e um header também `bg-card` (linha 180). Isso deixa a página com um tom levemente diferente das outras rotas autenticadas (ex.: `/feed`, `/perfil/...`, `/dashboard`), que renderizam direto sobre `--background` do body sem essa sobreposição — a diferença fica sutil no light mode e mais visível no dark.
 
-Hoje enviamos ao Asaas descrições como `Assinatura ${data.plan}` e `Desbloqueio publicação ...`, onde `data.plan` é texto livre digitado pelo criador. Alguns bancos exibem esse `description` na tela do PIX junto ao nome do recebedor — daí sai o "sexando".
+## Mudança
 
-## Mudanças
+Alinhar o fundo desta rota ao padrão das demais páginas de conteúdo do app.
 
-### 1. `src/lib/asaas.server.ts` — sanitizador central
-- Criar helper `sanitizeAsaasText(text: string)` aplicado dentro de `createPayment` **antes** de enviar `description`:
-  - remove acentos, normaliza espaços;
-  - filtra por regex uma lista de termos proibidos (`sex`, `sexo`, `sexy`, `sexando`, `porn`, `nude`, `xxx`, `hot`, `fetiche`, `putaria`, etc.);
-  - trunca em 60 caracteres (limite visível na maioria dos apps de banco).
-- Mesma sanitização aplicada em `holderName` / `customer.name` quando enviados (nome do pagador não afeta a tela do recebedor, mas é bom garantir).
+1. Remover o `<div className="absolute inset-0 bg-card" />` (linha 179).
+2. Trocar o wrapper externo de `relative min-h-screen text-foreground overflow-hidden` para `min-h-screen text-foreground` (deixa o `--background` do body aparecer, como no `/feed` e no `/dashboard`).
+3. Ajustar o header (linha 180) de `bg-card` para `bg-background/90 backdrop-blur` — mesmo padrão do header sticky do `publisher.tsx`, para manter a legibilidade quando o usuário rola.
+4. Remover o `relative z-10` do `<main>` (não é mais necessário sem a camada absoluta).
 
-### 2. `src/lib/payments.functions.ts` — descrições neutras
-Substituir todas as descrições por textos genéricos que **não** interpolam conteúdo do criador:
+Escopo estritamente visual — nenhuma alteração de lógica, dados ou abas.
 
-| Fluxo atual | Novo `description` |
-|---|---|
-| `Assinatura ${data.plan}` | `Assinatura MTX` |
-| `Desbloqueio publicação ...` | `Compra MTX` |
-| `Desbloqueio story ...` | `Compra MTX` |
-| `Desbloqueio mensagem` | `Compra MTX` |
-| `Contribuição desafio ...` | `Compra MTX` |
-| `Tip para criador` | `Compra MTX` |
-| `Videochamada Xmin` | `Compra MTX` |
-| `Recarga carteira` | `Recarga MTX` |
+## Verificação
 
-O detalhamento real (nome do plano, publicação, criador) continua no nosso banco (`payments`, `wallet_transactions`) e aparece normalmente em `/mywallet/extrato` — só não vai mais no payload do Asaas.
-
-### 3. Nome do recebedor (subconta)
-O nome que aparece como "quem vai receber" no app do banco vem do `name` da subconta Asaas do criador (`createSubaccount`). Hoje usamos o nome civil do criador (KYC). **Não vamos alterar** — é obrigatório por regulação do Asaas usar o nome real do titular da conta. Se o "sexando" estiver vindo daí, é o nome civil real do criador e não deve ser mascarado.
-
-### 4. Verificação
-Após a mudança, testar um pagamento PIX real de assinatura para confirmar que a tela do banco mostra apenas `Assinatura MTX` (ou similar) e o nome civil do criador.
-
-## Fora de escopo
-- Não alterar o texto `"Saque Monetisexy"` das transferências (assunto tratado em conversa anterior).
-- Não mexer em nomes de planos armazenados em `subscription_plans` — continuam livres para o criador editar; só não vão mais no payload externo.
+- Abrir `/my-monetisex-stats` no light e dark mode e confirmar que o fundo agora bate com `/feed` e `/dashboard`.
+- Rolar a página e confirmar que o header sticky continua legível sobre o conteúdo.
