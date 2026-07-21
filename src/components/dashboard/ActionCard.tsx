@@ -20,8 +20,9 @@ export function ActionCard({
 }) {
   const navigate = useNavigate();
   const isDanger = tone === "danger";
-  const className =
-    "group text-left rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40 hover:bg-accent disabled:opacity-60";
+  const className = disabled
+    ? "group text-left rounded-2xl border border-border bg-card p-5 shadow-card opacity-60 cursor-not-allowed"
+    : "group text-left rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40 hover:bg-accent";
 
   const content = (
     <>
