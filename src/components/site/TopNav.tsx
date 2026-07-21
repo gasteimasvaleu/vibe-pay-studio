@@ -16,47 +16,66 @@ export function TopNav() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
+
+    async function sync(userId: string | null, email: string | null | undefined, meta: Record<string, unknown> | null | undefined) {
       if (!mounted) return;
-      const user = data.user;
-      setSignedIn(!!user);
+      setSignedIn(!!userId);
+      if (!userId) {
+        setInitial("");
+        setAvatarUrl(null);
+        return;
+      }
       const name =
-        (user?.user_metadata as { username?: string } | null)?.username ??
-        user?.email?.split("@")[0] ??
+        (meta as { username?: string } | null)?.username ??
+        email?.split("@")[0] ??
         "";
       setInitial(name.charAt(0).toUpperCase());
 
-      if (user) {
-        const [{ data: prof }, { data: cps }] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select("avatar_url, free_avatar_url, active_view, active_profile_id")
-            .eq("user_id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("creator_profiles")
-            .select("id, kind, avatar_url")
-            .eq("user_id", user.id),
-        ]);
-        if (!mounted) return;
-        const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
-        const active =
-          rows.find((r) => r.id === prof?.active_profile_id) ??
-          rows.find((r) => (prof?.active_view === "free" ? r.kind === "free" : r.kind === "paid")) ??
-          rows[0] ??
-          null;
-        const inFree = (active?.kind ?? prof?.active_view) === "free";
-        const resolved =
-          active?.avatar_url ??
-          (inFree ? prof?.free_avatar_url ?? prof?.avatar_url ?? null : prof?.avatar_url ?? null);
-        setAvatarUrl(resolved);
-      }
+      const [{ data: prof }, { data: cps }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("avatar_url, free_avatar_url, active_view, active_profile_id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("creator_profiles")
+          .select("id, kind, avatar_url")
+          .eq("user_id", userId),
+      ]);
+      if (!mounted) return;
+      const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
+      const active =
+        rows.find((r) => r.id === prof?.active_profile_id) ??
+        rows.find((r) => (prof?.active_view === "free" ? r.kind === "free" : r.kind === "paid")) ??
+        rows[0] ??
+        null;
+      const inFree = (active?.kind ?? prof?.active_view) === "free";
+      const resolved =
+        active?.avatar_url ??
+        (inFree ? prof?.free_avatar_url ?? prof?.avatar_url ?? null : prof?.avatar_url ?? null);
+      setAvatarUrl(resolved);
+    }
+
+    // Estado inicial
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const u = data.user;
+      await sync(u?.id ?? null, u?.email, u?.user_metadata as Record<string, unknown> | undefined);
     })();
+
+    // Reage a login/logout/troca de identidade
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      const u = session?.user ?? null;
+      void sync(u?.id ?? null, u?.email, u?.user_metadata as Record<string, unknown> | undefined);
+    });
+
     return () => {
       mounted = false;
+      sub.subscription.unsubscribe();
     };
   }, []);
+
 
   const getRoles = useServerFn(getMyRoles);
   const rolesQ = useQuery({
