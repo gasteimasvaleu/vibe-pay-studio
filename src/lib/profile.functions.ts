@@ -107,14 +107,19 @@ export const checkUsernameAvailability = createServerFn({ method: "POST" })
       return { available: false, isSelf: false, reason: check.reason } as const;
     }
     const { supabase, userId } = context;
-    const { data: row, error } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .eq("username", check.value)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!row) return { available: true, isSelf: false } as const;
-    if (row.user_id === userId) return { available: true, isSelf: true } as const;
+    const [profilesRes, creatorProfilesRes] = await Promise.all([
+      supabase.from("profiles").select("user_id").eq("username", check.value).maybeSingle(),
+      supabase.from("creator_profiles").select("user_id").eq("username", check.value).maybeSingle(),
+    ]);
+    if (profilesRes.error) throw new Error(profilesRes.error.message);
+    if (creatorProfilesRes.error) throw new Error(creatorProfilesRes.error.message);
+
+    const owners = new Set<string>();
+    if (profilesRes.data?.user_id) owners.add(profilesRes.data.user_id);
+    if (creatorProfilesRes.data?.user_id) owners.add(creatorProfilesRes.data.user_id);
+
+    if (owners.size === 0) return { available: true, isSelf: false } as const;
+    if (owners.size === 1 && owners.has(userId)) return { available: true, isSelf: true } as const;
     return { available: false, isSelf: false, reason: "taken" } as const;
   });
 
