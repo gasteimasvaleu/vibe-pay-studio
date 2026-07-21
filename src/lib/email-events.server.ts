@@ -243,24 +243,6 @@ export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
       );
     }
 
-    // Indicação: quem indicou recebe creator_referrals
-    const referredBy = (creator as { referred_by?: string | null }).referred_by;
-    if (referredBy) {
-      const referrerEmail = await resolveUserEmail(referredBy);
-      if (referrerEmail) {
-        const refTpl = await renderTemplate("creator_referrals", {
-          referredName: creatorName,
-          creatorUrl,
-        });
-        await sendTransactionalEmail({
-          userId: referredBy,
-          kind: "creator_referrals",
-          to: referrerEmail,
-          subject: refTpl.subject,
-          html: refTpl.html,
-        });
-      }
-    }
   } catch (err) {
     console.error("[email-events] notifyFreeToPaid failed", err);
   }
