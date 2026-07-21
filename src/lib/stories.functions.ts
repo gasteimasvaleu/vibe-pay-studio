@@ -66,13 +66,16 @@ export const deleteStory = createServerFn({ method: "POST" })
 
 export type StoryRingItem = {
   creator_id: string;
+  creator_profile_id: string | null;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
   latest_at: string;
   count: number;
   unseen: number;
   is_self: boolean;
 };
+
 
 export const getFeedStoryRings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
