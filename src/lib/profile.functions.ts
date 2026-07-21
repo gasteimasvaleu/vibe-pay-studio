@@ -132,6 +132,18 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
     const userCheck = validateUsername(data.username);
     if (!userCheck.ok) return { ok: false, reason: userCheck.reason } as const;
     const { supabase, userId } = context;
+
+    // Verifica colisão cross-table: creator_profiles pode ter o mesmo username.
+    const { data: existingCreator, error: creatorError } = await supabase
+      .from("creator_profiles")
+      .select("user_id")
+      .eq("username", userCheck.value)
+      .maybeSingle();
+    if (creatorError) throw new Error(creatorError.message);
+    if (existingCreator && existingCreator.user_id !== userId) {
+      return { ok: false, reason: "username_taken" } as const;
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({ display_name: nameCheck.value, username: userCheck.value })
