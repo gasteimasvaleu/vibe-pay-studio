@@ -1073,7 +1073,7 @@ function PlanPill({
     <button
       type="button"
       onClick={onClick}
-      className="w-full h-12 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
+      className="w-full h-9 px-5 rounded-md flex items-center justify-between bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:brightness-105 transition"
     >
       <span>{label}</span>
       <span>{price}</span>
