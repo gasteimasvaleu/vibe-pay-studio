@@ -489,7 +489,6 @@ export type Database = {
       email_preferences: {
         Row: {
           content_purchase: boolean
-          creator_referrals: boolean
           free_to_paid: boolean
           post_sales: boolean
           subscription_sales: boolean
@@ -498,7 +497,6 @@ export type Database = {
         }
         Insert: {
           content_purchase?: boolean
-          creator_referrals?: boolean
           free_to_paid?: boolean
           post_sales?: boolean
           subscription_sales?: boolean
@@ -507,7 +505,6 @@ export type Database = {
         }
         Update: {
           content_purchase?: boolean
-          creator_referrals?: boolean
           free_to_paid?: boolean
           post_sales?: boolean
           subscription_sales?: boolean

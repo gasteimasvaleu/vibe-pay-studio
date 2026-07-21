@@ -48,12 +48,6 @@ const OPTIONS: { id: OptionId; label: string; description: string }[] = [
     description:
       "Ao selecionar esta opção, você não receberá mais emails de suas compras de conteúdo.",
   },
-  {
-    id: "creator_referrals",
-    label: "Indicações de criador de conteúdo",
-    description:
-      "Ao selecionar esta opção, você não receberá mais emails de perfis que se tornaram criadores com seu link de indicação.",
-  },
 ];
 
 // UI copy: switch ON = "não receber". DB stores opted-in (true = receive).
