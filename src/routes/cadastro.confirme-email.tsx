@@ -90,69 +90,87 @@ function ConfirmeEmailPage() {
   return (
     <SiteLayout>
       <div className="flex items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md">
-          <div className="rounded-3xl border border-border bg-surface p-6 md:p-10 text-center">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-              Confirme seu e-mail
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {email ? (
-                <>
-                  Enviamos um link de confirmação para{" "}
-                  <strong className="text-foreground break-all">{email}</strong>. Abra o link para
-                  ativar sua conta.
-                </>
-              ) : (
-                <>Abra o link que enviamos para ativar sua conta.</>
-              )}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Não esqueça de checar a caixa de spam.
-            </p>
-
-            <div className="mt-8 space-y-3">
-              <button
-                type="button"
-                onClick={handleAlreadyConfirmed}
-                disabled={checking}
-                className="w-full py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {checking ? "Verificando..." : "Já confirmei"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resending || cooldown > 0 || !email}
-                className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {resending
-                  ? "Reenviando..."
-                  : cooldown > 0
-                    ? `Reenviar em ${cooldown}s`
-                    : "Reenviar e-mail"}
-              </button>
+        <div className="w-full max-w-4xl">
+          <div className="rounded-3xl overflow-hidden shadow-card border border-slate-200 bg-white flex flex-col md:flex-row">
+            {/* Imagem */}
+            <div className="bg-white md:w-1/2 md:flex-shrink-0 border-b border-slate-200 md:border-b-0 md:border-r">
+              <img
+                src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/gpt-image-2-1%20(1).png"
+                alt=""
+                className="md:hidden w-full aspect-[16/9] object-cover"
+              />
+              <img
+                src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/gpt-image-2-1.png"
+                alt=""
+                className="hidden md:block w-full aspect-square object-cover"
+              />
             </div>
 
-            {info && (
-              <p role="status" className="mt-4 text-sm text-primary">
-                {info}
+            {/* Conteúdo */}
+            <div className="flex-1 p-6 md:p-10 text-center bg-white">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+                Confirme seu e-mail
+              </h1>
+              <p className="mt-3 text-sm text-slate-600">
+                {email ? (
+                  <>
+                    Enviamos um link de confirmação para{" "}
+                    <strong className="text-slate-900 break-all">{email}</strong>. Abra o link para
+                    ativar sua conta.
+                  </>
+                ) : (
+                  <>Abra o link que enviamos para ativar sua conta.</>
+                )}
               </p>
-            )}
-            {errorMsg && (
-              <p role="alert" className="mt-4 text-sm text-red-500">
-                {errorMsg}
+              <p className="mt-2 text-xs text-slate-500">
+                Não esqueça de checar a caixa de spam.
               </p>
-            )}
 
-            <p className="mt-8 text-sm text-muted-foreground">
-              <Link to="/cadastro" className="text-primary hover:underline font-semibold">
-                Usar outro e-mail
-              </Link>
-            </p>
+              <div className="mt-8 space-y-3">
+                <button
+                  type="button"
+                  onClick={handleAlreadyConfirmed}
+                  disabled={checking}
+                  className="w-full py-3 rounded-md bg-gradient-primary text-primary-foreground font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {checking ? "Verificando..." : "Já confirmei"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending || cooldown > 0 || !email}
+                  className="w-full py-3 rounded-md border border-slate-200 hover:border-slate-400 bg-white text-slate-900 font-medium text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {resending
+                    ? "Reenviando..."
+                    : cooldown > 0
+                      ? `Reenviar em ${cooldown}s`
+                      : "Reenviar e-mail"}
+                </button>
+              </div>
+
+              {info && (
+                <p role="status" className="mt-4 text-sm text-primary">
+                  {info}
+                </p>
+              )}
+              {errorMsg && (
+                <p role="alert" className="mt-4 text-sm text-red-500">
+                  {errorMsg}
+                </p>
+              )}
+
+              <p className="mt-8 text-sm text-slate-600">
+                <Link to="/cadastro" className="text-primary hover:underline font-semibold">
+                  Usar outro e-mail
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </SiteLayout>
   );
 }
+
