@@ -195,9 +195,12 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       // Collect media paths across messages and sign in one batch
       const allPaths: string[] = [];
+      const storyThumbPaths: string[] = [];
       for (const m of msgs ?? []) {
         const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
         for (const it of media) if (it?.path) allPaths.push(it.path);
+        const sr = (m as any).metadata?.storyReply as ChatStoryReply | undefined;
+        if (sr?.thumbPath) storyThumbPaths.push(sr.thumbPath);
       }
       const urlByPath = new Map<string, string>();
       if (allPaths.length > 0) {
@@ -206,6 +209,16 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           .createSignedUrls(Array.from(new Set(allPaths)), 60 * 60);
         for (const s of signed ?? []) {
           if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+        }
+      }
+      const storyUrlByPath = new Map<string, string>();
+      if (storyThumbPaths.length > 0) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: signed } = await supabaseAdmin.storage
+          .from("stories")
+          .createSignedUrls(Array.from(new Set(storyThumbPaths)), 60 * 60);
+        for (const s of signed ?? []) {
+          if (s.path && s.signedUrl) storyUrlByPath.set(s.path, s.signedUrl);
         }
       }
 
@@ -225,6 +238,13 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
                 url: urlByPath.get(it.path) ?? null,
               }))
             : undefined;
+          const rawSr = meta?.storyReply as ChatStoryReply | undefined;
+          const storyReply: ChatStoryReply | undefined = rawSr
+            ? {
+                ...rawSr,
+                thumbUrl: rawSr.thumbPath ? storyUrlByPath.get(rawSr.thumbPath) ?? null : null,
+              }
+            : undefined;
           return {
             id: m.id,
             threadId: m.thread_id,
@@ -235,13 +255,14 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
             priceCents: price > 0 ? price : null,
             unlocked: price <= 0 || mine || unlockedSet.has(m.id),
             metadata: meta
-              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media }
+              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media, storyReply }
               : null,
           };
         }),
       };
     },
   );
+
 
 export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
