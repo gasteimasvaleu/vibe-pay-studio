@@ -51,7 +51,6 @@ const EMAIL_DEFAULTS: EmailPreferences = {
   post_sales: true,
   subscription_sales: true,
   content_purchase: true,
-  creator_referrals: true,
 };
 
 export const getPrivacySettings = createServerFn({ method: "GET" })
