@@ -365,7 +365,7 @@ export async function createPayment(input: {
     billingType: input.billingType,
     value: centsToBrl(input.amountCents),
     dueDate: due,
-    description: input.description.slice(0, 500),
+    description: sanitizeAsaasText(input.description, 60),
     externalReference: input.externalReference,
   };
 
