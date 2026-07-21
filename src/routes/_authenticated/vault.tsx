@@ -500,7 +500,7 @@ function VaultPage() {
         }}
       />
 
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="max-w-6xl mx-auto grid md:grid-cols-[minmax(0,360px)_1fr]">
           {/* Left header */}
           <div
@@ -537,7 +537,7 @@ function VaultPage() {
               </div>
             ) : (
               <>
-                <h1 className="text-xl font-semibold tracking-wide text-foreground">ACERVO</h1>
+                <h1 className="text-lg font-bold tracking-tight text-foreground">ACERVO</h1>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
@@ -573,7 +573,7 @@ function VaultPage() {
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <h2 className="text-lg font-semibold tracking-wide text-foreground truncate">
+              <h2 className="text-lg font-bold tracking-tight text-foreground truncate">
                 {current.title}
               </h2>
             </div>

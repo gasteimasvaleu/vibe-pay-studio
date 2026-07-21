@@ -1,11 +1,24 @@
-Problema
-O header da rota `/publicacoes-agendadas` está com `bg-card` e sem `sticky`/`backdrop-blur`, diferente do padrão adotado nas outras páginas do app (`/banco`, `/follow`, `/mywallet`, `/my-monetisex-stats`), que usam `sticky top-0 bg-background/90 backdrop-blur`.
+## Problema
+O header da rota `/vault` está visualmente fora do padrão do restante do app:
+- O título "ACERVO" usa `text-xl font-semibold tracking-wide`, enquanto as demais páginas (ex: `/banco`, `/mywallet`, `/follow`, `/publicacoes-agendadas`) usam `text-lg font-bold tracking-tight`.
+- O header usa `bg-card` sem efeito de vidro e não é `sticky`, diferente do padrão `sticky top-0 bg-background/90 backdrop-blur` adotado nas outras telas.
 
-Alteração proposta
-Em `src/routes/_authenticated/publicacoes-agendadas.tsx`:
-1. Substituir `header className="relative z-10 border-b border-border bg-card"` por `header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur"`.
-2. Manter o conteúdo interno do header (botão voltar, título, spacer) inalterado.
-3. Verificar visualmente no preview que o header fica translúcido e acompanha o scroll como nas páginas irmãs.
+## Plano
+1. **Padronizar o container do header** em `src/routes/_authenticated/vault.tsx`:
+   - Alterar `header` para `sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur`.
+   - Manter o grid de duas colunas em desktop, mas garantir que o fundo e a fixação acompanhem o padrão.
 
-Escopo
-Apenas ajuste de estilo do header; nenhuma mudança de funcionalidade ou dados.
+2. **Corrigir a tipografia do título principal**:
+   - Trocar `text-xl font-semibold tracking-wide` por `text-lg font-bold tracking-tight` no `<h1>ACERVO</h1>`.
+
+3. **Padronizar o título da coluna direita**:
+   - O `<h2>` que mostra o nome da aba/categoria (ex: "TODAS AS MÍDIAS") também usa `text-lg font-semibold tracking-wide`; ajustar para `text-lg font-bold tracking-tight` para manter consistência com os títulos de outras páginas.
+
+4. **Verificar e ajustar contraste no tema escuro**:
+   - Confirmar que `text-foreground` permanece e que o fundo translúcido funciona tanto no tema claro quanto no escuro.
+
+5. **Validar visualmente**:
+   - Após a alteração, verificar no preview se o header da `/vault` agora segue o mesmo padrão de fonte, peso, tracking, fixação e fundo das demais páginas.
+
+## Escopo
+Apenas ajustes visuais/tipográficos no header de `src/routes/_authenticated/vault.tsx`. Nenhuma funcionalidade de negócio será alterada.
