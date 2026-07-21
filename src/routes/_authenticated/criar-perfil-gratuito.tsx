@@ -211,7 +211,7 @@ function CriarPerfilGratuitoPage() {
 
       <main className="max-w-2xl mx-auto px-4 pb-44">
         {step === 1 ? (
-          <section className="space-y-8">
+          <section className="space-y-8 pt-6">
             <div className="grid grid-cols-3 gap-2">
               <img src={HERO_IMAGES[0]} alt="" loading="lazy" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
               <img src={HERO_IMAGES[1]} alt="" loading="lazy" className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl aspect-[3/5]" />
@@ -242,7 +242,7 @@ function CriarPerfilGratuitoPage() {
             </ol>
           </section>
         ) : (
-          <section className="space-y-6">
+          <section className="space-y-6 pt-6">
             <div className="flex justify-center pt-4">
               <button
                 type="button"
