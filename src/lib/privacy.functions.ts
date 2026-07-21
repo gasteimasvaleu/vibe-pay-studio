@@ -17,7 +17,6 @@ export type EmailPreferences = {
   post_sales: boolean;
   subscription_sales: boolean;
   content_purchase: boolean;
-  creator_referrals: boolean;
 };
 
 const PRIVACY_KEYS = [
