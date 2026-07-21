@@ -47,9 +47,10 @@ const AppleIcon = () => (
 
 const PROVIDERS: Provider[] = [
   { id: "google", name: "Google", connected: true, icon: <GoogleIcon /> },
-  { id: "twitter", name: "Twitter", connected: false, icon: <XIcon /> },
-  { id: "apple", name: "Apple", connected: false, icon: <AppleIcon /> },
+  { id: "twitter", name: "Twitter", connected: false, icon: <XIcon />, comingSoon: true },
+  { id: "apple", name: "Apple", connected: false, icon: <AppleIcon />, comingSoon: true },
 ];
+
 
 function SecurityPage() {
   const router = useRouter();
