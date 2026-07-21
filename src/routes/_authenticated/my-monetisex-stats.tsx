@@ -2257,3 +2257,119 @@ function SequenciaPanel() {
     </div>
   );
 }
+
+/* ============================== Superfãs ============================== */
+
+function SuperfasPanel() {
+  const listFn = useServerFn(listMyIncomingFriends);
+  const toggleFn = useServerFn(setFriendshipVisibility);
+  const qc = useQueryClient();
+  const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["friends", "incoming", deferredQ],
+    queryFn: () => listFn({ data: { search: deferredQ, limit: 200 } }),
+  });
+
+  const toggle = useMutation({
+    mutationFn: (vars: { friendshipId: string; visible: boolean }) =>
+      toggleFn({ data: vars }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["friends", "incoming"] });
+      void qc.invalidateQueries({ queryKey: ["friends", "public"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Falha ao atualizar"),
+  });
+
+  const rows = data ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-border bg-background p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-bold">Superfãs — quem te adicionou</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Outros criadores e assinantes que te adicionaram como amigo. Ótimo
+          para acompanhar oportunidades de cross-promotion. Você pode ocultar
+          individualmente sua exibição pública em cada perfil.
+        </p>
+        <div className="text-xs text-muted-foreground">
+          Para ocultar-se globalmente de todas as listas de amigos, ative a opção
+          em{" "}
+          <Link to="/settings/privacy-options" className="text-primary font-semibold hover:underline">
+            Privacidade
+          </Link>
+          .
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-border bg-background p-5 space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Pesquisar superfãs..."
+            className="pl-9"
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="text-center py-10 text-sm text-muted-foreground">
+            Ninguém te adicionou como amigo ainda.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {rows.map((r) => (
+              <li key={r.friendshipId} className="flex items-center gap-3 py-3">
+                <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-white font-bold shrink-0">
+                  {r.avatarUrl ? (
+                    <img src={r.avatarUrl} alt={r.displayName ?? r.username} className="h-full w-full object-cover" />
+                  ) : (
+                    <span>{(r.displayName ?? r.username).slice(0, 1).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-foreground truncate">
+                    {r.displayName ?? r.username}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    @{r.username} · desde {fullDate.format(new Date(r.createdAt))}
+                  </div>
+                </div>
+                <Link
+                  to="/perfil/$username"
+                  params={{ username: r.username }}
+                  className="text-xs font-semibold text-primary hover:underline shrink-0"
+                >
+                  Ver perfil
+                </Link>
+                <div className="flex items-center gap-2 shrink-0 pl-2">
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                    {r.visible ? "Visível" : "Oculto"}
+                  </span>
+                  <Switch
+                    checked={r.visible}
+                    disabled={toggle.isPending}
+                    onCheckedChange={(checked) =>
+                      toggle.mutate({ friendshipId: r.friendshipId, visible: checked })
+                    }
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
