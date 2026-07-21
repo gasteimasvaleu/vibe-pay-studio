@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { X, Lock, Trash2, Loader2 } from "lucide-react";
+import { X, Lock, Trash2, Loader2, Eye, SendHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import {
   getCreatorStories,
@@ -10,9 +11,11 @@ import {
   deleteStory,
   type StoryItem,
 } from "@/lib/stories.functions";
+import { sendStoryReply } from "@/lib/chat.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
+
 
 export function StoryViewer({
   creatorId,
