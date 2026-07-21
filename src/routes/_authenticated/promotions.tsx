@@ -170,10 +170,6 @@ function PromotionCard({
   promotion,
   onEnd,
   ending,
-function PromotionCard({
-  promotion,
-  onEnd,
-  ending,
   onDelete,
   deleting,
 }: {
