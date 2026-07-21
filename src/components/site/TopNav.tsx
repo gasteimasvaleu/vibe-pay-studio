@@ -28,16 +28,28 @@ export function TopNav() {
       setInitial(name.charAt(0).toUpperCase());
 
       if (user) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("avatar_url, free_avatar_url, active_view")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [{ data: prof }, { data: cps }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("avatar_url, free_avatar_url, active_view, active_profile_id")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("creator_profiles")
+            .select("id, kind, avatar_url")
+            .eq("user_id", user.id),
+        ]);
         if (!mounted) return;
-        const inFree = prof?.active_view === "free";
-        const resolved = inFree
-          ? prof?.free_avatar_url ?? prof?.avatar_url ?? null
-          : prof?.avatar_url ?? null;
+        const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
+        const active =
+          rows.find((r) => r.id === prof?.active_profile_id) ??
+          rows.find((r) => (prof?.active_view === "free" ? r.kind === "free" : r.kind === "paid")) ??
+          rows[0] ??
+          null;
+        const inFree = (active?.kind ?? prof?.active_view) === "free";
+        const resolved =
+          active?.avatar_url ??
+          (inFree ? prof?.free_avatar_url ?? prof?.avatar_url ?? null : prof?.avatar_url ?? null);
         setAvatarUrl(resolved);
       }
     })();
