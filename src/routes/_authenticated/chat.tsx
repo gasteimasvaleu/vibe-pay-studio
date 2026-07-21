@@ -150,7 +150,9 @@ function ChatLayout() {
           )}
         >
           <div className="px-4 pt-6 pb-3 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Conversas</h1>
+            <h1 className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
+              Conversas
+            </h1>
             <div className="flex items-center gap-1 text-muted-foreground">
               <Link
                 to="/chat-agendamento"
