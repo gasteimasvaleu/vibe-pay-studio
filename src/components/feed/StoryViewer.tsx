@@ -39,14 +39,18 @@ export function StoryViewer({
   const walletPay = useServerFn(payWithWallet);
   const removeStory = useServerFn(deleteStory);
   const replyToStory = useServerFn(sendStoryReply);
+  const createStoryPayment = useServerFn(createStoryUnlockPayment);
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
+  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+
 
   const storiesQuery = useQuery({
     queryKey: ["creator-stories", creatorId],
