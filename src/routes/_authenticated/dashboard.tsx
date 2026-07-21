@@ -16,34 +16,47 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select(
-        "account_type, username, avatar_url, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at, free_profile_enabled, active_view, free_display_name, free_avatar_url",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const [{ data: profile }, { data: cps }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(
+          "account_type, username, avatar_url, price_monthly, kyc_status, instagram_handle, tiktok_handle, x_handle, onboarding_completed_at, free_profile_enabled, active_view, active_profile_id, free_display_name, free_avatar_url, free_username",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("creator_profiles")
+        .select("id, kind, username, display_name, avatar_url, price_monthly")
+        .eq("user_id", user.id),
+    ]);
 
     const accountType = (profile?.account_type ?? "subscriber") as AccountType;
+    const creatorProfiles = ((cps ?? []) as Array<{ id: string; kind: string; username: string; display_name: string | null; avatar_url: string | null; price_monthly: number | null }>);
+    const paid = creatorProfiles.find((r) => r.kind === "paid") ?? null;
+    const free = creatorProfiles.find((r) => r.kind === "free") ?? null;
+    const active =
+      creatorProfiles.find((r) => r.id === profile?.active_profile_id) ??
+      paid ??
+      free ??
+      null;
+
+    // Identity resolved from creator_profiles first, com fallback nos campos legados.
     const username =
-      profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    const freeProfileEnabled = profile?.free_profile_enabled === true;
-    const activeView = (profile?.active_view ?? "creator") as "creator" | "free";
-    // Modo de exibição efetivo: creator pago em modo "free" renderiza a UI de assinante.
+      active?.username ??
+      profile?.username ??
+      user.email?.split("@")[0] ??
+      "voce";
+    const freeProfileEnabled = profile?.free_profile_enabled === true || !!free;
+    const activeView = (active?.kind ?? profile?.active_view ?? "creator") === "free" ? "free" : "creator";
     const inFreeMode =
       accountType === "creator" && freeProfileEnabled && activeView === "free";
-    // No modo free vinculado a um creator, priorizamos o avatar do perfil creator
-    // para reforçar a relação entre as duas visões.
-    const creatorAvatarUrl = profile?.avatar_url ?? null;
-    const freeAvatarUrl = profile?.free_avatar_url ?? profile?.avatar_url ?? null;
-    const avatarUrl = inFreeMode
-      ? creatorAvatarUrl ?? freeAvatarUrl
-      : creatorAvatarUrl;
+    const creatorAvatarUrl = paid?.avatar_url ?? profile?.avatar_url ?? null;
+    const freeAvatarUrl = free?.avatar_url ?? profile?.free_avatar_url ?? profile?.avatar_url ?? null;
+    const avatarUrl = active?.avatar_url ?? (inFreeMode ? freeAvatarUrl : creatorAvatarUrl);
 
     // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
-    // (free_creator não passa por esse fluxo — ele finaliza em /criar-perfil-gratuito.)
     if (accountType === "creator" && !profile?.onboarding_completed_at) {
-      const hasPrice = profile?.price_monthly != null;
+      const hasPrice = (paid?.price_monthly ?? profile?.price_monthly) != null;
       const kyc = profile?.kyc_status ?? "not_started";
       if (kyc === "processing") {
         throw redirect({ to: "/creator/onboarding/documentos/verificando" });
@@ -56,12 +69,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       }
     }
 
-    // Próximo passo do onboarding para assinantes puros que já iniciaram.
     const hasSocials =
       !!profile?.instagram_handle ||
       !!profile?.tiktok_handle ||
       !!profile?.x_handle;
-    const hasPrice = profile?.price_monthly != null;
+    const hasPrice = (paid?.price_monthly ?? profile?.price_monthly) != null;
     const kyc = profile?.kyc_status ?? "not_started";
     let creatorNextStep: string = "/creator/onboarding/redes-sociais";
     if (kyc === "processing") {
@@ -89,6 +101,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       freeProfileEnabled,
       activeView,
       inFreeMode,
+      activeProfileKind: (active?.kind ?? "paid") as "paid" | "free",
     };
   },
   component: DashboardPage,
