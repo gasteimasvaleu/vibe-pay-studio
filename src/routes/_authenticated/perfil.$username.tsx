@@ -44,6 +44,8 @@ import { createUnlockPayment } from "@/lib/payments.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
+import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.functions";
+import { FriendsStrip } from "@/components/profile/FriendsStrip";
 
 
 
@@ -304,6 +306,40 @@ function PerfilPage() {
   const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
   const subscribeFreeFn = useServerFn(subscribeFree);
+  const addFriendFn = useServerFn(addFriend);
+  const removeFriendFn = useServerFn(removeFriend);
+  const isFriendServerFn = useServerFn(isFriendFn);
+
+  const friendQueryKey = ["friends", "is", viewerId, profile.userId] as const;
+  const friendQuery = useQuery({
+    queryKey: friendQueryKey,
+    queryFn: () => isFriendServerFn({ data: { friendUserId: profile.userId } }),
+    enabled: !isOwner,
+  });
+  const isFriendState = !!friendQuery.data?.isFriend;
+  const [friendBusy, setFriendBusy] = useState(false);
+
+  const handleToggleFriend = async () => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      if (isFriendState) {
+        await removeFriendFn({ data: { friendUserId: profile.userId } });
+        toast.success("Amigo removido.");
+      } else {
+        await addFriendFn({ data: { friendUserId: profile.userId } });
+        toast.success(`Você adicionou ${profile.displayName ?? profile.username} como amigo!`);
+      }
+      await queryClient.invalidateQueries({ queryKey: friendQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["friends", "public", viewerId] });
+      await queryClient.invalidateQueries({ queryKey: ["friends", "public", profile.userId] });
+      setMenuOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao atualizar amizade");
+    } finally {
+      setFriendBusy(false);
+    }
+  };
 
 
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
@@ -577,14 +613,12 @@ function PerfilPage() {
                 {!profile.restrictFriendships && (
                   <button
                     type="button"
-                    onClick={() => {
-                      toast.success(`Solicitação de amizade enviada para ${displayName}!`);
-                      setMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                    disabled={friendBusy}
+                    onClick={handleToggleFriend}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60"
                   >
                     <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                    Adicionar amigo
+                    {isFriendState ? "Remover amigo" : "Adicionar amigo"}
                   </button>
                 )}
 
@@ -699,6 +733,8 @@ function PerfilPage() {
               <Music2 className="h-4 w-4" />
             </SocialButton>
           </div>
+
+          <FriendsStrip userId={profile.userId} isOwner={isOwner} />
 
 
           {!isOwner && (
