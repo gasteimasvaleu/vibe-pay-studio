@@ -569,6 +569,33 @@ export type Database = {
           },
         ]
       }
+      friendships: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          owner_id: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          owner_id: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
       live_comments: {
         Row: {
           content: string
