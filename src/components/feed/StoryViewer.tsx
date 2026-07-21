@@ -302,8 +302,11 @@ export function StoryViewer({
               thumbUrl={current.thumb_url}
               priceCents={current.price_cents}
               unlocking={unlocking}
+              method={selectedMethod}
+              onMethodChange={setSelectedMethod}
               onUnlock={handleUnlock}
             />
+
           )}
 
           {/* Tap zones */}
