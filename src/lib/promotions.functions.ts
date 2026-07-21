@@ -83,3 +83,30 @@ export const endPromotion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deletePromotion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: promo, error: fetchErr } = await supabase
+      .from("promotions")
+      .select("status, ends_at")
+      .eq("id", data.id)
+      .eq("creator_id", userId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!promo) throw new Error("Oferta não encontrada.");
+    const stillActive =
+      promo.status === "active" && new Date(promo.ends_at).getTime() > Date.now();
+    if (stillActive) {
+      throw new Error("Encerre a oferta antes de apagá-la.");
+    }
+    const { error } = await supabase
+      .from("promotions")
+      .delete()
+      .eq("id", data.id)
+      .eq("creator_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

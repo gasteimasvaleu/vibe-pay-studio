@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, useSuspenseQuery, queryOptions } from "@ta
 import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { endPromotion, listMyPromotions } from "@/lib/promotions.functions";
+import { deletePromotion, endPromotion, listMyPromotions } from "@/lib/promotions.functions";
 
 const promotionsQueryOptions = queryOptions({
   queryKey: ["my-promotions"],
