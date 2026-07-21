@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { X, Lock, Trash2, Loader2 } from "lucide-react";
