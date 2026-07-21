@@ -1,31 +1,37 @@
 ## Objetivo
-Alterar o botão "Copiar meu link Monetisexy" em `/settings/myprofile` para gerar o link de perfil usando o domínio próprio (`monetisexy.com`) em vez do `window.location.origin` atual (que pode ser preview ou subdomínio Lovable).
+Garantir que a página `/settings/social` verifique a disponibilidade do `@` não apenas na tabela `profiles`, mas também em `creator_profiles`, evitando colisões de identificadores entre os dois modelos de perfil.
 
-## Alterações propostas
+## Problema atual
+- A server function `checkUsernameAvailability` (`src/lib/profile.functions.ts`) consulta apenas `profiles.username`.
+- A tabela `creator_profiles` também possui a coluna `username` e pode conter handles iguais a `profiles`, gerando duplicidade.
 
-### 1. Configurar base URL client-safe
-- Adicionar `VITE_APP_BASE_URL=https://monetisexy.com` em `.env` e `.env.example`.
-- O prefixo `VITE_` torna a variável acessível no bundle do navegador via `import.meta.env`.
+## Escopo da mudança
+1. **Backend**: atualizar `checkUsernameAvailability` para verificar a existência do username em ambas as tabelas (`profiles` e `creator_profiles`).
+2. **Backend**: atualizar `updateProfileIdentity` para garantir que, ao salvar, o username escolhido não colida com nenhuma das duas tabelas.
+3. **Frontend**: manter o mesmo UX da página (`Verificando…`, `Disponível`, `Já está em uso`), sem alterações visuais.
+4. **Opcional**: considerar se o username do `creator_profiles` ativo do próprio usuário deve ser tratado como "self" (identificador atual), para não bloquear reutilização do próprio `@`.
 
-### 2. Atualizar `src/routes/_authenticated/settings.myprofile.tsx`
-- Substituir a linha:
-  ```ts
-  const link = `${window.location.origin}/perfil/${username}`;
-  ```
-  por:
-  ```ts
-  const baseUrl = import.meta.env.VITE_APP_BASE_URL ?? window.location.origin;
-  const link = `${baseUrl}/perfil/${username}`;
-  ```
-- Manter o texto e ícone do botão inalterados, a menos que o usuário queira ajustar.
+## Como funciona hoje
+- O usuário digita o `@` no campo.
+- A cada mudança, após debounce de 400 ms, chama `checkUsernameAvailability`.
+- A server function valida formato e nomes reservados, depois faz `select user_id from profiles where username = $1`.
+- Se o username pertence ao usuário logado, retorna `isSelf: true`; se pertence a outro, retorna `taken`; se não existe, retorna `available`.
 
-### 3. Verificação
-- Re-ler o arquivo editado para confirmar que o link copiado será `https://monetisexy.com/perfil/<username>`.
-- Garantir que o fallback `window.location.origin` continue funcionando em ambientes sem a variável configurada.
+## Como vai funcionar após a mudança
+- O mesmo fluxo de debounce e status visuais será preservado.
+- A server function fará duas consultas (ou uma consulta unificada via `union`) em `profiles` e `creator_profiles`.
+- Se o username existir em qualquer uma das tabelas e não pertencer ao usuário logado, será considerado `taken`.
+- Se existir apenas em um perfil vinculado ao próprio usuário (seja `profiles` ou `creator_profiles`), será considerado `self`.
 
-## Escopo
-- Apenas o botão selecionado em `/settings/myprofile`.
-- Não altera outros links internos (feed, publicações, chat) nem links de compartilhamento de publicações, salvo solicitação posterior.
+## Arquivos envolvidos
+- `src/lib/profile.functions.ts` — lógica de verificação e salvamento.
+- `src/routes/_authenticated/settings.social.tsx` — nenhuma mudança funcional esperada, apenas garantir que os novos status continuem sendo exibidos corretamente.
 
-## Pergunta
-Deseja que eu use `https://monetisexy.com` (domínio principal) ou `https://www.monetisexy.com` (com www)?
+## Critérios de aceitação
+- [ ] Username existente em `creator_profiles` (de outro usuário) aparece como "Já está em uso".
+- [ ] Username existente em `profiles` (de outro usuário) continua aparecendo como "Já está em uso".
+- [ ] Username próprio em `profiles` ou `creator_profiles` aparece como "Este é seu identificador atual".
+- [ ] Tentativa de salvar um username já usado em outra tabela retorna erro apropriado e não gera exceção não tratada.
+
+## Riscos e observações
+- É necessário confirmar se a política de RLS permite ao usuário autenticado ler `creator_profiles.username` de outros usuários. Caso contrário, a verificação deverá ser feita via `supabaseAdmin` dentro do server function (já que é uma validação de segurança, não exposição de dados).
