@@ -212,30 +212,53 @@ async function fetchVeriffStatus(sessionId: string): Promise<KycStatus | null> {
     console.error("[veriff] decision fetch threw", { sessionId, err: String(err) });
   }
 
-  // 2) Fallback: endpoint de sessão
+  // 2) Fallback: endpoint de attempts (destrava quando um attempt foi
+  // aprovado/recusado no painel mas a decisão de sessão ainda não saiu).
   try {
     const res = await fetch(
-      `https://stationapi.veriff.com/v1/sessions/${sessionId}`,
+      `https://stationapi.veriff.com/v1/sessions/${sessionId}/attempts`,
       { method: "GET", headers },
     );
     if (res.ok) {
       const payload = (await res.json()) as {
-        verification?: { status?: string } | null;
-        status?: string;
+        verifications?: Array<{
+          id?: string;
+          status?: string;
+          createdAt?: string;
+          updatedAt?: string;
+        }> | null;
       };
-      const v = payload.verification?.status ?? payload.status;
-      if (v && veriffStatusMap[v]) return veriffStatusMap[v];
-      console.warn("[veriff] session empty/unknown status", { sessionId, payload });
+      const attempts = payload.verifications ?? [];
+      if (attempts.length > 0) {
+        const sorted = [...attempts].sort((a, b) => {
+          const ta = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+          const tb = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+          return tb - ta;
+        });
+        // Prefer any terminal attempt (approved/declined/etc) over pending ones.
+        const terminal = sorted.find(
+          (a) =>
+            a.status &&
+            veriffStatusMap[a.status] &&
+            veriffStatusMap[a.status] !== "processing",
+        );
+        const picked = terminal ?? sorted[0];
+        const v = picked?.status;
+        if (v && veriffStatusMap[v]) return veriffStatusMap[v];
+        console.warn("[veriff] attempts empty/unknown status", { sessionId, payload });
+      } else {
+        console.warn("[veriff] attempts list empty", { sessionId });
+      }
     } else {
       const body = await res.text().catch(() => "");
-      console.error("[veriff] session fetch non-ok", {
+      console.error("[veriff] attempts fetch non-ok", {
         sessionId,
         status: res.status,
         body: body.slice(0, 500),
       });
     }
   } catch (err) {
-    console.error("[veriff] session fetch threw", { sessionId, err: String(err) });
+    console.error("[veriff] attempts fetch threw", { sessionId, err: String(err) });
   }
 
   return null;
