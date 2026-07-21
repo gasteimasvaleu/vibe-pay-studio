@@ -131,12 +131,30 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
 
   useEffect(() => {
     ensureCurrentUserProfile().catch((error) => {
       console.error("Failed to sync user profile", error);
     });
   }, []);
+
+  // Listener global: reage a mudanças de sessão (login/logout/atualização de identidade)
+  // e força loaders + queries a se atualizarem para o usuário correto.
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      // Limpa qualquer dado cacheado do usuário anterior antes de re-executar loaders.
+      if (event === "SIGNED_OUT") {
+        queryClient.clear();
+      } else {
+        queryClient.invalidateQueries();
+      }
+      void router.invalidate();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router, queryClient]);
+
 
   return (
     <>
