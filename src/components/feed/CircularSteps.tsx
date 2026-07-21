@@ -233,7 +233,7 @@ export function CircularSteps({
             </motion.div>
           </AnimatePresence>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={handlePrev}
