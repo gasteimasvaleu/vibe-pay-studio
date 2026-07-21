@@ -317,7 +317,7 @@ export const joinVideoCall = createServerFn({ method: "POST" })
       throw new Error("not a participant");
     if (call.status === "completed" || call.status === "cancelled" || call.status === "declined")
       throw new Error("call is not active");
-    if (call.payment_status !== "paid" && call.payment_status !== "paid")
+    if (call.payment_status !== "paid")
       throw new Error("call is not paid");
 
     const { dailyEnsureRoom, dailyCreateToken } = await import("./video-calls.server");
