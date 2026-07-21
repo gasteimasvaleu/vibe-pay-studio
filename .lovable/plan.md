@@ -1,26 +1,21 @@
-## Alteração
+## Objetivo
+Substituir os placeholders `/placeholder.svg` pelas 5 imagens reais fornecidas nos 5 passos do componente `CircularSteps` na página `/feed`.
 
-No array `steps` em `src/routes/_authenticated/feed.tsx` (linhas 202-224), substituir os 3 passos atuais pelos 5 passos dos screenshots:
+## Estado atual
+- O array `steps` em `src/routes/_authenticated/feed.tsx` já contém os 5 textos corretos ("Você chegou!", "Em Alta", "Conheça o Mural", "Se interessou?", "Assinou?"), mas todos usam `src: "/placeholder.svg"`.
+- O componente `CircularSteps` em `src/components/feed/CircularSteps.tsx` renderiza essas imagens via `step.src`.
 
-1. **Passo 1 — Você chegou!**
-   "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar."
+## Mapeamento das imagens
+1. **Passo 1 — Você chegou!** → `openart-image_1784622024885_9b463187_1784622025991_241a55cc.png`
+2. **Passo 2 — Em Alta** → `openart-image_1784622105669_f17e2279_1784622106666_13d91818.png`
+3. **Passo 3 — Conheça o Mural** → `openart-image_1784622441232_336327f6_1784622442736_9e654942.png`
+4. **Passo 4 — Se interessou?** → `openart-image_1784622583046_6307d7aa_1784622584052_e08a8ea3.png`
+5. **Passo 5 — Assinou?** → `openart-image_1784622801840_727ff900_1784622802895_bfe312fe.png`
 
-2. **Passo 2 — Em Alta**
-   "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais."
+## Implementação
+1. Em `src/routes/_authenticated/feed.tsx`, atualizar o campo `src` de cada um dos 5 objetos do array `steps` para a URL correspondente do Supabase Storage.
+2. Não alterar `CircularSteps.tsx`, lógica, textos, cores ou animações.
 
-3. **Passo 3 — Conheça o Mural**
-   "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais."
-
-4. **Passo 4 — Se interessou?**
-   "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles."
-
-5. **Passo 5 — Assinou?**
-   "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador."
-
-## Imagens (`src`)
-
-Os screenshots enviados são referências do produto Privacy (marca concorrente) e não devem ser embutidos como assets do app. Manter `src: "/placeholder.svg"` nos 5 passos até você fornecer imagens próprias.
-
-## Escopo
-
-Somente edição do array `steps` em `feed.tsx`. Nenhuma alteração em `CircularSteps.tsx` ou lógica.
+## Verificação
+- Abrir `/feed` em uma conta sem publicações para visualizar o `CircularSteps`.
+- Confirmar que cada um dos 5 passos exibe a imagem correta e que não há imagens quebradas (erro 404 no network).
