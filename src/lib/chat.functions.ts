@@ -302,6 +302,70 @@ export const sendMessage = createServerFn({ method: "POST" })
     };
   });
 
+export const sendStoryReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        storyId: z.string().uuid(),
+        content: z.string().min(1).max(4000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ threadId: string; messageId: string }> => {
+    const { supabase, userId } = context;
+    // Load story (RLS: viewer must be able to see it — creators/subscribers/unlockers via story policies)
+    const { data: story, error: sErr } = await supabase
+      .from("stories")
+      .select("id, creator_id, media_type, media_path, thumb_path, caption")
+      .eq("id", data.storyId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!story) throw new Error("Story não encontrado");
+    if (story.creator_id === userId) throw new Error("Você não pode responder ao próprio story");
+
+    // Enforce active subscription
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("subscriber_id", userId)
+      .eq("creator_id", story.creator_id)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .limit(1)
+      .maybeSingle();
+    if (!sub) throw new Error("Você precisa ser assinante para responder");
+
+    // Ensure thread
+    const { data: threadId, error: tErr } = await supabase.rpc("get_or_create_thread", {
+      other_user: story.creator_id,
+    });
+    if (tErr) throw new Error(tErr.message);
+
+    const storyReply: ChatStoryReply = {
+      storyId: story.id,
+      mediaType: story.media_type as "image" | "video",
+      caption: (story.caption as string | null) ?? null,
+      thumbPath: (story.thumb_path ?? story.media_path) as string | null,
+    };
+
+    const { data: row, error } = await supabase
+      .from("chat_messages")
+      .insert({
+        thread_id: threadId as string,
+        sender_id: userId,
+        content: data.content,
+        price_cents: 0,
+        metadata: { storyReply } as unknown as never,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { threadId: threadId as string, messageId: row.id };
+  });
+
+
+
 
 export const markThreadRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
