@@ -1248,7 +1248,7 @@ function StepMedia({
               variant="outline"
               onClick={onOpenPicker}
               disabled={media.length >= MAX_MEDIA || reorderMode}
-              className="h-12 rounded-md bg-card"
+              className="h-9 rounded-md bg-card"
             >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar mídia
@@ -1257,7 +1257,7 @@ function StepMedia({
               variant={reorderMode ? "default" : "outline"}
               onClick={() => setReorderMode(!reorderMode)}
               disabled={media.length < 2}
-              className="h-12 rounded-md"
+              className="h-9 rounded-md"
             >
               {reorderMode ? (
                 <>
@@ -1497,7 +1497,7 @@ function StepCompose({
             variant={reorderMode ? "default" : "outline"}
             disabled={media.length < 2}
             onClick={() => setReorderMode(!reorderMode)}
-            className="h-12 rounded-md"
+            className="h-9 rounded-md"
           >
             {reorderMode ? (
               <>
@@ -1589,7 +1589,7 @@ function StepCompose({
             <button
               type="button"
               onClick={onEditPrice}
-              className="h-12 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+              className="h-9 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               <Pencil className="h-4 w-4" />
               {toggles.paid.priceCents != null
@@ -1599,7 +1599,7 @@ function StepCompose({
             <button
               type="button"
               onClick={onEditPreview}
-              className="h-12 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
+              className="h-9 rounded-md bg-card shadow-sm border border-border flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               <Pencil className="h-4 w-4" />
               {preview?.status === "uploading"
@@ -1761,7 +1761,7 @@ function PriceDialog({
           </p>
           <Button
             onClick={() => onConfirm(cents)}
-            className="w-full h-12 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
+            className="w-full h-9 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
@@ -1953,7 +1953,7 @@ function ChallengeGoalSheet({
           </p>
           <Button
             onClick={() => onNext(cents)}
-            className="w-full h-12 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
+            className="w-full h-9 mt-6 rounded-md bg-gradient-primary hover:opacity-95 text-primary-foreground font-semibold"
           >
             Avançar
           </Button>
