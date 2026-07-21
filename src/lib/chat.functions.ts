@@ -10,6 +10,7 @@ export type ThreadListItem = {
   lastMessage: string | null;
   lastMessageAt: string;
   unreadCount: number;
+  isMuted: boolean;
 };
 
 export type ChatWelcomeMedia = {
