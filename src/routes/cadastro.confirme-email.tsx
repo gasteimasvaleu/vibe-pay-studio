@@ -89,7 +89,7 @@ function ConfirmeEmailPage() {
 
   return (
     <SiteLayout>
-      <div className="flex items-center justify-center px-4 py-16">
+      <div className="flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-4xl">
           <div className="rounded-3xl overflow-hidden shadow-card border border-slate-200 bg-white flex flex-col md:flex-row">
             {/* Imagem */}
