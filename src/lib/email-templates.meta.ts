@@ -9,7 +9,6 @@ export const EMAIL_KINDS = [
   "post_sales",
   "subscription_sales",
   "content_purchase",
-  "creator_referrals",
 ] as const;
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 
