@@ -45,6 +45,7 @@ import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.functions";
+import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
 
 
@@ -309,6 +310,9 @@ function PerfilPage() {
   const addFriendFn = useServerFn(addFriend);
   const removeFriendFn = useServerFn(removeFriend);
   const isFriendServerFn = useServerFn(isFriendFn);
+  const muteFn = useServerFn(muteProfile);
+  const unmuteFn = useServerFn(unmuteProfile);
+  const isMutedServerFn = useServerFn(isMutedFn);
 
   const friendQueryKey = ["friends", "is", viewerId, profile.userId] as const;
   const friendQuery = useQuery({
@@ -318,6 +322,37 @@ function PerfilPage() {
   });
   const isFriendState = !!friendQuery.data?.isFriend;
   const [friendBusy, setFriendBusy] = useState(false);
+
+  const mutedQueryKey = ["mutes", "is", viewerId, profile.userId] as const;
+  const mutedQuery = useQuery({
+    queryKey: mutedQueryKey,
+    queryFn: () => isMutedServerFn({ data: { userId: profile.userId } }),
+    enabled: !isOwner,
+  });
+  const isMutedState = !!mutedQuery.data?.muted;
+  const [muteBusy, setMuteBusy] = useState(false);
+
+  const handleToggleMute = async () => {
+    if (muteBusy) return;
+    setMuteBusy(true);
+    try {
+      if (isMutedState) {
+        await unmuteFn({ data: { userId: profile.userId } });
+        toast.success("Perfil não está mais silenciado.");
+      } else {
+        await muteFn({ data: { userId: profile.userId } });
+        toast.success("Perfil silenciado.");
+      }
+      await queryClient.invalidateQueries({ queryKey: mutedQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["mutes"] });
+      await queryClient.invalidateQueries({ queryKey: ["chat", "threads"] });
+      setMenuOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao silenciar");
+    } finally {
+      setMuteBusy(false);
+    }
+  };
 
   const handleToggleFriend = async () => {
     if (friendBusy) return;
@@ -601,14 +636,12 @@ function PerfilPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    toast.success("Perfil silenciado.");
-                    setMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                  disabled={muteBusy}
+                  onClick={handleToggleMute}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-60"
                 >
                   <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                  Silenciar perfil
+                  {isMutedState ? "Deixar de silenciar" : "Silenciar perfil"}
                 </button>
                 {!profile.restrictFriendships && (
                   <button

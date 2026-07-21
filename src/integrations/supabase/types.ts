@@ -733,6 +733,27 @@ export type Database = {
           },
         ]
       }
+      muted_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          muted_id: string
+          muter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          muted_id: string
+          muter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          muted_id?: string
+          muter_id?: string
+        }
+        Relationships: []
+      }
       payment_intents: {
         Row: {
           asaas_invoice_url: string | null
@@ -2425,6 +2446,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_muted: { Args: { _muter: string; _target: string }; Returns: boolean }
       is_restricted: {
         Args: { _creator: string; _subscriber: string }
         Returns: boolean

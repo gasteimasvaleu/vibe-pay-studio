@@ -10,6 +10,7 @@ export type ThreadListItem = {
   lastMessage: string | null;
   lastMessageAt: string;
   unreadCount: number;
+  isMuted: boolean;
 };
 
 export type ChatWelcomeMedia = {
@@ -76,6 +77,13 @@ export const listThreads = createServerFn({ method: "GET" })
       (profiles ?? []).map((p) => [p.user_id, p]),
     );
 
+    const { data: mutedRows } = await supabase
+      .from("muted_profiles")
+      .select("muted_id")
+      .eq("muter_id", userId)
+      .in("muted_id", partnerIds);
+    const mutedSet = new Set((mutedRows ?? []).map((r) => r.muted_id));
+
     const results: ThreadListItem[] = [];
     for (const t of threads) {
       const partnerId = t.user_a === userId ? t.user_b : t.user_a;
@@ -103,6 +111,7 @@ export const listThreads = createServerFn({ method: "GET" })
         lastMessage: lastMsgRows?.[0]?.content ?? null,
         lastMessageAt: t.last_message_at,
         unreadCount: unread ?? 0,
+        isMuted: mutedSet.has(partnerId),
       });
     }
 

@@ -10,6 +10,7 @@ import {
   Search,
   Settings,
   UserRoundCheck,
+  VolumeX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -131,9 +132,13 @@ function ChatLayout() {
   }, [meId]);
 
   const filteredThreads = useMemo(() => {
-    if (!onlineOnly) return threads;
-    return threads.filter((t) => onlineUsers.has(t.partnerId));
-  }, [threads, onlineOnly, onlineUsers]);
+    let out = threads;
+    // Silenciados: quando ativo, mostra APENAS silenciados; quando inativo, esconde silenciados da lista principal
+    out = filters.muted ? out.filter((t) => t.isMuted) : out.filter((t) => !t.isMuted);
+    if (filters.unread) out = out.filter((t) => t.unreadCount > 0);
+    if (onlineOnly) out = out.filter((t) => onlineUsers.has(t.partnerId));
+    return out;
+  }, [threads, onlineOnly, onlineUsers, filters.muted, filters.unread]);
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground">
@@ -287,7 +292,10 @@ function ThreadRow({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-medium text-foreground">@{thread.partnerUsername}</span>
+            <span className="truncate font-medium text-foreground flex items-center gap-1.5">
+              {thread.isMuted && <VolumeX className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+              @{thread.partnerUsername}
+            </span>
             <span className="text-[11px] text-muted-foreground shrink-0">
               {formatTime(thread.lastMessageAt)}
             </span>
@@ -296,7 +304,7 @@ function ThreadRow({
             <span className="truncate text-sm text-muted-foreground">
               {thread.lastMessage ?? "Sem mensagens"}
             </span>
-            {thread.unreadCount > 0 && (
+            {thread.unreadCount > 0 && !thread.isMuted && (
               <span className="shrink-0 min-w-5 h-5 px-1.5 grid place-items-center text-[11px] rounded-full bg-gradient-primary text-primary-foreground font-semibold">
                 {thread.unreadCount}
               </span>
