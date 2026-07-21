@@ -1218,7 +1218,7 @@ function SubscriptionOfferCard({
       <button
         type="button"
         onClick={onSubscribe}
-        className="w-full h-11 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
+        className="w-full h-9 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary/60 text-primary-foreground text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
       >
         Assinar agora {format(promotion.promoPrice)}
       </button>
