@@ -34,7 +34,6 @@ const EMAIL_KEYS = [
   "post_sales",
   "subscription_sales",
   "content_purchase",
-  "creator_referrals",
 ] as const;
 
 const PRIVACY_DEFAULTS: PrivacySettings = {
