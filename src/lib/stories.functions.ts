@@ -193,7 +193,8 @@ export const getCreatorStories = createServerFn({ method: "GET" })
     if (!stories || stories.length === 0) return [];
 
     const ids = stories.map((s) => s.id);
-    const [{ data: unlocks }, { data: views }, { data: profile }] = await Promise.all([
+    const isSelfCreator = data.creatorId === context.userId;
+    const [{ data: unlocks }, { data: views }, { data: profile }, { data: subRow }, { data: viewCounts }] = await Promise.all([
       context.supabase
         .from("story_unlocks")
         .select("story_id")
@@ -210,11 +211,33 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         .select("username, avatar_url")
         .eq("user_id", data.creatorId)
         .maybeSingle(),
+      isSelfCreator
+        ? Promise.resolve({ data: null as any })
+        : context.supabase
+            .from("subscriptions")
+            .select("id")
+            .eq("subscriber_id", context.userId)
+            .eq("creator_id", data.creatorId)
+            .eq("status", "active")
+            .gt("current_period_end", new Date().toISOString())
+            .limit(1)
+            .maybeSingle(),
+      isSelfCreator
+        ? context.supabase
+            .from("story_views")
+            .select("story_id")
+            .in("story_id", ids)
+        : Promise.resolve({ data: [] as { story_id: string }[] }),
     ]);
     const unlockedSet = new Set((unlocks ?? []).map((u) => u.story_id));
     const viewedSet = new Set((views ?? []).map((v) => v.story_id));
     const creatorUsername = (profile?.username as string | undefined) ?? "creator";
     const creatorAvatarUrl = (profile?.avatar_url as string | null | undefined) ?? null;
+    const viewerIsSubscriber = isSelfCreator ? true : !!subRow;
+    const viewCountMap = new Map<string, number>();
+    for (const v of (viewCounts ?? []) as { story_id: string }[]) {
+      viewCountMap.set(v.story_id, (viewCountMap.get(v.story_id) ?? 0) + 1);
+    }
 
     const results: StoryItem[] = [];
     for (const s of stories) {
@@ -234,13 +257,17 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         expires_at: s.expires_at,
         media_url: mediaUrl,
         thumb_url: thumbUrl,
+        thumb_path: (s.thumb_path ?? s.media_path) as string | null,
         unlocked,
         is_self: isSelf,
         viewed: viewedSet.has(s.id),
+        view_count: viewCountMap.get(s.id) ?? 0,
+        viewer_is_subscriber: viewerIsSubscriber,
       });
     }
     return results;
   });
+
 
 export const markStoryViewed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
