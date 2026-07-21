@@ -110,7 +110,7 @@ export function CircularSteps({
 
   function getImageStyle(index: number): CSSProperties {
     const gap = calculateGap(containerWidth);
-    const maxStickUp = gap * 0.6;
+    const maxStickUp = gap * 0.8;
     const isActive = index === activeIndex;
     const isLeft = (activeIndex - 1 + stepsLength) % stepsLength === index;
     const isRight = (activeIndex + 1) % stepsLength === index;
@@ -118,7 +118,7 @@ export function CircularSteps({
       position: "absolute",
       inset: 0,
       margin: "auto",
-      width: "72%",
+      width: "82%",
       aspectRatio: "1 / 1",
       borderRadius: "24px",
       overflow: "hidden",
@@ -139,20 +139,21 @@ export function CircularSteps({
       return {
         ...base,
         zIndex: 2,
-        opacity: 0.85,
-        transform: `translateX(-${gap}px) translateY(-${maxStickUp}px) scale(0.7) rotateY(20deg)`,
+        opacity: 1,
+        transform: `translateX(-${gap}px) translateY(-${maxStickUp}px) scale(0.85) rotateY(15deg)`,
       };
     }
     if (isRight) {
       return {
         ...base,
         zIndex: 2,
-        opacity: 0.85,
-        transform: `translateX(${gap}px) translateY(-${maxStickUp}px) scale(0.7) rotateY(-20deg)`,
+        opacity: 1,
+        transform: `translateX(${gap}px) translateY(-${maxStickUp}px) scale(0.85) rotateY(-15deg)`,
       };
     }
     return { ...base, zIndex: 1, opacity: 0, pointerEvents: "none" };
   }
+
 
   return (
     <div className="w-full">
@@ -160,7 +161,7 @@ export function CircularSteps({
         {/* Images */}
         <div
           ref={imageContainerRef}
-          className="relative mx-auto w-full max-w-sm"
+          className="relative mx-auto w-full max-w-md lg:max-w-lg"
           style={{ aspectRatio: "1 / 1", perspective: "1000px" }}
         >
           {steps.map((step, index) => (
