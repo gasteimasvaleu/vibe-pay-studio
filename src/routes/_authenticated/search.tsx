@@ -116,13 +116,23 @@ function SearchPage() {
     return () => clearTimeout(t);
   }, [rawQuery]);
 
+  const resolveCountry = useServerFn(resolveViewerCountry);
+  const countryQuery = useQuery({
+    queryKey: ["viewer-country", viewerId] as const,
+    queryFn: () => resolveCountry(),
+    enabled: !!viewerId,
+    staleTime: 60 * 60 * 1000,
+  });
+  const viewerCountry = countryQuery.data?.country ?? null;
+
   const query = useInfiniteQuery({
-    queryKey: ["creator-search", debounced, viewerId] as const,
+    queryKey: ["creator-search", debounced, viewerId, viewerCountry] as const,
     queryFn: ({ pageParam }) =>
-      fetchCreators({ query: debounced, pageParam, viewerId }),
+      fetchCreators({ query: debounced, pageParam, viewerId, viewerCountry }),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
   });
+
 
   const items = useMemo(
     () => query.data?.pages.flatMap((p) => p.items) ?? [],
