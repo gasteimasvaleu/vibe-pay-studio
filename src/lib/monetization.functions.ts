@@ -105,20 +105,68 @@ export const cancelSubscription = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type MySubscription = {
+  id: string;
+  creatorId: string;
+  creatorUsername: string | null;
+  creatorDisplayName: string | null;
+  creatorAvatarUrl: string | null;
+  creatorAccountType: string | null;
+  plan: string;
+  priceCents: number;
+  status: string;
+  autoRenew: boolean;
+  currentPeriodEnd: string;
+  startedAt: string;
+};
+
 /**
- * Lista assinaturas ativas do usuário logado.
+ * Lista assinaturas do usuário logado com dados do creator.
  */
 export const listMySubscriptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<MySubscription[]> => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const { data: subs, error } = await supabase
       .from("subscriptions")
       .select("id, creator_id, plan, price_cents_paid, status, auto_renew, current_period_end, started_at")
       .eq("subscriber_id", userId)
       .order("started_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const rows = subs ?? [];
+    if (!rows.length) return [];
+
+    const creatorIds = Array.from(new Set(rows.map((r) => r.creator_id as string)));
+    const { data: profs, error: profError } = await supabase
+      .from("profiles")
+      .select("user_id, username, display_name, avatar_url, account_type")
+      .in("user_id", creatorIds);
+    if (profError) throw new Error(profError.message);
+
+    const byId = Object.fromEntries((profs ?? []).map((p) => [p.user_id as string, p]));
+
+    return rows.map((r) => {
+      const p = byId[r.creator_id as string] as {
+        username?: string | null;
+        display_name?: string | null;
+        avatar_url?: string | null;
+        account_type?: string | null;
+      } | undefined;
+      return {
+        id: r.id as string,
+        creatorId: r.creator_id as string,
+        creatorUsername: p?.username ?? null,
+        creatorDisplayName: p?.display_name ?? null,
+        creatorAvatarUrl: p?.avatar_url ?? null,
+        creatorAccountType: p?.account_type ?? null,
+        plan: r.plan as string,
+        priceCents: r.price_cents_paid ?? 0,
+        status: r.status as string,
+        autoRenew: r.auto_renew ?? true,
+        currentPeriodEnd: (r.current_period_end as string) ?? null,
+        startedAt: (r.started_at as string) ?? null,
+      };
+    });
   });
 
 /**
