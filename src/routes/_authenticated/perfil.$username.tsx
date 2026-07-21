@@ -108,7 +108,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     ]);
 
     const nowIso = new Date().toISOString();
-    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }] = await Promise.all([
+    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("id")
@@ -133,7 +133,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .order("promo_price", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("follows")
+        .select("follower_id", { count: "exact", head: true })
+        .eq("followee_id", profile.user_id),
     ]);
+
+    const isOwnerViewer = profile.user_id === user.id;
+    const showFollowers = profile.show_followers !== false;
+    const followersCount =
+      showFollowers || isOwnerViewer ? (followersCountRaw ?? 0) : null;
+
 
     const promotion =
       promotionRow &&
