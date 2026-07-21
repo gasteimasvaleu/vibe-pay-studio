@@ -242,7 +242,7 @@ function CriarPerfilGratuitoPage() {
             </ol>
           </section>
         ) : (
-          <section className="space-y-6">
+          <section className="space-y-6 pt-6">
             <div className="flex justify-center pt-4">
               <button
                 type="button"
