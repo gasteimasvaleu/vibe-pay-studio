@@ -14,8 +14,7 @@ export type EmailKind =
   | "free_to_paid"
   | "post_sales"
   | "subscription_sales"
-  | "content_purchase"
-  | "creator_referrals";
+  | "content_purchase";
 
 export type EmailVars = Record<string, string | number | null | undefined>;
 
