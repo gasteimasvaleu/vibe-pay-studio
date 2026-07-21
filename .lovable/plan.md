@@ -1,25 +1,22 @@
 ## Objetivo
+Ajustar o background das páginas da carteira (`/mywallet`, `/mywallet/extrato`, `/mywallet/recarregar`) para usar o padrão do restante do app (`bg-background` com header `bg-background/90 backdrop-blur`), corrigindo a diferença visual reportada.
 
-Alinhar o visual da rota `/follow` com o padrão das outras páginas (feed, dashboard, `/banco`, `/my-monetisexy-stats`), que usam fundo transparente sobre o `bg-background` global e header translúcido com blur.
+## Estado atual verificado
+- `src/routes/_authenticated/mywallet.index.tsx` (linhas 200–203): usa `<div className="absolute inset-0 bg-card" />` e `header bg-card`.
+- `src/routes/_authenticated/mywallet.extrato.tsx` (linhas 173–176): mesmo padrão de fundo `bg-card`.
+- `src/routes/_authenticated/mywallet.recarregar.tsx` (linhas 93–96): mesmo padrão de fundo `bg-card`.
+- Páginas de referência como `/banco` e `/follow` usam `min-h-screen bg-background` e `header bg-background/90 backdrop-blur`.
 
-## Diagnóstico
+## Alterações propostas
+1. Em cada um dos três arquivos de rota da carteira:
+   - Substituir o wrapper `relative min-h-screen text-foreground overflow-hidden` + `absolute inset-0 bg-card` por `min-h-screen bg-background text-foreground`.
+   - Substituir o header `relative z-10 border-b border-border bg-card` por `sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur`.
+   - Remover classes `relative z-10` desnecessárias do `<main>` (o sticky header já resolve o empilhamento).
 
-Em `src/routes/_authenticated/follow.tsx` o shell força:
-- `<div className="absolute inset-0 bg-card" />` cobrindo toda a viewport com a cor de card.
-- `<header className="... bg-card">` sólido.
+## Arquivos afetados
+- `src/routes/_authenticated/mywallet.index.tsx`
+- `src/routes/_authenticated/mywallet.extrato.tsx`
+- `src/routes/_authenticated/mywallet.recarregar.tsx`
 
-Isso deixa a página com um tom diferente do restante do app (que fica sobre `bg-background`).
-
-## Funcionalidade
-
-A página já é funcional: usa `listMySubscribers` (server function protegida) via loader + `useSuspenseQuery`, com busca client-side por `username`/`displayName`, estado vazio, estado sem resultado e navegação para `/perfil/$username`. Não precisa de nova implementação — apenas o ajuste visual.
-
-## Mudanças
-
-Arquivo: `src/routes/_authenticated/follow.tsx` (função `FollowShell`)
-
-1. Remover o overlay `<div className="absolute inset-0 bg-card" />`.
-2. Trocar o wrapper `min-h-screen ... overflow-hidden` por `min-h-screen text-foreground` (sem overlay, herda `bg-background`).
-3. Header: `bg-card` → `bg-background/90 backdrop-blur` + manter `border-b border-border` (mesmo padrão do `/banco` e `/my-monetisexy-stats`).
-
-Nenhuma outra alteração de lógica, dados ou componentes.
+## Validação
+Após a alteração, verificar visualmente no preview que as três rotas da carteira exibem o mesmo fundo e comportamento de header das páginas `/banco` e `/follow`, tanto no tema claro quanto no escuro.
