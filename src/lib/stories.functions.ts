@@ -155,10 +155,14 @@ export type StoryItem = {
   expires_at: string;
   media_url: string | null;
   thumb_url: string | null;
+  thumb_path: string | null;
   unlocked: boolean;
   is_self: boolean;
   viewed: boolean;
+  view_count: number;
+  viewer_is_subscriber: boolean;
 };
+
 
 async function signedFor(
   supabase: any,
