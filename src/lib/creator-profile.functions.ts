@@ -18,7 +18,7 @@ export type ActiveCreatorProfile = {
   x: string | null;
   chatWelcomeEnabled: boolean;
   chatWelcomeMessage: string | null;
-  chatWelcomeMedia: unknown;
+  chatWelcomeMedia: Array<{ path: string; mime: string; kind: string; durationSec: number | null }>;
   chatWelcomeTag: string | null;
   chatWelcomePriceCents: number;
 };
