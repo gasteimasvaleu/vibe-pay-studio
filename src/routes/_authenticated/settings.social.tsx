@@ -147,7 +147,7 @@ function SettingsSocialPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative z-10 border-b border-border bg-card">
+      <header className="relative z-10 border-b border-border bg-white">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
           <button
             type="button"
