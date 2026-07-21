@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
 });
