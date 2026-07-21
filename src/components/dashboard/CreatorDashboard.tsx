@@ -3,6 +3,8 @@ import {
   BadgePercent,
   Bookmark,
   Bug,
+  Clock,
+
   FolderPlus,
   HelpCircle,
   Landmark,
