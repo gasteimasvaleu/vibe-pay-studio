@@ -62,12 +62,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual")
+      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
       .eq("username", params.username)
       .maybeSingle();
 
     if (!profile) throw notFound();
     if (profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
+
 
     const [
       { count: postsCount },
@@ -107,7 +108,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     ]);
 
     const nowIso = new Date().toISOString();
-    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }] = await Promise.all([
+    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("id")
@@ -132,7 +133,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .order("promo_price", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("follows")
+        .select("follower_id", { count: "exact", head: true })
+        .eq("followee_id", profile.user_id),
     ]);
+
+    const isOwnerViewer = profile.user_id === user.id;
+    const showFollowers = profile.show_followers !== false;
+    const followersCount =
+      showFollowers || isOwnerViewer ? (followersCountRaw ?? 0) : null;
+
 
     const promotion =
       promotionRow &&
@@ -165,6 +176,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
+        restrictFriendships: !!profile.restrict_friendships,
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
@@ -175,7 +187,9 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       videosCount: videosCount ?? 0,
       lockedCount: lockedCount ?? 0,
       likesCount: likesCount ?? 0,
+      followersCount,
     };
+
   },
 
 
@@ -266,8 +280,9 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount, followersCount } =
     Route.useLoaderData();
+
   const router = useRouter();
   const navigate = useNavigate();
   const isOwner = viewerId === profile.userId;
@@ -559,17 +574,20 @@ function PerfilPage() {
                   <VolumeX className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   Silenciar perfil
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    toast.success(`Solicitação de amizade enviada para ${displayName}!`);
-                    setMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
-                >
-                  <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                  Adicionar amigo
-                </button>
+                {!profile.restrictFriendships && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast.success(`Solicitação de amizade enviada para ${displayName}!`);
+                      setMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-semibold text-foreground hover:bg-foreground/5 transition-colors"
+                  >
+                    <UserPlus className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                    Adicionar amigo
+                  </button>
+                )}
+
               </nav>
             </PopoverContent>
           </Popover>
@@ -627,7 +645,18 @@ function PerfilPage() {
             <h2 className="text-2xl font-black tracking-tight text-foreground">{displayName}</h2>
             <BadgeCheck className="h-6 w-6 text-fuchsia-400 fill-fuchsia-400/20" />
           </div>
-          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>@{profile.username}</span>
+            {followersCount !== null && (
+              <span className="flex items-center gap-1">
+                <span className="font-semibold text-foreground">
+                  {new Intl.NumberFormat("pt-BR").format(followersCount)}
+                </span>
+                {followersCount === 1 ? "seguidor" : "seguidores"}
+              </span>
+            )}
+          </div>
+
 
           {/* Mobile stats */}
           <div className="sm:hidden flex items-center gap-4 text-xs text-muted-foreground">

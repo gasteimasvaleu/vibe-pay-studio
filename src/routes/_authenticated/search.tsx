@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Search, BadgeCheck, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
+import { resolveViewerCountry } from "@/lib/geo.functions";
+
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
@@ -36,16 +39,20 @@ async function fetchCreators({
   query,
   pageParam,
   viewerId,
+  viewerCountry,
 }: {
   query: string;
   pageParam: number;
   viewerId: string | null;
+  viewerCountry: string | null;
 }) {
   const from = pageParam * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
   const trimmed = query.trim();
   const isMentionLookup = trimmed.startsWith("@");
   const term = isMentionLookup ? trimmed.slice(1) : trimmed;
+
+  const ownEscape = viewerId ? `,user_id.eq.${viewerId}` : "";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase
@@ -54,32 +61,25 @@ async function fetchCreators({
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  // Respect global search restriction (own profile never filtered).
-  q = q.or(
-    viewerId
-      ? `restrict_search.eq.false,user_id.eq.${viewerId}`
-      : "restrict_search.eq.false",
-  );
-  // TODO: split restrict_search_br / restrict_search_country once IP geo is available.
-  // For now both act as "hide from all searches" (same effect as restrict_search).
-  q = q.or(
-    viewerId
-      ? `restrict_search_br.eq.false,user_id.eq.${viewerId}`
-      : "restrict_search_br.eq.false",
-  );
-  q = q.or(
-    viewerId
-      ? `restrict_search_country.eq.false,user_id.eq.${viewerId}`
-      : "restrict_search_country.eq.false",
-  );
+  // Global search restriction (own profile never filtered).
+  q = q.or(`restrict_search.eq.false${ownEscape}`);
+
+  // "Não aparecer em pesquisas no Brasil" — só filtra quando o viewer está no BR.
+  if (viewerCountry === "BR") {
+    q = q.or(`restrict_search_br.eq.false${ownEscape}`);
+  }
+
+  // "Não aparecer em pesquisas do meu país" — só filtra quando viewer country == owner country.
+  // Mantém rows onde: flag=false OR owner.country != viewer country OR owner.country IS NULL OR own profile.
+  if (viewerCountry) {
+    q = q.or(
+      `restrict_search_country.eq.false,country.neq.${viewerCountry},country.is.null${ownEscape}`,
+    );
+  }
 
   // @mention lookup — also honor restrict_mentions.
   if (isMentionLookup) {
-    q = q.or(
-      viewerId
-        ? `restrict_mentions.eq.false,user_id.eq.${viewerId}`
-        : "restrict_mentions.eq.false",
-    );
+    q = q.or(`restrict_mentions.eq.false${ownEscape}`);
   }
 
   if (term.length > 0) {
@@ -94,6 +94,7 @@ async function fetchCreators({
     nextPage: (data?.length ?? 0) < PAGE_SIZE ? undefined : pageParam + 1,
   };
 }
+
 
 function SearchPage() {
   const [rawQuery, setRawQuery] = useState("");
@@ -115,13 +116,23 @@ function SearchPage() {
     return () => clearTimeout(t);
   }, [rawQuery]);
 
+  const resolveCountry = useServerFn(resolveViewerCountry);
+  const countryQuery = useQuery({
+    queryKey: ["viewer-country", viewerId] as const,
+    queryFn: () => resolveCountry(),
+    enabled: !!viewerId,
+    staleTime: 60 * 60 * 1000,
+  });
+  const viewerCountry = countryQuery.data?.country ?? null;
+
   const query = useInfiniteQuery({
-    queryKey: ["creator-search", debounced, viewerId] as const,
+    queryKey: ["creator-search", debounced, viewerId, viewerCountry] as const,
     queryFn: ({ pageParam }) =>
-      fetchCreators({ query: debounced, pageParam, viewerId }),
+      fetchCreators({ query: debounced, pageParam, viewerId, viewerCountry }),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
   });
+
 
   const items = useMemo(
     () => query.data?.pages.flatMap((p) => p.items) ?? [],
