@@ -45,6 +45,7 @@ import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.functions";
+import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
 
 
