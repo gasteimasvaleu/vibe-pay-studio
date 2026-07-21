@@ -191,7 +191,7 @@ function CriarPerfilGratuitoPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="relative flex items-center justify-center px-4 py-4">
+      <header className="sticky top-0 z-20 flex items-center justify-center border-b border-border bg-background/90 px-4 py-4 backdrop-blur">
         <button
           type="button"
           onClick={() => (step === 1 ? navigate({ to: "/dashboard" }) : setStep(1))}
