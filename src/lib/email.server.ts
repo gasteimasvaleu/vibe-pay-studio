@@ -114,6 +114,3 @@ export async function resolveUserEmail(userId: string): Promise<string | null> {
   }
 }
 
-// TODO(creator_referrals): dispara quando um perfil indicado (referred_by)
-// se torna criador. Aguardando coluna `profiles.referred_by` para acionar via
-// `sendTransactionalEmail({ kind: "creator_referrals", ... })`.
