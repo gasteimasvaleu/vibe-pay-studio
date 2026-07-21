@@ -84,7 +84,8 @@ function SettingsMyProfilePage() {
 
   const handleCopyLink = async () => {
     try {
-      const link = `${window.location.origin}/perfil/${username}`;
+      const baseUrl = import.meta.env.VITE_APP_BASE_URL ?? window.location.origin;
+      const link = `${baseUrl}/perfil/${username}`;
       await navigator.clipboard.writeText(link);
       toast.success("Link copiado");
     } catch {
