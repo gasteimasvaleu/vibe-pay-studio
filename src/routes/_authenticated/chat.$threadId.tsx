@@ -311,6 +311,19 @@ function ChatThreadView() {
           );
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "chat_messages",
+          filter: `thread_id=eq.${threadId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        },
+      )
+
       .on("broadcast", { event: "float-emoji" }, ({ payload }) => {
         const emoji = (payload as { emoji?: string })?.emoji;
         if (!emoji) return;
