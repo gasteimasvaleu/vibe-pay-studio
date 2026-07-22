@@ -851,6 +851,63 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
     };
   });
 
+// ---------------- Paid DM upload request ----------------
+
+export const createPaidDmPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { requestId: string; method: Method; card?: CardInput }) => data)
+  .handler(async ({ data, context }): Promise<CheckoutResult> => {
+    const { supabase, userId } = context;
+    const { data: req, error } = await supabase
+      .from("chat_media_requests")
+      .select("id, requester_id, creator_id, price_cents")
+      .eq("id", data.requestId)
+      .single();
+    if (error || !req) throw new Error("solicitação não encontrada");
+    if (req.requester_id !== userId) throw new Error("apenas o solicitante pode pagar");
+    if (req.price_cents <= 0) throw new Error("solicitação sem preço");
+
+    const walletId = await getCreatorWallet(supabase, req.creator_id);
+    const customerId = await ensureCustomerId(supabase, userId);
+
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(req.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
+    const payment = await asaas.createPayment({
+      customerId,
+      billingType: asaasBillingTypeForMethod(data.method),
+      amountCents: req.price_cents,
+      description: `Compra MTX`,
+      externalReference: `chat_media_request:${req.id}`,
+      creatorWalletId: walletId,
+      netCreatorCents,
+      ...buildCardArgs(data.card),
+    });
+    await supabase
+      .from("chat_media_requests")
+      .update({ provider: providerTag, provider_ref: payment.id })
+      .eq("id", req.id);
+
+    const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
+    const intentId = await recordIntent(supabase, {
+      asaasPayment: payment,
+      method: data.method,
+      referenceTable: "chat_media_requests",
+      referenceId: req.id,
+      pixQr,
+    });
+    return {
+      paymentIntentId: intentId,
+      asaasPaymentId: payment.id,
+      status: payment.status,
+      method: data.method,
+      invoiceUrl: payment.invoiceUrl ?? null,
+      pixQrCode: pixQr?.encodedImage ?? null,
+      pixCopyPaste: pixQr?.payload ?? null,
+    };
+  });
+
 // ---------------- Wallet top-up (no split) ----------------
 
 export const createWalletTopupPayment = createServerFn({ method: "POST" })

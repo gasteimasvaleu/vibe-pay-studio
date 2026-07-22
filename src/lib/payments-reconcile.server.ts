@@ -20,6 +20,7 @@ type ReferenceTable =
   | "tips"
   | "chat_message_unlocks"
   | "video_calls"
+  | "chat_media_requests"
   | "story_unlocks"
   | "wallet_topups";
 

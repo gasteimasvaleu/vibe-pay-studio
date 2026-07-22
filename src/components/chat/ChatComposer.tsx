@@ -3,10 +3,13 @@ import {
   ArrowUp,
   Camera,
   DollarSign,
+  Gift,
   Loader2,
+  Lock,
   Mic,
   Paperclip,
   Sparkles,
+  Video,
   X,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,15 +69,23 @@ async function uploadOne(file: File, userId: string): Promise<ComposerMedia> {
 export function ChatComposer({
   meId,
   isCreator,
+  isSubscriber,
   disabled,
   onSend,
   onFloatEmoji,
+  onCallInvite,
+  onPaidDmRequest,
+  onTip,
 }: {
   meId: string | null;
   isCreator: boolean;
+  isSubscriber?: boolean;
   disabled?: boolean;
   onSend: (payload: ComposerSendPayload) => Promise<void> | void;
   onFloatEmoji: (emoji: string) => void;
+  onCallInvite?: () => void;
+  onPaidDmRequest?: () => void;
+  onTip?: () => void;
 }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
@@ -339,12 +350,35 @@ export function ChatComposer({
             </Popover>
 
             {isCreator ? (
-              <IconAction
-                icon={DollarSign}
-                label="Definir valor da mensagem"
-                onClick={() => setPriceOpen(true)}
-                active={!!priceCents}
-              />
+              <>
+                <IconAction
+                  icon={DollarSign}
+                  label={media.length > 0 ? "Definir valor da mensagem" : "Anexe uma mídia para definir preço"}
+                  onClick={() => media.length > 0 && setPriceOpen(true)}
+                  active={!!priceCents}
+                  disabled={media.length === 0}
+                />
+                <IconAction
+                  icon={Video}
+                  label="Convite de videochamada"
+                  onClick={onCallInvite}
+                />
+              </>
+            ) : null}
+
+            {!isCreator && isSubscriber ? (
+              <>
+                <IconAction
+                  icon={Gift}
+                  label="Enviar mimo"
+                  onClick={onTip}
+                />
+                <IconAction
+                  icon={Lock}
+                  label="Pagar para enviar mídia"
+                  onClick={onPaidDmRequest}
+                />
+              </>
             ) : null}
 
             {uploading ? (

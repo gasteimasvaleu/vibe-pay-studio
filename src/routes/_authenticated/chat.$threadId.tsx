@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Gift, Lock, Phone, Timer, Video, X } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,15 @@ import {
   sendMessage,
   type ChatMessage,
 } from "@/lib/chat.functions";
-import { createChatUnlockPayment } from "@/lib/payments.functions";
+import {
+  createCallInvite,
+  cancelCallInvite,
+  createPaidDmRequest,
+  cancelPaidDmRequest,
+  sendTipMessage,
+  expireStaleInvites,
+} from "@/lib/chat-monetization.functions";
+import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
@@ -22,6 +30,14 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
 import { VideoCallHeaderButton } from "@/components/chat/VideoCallHeaderButton";
 import { ThreadActionsMenu } from "@/components/chat/ThreadActionsMenu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -61,6 +77,115 @@ function formatBRL(cents: number) {
   });
 }
 
+function isExpired(expiresAt: string) {
+  return new Date(expiresAt) < new Date();
+}
+
+function CallInviteCard({
+  invite,
+  mine,
+  onPay,
+  onCancel,
+}: {
+  invite: Required<NonNullable<ChatMessage["metadata"]>>["callInvite"];
+  mine: boolean;
+  onPay: () => void;
+  onCancel: () => void;
+}) {
+  const expired = isExpired(invite.expiresAt) || invite.status === "expired";
+  const paid = invite.status === "paid";
+  const cancelled = invite.status === "cancelled";
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2 min-w-[220px]">
+      <div className="flex items-center gap-2 text-primary">
+        <Video className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Videochamada</span>
+      </div>
+      <div className="text-sm">
+        {invite.durationMin} min · {formatBRL(invite.priceCents)}
+      </div>
+      {expired ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Timer className="h-3 w-3" /> Expirado
+        </div>
+      ) : cancelled ? (
+        <div className="text-xs text-muted-foreground">Cancelado</div>
+      ) : paid ? (
+        <div className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+          <Phone className="h-3 w-3" /> Pago · aguardando início
+        </div>
+      ) : mine ? (
+        <Button size="sm" variant="outline" className="w-full h-8" onClick={onCancel}>
+          Cancelar convite
+        </Button>
+      ) : (
+        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
+          Pagar {formatBRL(invite.priceCents)}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function TipCard({
+  tip,
+  mine,
+}: {
+  tip: Required<NonNullable<ChatMessage["metadata"]>>["tip"];
+  mine: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-1">
+      <div className="flex items-center gap-2 text-amber-500">
+        <Gift className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Mimo</span>
+      </div>
+      <div className="text-sm font-medium">{formatBRL(tip.amountCents)}</div>
+      <div className="text-[10px] text-muted-foreground">{mine ? "Você enviou um mimo" : "Enviou um mimo"}</div>
+    </div>
+  );
+}
+
+function PaidDmCard({
+  upload,
+  media,
+  mine,
+  onPay,
+}: {
+  upload: Required<NonNullable<ChatMessage["metadata"]>>["paidUpload"];
+  media: { url?: string | null; kind: string; mime: string }[];
+  mine: boolean;
+  onPay: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+      <div className="flex items-center gap-2 text-primary">
+        <Lock className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Mídia paga</span>
+      </div>
+      <div className="text-sm">{formatBRL(upload.priceCents)} · desbloqueie para visualizar</div>
+      {media.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {media.map((m, idx) =>
+            m.url ? (
+              m.kind === "image" ? (
+                <img key={idx} src={m.url} alt="" className="rounded-lg w-full object-cover max-h-48" />
+              ) : m.kind === "video" ? (
+                <video key={idx} src={m.url} controls className="rounded-lg w-full max-h-48" />
+              ) : null
+            ) : null,
+          )}
+        </div>
+      )}
+      {!mine && (
+        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
+          Desbloquear por {formatBRL(upload.priceCents)}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function ChatThreadView() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
@@ -70,6 +195,14 @@ function ChatThreadView() {
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const callInviteFn = useServerFn(createCallInvite);
+  const cancelCallInviteFn = useServerFn(cancelCallInvite);
+  const paidDmRequestFn = useServerFn(createPaidDmRequest);
+  const cancelPaidDmRequestFn = useServerFn(cancelPaidDmRequest);
+  const sendTipFn = useServerFn(sendTipMessage);
+  const expireInvitesFn = useServerFn(expireStaleInvites);
+  const videoCallPayFn = useServerFn(createVideoCallPayment);
+  const paidDmPayFn = useServerFn(createPaidDmPayment);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -78,6 +211,18 @@ function ChatThreadView() {
   const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
   const [floaters, setFloaters] = useState<FloatingEmoji[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Monetization dialogs
+  const [callInviteOpen, setCallInviteOpen] = useState(false);
+  const [callPrice, setCallPrice] = useState<number>(3990);
+  const [callDuration, setCallDuration] = useState<number>(15);
+  const [paidDmOpen, setPaidDmOpen] = useState(false);
+  const [paidDmPrice, setPaidDmPrice] = useState<number>(1490);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipAmount, setTipAmount] = useState<number>(1000);
+  const [pendingAction, setPendingAction] = useState<
+    { type: "call" | "paidDm"; id: string; priceCents: number } | null
+  >(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
@@ -190,6 +335,11 @@ function ChatThreadView() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [data?.messages.length]);
 
+  useEffect(() => {
+    if (!threadId) return;
+    expireInvitesFn({ data: { threadId } }).catch(() => {});
+  }, [threadId, expireInvitesFn]);
+
   const sendMutation = useMutation({
     mutationFn: (vars: ComposerSendPayload) =>
       sendFn({
@@ -260,6 +410,71 @@ function ChatThreadView() {
     setFloaters((prev) => [...prev, { id, emoji, x }]);
     setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
   };
+
+  const callInviteMutation = useMutation({
+    mutationFn: (vars: { priceCents: number; durationMinutes: number }) =>
+      callInviteFn({ data: { threadId, priceCents: vars.priceCents, durationMinutes: vars.durationMinutes } }),
+    onSuccess: () => {
+      setCallInviteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+      toast.success("Convite de videochamada enviado");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const paidDmMutation = useMutation({
+    mutationFn: (vars: { priceCents: number }) =>
+      paidDmRequestFn({ data: { threadId, priceCents: vars.priceCents } }),
+    onSuccess: (res) => {
+      setPaidDmOpen(false);
+      setPendingAction({ type: "paidDm", id: res.requestId, priceCents: paidDmPrice });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const tipMutation = useMutation({
+    mutationFn: (vars: { amountCents: number }) =>
+      sendTipFn({ data: { threadId, amountCents: vars.amountCents } }),
+    onSuccess: () => {
+      setTipOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+      queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+      toast.success("Mimo enviado");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const confirmActionPayment = async (method: PaymentMethod) => {
+    if (!pendingAction || method === "WALLET") return;
+    try {
+      setUnlockingId(pendingAction.id);
+      const res =
+        pendingAction.type === "call"
+          ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
+          : await paidDmPayFn({ data: { requestId: pendingAction.id, method } });
+      setPendingAction(null);
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        method,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (err: any) {
+      toast.error(translatePaymentError(err, "Erro ao gerar pagamento"));
+    } finally {
+      setUnlockingId(null);
+    }
+  };
+
+  function openPaymentForCallInvite(messageId: string, callId: string, priceCents: number) {
+    setPendingAction({ type: "call", id: callId, priceCents });
+  }
+
+  function openPaymentForPaidDm(messageId: string, requestId: string, priceCents: number) {
+    setPendingAction({ type: "paidDm", id: requestId, priceCents });
+  }
 
 
   return (
@@ -406,11 +621,40 @@ function ChatThreadView() {
                     </div>
                   </div>
                 )}
-                {m.content && (
+                {m.metadata?.callInvite && (
+                  <CallInviteCard
+                    invite={m.metadata.callInvite}
+                    mine={mine}
+                    onPay={() =>
+                      openPaymentForCallInvite(m.id, m.metadata!.callInvite!.callId, m.metadata!.callInvite!.priceCents)
+                    }
+                    onCancel={() =>
+                      cancelCallInviteFn({ data: { callId: m.metadata!.callInvite!.callId } }).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+                        toast.success("Convite cancelado");
+                      })
+                    }
+                  />
+                )}
+                {m.metadata?.tip && (
+                  <TipCard tip={m.metadata.tip} mine={mine} />
+                )}
+                {m.metadata?.paidUpload && (
+                  <PaidDmCard
+                    upload={m.metadata.paidUpload}
+                    media={m.metadata.media ?? []}
+                    mine={mine}
+                    onPay={() =>
+                      openPaymentForPaidDm(m.id, m.metadata!.paidUpload!.requestId, m.metadata!.paidUpload!.priceCents)
+                    }
+                  />
+                )}
+
+                {m.content && !m.metadata?.callInvite && !m.metadata?.tip && (
                   <div className="whitespace-pre-wrap break-words">{m.content}</div>
                 )}
 
-                {m.metadata?.media && m.metadata.media.length > 0 && (
+                {m.metadata?.media && m.metadata.media.length > 0 && (!m.metadata?.paidUpload || m.metadata.paidUpload.priceCents === 0) && (
                   <div className="mt-2 grid gap-2 grid-cols-2">
                     {m.metadata.media.map((mm, idx) =>
                       mm.url ? (
@@ -468,6 +712,7 @@ function ChatThreadView() {
             <ChatComposer
               meId={meId}
               isCreator={isCreator}
+              isSubscriber={!isCreator}
               disabled={sendMutation.isPending}
               onSend={async (payload) => {
                 await sendMutation.mutateAsync(payload);
@@ -478,6 +723,9 @@ function ChatThreadView() {
                   .channel(`chat-thread-${threadId}`)
                   .send({ type: "broadcast", event: "float-emoji", payload: { emoji } });
               }}
+              onCallInvite={() => setCallInviteOpen(true)}
+              onPaidDmRequest={() => setPaidDmOpen(true)}
+              onTip={() => setTipOpen(true)}
             />
           </TooltipProvider>
         </div>
@@ -493,18 +741,127 @@ function ChatThreadView() {
         onConfirm={confirmUnlockPayment}
       />
 
+      <PaymentMethodDialog
+        open={!!pendingAction}
+        onOpenChange={(v) => !v && setPendingAction(null)}
+        title={pendingAction?.type === "call" ? "Pagar videochamada" : "Pagar envio de mídia"}
+        amountCents={pendingAction?.priceCents ?? 0}
+        loading={!!unlockingId}
+        onConfirm={confirmActionPayment}
+      />
+
       <PaymentModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        title="Desbloquear mensagem"
+        title={pendingAction?.type === "call" ? "Pagar videochamada" : pendingAction?.type === "paidDm" ? "Pagar envio de mídia" : "Desbloquear mensagem"}
         checkout={checkout}
         onPaid={() => {
           queryClient.invalidateQueries({
             queryKey: ["chat", "messages", threadId],
           });
-          toast.success("Mensagem desbloqueada");
+          toast.success("Pagamento confirmado");
         }}
       />
+
+      {/* Call invite dialog */}
+      <Dialog open={callInviteOpen} onOpenChange={setCallInviteOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Convite de videochamada</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Duração (min)</label>
+              <Input
+                type="number"
+                min={5}
+                max={120}
+                value={callDuration}
+                onChange={(e) => setCallDuration(Math.max(5, Math.min(120, Number(e.target.value))))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor (R$)</label>
+              <Input
+                type="number"
+                min={39.9}
+                max={5000}
+                step={0.01}
+                value={(callPrice / 100).toFixed(2)}
+                onChange={(e) => setCallPrice(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={callInviteMutation.isPending}
+              onClick={() => callInviteMutation.mutate({ priceCents: callPrice, durationMinutes: callDuration })}
+            >
+              Enviar convite · válido por 10 min
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Paid DM dialog */}
+      <Dialog open={paidDmOpen} onOpenChange={setPaidDmOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pagar para enviar mídia</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              O criador cobra para receber mídias nesta conversa. Após o pagamento você poderá enviar fotos e vídeos.
+            </p>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor oferecido (R$)</label>
+              <Input
+                type="number"
+                min={14.9}
+                max={2000}
+                step={0.01}
+                value={(paidDmPrice / 100).toFixed(2)}
+                onChange={(e) => setPaidDmPrice(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={paidDmMutation.isPending}
+              onClick={() => paidDmMutation.mutate({ priceCents: paidDmPrice })}
+            >
+              Continuar para pagamento
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tip dialog */}
+      <Dialog open={tipOpen} onOpenChange={setTipOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Enviar mimo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor (R$)</label>
+              <Input
+                type="number"
+                min={5}
+                max={2000}
+                step={0.01}
+                value={(tipAmount / 100).toFixed(2)}
+                onChange={(e) => setTipAmount(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={tipMutation.isPending}
+              onClick={() => tipMutation.mutate({ amountCents: tipAmount })}
+            >
+              Enviar mimo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

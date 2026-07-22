@@ -29,6 +29,25 @@ export type ChatStoryReply = {
   thumbUrl?: string | null;
 };
 
+export type ChatCallInvite = {
+  callId: string;
+  priceCents: number;
+  durationMin: number;
+  expiresAt: string;
+  status?: "pending_payment" | "paid" | "expired" | "cancelled";
+  paidAt?: string | null;
+};
+
+export type ChatTipMeta = {
+  tipId: string;
+  amountCents: number;
+};
+
+export type ChatPaidUploadMeta = {
+  requestId: string;
+  priceCents: number;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -43,6 +62,9 @@ export type ChatMessage = {
     tag?: string | null;
     media?: ChatWelcomeMedia[];
     storyReply?: ChatStoryReply;
+    callInvite?: ChatCallInvite;
+    tip?: ChatTipMeta;
+    paidUpload?: ChatPaidUploadMeta;
   } | null;
 };
 
@@ -329,6 +351,9 @@ export const sendMessage = createServerFn({ method: "POST" })
       })
       .refine((v) => (v.content?.trim().length ?? 0) > 0 || (v.media?.length ?? 0) > 0, {
         message: "Mensagem vazia",
+      })
+      .refine((v) => (v.priceCents ?? 0) === 0 || (v.media?.length ?? 0) > 0, {
+        message: "Anexe uma mídia para definir um preço",
       })
       .parse(data),
   )
