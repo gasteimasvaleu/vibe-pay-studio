@@ -41,7 +41,15 @@ export type ComposerSendPayload = {
   text: string;
   media: ComposerMedia[];
   priceCents: number | null;
+  replyToId?: string | null;
 };
+
+export type ComposerReplyPreview = {
+  messageId: string;
+  authorLabel: string;
+  snippet: string;
+};
+
 
 const FLOAT_EMOJIS = ["❤️", "🔥", "😍", "👏", "😂", "🎉"];
 
