@@ -331,7 +331,7 @@ export function ChatComposer({
               ? `Gravando… ${recordSec}s (solte para enviar)`
               : priceCents
                 ? "Escreva a mensagem exclusiva…"
-                : "Escreva uma mensagem…"
+                : (placeholder ?? "Escreva uma mensagem…")
           }
           rows={1}
           disabled={disabled || recording}
