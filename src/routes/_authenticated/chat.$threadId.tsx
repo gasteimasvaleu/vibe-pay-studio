@@ -275,16 +275,18 @@ function ChatThreadView() {
             created_at: string;
             price_cents: number | null;
             metadata: unknown;
+            reply_to_id?: string | null;
           };
           const meta = m.metadata as { media?: unknown[]; storyReply?: unknown } | null;
           const hasMedia =
             !!meta && Array.isArray(meta.media) && (meta.media as unknown[]).length > 0;
           const hasStoryReply = !!meta && !!meta.storyReply;
-          if (hasMedia || hasStoryReply) {
-            // Needs server-signed URLs; refetch.
+          if (hasMedia || hasStoryReply || m.reply_to_id) {
+            // Needs server-signed URLs or reply preview enrichment; refetch.
             queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
             return;
           }
+
 
           queryClient.setQueryData<ThreadData>(
             ["chat", "messages", threadId],
