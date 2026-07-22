@@ -140,7 +140,7 @@ function ChatLayout() {
   }, [threads, onlineOnly, onlineUsers, filters.muted, filters.unread]);
 
   return (
-    <div className="h-[calc(100svh-10rem)] bg-background text-foreground">
+    <div className="h-[calc(100svh-3.5rem)] -mb-24 bg-background text-foreground pb-16 pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
 
         <aside
