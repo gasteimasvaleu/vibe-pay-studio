@@ -453,74 +453,27 @@ function ChatThreadView() {
         })}
       </div>
 
-      <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="max-w-3xl mx-auto space-y-2">
-          {priceLabel ? (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">
-                <DollarSign className="h-3 w-3" />
-                Mensagem paga · {priceLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPriceCents(null)}
-                className="text-muted-foreground hover:text-foreground underline"
-              >
-                remover
-              </button>
-            </div>
-          ) : null}
-
-          <div className="flex items-end gap-2">
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
+      <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-3 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+        <div className="max-w-3xl mx-auto">
+          <TooltipProvider delayDuration={200}>
+            <ChatComposer
+              meId={meId}
+              isCreator={isCreator}
+              disabled={sendMutation.isPending}
+              onSend={async (payload) => {
+                await sendMutation.mutateAsync(payload);
               }}
-              placeholder={
-                priceLabel
-                  ? "Escreva a mensagem exclusiva…"
-                  : "Escreva uma mensagem…"
-              }
-              rows={1}
-              className="flex-1 min-h-[44px] max-h-40 resize-none focus-visible:ring-ring"
+              onFloatEmoji={(emoji) => {
+                emitFloater(emoji);
+                supabase
+                  .channel(`chat-thread-${threadId}`)
+                  .send({ type: "broadcast", event: "float-emoji", payload: { emoji } });
+              }}
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!text.trim() || sendMutation.isPending}
-              className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Enviar"
-            >
-              <SendHorizontal className="h-5 w-5" />
-            </button>
-          </div>
-
-          {isCreator ? (
-            <TooltipProvider delayDuration={200}>
-              <div className="flex items-center gap-1">
-                <ComposerIcon
-                  icon={DollarSign}
-                  label="Definir valor da mensagem"
-                  active={!!priceCents}
-                  onClick={() => setPriceOpen(true)}
-                />
-              </div>
-            </TooltipProvider>
-          ) : null}
+          </TooltipProvider>
         </div>
       </div>
 
-      <PriceDialog
-        open={priceOpen}
-        onOpenChange={setPriceOpen}
-        initialCents={priceCents}
-        onConfirm={(cents) => setPriceCents(cents)}
-      />
 
       <PaymentMethodDialog
         open={!!pendingMsg}
