@@ -1024,12 +1024,23 @@ function PerfilPage() {
       />
 
       <CpfPromptDialog
-        open={!!cpfPromptFor}
-        onOpenChange={(v) => !v && setCpfPromptFor(null)}
+        open={!!cpfPromptFor || cpfPromptForSubscription}
+        onOpenChange={(v) => {
+          if (!v) {
+            setCpfPromptFor(null);
+            setCpfPromptForSubscription(false);
+          }
+        }}
         onSaved={() => {
           const method = cpfPromptFor;
+          const wasSubscription = cpfPromptForSubscription;
           setCpfPromptFor(null);
-          if (method) void confirmPayment(method);
+          setCpfPromptForSubscription(false);
+          if (wasSubscription) {
+            setSubscribeOpen(true);
+          } else if (method) {
+            void confirmPayment(method);
+          }
         }}
       />
 
