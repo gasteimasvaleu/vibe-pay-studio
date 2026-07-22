@@ -326,16 +326,56 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         }
       }
 
+      // Build map for reply previews
+      const msgById = new Map<string, any>();
+      for (const m of msgs) msgById.set(m.id, m);
+      const missingParentIds = new Set<string>();
+      for (const m of msgs) {
+        if (m.reply_to_id && !msgById.has(m.reply_to_id)) missingParentIds.add(m.reply_to_id);
+      }
+      if (missingParentIds.size > 0) {
+        const { data: parents } = await supabase
+          .from("chat_messages")
+          .select("id, sender_id, content, metadata, deleted_at")
+          .in("id", Array.from(missingParentIds));
+        for (const p of parents ?? []) msgById.set(p.id, p);
+      }
+
+      function buildReplyPreview(parentId: string | null): ChatReplyPreview | undefined {
+        if (!parentId) return undefined;
+        const p = msgById.get(parentId);
+        if (!p) return undefined;
+        if (p.deleted_at) {
+          return { messageId: p.id, senderId: p.sender_id, snippet: "Mensagem apagada", hasMedia: false };
+        }
+        const pMedia = (p.metadata?.media ?? []) as ChatWelcomeMedia[];
+        const hasMedia = pMedia.length > 0;
+        const rawText = (p.content ?? "").trim();
+        const snippet = rawText
+          ? rawText.length > 80
+            ? rawText.slice(0, 80) + "…"
+            : rawText
+          : hasMedia
+            ? pMedia[0].kind === "image"
+              ? "📷 Foto"
+              : pMedia[0].kind === "video"
+                ? "🎬 Vídeo"
+                : "🎙️ Áudio"
+            : "Mensagem";
+        return { messageId: p.id, senderId: p.sender_id, snippet, hasMedia };
+      }
+
       return {
         partner: {
           userId: partnerId,
           username: profile?.username ?? "usuário",
           avatarUrl: (profile as { avatar_url?: string | null } | undefined)?.avatar_url ?? null,
         },
-        messages: (msgs ?? []).map((m: any) => {
+        messages: msgs.map((m: any) => {
           const price = m.price_cents ?? 0;
           const mine = m.sender_id === userId;
-          const meta = m.metadata ?? null;
+          const deletedAt = m.deleted_at ?? null;
+          const meta = deletedAt ? null : m.metadata ?? null;
           const media: ChatWelcomeMedia[] | undefined = meta?.media
             ? (meta.media as ChatWelcomeMedia[]).map((it) => ({
                 ...it,
@@ -349,31 +389,39 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
                 thumbUrl: rawSr.thumbPath ? storyUrlByPath.get(rawSr.thumbPath) ?? null : null,
               }
             : undefined;
+          const replyTo = buildReplyPreview(m.reply_to_id ?? null);
           return {
             id: m.id,
             threadId: m.thread_id,
             senderId: m.sender_id,
-            content: m.content,
+            content: deletedAt ? "" : m.content,
             readAt: m.read_at,
             createdAt: m.created_at,
-            priceCents: price > 0 ? price : null,
-            unlocked: price <= 0 || mine || unlockedSet.has(m.id),
-            metadata: meta
-              ? {
-                  welcome: !!meta.welcome,
-                  tag: meta.tag ?? null,
-                  media,
-                  storyReply,
-                  callInvite: meta.callInvite ?? undefined,
-                  tip: meta.tip ?? undefined,
-                  paidUpload: meta.paidUpload ?? undefined,
-                }
-              : null,
+            deletedAt,
+            priceCents: deletedAt ? null : price > 0 ? price : null,
+            unlocked: deletedAt ? true : price <= 0 || mine || unlockedSet.has(m.id),
+            metadata: deletedAt
+              ? { replyTo }
+              : meta
+                ? {
+                    welcome: !!meta.welcome,
+                    tag: meta.tag ?? null,
+                    media,
+                    storyReply,
+                    callInvite: meta.callInvite ?? undefined,
+                    tip: meta.tip ?? undefined,
+                    paidUpload: meta.paidUpload ?? undefined,
+                    replyTo,
+                  }
+                : replyTo
+                  ? { replyTo }
+                  : null,
           };
         }),
       };
     },
   );
+
 
 
 export const sendMessage = createServerFn({ method: "POST" })
