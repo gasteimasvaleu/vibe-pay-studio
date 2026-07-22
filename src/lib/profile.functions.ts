@@ -75,6 +75,18 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     return { coverUrl: url };
   });
 
+async function getActiveCreatorProfileId(
+  supabase: any,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("active_profile_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data?.active_profile_id as string | null) ?? null;
+}
+
 export const updateProfileDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { bio: string; location: string }) => data)
@@ -84,6 +96,17 @@ export const updateProfileDetails = createServerFn({ method: "POST" })
     const locTrimmed = data.location.replace(/\s+/g, " ").trim();
     if (bioTrimmed.length > 3000) throw new Error("bio muito longa");
     if (locTrimmed.length > 120) throw new Error("localização muito longa");
+
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ bio: bioTrimmed.length ? bioTrimmed : null })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -106,6 +129,21 @@ export const updateSocialLinks = createServerFn({ method: "POST" })
     const ig = sanitizeHandle(data.instagram);
     const tk = sanitizeHandle(data.tiktok);
     const xh = sanitizeHandle(data.x);
+
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({
+          instagram_handle: ig.length ? ig : null,
+          tiktok_handle: tk.length ? tk : null,
+          x_handle: xh.length ? xh : null,
+        })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
