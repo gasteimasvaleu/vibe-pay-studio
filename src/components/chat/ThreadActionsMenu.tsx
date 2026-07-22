@@ -82,7 +82,7 @@ export function ThreadActionsMenu({ threadId, partnerId, partnerUsername }: Prop
 
   const { data: muted } = useQuery({
     queryKey: ["chat", "muted", partnerId],
-    queryFn: () => isMutedFn({ data: { profileId: partnerId } }),
+    queryFn: () => isMutedFn({ data: { userId: partnerId } }),
   });
   const { data: restricted } = useQuery({
     queryKey: ["chat", "restricted", partnerId],
@@ -97,8 +97,8 @@ export function ThreadActionsMenu({ threadId, partnerId, partnerUsername }: Prop
 
   const toggleMute = useMutation({
     mutationFn: async () => {
-      if (muted?.muted) await unmuteFn({ data: { profileId: partnerId } });
-      else await muteFn({ data: { profileId: partnerId } });
+      if (muted?.muted) await unmuteFn({ data: { userId: partnerId } });
+      else await muteFn({ data: { userId: partnerId } });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chat", "muted", partnerId] });
