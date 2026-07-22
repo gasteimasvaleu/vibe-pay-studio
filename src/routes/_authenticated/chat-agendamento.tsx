@@ -584,7 +584,19 @@ function Composer({
               </div>
             </div>
 
-            <div className="mt-auto pt-6">
+            <div className="mt-auto pt-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Destinatários estimados</span>
+                <span className="font-semibold text-foreground">
+                  {previewLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin inline" />
+                  ) : audienceCount !== null ? (
+                    `${audienceCount.toLocaleString("pt-BR")}`
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </div>
               <Button
                 type="button"
                 disabled={activeFilters.size === 0}
@@ -593,6 +605,7 @@ function Composer({
                 Aplicar filtro
               </Button>
             </div>
+
           </div>
         </aside>
 
