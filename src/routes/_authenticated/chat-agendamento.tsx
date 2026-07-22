@@ -439,40 +439,23 @@ function Composer({
                 </div>
               )}
 
-              <Textarea
-                value={message}
-                onChange={(e) => onMessageChange(e.target.value)}
-                placeholder="Digite uma mensagem"
-                className="min-h-14 resize-none border-0 shadow-none focus-visible:ring-0 px-1"
+              <ChatComposer
+                meId={meId}
+                isCreator
+                disabled={!canContinue}
+                placeholder="Escreva sua mensagem em massa…"
+                hideCallInvite
+                hideBroadcast
+                scheduledAt={scheduledAt}
+                onOpenSchedule={onOpenDateDialog}
+                onSend={async (payload) => {
+                  onMessageChange(payload.text);
+                  onSubmitBroadcast(payload);
+                }}
+                onFloatEmoji={() => {
+                  /* no-op em broadcast */
+                }}
               />
-
-              <div className="border-b border-border" />
-
-              <TooltipProvider delayDuration={200}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <ComposerIcon icon={ImageIcon} label="Adicionar mídia" />
-                    <ComposerIcon icon={Mic} label="Gravar um áudio" />
-                    <ComposerIcon icon={Archive} label="Adicionar mídia do acervo" />
-                    <ComposerIcon
-                      icon={CalendarCheck}
-                      label="Agendar mensagem"
-                      onClick={onOpenDateDialog}
-                      active={!!scheduledAt}
-                    />
-                    <ComposerIcon icon={Images} label="Adicionar GIF" />
-                    <ComposerIcon icon={Smile} label="Adicionar um emoji" />
-                    <ComposerIcon icon={Tag} label="Adicionar tag" />
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={!canContinue}
-                    className="rounded-md px-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
-                  >
-                    Continuar
-                  </Button>
-                </div>
-              </TooltipProvider>
             </div>
           </section>
         </div>
