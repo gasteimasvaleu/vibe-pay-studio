@@ -59,7 +59,7 @@ export async function resolveAudienceIds(
 
   if (audience === "recent_interactors") {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const [{ data: chatUsers }, { data: liveSessions }, { data: liveUsers }] = await Promise.all([
+    const [{ data: chatUsers }, { data: liveSessions }] = await Promise.all([
       supabase
         .from("chat_messages")
         .select("sender_id, thread_id")
@@ -72,7 +72,6 @@ export async function resolveAudienceIds(
         .eq("creator_id", userId)
         .gte("created_at", since)
         .limit(500),
-      Promise.resolve([] as { user_id: string }[]),
     ]);
     const ids = new Set<string>();
     for (const m of chatUsers ?? []) {
@@ -90,6 +89,7 @@ export async function resolveAudienceIds(
     }
     return Array.from(ids);
   }
+
 
 
   if (audience === "top_buyers") {
