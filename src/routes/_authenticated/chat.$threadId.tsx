@@ -814,7 +814,7 @@ function ChatThreadView() {
       </div>
 
       <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-3 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="max-w-3xl mx-auto">
+        <div className="w-full">
           <TooltipProvider delayDuration={200}>
             <ChatComposer
               meId={meId}
