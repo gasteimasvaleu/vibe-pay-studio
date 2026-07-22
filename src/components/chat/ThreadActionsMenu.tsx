@@ -238,7 +238,7 @@ export function ThreadActionsMenu({ threadId, partnerId, partnerUsername }: Prop
             Limpar conversa
           </DropdownMenuItem>
           <DropdownMenuItem
-            variant="destructive"
+            className="text-destructive focus:text-destructive"
             onSelect={(e) => {
               e.preventDefault();
               setConfirmDelete(true);
