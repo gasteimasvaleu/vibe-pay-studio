@@ -32,11 +32,17 @@ async function markStatusPaid(
 ) {
   const statusColumn = table === "video_calls" ? "payment_status" : "status";
   const mapped = table === "subscriptions" ? "active" : "paid";
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from(table)
     .update({ [statusColumn]: mapped, provider_ref: providerRef })
     .eq("id", id);
+  if (error) {
+    throw new Error(
+      `markStatusPaid failed [${table}#${id}]: ${error.message ?? error}`,
+    );
+  }
 }
+
 
 async function creditWalletTopup(
   supabaseAdmin: SupabaseAdminLike,
