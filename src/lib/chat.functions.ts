@@ -200,12 +200,25 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         .maybeSingle();
 
 
-      const { data: msgs, error: mErr } = await supabase
+      const { data: threadRow } = await supabase
+        .from("chat_threads")
+        .select("cleared_at_a, cleared_at_b")
+        .eq("id", data.threadId)
+        .maybeSingle();
+      const mySide = thread.user_a === userId ? "a" : "b";
+      const clearedAt =
+        mySide === "a"
+          ? (threadRow as { cleared_at_a?: string | null } | null)?.cleared_at_a
+          : (threadRow as { cleared_at_b?: string | null } | null)?.cleared_at_b;
+
+      let msgQuery = supabase
         .from("chat_messages")
         .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
+      if (clearedAt) msgQuery = msgQuery.gt("created_at", clearedAt);
+      const { data: msgs, error: mErr } = await msgQuery;
       if (mErr) throw new Error(mErr.message);
 
       const paidPartnerMsgIds = (msgs ?? [])
@@ -221,6 +234,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           .eq("status", "paid");
         for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
       }
+
 
       // Collect media paths across messages and sign in one batch
       const allPaths: string[] = [];
