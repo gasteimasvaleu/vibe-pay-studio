@@ -396,9 +396,10 @@ export const previewBroadcastAudience = createServerFn({ method: "POST" })
     if (data.creatorId !== userId) throw new Error("Sem permissão");
 
     const resolved = data.filters.map(uiFilterToAudience).filter(Boolean) as {
-      audience: typeof BROADCAST_AUDIENCES[number];
+      audience: BroadcastAudience;
       topN?: number;
     }[];
+
     if (resolved.length === 0) throw new Error("Nenhum filtro válido");
 
     const ids = new Set<string>();
