@@ -312,7 +312,27 @@ function Composer({
   onOpenDateDialog: () => void;
   onClearSchedule: () => void;
 }) {
-  const canContinue = message.trim().length > 0 && activeFilters.size > 0;
+  const [meId, setMeId] = useState<string | null>(null);
+  useMemo(() => {
+    supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
+  }, []);
+
+  const canContinue = activeFilters.size > 0;
+
+  async function onSubmitBroadcast(payload: ComposerSendPayload) {
+    if (activeFilters.size === 0) {
+      toast.error("Selecione ao menos um filtro de contatos");
+      return;
+    }
+    onMessageChange(payload.text);
+    toast.success(
+      scheduledAt
+        ? `Mensagem agendada para ${format(scheduledAt, "dd/MM 'às' HH:mm", { locale: ptBR })}`
+        : "Mensagem em massa enfileirada para envio",
+    );
+    onClose();
+  }
+
 
   return (
     <div className="flex-1 relative">
