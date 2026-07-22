@@ -229,7 +229,7 @@ function SettingsSocialPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 px-5 pt-2">
+        <div className="flex flex-col gap-3 pt-2">
           <Button
             type="button"
             variant="default"
