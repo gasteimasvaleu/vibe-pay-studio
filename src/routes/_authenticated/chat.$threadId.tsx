@@ -885,6 +885,101 @@ function ChatThreadView() {
         onClose={() => setBroadcastOpen(false)}
         creatorId={meId ?? ""}
       />
+
+      {/* Paid DM delivery dialog */}
+      <PaidDmDeliveryDialog
+        open={!!deliveringPaidDm}
+        onClose={() => setDeliveringPaidDm(null)}
+        requestId={deliveringPaidDm?.requestId ?? ""}
+        threadId={threadId}
+        onDelivered={() => {
+          setDeliveringPaidDm(null);
+          queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        }}
+      />
     </div>
+  );
+}
+
+function PaidDmDeliveryDialog({
+  open,
+  onClose,
+  requestId,
+  threadId,
+  onDelivered,
+}: {
+  open: boolean;
+  onClose: () => void;
+  requestId: string;
+  threadId: string;
+  onDelivered: () => void;
+}) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const deliverFn = useServerFn(markPaidDmDelivered);
+
+  const handleUpload = async () => {
+    if (!requestId || files.length === 0) return;
+    setUploading(true);
+    try {
+      const media: { path: string; kind: "image" | "video"; mime: string }[] = [];
+      for (const file of files) {
+        const ext = file.name.split(".").pop() ?? "";
+        const path = `${threadId}/${requestId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await supabase.storage.from("chat-paid-uploads").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (error) throw error;
+        const kind = file.type.startsWith("video/") ? "video" : "image";
+        media.push({ path, kind, mime: file.type });
+      }
+      await deliverFn({ data: { requestId, media } });
+      toast.success("Mídia enviada");
+      onDelivered();
+      setFiles([]);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar mídia");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Enviar mídia paga</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Selecione fotos ou vídeos para enviar ao criador.
+          </p>
+          <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-6 cursor-pointer hover:bg-accent transition-colors">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Clique para selecionar arquivos</span>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+            />
+          </label>
+          {files.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {files.length} arquivo{files.length > 1 ? "s" : ""} selecionado{files.length > 1 ? "s" : ""}
+            </div>
+          )}
+          <Button
+            className="w-full bg-gradient-primary"
+            disabled={files.length === 0 || uploading}
+            onClick={handleUpload}
+          >
+            {uploading ? "Enviando…" : "Enviar mídia"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
