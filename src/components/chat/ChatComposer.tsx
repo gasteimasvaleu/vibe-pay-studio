@@ -391,6 +391,15 @@ export function ChatComposer({
               onClick={() => cameraInputRef.current?.click()}
               disabled={uploading}
             />
+            {showArchive ? (
+              <IconAction icon={Archive} label="Arquivar rascunho" onClick={onArchive} />
+            ) : null}
+            {showGallery ? (
+              <IconAction icon={Images} label="Galeria / Vault" onClick={onOpenGallery} />
+            ) : null}
+            {showTag ? (
+              <IconAction icon={Tag} label="Rotular disparo" onClick={onOpenTag} />
+            ) : null}
 
             <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
               <PopoverTrigger asChild>
