@@ -87,7 +87,7 @@ function CallInviteCard({
   onPay,
   onCancel,
 }: {
-  invite: NonNullable<ChatMessage["metadata"]>["callInvite"];
+  invite: Required<NonNullable<ChatMessage["metadata"]>>["callInvite"];
   mine: boolean;
   onPay: () => void;
   onCancel: () => void;
