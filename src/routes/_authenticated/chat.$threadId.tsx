@@ -289,10 +289,17 @@ function ChatThreadView() {
           </div>
         </div>
         {data?.partner && (
-          <VideoCallHeaderButton
-            partnerId={data.partner.userId}
-            partnerUsername={data.partner.username}
-          />
+          <div className="flex items-center gap-1">
+            <VideoCallHeaderButton
+              partnerId={data.partner.userId}
+              partnerUsername={data.partner.username}
+            />
+            <ThreadActionsMenu
+              threadId={threadId}
+              partnerId={data.partner.userId}
+              partnerUsername={data.partner.username}
+            />
+          </div>
         )}
 
       </header>
