@@ -23,7 +23,10 @@ import {
   createChatWelcomeUploadUrl,
   getChatWelcome,
   updateChatWelcome,
+  getPaidDmSettings,
+  updatePaidDmSettings,
   type ChatWelcomeMedia,
+  type PaidDmSettings,
 } from "@/lib/chat.functions";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -82,10 +85,16 @@ function ChatSettingsPage() {
   const getFn = useServerFn(getChatWelcome);
   const updateFn = useServerFn(updateChatWelcome);
   const uploadUrlFn = useServerFn(createChatWelcomeUploadUrl);
+  const getPaidDmFn = useServerFn(getPaidDmSettings);
+  const updatePaidDmFn = useServerFn(updatePaidDmSettings);
 
   const { data, isLoading } = useQuery({
     queryKey: ["chat-welcome"],
     queryFn: () => getFn(),
+  });
+  const { data: paidDmData, isLoading: paidDmLoading } = useQuery({
+    queryKey: ["chat-paid-dm-settings"],
+    queryFn: () => getPaidDmFn(),
   });
 
   const [enabled, setEnabled] = useState(false);
@@ -95,6 +104,10 @@ function ChatSettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
+  const [paidDmEnabled, setPaidDmEnabled] = useState(false);
+  const [paidDmMin, setPaidDmMin] = useState(100);
+  const [paidDmMax, setPaidDmMax] = useState(50000);
+  const [paidDmDirty, setPaidDmDirty] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +119,14 @@ function ChatSettingsPage() {
     setPriceCents(data.priceCents ?? 0);
     setDirty(false);
   }, [data]);
+
+  useEffect(() => {
+    if (!paidDmData) return;
+    setPaidDmEnabled(paidDmData.enabled);
+    setPaidDmMin(paidDmData.minCents);
+    setPaidDmMax(paidDmData.maxCents);
+    setPaidDmDirty(false);
+  }, [paidDmData]);
 
   const markDirty = () => setDirty(true);
 
@@ -129,6 +150,23 @@ function ChatSettingsPage() {
       toast.success("Alterações salvas");
       setDirty(false);
       qc.invalidateQueries({ queryKey: ["chat-welcome"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Erro ao salvar"),
+  });
+
+  const paidDmUpdateMutation = useMutation({
+    mutationFn: () =>
+      updatePaidDmFn({
+        data: {
+          enabled: paidDmEnabled,
+          minCents: paidDmMin,
+          maxCents: paidDmMax,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Configurações de DM pago salvas");
+      setPaidDmDirty(false);
+      qc.invalidateQueries({ queryKey: ["chat-paid-dm-settings"] });
     },
     onError: (e: Error) => toast.error(e.message ?? "Erro ao salvar"),
   });
@@ -403,6 +441,99 @@ function ChatSettingsPage() {
         >
           {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
         </Button>
+
+        <div className="border-t border-border pt-6 space-y-5">
+          <div className="flex items-start gap-3 rounded-xl bg-primary/10 text-foreground p-4">
+            <Lightbulb className="h-5 w-5 shrink-0 mt-0.5" />
+            <p className="text-sm">
+              Cobre para que assinantes enviem mídias diretamente no chat.
+              Útil para solicitações personalizadas de fotos e vídeos.
+            </p>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground">
+                Cobrar por mídia no chat
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Quando ativo, assinantes precisam pagar para enviar mídias em conversas privadas.
+              </p>
+            </div>
+            <Switch
+              checked={paidDmEnabled}
+              onCheckedChange={(v) => {
+                setPaidDmEnabled(v);
+                setPaidDmDirty(true);
+              }}
+              aria-label="Cobrar por mídia no chat"
+              disabled={paidDmLoading}
+            />
+          </div>
+
+          {paidDmEnabled && (
+            <div className="rounded-xl bg-muted/60 p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Preço mínimo</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+                      R$
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      value={(paidDmMin / 100).toFixed(2).replace(".", ",")}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        const cents = parseInt(digits || "0", 10);
+                        setPaidDmMin(cents);
+                        setPaidDmDirty(true);
+                      }}
+                      className="w-full h-11 rounded-md border border-border bg-background pl-10 pr-3 text-base font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Preço máximo</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+                      R$
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      value={(paidDmMax / 100).toFixed(2).replace(".", ",")}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        const cents = parseInt(digits || "0", 10);
+                        setPaidDmMax(cents);
+                        setPaidDmDirty(true);
+                      }}
+                      className="w-full h-11 rounded-md border border-border bg-background pl-10 pr-3 text-base font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+              </div>
+              {paidDmMin > paidDmMax && (
+                <p className="text-xs text-destructive">
+                  O preço mínimo deve ser menor ou igual ao máximo.
+                </p>
+              )}
+            </div>
+          )}
+
+          <Button
+            type="button"
+            onClick={() => paidDmUpdateMutation.mutate()}
+            disabled={
+              !paidDmDirty ||
+              paidDmUpdateMutation.isPending ||
+              paidDmMin > paidDmMax
+            }
+            className="w-full rounded-md h-9 text-base"
+          >
+            {paidDmUpdateMutation.isPending ? "Salvando…" : "Salvar configurações de DM pago"}
+          </Button>
+        </div>
       </main>
 
       <PriceDialog

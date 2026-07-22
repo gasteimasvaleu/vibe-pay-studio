@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Gift, Lock, Phone, Timer, Video, X } from "lucide-react";
+import { ArrowLeft, Gift, Lock, Phone, Timer, Upload, Video, X } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,12 +19,14 @@ import {
   cancelPaidDmRequest,
   sendTipMessage,
   expireStaleInvites,
+  markPaidDmDelivered,
 } from "@/lib/chat-monetization.functions";
 import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
 import { FloatingEmojiLayer, type FloatingEmoji } from "@/components/chat/FloatingEmojiLayer";
+import { BroadcastDialog } from "@/components/chat/BroadcastDialog";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
@@ -150,12 +152,10 @@ function PaidDmCard({
   upload,
   media,
   mine,
-  onPay,
 }: {
   upload: Required<NonNullable<ChatMessage["metadata"]>>["paidUpload"];
   media: { url?: string | null; kind: string; mime: string }[];
   mine: boolean;
-  onPay: () => void;
 }) {
   return (
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
@@ -163,7 +163,7 @@ function PaidDmCard({
         <Lock className="h-4 w-4" />
         <span className="text-xs font-semibold uppercase tracking-wide">Mídia paga</span>
       </div>
-      <div className="text-sm">{formatBRL(upload.priceCents)} · desbloqueie para visualizar</div>
+      <div className="text-sm">{formatBRL(upload.priceCents)} · {mine ? "enviada" : "recebida"}</div>
       {media.length > 0 && (
         <div className="grid grid-cols-2 gap-2">
           {media.map((m, idx) =>
@@ -176,11 +176,6 @@ function PaidDmCard({
             ) : null,
           )}
         </div>
-      )}
-      {!mine && (
-        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
-          Desbloquear por {formatBRL(upload.priceCents)}
-        </Button>
       )}
     </div>
   );
@@ -203,6 +198,7 @@ function ChatThreadView() {
   const expireInvitesFn = useServerFn(expireStaleInvites);
   const videoCallPayFn = useServerFn(createVideoCallPayment);
   const paidDmPayFn = useServerFn(createPaidDmPayment);
+  const deliverPaidDmFn = useServerFn(markPaidDmDelivered);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -220,6 +216,9 @@ function ChatThreadView() {
   const [paidDmPrice, setPaidDmPrice] = useState<number>(1490);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(1000);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [deliveringPaidDm, setDeliveringPaidDm] = useState<{ requestId: string } | null>(null);
+  const [lastPaidDmRequestId, setLastPaidDmRequestId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<
     { type: "call" | "paidDm"; id: string; priceCents: number } | null
   >(null);
@@ -445,13 +444,29 @@ function ChatThreadView() {
   });
 
   const confirmActionPayment = async (method: PaymentMethod) => {
-    if (!pendingAction || method === "WALLET") return;
+    if (!pendingAction) return;
     try {
       setUnlockingId(pendingAction.id);
+      if (method === "WALLET") {
+        if (pendingAction.type === "call") {
+          await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
+        } else {
+          await walletPay({ data: { kind: "paid_dm", requestId: pendingAction.id } });
+          setDeliveringPaidDm({ requestId: pendingAction.id });
+        }
+        setPendingAction(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Pagamento confirmado");
+        return;
+      }
       const res =
         pendingAction.type === "call"
           ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
           : await paidDmPayFn({ data: { requestId: pendingAction.id, method } });
+      if (pendingAction.type === "paidDm") {
+        setLastPaidDmRequestId(pendingAction.id);
+      }
       setPendingAction(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
@@ -644,9 +659,6 @@ function ChatThreadView() {
                     upload={m.metadata.paidUpload}
                     media={m.metadata.media ?? []}
                     mine={mine}
-                    onPay={() =>
-                      openPaymentForPaidDm(m.id, m.metadata!.paidUpload!.requestId, m.metadata!.paidUpload!.priceCents)
-                    }
                   />
                 )}
 
@@ -726,6 +738,7 @@ function ChatThreadView() {
               onCallInvite={() => setCallInviteOpen(true)}
               onPaidDmRequest={() => setPaidDmOpen(true)}
               onTip={() => setTipOpen(true)}
+              onBroadcast={() => setBroadcastOpen(true)}
             />
           </TooltipProvider>
         </div>
@@ -760,6 +773,10 @@ function ChatThreadView() {
             queryKey: ["chat", "messages", threadId],
           });
           toast.success("Pagamento confirmado");
+          if (lastPaidDmRequestId) {
+            setDeliveringPaidDm({ requestId: lastPaidDmRequestId });
+            setLastPaidDmRequestId(null);
+          }
         }}
       />
 
@@ -862,6 +879,107 @@ function ChatThreadView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <BroadcastDialog
+        open={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
+        creatorId={meId ?? ""}
+      />
+
+      {/* Paid DM delivery dialog */}
+      <PaidDmDeliveryDialog
+        open={!!deliveringPaidDm}
+        onClose={() => setDeliveringPaidDm(null)}
+        requestId={deliveringPaidDm?.requestId ?? ""}
+        threadId={threadId}
+        onDelivered={() => {
+          setDeliveringPaidDm(null);
+          queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        }}
+      />
     </div>
+  );
+}
+
+function PaidDmDeliveryDialog({
+  open,
+  onClose,
+  requestId,
+  threadId,
+  onDelivered,
+}: {
+  open: boolean;
+  onClose: () => void;
+  requestId: string;
+  threadId: string;
+  onDelivered: () => void;
+}) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const deliverFn = useServerFn(markPaidDmDelivered);
+
+  const handleUpload = async () => {
+    if (!requestId || files.length === 0) return;
+    setUploading(true);
+    try {
+      const media: { path: string; kind: "image" | "video"; mime: string }[] = [];
+      for (const file of files) {
+        const ext = file.name.split(".").pop() ?? "";
+        const path = `${threadId}/${requestId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await supabase.storage.from("chat-paid-uploads").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (error) throw error;
+        const kind = file.type.startsWith("video/") ? "video" : "image";
+        media.push({ path, kind, mime: file.type });
+      }
+      await deliverFn({ data: { requestId, media } });
+      toast.success("Mídia enviada");
+      onDelivered();
+      setFiles([]);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar mídia");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Enviar mídia paga</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Selecione fotos ou vídeos para enviar ao criador.
+          </p>
+          <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-6 cursor-pointer hover:bg-accent transition-colors">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Clique para selecionar arquivos</span>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+            />
+          </label>
+          {files.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {files.length} arquivo{files.length > 1 ? "s" : ""} selecionado{files.length > 1 ? "s" : ""}
+            </div>
+          )}
+          <Button
+            className="w-full bg-gradient-primary"
+            disabled={files.length === 0 || uploading}
+            onClick={handleUpload}
+          >
+            {uploading ? "Enviando…" : "Enviar mídia"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -259,19 +259,34 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
 
       // Collect media paths across messages and sign in one batch
-      const allPaths: string[] = [];
+      const publicationPaths: string[] = [];
+      const paidDmPaths: string[] = [];
       const storyThumbPaths: string[] = [];
       for (const m of msgs ?? []) {
         const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
-        for (const it of media) if (it?.path) allPaths.push(it.path);
+        const paidUpload = (m as any).metadata?.paidUpload as ChatPaidUploadMeta | undefined;
+        for (const it of media) {
+          if (it?.path) {
+            if (paidUpload) paidDmPaths.push(it.path);
+            else publicationPaths.push(it.path);
+          }
+        }
         const sr = (m as any).metadata?.storyReply as ChatStoryReply | undefined;
         if (sr?.thumbPath) storyThumbPaths.push(sr.thumbPath);
       }
       const urlByPath = new Map<string, string>();
-      if (allPaths.length > 0) {
+      if (publicationPaths.length > 0) {
         const { data: signed } = await supabase.storage
           .from("publications")
-          .createSignedUrls(Array.from(new Set(allPaths)), 60 * 60);
+          .createSignedUrls(Array.from(new Set(publicationPaths)), 60 * 60);
+        for (const s of signed ?? []) {
+          if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+        }
+      }
+      if (paidDmPaths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("chat-paid-uploads")
+          .createSignedUrls(Array.from(new Set(paidDmPaths)), 60 * 60);
         for (const s of signed ?? []) {
           if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
         }
@@ -320,7 +335,15 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
             priceCents: price > 0 ? price : null,
             unlocked: price <= 0 || mine || unlockedSet.has(m.id),
             metadata: meta
-              ? { welcome: !!meta.welcome, tag: meta.tag ?? null, media, storyReply }
+              ? {
+                  welcome: !!meta.welcome,
+                  tag: meta.tag ?? null,
+                  media,
+                  storyReply,
+                  callInvite: meta.callInvite ?? undefined,
+                  tip: meta.tip ?? undefined,
+                  paidUpload: meta.paidUpload ?? undefined,
+                }
               : null,
           };
         }),
@@ -594,6 +617,55 @@ export const createChatWelcomeUploadUrl = createServerFn({ method: "POST" })
       .createSignedUploadUrl(path);
     if (error || !signed) throw new Error(error?.message ?? "upload_url_failed");
     return { path, token: signed.token, signedUrl: signed.signedUrl };
+  });
+
+export type PaidDmSettings = {
+  enabled: boolean;
+  minCents: number;
+  maxCents: number;
+};
+
+export const getPaidDmSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PaidDmSettings> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("paid_dm_upload_enabled, paid_dm_upload_min_cents, paid_dm_upload_max_cents")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      enabled: !!data?.paid_dm_upload_enabled,
+      minCents: data?.paid_dm_upload_min_cents ?? 100,
+      maxCents: data?.paid_dm_upload_max_cents ?? 50000,
+    };
+  });
+
+export const updatePaidDmSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        enabled: z.boolean(),
+        minCents: z.number().int().min(0).max(50000),
+        maxCents: z.number().int().min(0).max(50000),
+      })
+      .refine((v) => v.minCents <= v.maxCents, "O mínimo deve ser menor ou igual ao máximo")
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<PaidDmSettings> => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        paid_dm_upload_enabled: data.enabled,
+        paid_dm_upload_min_cents: data.minCents,
+        paid_dm_upload_max_cents: data.maxCents,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return data;
   });
 
 async function getThreadSide(
