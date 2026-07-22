@@ -77,7 +77,25 @@ const CONTACT_FILTERS = [
   "Top 1000 Compradores",
 ];
 
+function statusLabel(status: string) {
+  switch (status) {
+    case "scheduled":
+      return "Agendado";
+    case "running":
+      return "Enviando";
+    case "completed":
+      return "Enviado";
+    case "failed":
+      return "Falhou";
+    case "cancelled":
+      return "Cancelado";
+    default:
+      return status;
+  }
+}
+
 function ChatSchedulingPage() {
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const today = useMemo(() => startOfDay(new Date()), []);
