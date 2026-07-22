@@ -152,7 +152,7 @@ function PaidDmCard({
   mine,
   onPay,
 }: {
-  upload: NonNullable<ChatMessage["metadata"]>["paidUpload"];
+  upload: Required<NonNullable<ChatMessage["metadata"]>>["paidUpload"];
   media: { url?: string | null; kind: string; mime: string }[];
   mine: boolean;
   onPay: () => void;
