@@ -285,13 +285,22 @@ function ThreadRow({
         )}
       >
         <div className="relative">
-          <div className="h-11 w-11 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
-            {initials(thread.partnerUsername)}
-          </div>
+          {thread.partnerAvatar ? (
+            <img
+              src={thread.partnerAvatar}
+              alt={`@${thread.partnerUsername}`}
+              className="h-11 w-11 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-11 w-11 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
+              {initials(thread.partnerUsername)}
+            </div>
+          )}
           {online && (
             <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background" />
           )}
         </div>
+
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="truncate font-medium text-foreground flex items-center gap-1.5">
