@@ -97,6 +97,12 @@ export function ChatComposer({
   scheduledAt,
   onOpenSchedule,
   placeholder,
+  showArchive,
+  onArchive,
+  showGallery,
+  onOpenGallery,
+  showTag,
+  onOpenTag,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -115,6 +121,12 @@ export function ChatComposer({
   scheduledAt?: Date | null;
   onOpenSchedule?: () => void;
   placeholder?: string;
+  showArchive?: boolean;
+  onArchive?: () => void;
+  showGallery?: boolean;
+  onOpenGallery?: () => void;
+  showTag?: boolean;
+  onOpenTag?: () => void;
 }) {
 
   const [text, setText] = useState("");
