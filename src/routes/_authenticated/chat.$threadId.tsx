@@ -1,8 +1,8 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, DollarSign, Lock, SendHorizontal } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,9 +15,8 @@ import {
 import { createChatUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
-import { Textarea } from "@/components/ui/textarea";
-import { ComposerIcon } from "@/components/chat/ComposerIcon";
-import { PriceDialog } from "@/components/chat/PriceDialog";
+import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
+import { FloatingEmojiLayer, type FloatingEmoji } from "@/components/chat/FloatingEmojiLayer";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
@@ -73,13 +72,11 @@ function ChatThreadView() {
   const walletPay = useServerFn(payWithWallet);
 
   const [meId, setMeId] = useState<string | null>(null);
-  const [text, setText] = useState("");
-  const [priceCents, setPriceCents] = useState<number | null>(null);
-  const [priceOpen, setPriceOpen] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
+  const [floaters, setFloaters] = useState<FloatingEmoji[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -166,6 +163,14 @@ function ChatThreadView() {
           );
         },
       )
+      .on("broadcast", { event: "float-emoji" }, ({ payload }) => {
+        const emoji = (payload as { emoji?: string })?.emoji;
+        if (!emoji) return;
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const x = (Math.random() - 0.5) * 200;
+        setFloaters((prev) => [...prev, { id, emoji, x }]);
+        setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -186,12 +191,13 @@ function ChatThreadView() {
   }, [data?.messages.length]);
 
   const sendMutation = useMutation({
-    mutationFn: (vars: { content: string; priceCents: number | null }) =>
+    mutationFn: (vars: ComposerSendPayload) =>
       sendFn({
         data: {
           threadId,
-          content: vars.content,
+          content: vars.text,
           priceCents: vars.priceCents ?? 0,
+          media: vars.media,
         },
       }),
     onSuccess: (msg) => {
@@ -207,15 +213,6 @@ function ChatThreadView() {
     },
     onError: (err: Error) => toast.error(err.message ?? "Erro ao enviar"),
   });
-
-  const handleSend = () => {
-    const content = text.trim();
-    if (!content || sendMutation.isPending) return;
-    const price = priceCents;
-    setText("");
-    setPriceCents(null);
-    sendMutation.mutate({ content, priceCents: price });
-  };
 
   const handleUnlock = (messageId: string, priceCents: number) => {
     setPendingMsg({ id: messageId, priceCents });
@@ -257,10 +254,13 @@ function ChatThreadView() {
     }
   };
 
-  const priceLabel = useMemo(
-    () => (priceCents ? formatBRL(priceCents) : null),
-    [priceCents],
-  );
+  const emitFloater = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const x = (Math.random() - 0.5) * 200;
+    setFloaters((prev) => [...prev, { id, emoji, x }]);
+    setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
+  };
+
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-white">
@@ -305,7 +305,8 @@ function ChatThreadView() {
 
       </header>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-6 space-y-3">
+        <FloatingEmojiLayer items={floaters} />
         {isLoading && (
           <div className="text-center text-muted-foreground text-sm">Carregando…</div>
         )}
@@ -461,74 +462,27 @@ function ChatThreadView() {
         })}
       </div>
 
-      <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="max-w-3xl mx-auto space-y-2">
-          {priceLabel ? (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">
-                <DollarSign className="h-3 w-3" />
-                Mensagem paga · {priceLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPriceCents(null)}
-                className="text-muted-foreground hover:text-foreground underline"
-              >
-                remover
-              </button>
-            </div>
-          ) : null}
-
-          <div className="flex items-end gap-2">
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
+      <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-3 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+        <div className="max-w-3xl mx-auto">
+          <TooltipProvider delayDuration={200}>
+            <ChatComposer
+              meId={meId}
+              isCreator={isCreator}
+              disabled={sendMutation.isPending}
+              onSend={async (payload) => {
+                await sendMutation.mutateAsync(payload);
               }}
-              placeholder={
-                priceLabel
-                  ? "Escreva a mensagem exclusiva…"
-                  : "Escreva uma mensagem…"
-              }
-              rows={1}
-              className="flex-1 min-h-[44px] max-h-40 resize-none focus-visible:ring-ring"
+              onFloatEmoji={(emoji) => {
+                emitFloater(emoji);
+                supabase
+                  .channel(`chat-thread-${threadId}`)
+                  .send({ type: "broadcast", event: "float-emoji", payload: { emoji } });
+              }}
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!text.trim() || sendMutation.isPending}
-              className="h-11 w-11 shrink-0 grid place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Enviar"
-            >
-              <SendHorizontal className="h-5 w-5" />
-            </button>
-          </div>
-
-          {isCreator ? (
-            <TooltipProvider delayDuration={200}>
-              <div className="flex items-center gap-1">
-                <ComposerIcon
-                  icon={DollarSign}
-                  label="Definir valor da mensagem"
-                  active={!!priceCents}
-                  onClick={() => setPriceOpen(true)}
-                />
-              </div>
-            </TooltipProvider>
-          ) : null}
+          </TooltipProvider>
         </div>
       </div>
 
-      <PriceDialog
-        open={priceOpen}
-        onOpenChange={setPriceOpen}
-        initialCents={priceCents}
-        onConfirm={(cents) => setPriceCents(cents)}
-      />
 
       <PaymentMethodDialog
         open={!!pendingMsg}
