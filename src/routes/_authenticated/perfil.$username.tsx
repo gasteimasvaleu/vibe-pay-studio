@@ -174,6 +174,10 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
           }
         : null;
 
+    const accountType = isCreatorProfile
+      ? (profile.kind === "free" ? "free_creator" : "creator")
+      : profile.account_type;
+
     return {
       viewerId: user.id,
       profile: {
@@ -181,17 +185,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         username: profile.username,
         displayName: (profile.display_name as string | null) ?? null,
         bio: (profile.bio as string | null) ?? null,
-        location: (profile.location as string | null) ?? null,
+        location: isCreatorProfile ? null : ((profile.location as string | null) ?? null),
         avatarUrl: (profile.avatar_url as string | null) ?? null,
         coverUrl: (profile.cover_url as string | null) ?? null,
         instagram: (profile.instagram_handle as string | null) ?? null,
         tiktok: (profile.tiktok_handle as string | null) ?? null,
         x: (profile.x_handle as string | null) ?? null,
-        accountType: profile.account_type,
+        accountType,
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
-        restrictFriendships: !!profile.restrict_friendships,
+        restrictFriendships: isCreatorProfile ? false : !!profile.restrict_friendships,
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
