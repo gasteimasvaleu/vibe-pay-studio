@@ -183,12 +183,13 @@ function ChatThreadView() {
   }, [data?.messages.length]);
 
   const sendMutation = useMutation({
-    mutationFn: (vars: { content: string; priceCents: number | null }) =>
+    mutationFn: (vars: ComposerSendPayload) =>
       sendFn({
         data: {
           threadId,
           content: vars.content,
           priceCents: vars.priceCents ?? 0,
+          media: vars.media,
         },
       }),
     onSuccess: (msg) => {
@@ -204,15 +205,6 @@ function ChatThreadView() {
     },
     onError: (err: Error) => toast.error(err.message ?? "Erro ao enviar"),
   });
-
-  const handleSend = () => {
-    const content = text.trim();
-    if (!content || sendMutation.isPending) return;
-    const price = priceCents;
-    setText("");
-    setPriceCents(null);
-    sendMutation.mutate({ content, priceCents: price });
-  };
 
   const handleUnlock = (messageId: string, priceCents: number) => {
     setPendingMsg({ id: messageId, priceCents });
