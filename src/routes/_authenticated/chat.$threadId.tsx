@@ -574,6 +574,7 @@ function ChatThreadView() {
             <ChatComposer
               meId={meId}
               isCreator={isCreator}
+              isSubscriber={!isCreator}
               disabled={sendMutation.isPending}
               onSend={async (payload) => {
                 await sendMutation.mutateAsync(payload);
@@ -584,6 +585,9 @@ function ChatThreadView() {
                   .channel(`chat-thread-${threadId}`)
                   .send({ type: "broadcast", event: "float-emoji", payload: { emoji } });
               }}
+              onCallInvite={() => setCallInviteOpen(true)}
+              onPaidDmRequest={() => setPaidDmOpen(true)}
+              onTip={() => setTipOpen(true)}
             />
           </TooltipProvider>
         </div>
