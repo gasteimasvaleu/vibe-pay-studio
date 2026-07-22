@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
+  CalendarCheck,
   Camera,
   DollarSign,
   Gift,
