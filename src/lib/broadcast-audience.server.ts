@@ -59,7 +59,7 @@ export async function resolveAudienceIds(
 
   if (audience === "recent_interactors") {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const [{ data: chatUsers }, { data: liveUsers }] = await Promise.all([
+    const [{ data: chatUsers }, { data: liveSessions }, { data: liveUsers }] = await Promise.all([
       supabase
         .from("chat_messages")
         .select("sender_id, thread_id")
@@ -67,19 +67,30 @@ export async function resolveAudienceIds(
         .gte("created_at", since)
         .limit(1000),
       supabase
-        .from("live_comments")
-        .select("user_id")
+        .from("live_sessions")
+        .select("id")
         .eq("creator_id", userId)
         .gte("created_at", since)
-        .limit(1000),
+        .limit(500),
+      Promise.resolve([] as { user_id: string }[]),
     ]);
     const ids = new Set<string>();
     for (const m of chatUsers ?? []) {
       if (m.sender_id !== userId) ids.add(m.sender_id);
     }
-    for (const u of liveUsers ?? []) ids.add(u.user_id);
+    const liveIds = (liveSessions ?? []).map((s) => s.id).filter(Boolean);
+    if (liveIds.length > 0) {
+      const { data: comments } = await supabase
+        .from("live_comments")
+        .select("user_id")
+        .in("live_id", liveIds)
+        .gte("created_at", since)
+        .limit(1000);
+      for (const u of comments ?? []) ids.add(u.user_id);
+    }
     return Array.from(ids);
   }
+
 
   if (audience === "top_buyers") {
     const { data: txs } = await supabase
