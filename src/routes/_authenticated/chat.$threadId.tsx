@@ -187,7 +187,7 @@ function ChatThreadView() {
       sendFn({
         data: {
           threadId,
-          content: vars.content,
+          content: vars.text,
           priceCents: vars.priceCents ?? 0,
           media: vars.media,
         },
