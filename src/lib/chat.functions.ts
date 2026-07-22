@@ -71,11 +71,12 @@ export const listThreads = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, username")
+      .select("user_id, username, avatar_url")
       .in("user_id", partnerIds);
     const profileMap = new Map(
       (profiles ?? []).map((p) => [p.user_id, p]),
     );
+
 
     const { data: mutedRows } = await supabase
       .from("muted_profiles")
