@@ -466,7 +466,8 @@ function Composer({
     }
     let cancelled = false;
     setPreviewLoading(true);
-    previewAudience({ data: { audienceNames } })
+    previewAudience({ data: { filters: audienceNames, creatorId: meId } })
+
       .then((res) => {
         if (!cancelled) setAudienceCount(res.count);
       })
