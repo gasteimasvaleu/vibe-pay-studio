@@ -452,6 +452,7 @@ function ChatThreadView() {
           await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
         } else {
           await walletPay({ data: { kind: "paid_dm", requestId: pendingAction.id } });
+          setDeliveringPaidDm({ requestId: pendingAction.id });
         }
         setPendingAction(null);
         queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
@@ -463,6 +464,9 @@ function ChatThreadView() {
         pendingAction.type === "call"
           ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
           : await paidDmPayFn({ data: { requestId: pendingAction.id, method } });
+      if (pendingAction.type === "paidDm") {
+        setLastPaidDmRequestId(pendingAction.id);
+      }
       setPendingAction(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
