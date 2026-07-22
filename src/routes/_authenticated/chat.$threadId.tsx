@@ -760,7 +760,25 @@ function ChatThreadView() {
               onPaidDmRequest={() => setPaidDmOpen(true)}
               onTip={() => setTipOpen(true)}
               onBroadcast={() => setBroadcastOpen(true)}
+              replyingTo={
+                replyingTo
+                  ? {
+                      messageId: replyingTo.id,
+                      authorLabel:
+                        replyingTo.senderId === meId
+                          ? "você"
+                          : data?.partner?.displayName ?? "mensagem",
+                      snippet:
+                        replyingTo.content?.trim() ||
+                        (replyingTo.metadata?.media && replyingTo.metadata.media.length > 0
+                          ? "Mídia"
+                          : "Mensagem"),
+                    }
+                  : null
+              }
+              onCancelReply={() => setReplyingTo(null)}
             />
+
           </TooltipProvider>
         </div>
       </div>
