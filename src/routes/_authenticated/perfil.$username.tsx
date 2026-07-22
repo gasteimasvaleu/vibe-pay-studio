@@ -383,6 +383,7 @@ function PerfilPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+  const [cpfPromptForSubscription, setCpfPromptForSubscription] = useState(false);
 
   const pubsQueryKey = ["user-publications", profile.userId] as const;
   const pubsQuery = useQuery({
