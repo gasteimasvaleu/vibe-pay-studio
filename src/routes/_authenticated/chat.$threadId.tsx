@@ -226,6 +226,11 @@ function ChatThreadView() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [data?.messages.length]);
 
+  useEffect(() => {
+    if (!threadId) return;
+    expireInvitesFn({ data: { threadId } }).catch(() => {});
+  }, [threadId, expireInvitesFn]);
+
   const sendMutation = useMutation({
     mutationFn: (vars: ComposerSendPayload) =>
       sendFn({
