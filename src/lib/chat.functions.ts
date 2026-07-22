@@ -542,3 +542,90 @@ export const createChatWelcomeUploadUrl = createServerFn({ method: "POST" })
     return { path, token: signed.token, signedUrl: signed.signedUrl };
   });
 
+async function getThreadSide(
+  supabase: any,
+  userId: string,
+  threadId: string,
+): Promise<"a" | "b"> {
+  const { data: t, error } = await supabase
+    .from("chat_threads")
+    .select("user_a, user_b")
+    .eq("id", threadId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!t) throw new Error("Conversa não encontrada");
+  if (t.user_a !== userId && t.user_b !== userId) {
+    throw new Error("Sem acesso a esta conversa");
+  }
+  return t.user_a === userId ? "a" : "b";
+}
+
+export const clearThread = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ threadId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const side = await getThreadSide(supabase, userId, data.threadId);
+    const patch =
+      side === "a"
+        ? { cleared_at_a: new Date().toISOString() }
+        : { cleared_at_b: new Date().toISOString() };
+    const { error } = await supabase
+      .from("chat_threads")
+      .update(patch)
+      .eq("id", data.threadId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const deleteThreadForMe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ threadId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const side = await getThreadSide(supabase, userId, data.threadId);
+    const now = new Date().toISOString();
+    const patch =
+      side === "a"
+        ? { cleared_at_a: now, deleted_at_a: now }
+        : { cleared_at_b: now, deleted_at_b: now };
+    const { error } = await supabase
+      .from("chat_threads")
+      .update(patch)
+      .eq("id", data.threadId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const reportUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        targetUserId: z.string().uuid(),
+        reason: z.string().trim().min(1).max(80),
+        details: z.string().trim().max(2000).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.targetUserId === userId) {
+      throw new Error("Você não pode denunciar a si mesmo.");
+    }
+    const { error } = await supabase.from("content_reports").insert({
+      reporter_id: userId,
+      target_type: "profile",
+      target_id: data.targetUserId,
+      reason: data.reason,
+      details: data.details ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+
