@@ -17,7 +17,6 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Archive,
   ArrowLeft,
   CalendarCheck,
   CalendarDays,
@@ -25,14 +24,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Image as ImageIcon,
-  Images,
   Info,
-  Mic,
   Plus,
   Search,
-  Smile,
-  Tag,
   X,
 } from "lucide-react";
 
