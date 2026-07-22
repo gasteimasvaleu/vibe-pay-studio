@@ -37,9 +37,7 @@ import {
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 
 import {
@@ -48,7 +46,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FilterChip } from "@/components/chat/FilterChip";
-import { ComposerIcon } from "@/components/chat/ComposerIcon";
+import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
