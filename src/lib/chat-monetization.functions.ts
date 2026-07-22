@@ -672,7 +672,8 @@ export const listScheduledBroadcastsByMonth = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data, context }): Promise<{ jobs: Array<{ id: string; scheduledAt: string; status: string; message: string; totalRecipients: number }> }> => {
+  .handler(async ({ data, context }): Promise<{ jobs: Array<{ id: string; scheduledAt: string | null; status: string; message: string; totalRecipients: number }> }> => {
+
     const { supabase, userId } = context;
     const start = new Date(Date.UTC(data.year, data.month - 1, 1)).toISOString();
     const end = new Date(Date.UTC(data.year, data.month, 1)).toISOString();
