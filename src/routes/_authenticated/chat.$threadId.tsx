@@ -717,6 +717,7 @@ function ChatThreadView() {
             </div>
           );
         })}
+        </div>
       </div>
 
       <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-xl px-3 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
