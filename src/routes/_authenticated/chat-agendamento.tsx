@@ -348,8 +348,8 @@ function Composer({
       </button>
       <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
         {/* Left: contacts */}
-        <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
-          <div className="flex items-center gap-2 mb-4">
+        <aside className="border-r border-border flex flex-col overflow-hidden">
+          <header className="h-16 flex items-center gap-2 px-6 border-b border-border shrink-0">
             <button
               type="button"
               aria-label="Voltar"
@@ -359,9 +359,9 @@ function Composer({
               <ArrowLeft className="h-5 w-5" />
             </button>
             <h2 className="text-base font-semibold text-foreground truncate">Mensagem em massa</h2>
-          </div>
+          </header>
 
-
+          <div className="flex-1 flex flex-col overflow-y-auto p-6">
             <h3 className="text-sm font-semibold text-foreground mb-3">
               Selecione seus contatos
             </h3>
@@ -411,15 +411,18 @@ function Composer({
                 Aplicar filtro
               </Button>
             </div>
-          </aside>
+          </div>
+        </aside>
+
 
           {/* Right: message */}
           <section className="flex flex-col overflow-hidden">
-            <div className="hidden md:block border-b border-border px-6 py-4">
-              <h2 className="text-center text-base font-semibold">
+            <header className="hidden md:flex h-16 items-center justify-center border-b border-border px-6 shrink-0">
+              <h2 className="text-base font-semibold">
                 Selecionar usuários para enviar mensagem em massa
               </h2>
-            </div>
+            </header>
+
 
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-2">
               <h3 className="text-lg font-semibold text-foreground">
