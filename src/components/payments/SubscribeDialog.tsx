@@ -121,6 +121,11 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         onOpenChange(false);
         return;
       }
+      if (e?.message === "cpf_required") {
+        onOpenChange(false);
+        onCpfRequired?.();
+        return;
+      }
       toast.error(translatePaymentError(e, "Erro ao assinar"));
     } finally {
       setLoading(false);
