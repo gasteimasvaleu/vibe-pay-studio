@@ -522,7 +522,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        audience: z.enum(["all_followers", "active_subscribers", "expired_subscribers", "top_buyers"]),
+        filters: z.array(z.string()).min(1).max(10),
         message: z.string().min(1).max(4000),
         media: z
           .array(
@@ -536,14 +536,14 @@ export const sendBroadcast = createServerFn({ method: "POST" })
           .max(10)
           .default([]),
         priceCents: z.number().int().min(0).max(50000).default(0),
-        topN: z.number().int().min(1).max(500).optional(),
+        scheduledAt: z.string().datetime().optional(),
       })
       .refine((v) => v.priceCents === 0 || v.media.length > 0, {
         message: "Anexe uma mídia para definir um preço",
       })
       .parse(data),
   )
-  .handler(async ({ data, context }): Promise<{ sent: number; failed: number; jobId: string }> => {
+  .handler(async ({ data, context }): Promise<{ sent: number; failed: number; jobId: string; scheduled: boolean }> => {
     const { supabase, userId } = context;
 
     const { data: me } = await supabase
@@ -555,67 +555,41 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       throw new Error("Apenas criadores podem enviar broadcasts");
     }
 
-    let recipientIds: string[] = [];
-    if (data.audience === "active_subscribers") {
-      const { data: subs } = await supabase
-        .from("subscriptions")
-        .select("subscriber_id")
-        .eq("creator_id", userId)
-        .eq("status", "active")
-        .gt("current_period_end", nowIso())
-        .limit(500);
-      recipientIds = Array.from(new Set((subs ?? []).map((s) => s.subscriber_id)));
-    } else if (data.audience === "expired_subscribers") {
-      const { data: subs } = await supabase
-        .from("subscriptions")
-        .select("subscriber_id")
-        .eq("creator_id", userId)
-        .or(`current_period_end.lt.${nowIso()},status.eq.cancelled`)
-        .limit(500);
-      recipientIds = Array.from(new Set((subs ?? []).map((s) => s.subscriber_id)));
-    } else if (data.audience === "top_buyers") {
-      const { data: txs } = await supabase
-        .from("transactions")
-        .select("buyer_id, amount_cents_gross")
-        .eq("creator_id", userId)
-        .eq("status", "paid")
-        .in("kind", ["publication_unlock", "chat_unlock", "subscription", "tip", "video_call"])
-        .limit(1000);
-      const grossByBuyer = new Map<string, number>();
-      for (const t of txs ?? []) {
-        if (!t.buyer_id) continue;
-        grossByBuyer.set(t.buyer_id, (grossByBuyer.get(t.buyer_id) ?? 0) + (t.amount_cents_gross ?? 0));
-      }
-      recipientIds = Array.from(grossByBuyer.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, data.topN ?? 100)
-        .map(([id]) => id);
-    } else {
-      const { data: rows } = await supabase
-        .from("follows")
-        .select("follower_id")
-        .eq("followee_id", userId)
-        .limit(500);
-      recipientIds = Array.from(new Set((rows ?? []).map((r) => r.follower_id)));
+    const resolved = data.filters.map(uiFilterToAudience).filter(Boolean) as {
+      audience: typeof BROADCAST_AUDIENCES[number];
+      topN?: number;
+    }[];
+    if (resolved.length === 0) throw new Error("Nenhum filtro válido");
+
+    const ids = new Set<string>();
+    for (const r of resolved) {
+      const list = await resolveAudienceIds(supabase, userId, r.audience, r.topN);
+      for (const id of list) ids.add(id);
     }
+    const recipientIds = Array.from(ids).filter((id) => id !== userId).slice(0, 1000);
 
-    recipientIds = recipientIds.filter((id) => id !== userId).slice(0, 500);
-
+    const audienceValues = resolved.map((r) => r.audience);
+    const primaryAudience = audienceValues[0];
     const { data: job, error: jErr } = await supabase
       .from("broadcast_jobs")
       .insert({
         creator_id: userId,
-        audience: data.audience,
-        filters: { topN: data.topN } as unknown as never,
+        audience: primaryAudience,
+        filters: { audiences: resolved } as unknown as never,
         message: data.message,
         media: data.media as unknown as never,
         price_cents: data.priceCents,
         total_recipients: recipientIds.length,
-        status: "running",
+        status: data.scheduledAt ? "scheduled" : "running",
+        scheduled_at: data.scheduledAt ?? null,
       })
       .select("id")
       .single();
     if (jErr) throw new Error(jErr.message);
+
+    if (data.scheduledAt) {
+      return { sent: 0, failed: 0, jobId: job.id, scheduled: true };
+    }
 
     let sent = 0;
     let failed = 0;
@@ -654,5 +628,93 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       })
       .eq("id", job.id);
 
-    return { sent, failed, jobId: job.id };
+    return { sent, failed, jobId: job.id, scheduled: false };
   });
+
+export const scheduleBroadcast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        filters: z.array(z.string()).min(1).max(10),
+        message: z.string().min(1).max(4000),
+        media: z
+          .array(
+            z.object({
+              path: z.string().min(1),
+              mime: z.string().min(1),
+              kind: z.enum(["image", "video", "audio"]),
+              durationSec: z.number().int().positive().optional(),
+            }),
+          )
+          .max(10)
+          .default([]),
+        priceCents: z.number().int().min(0).max(50000).default(0),
+        scheduledAt: z.string().datetime(),
+      })
+      .refine((v) => v.priceCents === 0 || v.media.length > 0, {
+        message: "Anexe uma mídia para definir um preço",
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ jobId: string; totalRecipients: number }> => {
+    const result = await sendBroadcast({ data: { ...data, scheduledAt: data.scheduledAt } });
+    return { jobId: result.jobId, totalRecipients: result.sent + result.failed };
+  });
+
+export const listScheduledBroadcastsByMonth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        year: z.number().int(),
+        month: z.number().int().min(1).max(12),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ jobs: Array<{ id: string; scheduledAt: string; status: string; message: string; totalRecipients: number }> }> => {
+    const { supabase, userId } = context;
+    const start = new Date(Date.UTC(data.year, data.month - 1, 1)).toISOString();
+    const end = new Date(Date.UTC(data.year, data.month, 1)).toISOString();
+
+    const { data: jobs, error } = await supabase
+      .from("broadcast_jobs")
+      .select("id, scheduled_at, status, message, total_recipients")
+      .eq("creator_id", userId)
+      .gte("scheduled_at", start)
+      .lt("scheduled_at", end)
+      .order("scheduled_at", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    return {
+      jobs: (jobs ?? []).map((j) => ({
+        id: j.id,
+        scheduledAt: j.scheduled_at,
+        status: j.status,
+        message: j.message,
+        totalRecipients: j.total_recipients ?? 0,
+      })),
+    };
+  });
+
+export const cancelBroadcast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        jobId: z.string().uuid(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean }> => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("broadcast_jobs")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", data.jobId)
+      .eq("creator_id", userId)
+      .eq("status", "scheduled");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
