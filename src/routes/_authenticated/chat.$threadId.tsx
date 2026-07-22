@@ -773,6 +773,10 @@ function ChatThreadView() {
             queryKey: ["chat", "messages", threadId],
           });
           toast.success("Pagamento confirmado");
+          if (lastPaidDmRequestId) {
+            setDeliveringPaidDm({ requestId: lastPaidDmRequestId });
+            setLastPaidDmRequestId(null);
+          }
         }}
       />
 
