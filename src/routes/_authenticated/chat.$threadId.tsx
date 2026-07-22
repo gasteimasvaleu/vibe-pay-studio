@@ -262,7 +262,7 @@ function ChatThreadView() {
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-[100svh] bg-gradient-soft">
+    <div className="flex flex-col flex-1 min-h-[100svh] bg-white">
       <header className="h-16 shrink-0 flex items-center gap-3 px-4 border-b border-border bg-card/80 backdrop-blur-xl">
         <button
           type="button"
