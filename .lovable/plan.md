@@ -1,31 +1,20 @@
 ## Problema
-O botão **Preço** no dialog de mensagem em massa (`BroadcastDialog`) usa `window.prompt` nativo. O browser exibe o hostname da página no título do prompt — no preview do Lovable aparece `ccce3d77-...lovableproject.com`. Isso quebra a identidade da marca e parece pouco profissional.
 
-## Resposta sobre o domínio
-- **Preview/editor**: o app roda no domínio do Lovable (`*.lovableproject.com`), por isso o prompt mostra esse endereço.
-- **Produção/publicado**: o app já está no domínio próprio (`monetisexy.com` / `www.monetisexy.com`), então o prompt mostraria esse domínio.
-- **Recomendação**: independente do domínio, o ideal é não usar `window.prompt`. Substituir por um dialog customizado do próprio app elimina a exposição do hostname e padroniza a UX.
+Os emojis flutuantes não aparecem porque `FloatingEmojiLayer` está renderizado **dentro** do container de mensagens (`<div ref={scrollRef} className="relative flex-1 overflow-y-auto ...">`).
 
-## O que será feito
-1. **Generalizar `PriceDialog`**
-   - Adicionar props opcionais: `title`, `description`, `allowZero`.
-   - Quando `allowZero` for true, permitir confirmar com valor `0` (ou "Remover preço").
-   - Manter o comportamento atual como padrão para não quebrar os outros usos.
+Isso causa dois problemas combinados:
 
-2. **Substituir o prompt no broadcast**
-   - Em `BroadcastDialog`, trocar o `window.prompt` pelo componente `PriceDialog`.
-   - Usar título/descrição específicos para mensagem em massa.
-   - Permitir valor zero, já que o broadcast pode ser gratuito ou pago (somente quando houver mídia).
+1. Com `absolute inset-0` dentro de um container `overflow-y-auto`, a camada é dimensionada pela **altura do conteúdo rolável** (todas as mensagens), não pela viewport visível. O `bottom-2` acaba posicionando os emojis no rodapé de todo o histórico — normalmente fora da área visível.
+2. Como o layer tem `overflow-hidden`, qualquer emoji que escapa desse retângulo é cortado, e ele fica ainda atrás/entre as mensagens no fluxo do scroll.
 
-3. **Validação do broadcast**
-   - Manter a regra existente: preço só é permitido quando há mídia anexada.
-   - O botão "Preço" continua mostrando o valor formatado ou o label "Preço".
+## Correção
 
-## Arquivos envolvidos
-- `src/components/chat/PriceDialog.tsx` — generalizar props e validação.
-- `src/components/chat/BroadcastDialog.tsx` — substituir `window.prompt` por `PriceDialog`.
+1. Envolver a área do chat (container de mensagens + composer, ou apenas o container de mensagens) em um wrapper `relative` e mover `<FloatingEmojiLayer />` para ser **irmão** do `scrollRef`, posicionado como `absolute inset-0 pointer-events-none` sobre o container de mensagens visível.
+2. Manter `pointer-events-none` para não bloquear scroll/cliques.
+3. Ajustar o `bottom-2` do `FloatingEmojiLayer` para ~72px (ou `bottom-4`) para os emojis nascerem logo acima do composer, e reduzir o `y: -420` para algo proporcional à altura da viewport (ex.: `y: -320`) para ficar consistente em telas pequenas.
 
-## Resultado esperado
-- O dialog de preço do broadcast terá o mesmo visual dos outros dialogs do app.
-- Nenhum hostname será exibido ao definir o preço.
-- A experiência fica consistente no preview e no domínio próprio.
+Arquivos:
+- `src/routes/_authenticated/chat.$threadId.tsx` — reestruturar o wrapper para tirar `FloatingEmojiLayer` de dentro do scroll.
+- `src/components/chat/FloatingEmojiLayer.tsx` — pequeno ajuste de `bottom` e distância vertical da animação.
+
+Sem mudanças de backend ou dados.
