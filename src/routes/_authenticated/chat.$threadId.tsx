@@ -767,7 +767,7 @@ function ChatThreadView() {
                       authorLabel:
                         replyingTo.senderId === meId
                           ? "você"
-                          : data?.partner?.displayName ?? "mensagem",
+                          : data?.partner?.username ?? "mensagem",
                       snippet:
                         replyingTo.content?.trim() ||
                         (replyingTo.metadata?.media && replyingTo.metadata.media.length > 0
