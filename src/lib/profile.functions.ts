@@ -8,9 +8,37 @@ export const updateAvatarUrl = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const url = data.avatarUrl.trim();
     if (!url) throw new Error("url inválida");
+
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("active_profile_id, account_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const updates: { avatar_url: string; free_avatar_url?: string | null } = {
+      avatar_url: url,
+    };
+    if (me?.active_profile_id) {
+      const { data: cp } = await supabase
+        .from("creator_profiles")
+        .select("kind")
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cp?.kind === "free") {
+        updates.free_avatar_url = url;
+      }
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ avatar_url: url })
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({ avatar_url: url })
+      .update(updates)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { avatarUrl: url };
@@ -23,6 +51,22 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const url = data.coverUrl.trim();
     if (!url) throw new Error("url inválida");
+
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("active_profile_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (me?.active_profile_id) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ cover_url: url })
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({ cover_url: url })
