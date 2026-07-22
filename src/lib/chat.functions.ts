@@ -335,8 +335,8 @@ export const sendMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<ChatMessage> => {
     const { supabase, userId } = context;
     const price = data.priceCents ?? 0;
-    const metadata: Record<string, unknown> =
-      data.media && data.media.length > 0 ? { media: data.media } : {};
+    const metadata =
+      data.media && data.media.length > 0 ? ({ media: data.media } as unknown as never) : ({} as unknown as never);
     const { data: row, error } = await supabase
       .from("chat_messages")
       .insert({
