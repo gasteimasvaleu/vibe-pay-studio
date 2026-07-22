@@ -163,17 +163,24 @@ export function ChatComposer({
     if (!canSend) return;
     setSending(true);
     try {
-      await onSend({ text: text.trim(), media, priceCents });
+      await onSend({
+        text: text.trim(),
+        media,
+        priceCents,
+        replyToId: replyingTo?.messageId ?? null,
+      });
       setText("");
       for (const m of media) URL.revokeObjectURL(m.previewUrl);
       setMedia([]);
       setPriceCents(null);
+      onCancelReply?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao enviar");
     } finally {
       setSending(false);
     }
   }
+
 
   async function startRecording() {
     if (recording || !meId) return;
