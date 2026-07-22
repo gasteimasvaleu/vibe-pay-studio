@@ -568,10 +568,21 @@ function ChatThreadView() {
         {data?.messages.map((m) => {
           const mine = m.senderId === meId;
           const locked = !mine && m.priceCents && !m.unlocked;
+          const isDeleted = !!m.deletedAt;
+
+          if (isDeleted) {
+            return (
+              <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                <div className="max-w-[75%] rounded-2xl px-4 py-2 text-xs italic text-muted-foreground bg-muted/60 border border-dashed border-border">
+                  Mensagem apagada
+                </div>
+              </div>
+            );
+          }
 
           if (locked) {
             return (
-              <div key={m.id} className="flex justify-start">
+              <div key={m.id} className="group flex justify-start items-end gap-1">
                 <div className="max-w-[75%] rounded-2xl rounded-bl-md border border-primary/30 bg-white shadow-card p-4 space-y-3">
                   <div className="flex items-center gap-2 text-primary">
                     <Lock className="h-4 w-4" />
@@ -596,23 +607,64 @@ function ChatThreadView() {
                     {formatTime(m.createdAt)}
                   </div>
                 </div>
+                <MessageActionsMenu message={m} mine={mine} threadId={threadId} onReply={setReplyingTo} />
               </div>
             );
           }
 
+          const mediaItems = m.metadata?.media ?? [];
+          const showMedia =
+            mediaItems.length > 0 &&
+            (!m.metadata?.paidUpload || m.metadata.paidUpload.priceCents === 0);
+          const hasText = !!m.content && !m.metadata?.callInvite && !m.metadata?.tip;
+          const hasCards =
+            !!m.metadata?.callInvite ||
+            !!m.metadata?.tip ||
+            !!m.metadata?.paidUpload ||
+            !!m.metadata?.storyReply ||
+            !!m.metadata?.welcome;
+          const mediaOnly = showMedia && !hasText && !hasCards && !m.metadata?.replyTo;
+
           return (
             <div
               key={m.id}
-              className={cn("flex", mine ? "justify-end" : "justify-start")}
+              className={cn(
+                "group flex items-end gap-1",
+                mine ? "justify-end flex-row" : "justify-start flex-row",
+              )}
             >
+              {mine && (
+                <MessageActionsMenu message={m} mine={mine} threadId={threadId} onReply={setReplyingTo} />
+              )}
               <div
                 className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-relaxed",
+                  "text-sm leading-relaxed overflow-hidden",
+                  mediaOnly
+                    ? "p-1 rounded-2xl max-w-[min(75vw,420px)]"
+                    : "max-w-[75%] rounded-2xl px-4 py-2",
                   mine
                     ? "bg-gradient-primary text-primary-foreground rounded-br-md shadow-glow"
                     : "bg-card text-card-foreground border border-border rounded-bl-md shadow-card",
                 )}
               >
+                {m.metadata?.replyTo && (
+                  <div
+                    className={cn(
+                      "mb-2 rounded-lg border-l-2 pl-2 py-1 pr-2 text-xs",
+                      mine
+                        ? "border-primary-foreground/70 bg-black/15 text-primary-foreground/90"
+                        : "border-primary/70 bg-primary/5 text-muted-foreground",
+                    )}
+                  >
+                    <div className={cn("text-[10px] font-semibold uppercase tracking-wide", mine ? "text-primary-foreground/80" : "text-primary")}>
+                      Resposta
+                    </div>
+                    <div className="truncate">
+                      {m.metadata.replyTo.snippet ||
+                        (m.metadata.replyTo.hasMedia ? "Mídia" : "Mensagem")}
+                    </div>
+                  </div>
+                )}
                 {m.metadata?.welcome && !mine && (
                   <div className="mb-1 text-[10px] uppercase tracking-wide font-semibold text-primary">
                     Boas-vindas{m.metadata.tag ? ` · ${m.metadata.tag}` : ""}
@@ -671,9 +723,7 @@ function ChatThreadView() {
                     }
                   />
                 )}
-                {m.metadata?.tip && (
-                  <TipCard tip={m.metadata.tip} mine={mine} />
-                )}
+                {m.metadata?.tip && <TipCard tip={m.metadata.tip} mine={mine} />}
                 {m.metadata?.paidUpload && (
                   <PaidDmCard
                     upload={m.metadata.paidUpload}
@@ -682,36 +732,52 @@ function ChatThreadView() {
                   />
                 )}
 
-                {m.content && !m.metadata?.callInvite && !m.metadata?.tip && (
+                {hasText && (
                   <div className="whitespace-pre-wrap break-words">{m.content}</div>
                 )}
 
-                {m.metadata?.media && m.metadata.media.length > 0 && (!m.metadata?.paidUpload || m.metadata.paidUpload.priceCents === 0) && (
-                  <div className="mt-2 grid gap-2 grid-cols-2">
-                    {m.metadata.media.map((mm, idx) =>
-                      mm.url ? (
-                        mm.kind === "image" ? (
-                          <img
-                            key={idx}
-                            src={mm.url}
-                            alt=""
-                            className="rounded-lg w-full object-cover max-h-64"
-                          />
-                        ) : mm.kind === "video" ? (
-                          <video
-                            key={idx}
-                            src={mm.url}
-                            controls
-                            className="rounded-lg w-full max-h-64"
-                          />
-                        ) : (
-                          <audio key={idx} src={mm.url} controls className="w-full col-span-2" />
-                        )
-                      ) : null,
+                {showMedia && (
+                  <div
+                    className={cn(
+                      mediaOnly ? "relative rounded-xl overflow-hidden" : "mt-2 rounded-xl overflow-hidden",
+                      mediaItems.length === 1
+                        ? ""
+                        : "grid gap-1 " + (mediaItems.length === 2 ? "grid-cols-2" : "grid-cols-2"),
+                    )}
+                  >
+                    {mediaItems.map((mm, idx) => {
+                      const spanFull =
+                        mediaItems.length > 2 && mediaItems.length % 2 === 1 && idx === mediaItems.length - 1;
+                      const single = mediaItems.length === 1;
+                      const commonClass = cn(
+                        "w-full h-auto",
+                        single ? "max-h-[420px] object-contain" : "max-h-[220px] object-cover",
+                        spanFull && "col-span-2",
+                      );
+                      if (!mm.url) return null;
+                      if (mm.kind === "image") {
+                        return <img key={idx} src={mm.url} alt="" className={commonClass} />;
+                      }
+                      if (mm.kind === "video") {
+                        return <video key={idx} src={mm.url} controls className={commonClass} />;
+                      }
+                      return <audio key={idx} src={mm.url} controls className="w-full col-span-2" />;
+                    })}
+                    {mediaOnly && (
+                      <div className="absolute bottom-1 right-1 inline-flex items-center gap-1 rounded-full bg-black/55 text-white px-2 py-0.5 text-[10px] font-medium backdrop-blur">
+                        {m.priceCents ? (
+                          <>
+                            <Lock className="h-2.5 w-2.5" />
+                            {formatBRL(m.priceCents)}
+                          </>
+                        ) : null}
+                        <span>{formatTime(m.createdAt)}</span>
+                      </div>
                     )}
                   </div>
                 )}
-                {m.priceCents ? (
+
+                {!mediaOnly && m.priceCents ? (
                   <div
                     className={cn(
                       "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
@@ -724,18 +790,24 @@ function ChatThreadView() {
                     {formatBRL(m.priceCents)} · {mine ? "Paga" : "Desbloqueada"}
                   </div>
                 ) : null}
-                <div
-                  className={cn(
-                    "text-[10px] mt-1 text-right",
-                    mine ? "text-primary-foreground/80" : "text-muted-foreground",
-                  )}
-                >
-                  {formatTime(m.createdAt)}
-                </div>
+                {!mediaOnly && (
+                  <div
+                    className={cn(
+                      "text-[10px] mt-1 text-right",
+                      mine ? "text-primary-foreground/80" : "text-muted-foreground",
+                    )}
+                  >
+                    {formatTime(m.createdAt)}
+                  </div>
+                )}
               </div>
+              {!mine && (
+                <MessageActionsMenu message={m} mine={mine} threadId={threadId} onReply={setReplyingTo} />
+              )}
             </div>
           );
         })}
+
         </div>
       </div>
 
