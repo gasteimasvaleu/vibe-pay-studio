@@ -131,6 +131,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "broadcast_jobs_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bug_reports: {
@@ -248,6 +255,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chat_media_requests_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chat_media_requests_message_id_fkey"
             columns: ["message_id"]
             isOneToOne: false
@@ -338,6 +352,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_message_unlocks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -656,6 +677,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_streak_days_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_wallets: {
@@ -689,6 +717,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_wallets_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
         ]
@@ -771,6 +806,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "follows_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       friendships: {
@@ -837,6 +879,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "live_comments_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "live_comments_live_id_fkey"
             columns: ["live_id"]
             isOneToOne: false
@@ -873,6 +922,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -936,6 +992,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
         ]
@@ -1299,6 +1362,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_active_profile_id_fkey"
+            columns: ["active_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       promotions: {
@@ -1364,6 +1434,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "promotions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       publication_bookmarks: {
@@ -1391,6 +1468,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_bookmarks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -1436,6 +1520,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "publication_challenge_tiers_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "publication_challenge_tiers_publication_id_fkey"
             columns: ["publication_id"]
             isOneToOne: false
@@ -1478,6 +1569,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "publication_comment_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       publication_comments: {
@@ -1514,6 +1612,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_comments_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -1557,6 +1662,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_likes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -1605,6 +1717,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_media_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -1662,6 +1781,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "publication_unlocks_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "publication_unlocks_publication_id_fkey"
             columns: ["publication_id"]
             isOneToOne: false
@@ -1705,6 +1831,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_views_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -1792,6 +1925,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publications_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
         ]
@@ -2025,6 +2165,13 @@ export type Database = {
             referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriber_restrictions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subscriber_wallets: {
@@ -2109,6 +2256,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "subscriptions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subscriptions_promotion_id_fkey"
             columns: ["promotion_id"]
             isOneToOne: false
@@ -2166,6 +2320,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -2269,6 +2430,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
         ]
@@ -2488,6 +2656,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "video_calls_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_calls_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
@@ -2569,6 +2744,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "withdrawals_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "withdrawals_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
@@ -2579,7 +2761,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      creator_profiles_search: {
+        Row: {
+          avatar_url: string | null
+          country: string | null
+          cover_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          kyc_verified_at: string | null
+          restrict_mentions: boolean | null
+          restrict_search: boolean | null
+          restrict_search_br: boolean | null
+          restrict_search_country: boolean | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_daily_revenue: {
