@@ -39,13 +39,15 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-broadcasts")({
 
         for (const job of jobs ?? []) {
           try {
-            const audiences = Array.isArray(job.filters?.audiences)
-              ? (job.filters.audiences as { audience: string; topN?: number }[])
-              : [{ audience: job.audience, topN: job.filters?.topN }];
+            const filters = (job.filters ?? {}) as Record<string, unknown>;
+            const audiences = Array.isArray(filters.audiences)
+              ? (filters.audiences as { audience: string; topN?: number }[])
+              : [{ audience: job.audience, topN: typeof filters.topN === "number" ? filters.topN : undefined }];
 
             const ids = new Set<string>();
             for (const a of audiences) {
               if (!BROADCAST_AUDIENCES.includes(a.audience as (typeof BROADCAST_AUDIENCES)[number])) continue;
+
               const list = await resolveAudienceIds(
                 supabaseAdmin as unknown as ReturnType<typeof createClient<Database>>,
                 job.creator_id,

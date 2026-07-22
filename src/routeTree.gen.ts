@@ -81,6 +81,7 @@ import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './route
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
+import { Route as ApiPublicHooksDispatchBroadcastsRouteImport } from './routes/api/public/hooks/dispatch-broadcasts'
 import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth/email-hook'
 import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
 import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
@@ -496,6 +497,12 @@ const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   path: '/api/public/webhooks/asaas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksDispatchBroadcastsRoute =
+  ApiPublicHooksDispatchBroadcastsRouteImport.update({
+    id: '/api/public/hooks/dispatch-broadcasts',
+    path: '/api/public/hooks/dispatch-broadcasts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
   id: '/api/public/auth/email-hook',
   path: '/api/public/auth/email-hook',
@@ -644,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
+  '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -723,6 +731,7 @@ export interface FileRoutesByTo {
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
+  '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -810,6 +819,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/_authenticated/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
+  '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -897,6 +907,7 @@ export interface FileRouteTypes {
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
+    | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management/'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
+    | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/settings/device-management'
@@ -1062,6 +1074,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/two-factor/setup'
     | '/_authenticated/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
+    | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/settings/device-management/'
@@ -1082,6 +1095,7 @@ export interface RootRouteChildren {
   CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
   CadastroIndexRoute: typeof CadastroIndexRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
+  ApiPublicHooksDispatchBroadcastsRoute: typeof ApiPublicHooksDispatchBroadcastsRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
 }
@@ -1592,6 +1606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/dispatch-broadcasts': {
+      id: '/api/public/hooks/dispatch-broadcasts'
+      path: '/api/public/hooks/dispatch-broadcasts'
+      fullPath: '/api/public/hooks/dispatch-broadcasts'
+      preLoaderRoute: typeof ApiPublicHooksDispatchBroadcastsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/email-hook': {
       id: '/api/public/auth/email-hook'
       path: '/api/public/auth/email-hook'
@@ -1939,6 +1960,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
   CadastroIndexRoute: CadastroIndexRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
+  ApiPublicHooksDispatchBroadcastsRoute: ApiPublicHooksDispatchBroadcastsRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
 }
