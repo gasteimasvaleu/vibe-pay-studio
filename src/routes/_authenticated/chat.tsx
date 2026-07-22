@@ -227,9 +227,10 @@ function ChatLayout() {
           </div>
         </aside>
 
-        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col min-h-svh")}>
+        <section className={cn(activeThreadId ? "flex" : "hidden md:flex", "flex-col h-full min-h-0")}>
           <Outlet />
         </section>
+
       </div>
 
       <NewChatDialog open={openNewChat} onOpenChange={setOpenNewChat} />
