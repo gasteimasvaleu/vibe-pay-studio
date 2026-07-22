@@ -305,7 +305,7 @@ function ChatThreadView() {
           if (locked) {
             return (
               <div key={m.id} className="flex justify-start">
-                <div className="max-w-[75%] rounded-2xl rounded-bl-md border border-primary/30 bg-card/80 shadow-card p-4 space-y-3">
+                <div className="max-w-[75%] rounded-2xl rounded-bl-md border border-primary/30 bg-white shadow-card p-4 space-y-3">
                   <div className="flex items-center gap-2 text-primary">
                     <Lock className="h-4 w-4" />
                     <span className="text-xs font-semibold uppercase tracking-wide">
