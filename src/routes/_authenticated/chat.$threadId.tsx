@@ -272,9 +272,17 @@ function ChatThreadView() {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="h-10 w-10 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
-          {(data?.partner.username ?? "??").slice(0, 2).toUpperCase()}
-        </div>
+        {data?.partner.avatarUrl ? (
+          <img
+            src={data.partner.avatarUrl}
+            alt={data.partner.username}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-gradient-primary grid place-items-center text-sm font-semibold text-primary-foreground">
+            {(data?.partner.username ?? "??").slice(0, 2).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="font-semibold truncate text-foreground">
             @{data?.partner.username ?? "…"}
