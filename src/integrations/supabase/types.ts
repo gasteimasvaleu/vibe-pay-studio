@@ -193,6 +193,7 @@ export type Database = {
           requester_id: string
           status: string
           thread_id: string
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -212,6 +213,7 @@ export type Database = {
           requester_id: string
           status?: string
           thread_id: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -231,6 +233,7 @@ export type Database = {
           requester_id?: string
           status?: string
           thread_id?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2673,6 +2676,21 @@ export type Database = {
               _message_id?: string
               _plan?: string
               _publication_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount_cents?: number
+              _call_id?: string
+              _creator_id?: string
+              _creator_profile_id?: string
+              _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+              _request_id?: string
             }
             Returns: Json
           }

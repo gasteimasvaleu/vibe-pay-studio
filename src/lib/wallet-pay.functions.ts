@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type WalletPayInput = {
-  kind: "publication_unlock" | "chat_unlock" | "subscription" | "tip" | "story_unlock";
+  kind: "publication_unlock" | "chat_unlock" | "subscription" | "tip" | "story_unlock" | "video_call" | "paid_dm";
   publicationId?: string;
   messageId?: string;
   storyId?: string;
@@ -10,6 +10,8 @@ export type WalletPayInput = {
   plan?: "monthly" | "quarterly" | "semiannual";
   amountCents?: number;
   message?: string;
+  callId?: string;
+  requestId?: string;
 };
 
 export type WalletPayResult = {
@@ -32,7 +34,7 @@ export const payWithWallet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: WalletPayInput) => {
     if (!input || typeof input !== "object") throw new Error("invalid_input");
-    const kinds = ["publication_unlock", "chat_unlock", "subscription", "tip", "story_unlock"];
+    const kinds = ["publication_unlock", "chat_unlock", "subscription", "tip", "story_unlock", "video_call", "paid_dm"];
     if (!kinds.includes(input.kind)) throw new Error("invalid_kind");
     return input;
   })
@@ -47,6 +49,8 @@ export const payWithWallet = createServerFn({ method: "POST" })
       _amount_cents: data.amountCents ?? undefined,
       _message: data.message ?? undefined,
       _story_id: data.storyId ?? undefined,
+      _call_id: data.callId ?? undefined,
+      _request_id: data.requestId ?? undefined,
     });
 
     if (error) {

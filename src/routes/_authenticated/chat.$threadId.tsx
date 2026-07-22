@@ -19,12 +19,14 @@ import {
   cancelPaidDmRequest,
   sendTipMessage,
   expireStaleInvites,
+  markPaidDmDelivered,
 } from "@/lib/chat-monetization.functions";
 import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
 import { FloatingEmojiLayer, type FloatingEmoji } from "@/components/chat/FloatingEmojiLayer";
+import { BroadcastDialog } from "@/components/chat/BroadcastDialog";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
@@ -150,12 +152,10 @@ function PaidDmCard({
   upload,
   media,
   mine,
-  onPay,
 }: {
   upload: Required<NonNullable<ChatMessage["metadata"]>>["paidUpload"];
   media: { url?: string | null; kind: string; mime: string }[];
   mine: boolean;
-  onPay: () => void;
 }) {
   return (
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
@@ -163,7 +163,7 @@ function PaidDmCard({
         <Lock className="h-4 w-4" />
         <span className="text-xs font-semibold uppercase tracking-wide">Mídia paga</span>
       </div>
-      <div className="text-sm">{formatBRL(upload.priceCents)} · desbloqueie para visualizar</div>
+      <div className="text-sm">{formatBRL(upload.priceCents)} · {mine ? "enviada" : "recebida"}</div>
       {media.length > 0 && (
         <div className="grid grid-cols-2 gap-2">
           {media.map((m, idx) =>
@@ -176,11 +176,6 @@ function PaidDmCard({
             ) : null,
           )}
         </div>
-      )}
-      {!mine && (
-        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
-          Desbloquear por {formatBRL(upload.priceCents)}
-        </Button>
       )}
     </div>
   );
@@ -203,6 +198,7 @@ function ChatThreadView() {
   const expireInvitesFn = useServerFn(expireStaleInvites);
   const videoCallPayFn = useServerFn(createVideoCallPayment);
   const paidDmPayFn = useServerFn(createPaidDmPayment);
+  const deliverPaidDmFn = useServerFn(markPaidDmDelivered);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -220,6 +216,7 @@ function ChatThreadView() {
   const [paidDmPrice, setPaidDmPrice] = useState<number>(1490);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(1000);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<
     { type: "call" | "paidDm"; id: string; priceCents: number } | null
   >(null);
@@ -445,9 +442,21 @@ function ChatThreadView() {
   });
 
   const confirmActionPayment = async (method: PaymentMethod) => {
-    if (!pendingAction || method === "WALLET") return;
+    if (!pendingAction) return;
     try {
       setUnlockingId(pendingAction.id);
+      if (method === "WALLET") {
+        if (pendingAction.type === "call") {
+          await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
+        } else {
+          await walletPay({ data: { kind: "paid_dm", requestId: pendingAction.id } });
+        }
+        setPendingAction(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Pagamento confirmado");
+        return;
+      }
       const res =
         pendingAction.type === "call"
           ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
@@ -644,9 +653,6 @@ function ChatThreadView() {
                     upload={m.metadata.paidUpload}
                     media={m.metadata.media ?? []}
                     mine={mine}
-                    onPay={() =>
-                      openPaymentForPaidDm(m.id, m.metadata!.paidUpload!.requestId, m.metadata!.paidUpload!.priceCents)
-                    }
                   />
                 )}
 
@@ -726,6 +732,7 @@ function ChatThreadView() {
               onCallInvite={() => setCallInviteOpen(true)}
               onPaidDmRequest={() => setPaidDmOpen(true)}
               onTip={() => setTipOpen(true)}
+              onBroadcast={() => setBroadcastOpen(true)}
             />
           </TooltipProvider>
         </div>
@@ -862,6 +869,12 @@ function ChatThreadView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <BroadcastDialog
+        open={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
+        creatorId={meId ?? ""}
+      />
     </div>
   );
 }

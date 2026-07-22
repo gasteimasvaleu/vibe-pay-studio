@@ -6,6 +6,7 @@ import {
   Gift,
   Loader2,
   Lock,
+  Megaphone,
   Mic,
   Paperclip,
   Sparkles,
@@ -76,6 +77,7 @@ export function ChatComposer({
   onCallInvite,
   onPaidDmRequest,
   onTip,
+  onBroadcast,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -86,6 +88,7 @@ export function ChatComposer({
   onCallInvite?: () => void;
   onPaidDmRequest?: () => void;
   onTip?: () => void;
+  onBroadcast?: () => void;
 }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
@@ -362,6 +365,11 @@ export function ChatComposer({
                   icon={Video}
                   label="Convite de videochamada"
                   onClick={onCallInvite}
+                />
+                <IconAction
+                  icon={Megaphone}
+                  label="Mensagem em massa"
+                  onClick={onBroadcast}
                 />
               </>
             ) : null}
