@@ -40,6 +40,13 @@ function providerForMethod(method: Method): "asaas_pix" | "asaas_card" {
   return method === "PIX" ? "asaas_pix" : "asaas_card";
 }
 
+// Asaas billingType para o /payments. Como a conta ainda não tem tokenização
+// liberada para compras, cartão sempre vai via checkout hospedado — enviamos
+// UNDEFINED para receber invoiceUrl que aceita cartão. PIX permanece direto.
+function asaasBillingTypeForMethod(method: Method): "PIX" | "UNDEFINED" {
+  return method === "PIX" ? "PIX" : "UNDEFINED";
+}
+
 async function ensureCustomerId(
   supabase: any,
   userId: string,
@@ -263,7 +270,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: pub.price_cents,
       description: `Compra MTX`,
       externalReference: `publication_unlock:${unlockId}`,
@@ -370,7 +377,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: story.price_cents,
       description: `Compra MTX`,
       externalReference: `story_unlock:${unlockId}`,
@@ -571,7 +578,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: data.amountCents,
       description: `Compra MTX`,
       externalReference: `tip:${tip.id}`,
@@ -686,7 +693,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents,
       description: `Assinatura MTX`,
       externalReference: `subscription:${sub.id}`,
@@ -755,7 +762,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: msg.price_cents,
       description: `Compra MTX`,
       externalReference: `chat_unlock:${unlock.id}`,
@@ -812,7 +819,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
 
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: call.price_cents,
       description: `Compra MTX`,
       externalReference: `video_call:${call.id}`,
@@ -857,7 +864,7 @@ export const createWalletTopupPayment = createServerFn({ method: "POST" })
     const asaas = await loadAsaas();
     const payment = await asaas.createPayment({
       customerId,
-      billingType: data.method,
+      billingType: asaasBillingTypeForMethod(data.method),
       amountCents: data.amountCents,
       description: `Recarga MTX`,
       externalReference: `wallet_topup:${userId}`,

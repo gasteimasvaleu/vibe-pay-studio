@@ -1,32 +1,52 @@
-## Problemas
+## Problema
 
-**1. Busca não mostra o perfil creator gratuito**
-`src/routes/_authenticated/search.tsx` consulta apenas `public.profiles`. Após a refatoração 1:N, cada perfil creator (pago ou gratuito) do mesmo usuário vive em `public.creator_profiles` (colunas próprias: `username`, `display_name`, `avatar_url`, `cover_url`, `kind`, etc.). Como só o perfil "raiz" está em `profiles`, o perfil free do `monetisex` nunca aparece nos resultados nem em "Mais buscados".
+O toast `Cartão requer creditCardToken ou creditCard+creditCardHolderInfo` vem do `asaas.server.ts:createPayment`: hoje ele exige token/cartão quando `billingType=CREDIT_CARD`, mas a conta Asaas do usuário ainda **não tem tokenização liberada**. Tokenização fica só para a recarga 1-clique da carteira. Para compras (assinatura, mimo, unlock, story), o cartão deve ser cobrado via **checkout externo hospedado pelo Asaas** — que o `CardCheckout.tsx` já sabe abrir e polar.
 
-**2. Toast `cpf_required` ao abrir checkout de cartão na assinatura**
-No fluxo de desbloqueio (`perfil.$username.tsx`) o erro `cpf_required` é interceptado e abre o `CpfPromptDialog`. Já no `SubscribeDialog.tsx` o `catch` cai direto no `translatePaymentError` e mostra o toast cru "cpf_required", sem oferecer para o usuário informar o CPF e retomar.
+## Causa exata
 
-## Plano
+Para gerar um `invoiceUrl` hospedado onde o comprador digita o cartão no site do Asaas, a `/payments` precisa ser criada com `billingType=UNDEFINED` (comprador escolhe o método na tela do Asaas) — não `CREDIT_CARD`. Ao mandar `CREDIT_CARD` sem token, a própria checagem local (`asaas.server.ts:397`) lança o erro visto no toast.
 
-### 1. Busca inclui perfis free
-- Ajustar `fetchCreators` em `src/routes/_authenticated/search.tsx` para consultar `public.creator_profiles` (todos os `kind`), fazendo `JOIN` implícito com `profiles` do dono para aplicar as restrições existentes (`restrict_search`, `restrict_search_br`, `restrict_search_country`, `restrict_mentions`).
-  - Estratégia: buscar em paralelo `creator_profiles` (com `select` incluindo o `profiles!inner(...)` embutido para trazer as flags e `country`/`kyc_verified_at` do dono) e filtrar client-side pelo mesmo conjunto de regras já aplicadas hoje, além do próprio `user_id === viewerId`.
-  - Deduplicar por `creator_profile.id` e mapear para `CreatorRow` com o `username`/`display_name`/`avatar_url` do próprio `creator_profile` (não do `profiles`), para que free e pago apareçam com identidade correta.
-  - `kyc_verified_at` continua vindo do `profiles` do dono (o selo é da pessoa).
-- Ajustar a navegação do card: hoje `/perfil/$username` usa o `username` do profile raiz. Como perfis free têm username próprio em `creator_profiles`, o link do card passa a usar `creator_profile.username` — a rota `perfil.$username.tsx` já resolve via `resolve_active_creator_profile` por username, então basta passar o correto.
-- Manter a lista "Mais buscados" (query vazia) ordenada por `created_at desc` da mesma forma, agora sobre `creator_profiles`.
+## Solução
 
-### 2. `SubscribeDialog` respeita `cpf_required`
-- Adicionar prop opcional `onCpfRequired?: () => void` em `src/components/payments/SubscribeDialog.tsx`. No `catch` do `submit`, se `e?.message === "cpf_required"`, chamar `onCpfRequired?.()` e retornar sem toast (o parent decide abrir o CpfPromptDialog e reabrir o SubscribeDialog).
-- Em `src/routes/_authenticated/perfil.$username.tsx`:
-  - Passar `onCpfRequired` para o `SubscribeDialog` que fecha o próprio dialog, guarda `setCpfPromptFor("SUBSCRIPTION")` (ou um marcador dedicado, ex.: `setCpfPromptForSubscription(true)`) e reabre o `SubscribeDialog` no `onSaved` do `CpfPromptDialog`.
-  - Como o `CpfPromptDialog` atual chama `onSaved()` sem argumentos, adicionar um segundo state `pendingReopenSubscribe` que, quando `true`, reabre o `SubscribeDialog` (mantendo o `initialPlan` selecionado) após o CPF ser salvo.
-- Nenhuma mudança em `createSubscriptionPayment` (o backend já lança `cpf_required` corretamente).
+Rotear a chamada ao Asaas conforme o método escolhido pelo comprador, mantendo o UX atual:
 
-### Arquivos afetados
-- `src/routes/_authenticated/search.tsx` — nova query e mapeamento por `creator_profiles`.
-- `src/components/payments/SubscribeDialog.tsx` — nova prop `onCpfRequired`, tratamento no catch.
-- `src/routes/_authenticated/perfil.$username.tsx` — estado extra para reabrir a assinatura após salvar CPF.
+- `PIX` → continua igual, `billingType=PIX` + QR code inline.
+- `WALLET` → continua igual, débito de saldo.
+- `CREDIT_CARD` → mudar para `billingType=UNDEFINED` no backend; o `invoiceUrl` retornado é o checkout hospedado que aceita cartão. O `CardCheckout.tsx` já abre em nova aba e faz polling do status — nenhuma mudança no componente.
 
-### Fora do escopo
-- Não mexer no backend de pagamentos nem em RLS. As policies de leitura de `creator_profiles` já permitem SELECT público (usado hoje pelo `DashboardShell` e resolvers). Se o teste apontar bloqueio, adiciono a policy no follow-up.
+Isso preserva:
+- Split para o creator (o Asaas aplica o split mesmo em `UNDEFINED`, pelo `walletId`).
+- Recarga 1-clique da carteira via `chargeSavedCardTopUp` (continua usando `CREDIT_CARD` + token, único caminho com tokenização).
+
+## Passos
+
+1. **`src/lib/asaas.server.ts`**
+   - Expandir `AsaasBillingType` para incluir `"UNDEFINED"`.
+   - Em `createPayment`, tratar `UNDEFINED` exatamente como PIX/BOLETO (sem exigir campos de cartão). Bloco `if (input.billingType === "CREDIT_CARD")` só é acionado quando um token/cartão é passado explicitamente (fluxo da recarga 1-clique).
+
+2. **`src/lib/payments.functions.ts`** — nos handlers de compra que aceitam método do comprador:
+   - `createSubscriptionPayment`
+   - `createTipPayment`
+   - `createChatUnlockPayment`
+   - `createPublicationUnlockPayment`
+   - `createStoryUnlockPayment` (e qualquer outro `createXxxPayment` que aceite `method: Method`)
+   
+   Mapear internamente: se `data.method === "CREDIT_CARD"`, chamar `asaas.createPayment({ billingType: "UNDEFINED", ... })`. Manter o campo `method: "CREDIT_CARD"` gravado no `payment_intents`/tabelas (não mudar contrato do frontend). Sem alterar splits nem `netCreatorCents`.
+
+3. **`chargeSavedCardTopUp` (recarga)** — **não mexer**. Continua `billingType=CREDIT_CARD` + `creditCardToken`.
+
+4. **Webhook `/api/public/webhooks/asaas.ts`** — verificar se o handler diferencia por `billingType` para atualizar status; se sim, tratar `UNDEFINED` cujo pagamento efetivo foi `CREDIT_CARD` (Asaas troca o `billingType` do evento pelo método real após o pagamento). Nenhuma alteração se ele já reage só ao `status` do evento.
+
+5. **`PaymentModal.tsx` / `SubscribeDialog.tsx`** — o branch `isCard` já usa `CardCheckout` com `invoiceUrl`. Verificar que `invoiceUrl` volta sempre preenchido para `UNDEFINED` (o Asaas retorna). Ajustar mensagem interna do `CardCheckout` de "checkout seguro do Asaas" continua correta.
+
+## Detalhes técnicos
+
+- `billingType=UNDEFINED` no Asaas: cria a cobrança sem forçar método; `invoiceUrl` mostra opções (Cartão, PIX, Boleto). Como já rotulamos a preferência do usuário como "Cartão" na UI, e a tela do Asaas prioriza cartão, o UX percebido é o mesmo.
+- Alternativa possível se o comportamento acima incomodar: usar `/paymentLinks` ou `/checkout` do Asaas para pré-selecionar cartão. Mais trabalho, deixar para uma iteração futura se necessário.
+- Não alterar `AsaasBillingType` guardado no banco em `payment_intents.method` — a coluna reflete o método que o comprador **escolheu** na nossa UI (`CREDIT_CARD`), não o `billingType` enviado ao Asaas.
+
+## Fora do escopo
+
+- Trocar de provider.
+- Formulário inline de cartão (foi meu plano anterior — descartado, tokenização não está liberada).
+- Suporte a parcelamento / 3DS custom (só via checkout hospedado).

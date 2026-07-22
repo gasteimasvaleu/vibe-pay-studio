@@ -313,7 +313,7 @@ export async function getPlatformWalletId(): Promise<string | null> {
 
 // ---------- Payments (with split) ----------
 
-export type AsaasBillingType = "PIX" | "CREDIT_CARD" | "BOLETO";
+export type AsaasBillingType = "PIX" | "CREDIT_CARD" | "BOLETO" | "UNDEFINED";
 
 export type AsaasPayment = {
   id: string;
