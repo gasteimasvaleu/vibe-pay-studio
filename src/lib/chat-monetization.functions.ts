@@ -371,7 +371,7 @@ export const previewBroadcastAudience = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     if (data.creatorId !== userId) throw new Error("Sem permissão");
 
-    let query = supabase.from("follows").select("follower_id").eq("following_id", userId);
+    let query = supabase.from("follows").select("follower_id").eq("followee_id", userId);
 
     if (data.audience === "active_subscribers") {
       const { data: subs } = await supabase
