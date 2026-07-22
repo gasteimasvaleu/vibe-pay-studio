@@ -246,10 +246,13 @@ function ChatThreadView() {
     }
   };
 
-  const priceLabel = useMemo(
-    () => (priceCents ? formatBRL(priceCents) : null),
-    [priceCents],
-  );
+  const emitFloater = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const x = (Math.random() - 0.5) * 200;
+    setFloaters((prev) => [...prev, { id, emoji, x }]);
+    setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
+  };
+
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-white">
