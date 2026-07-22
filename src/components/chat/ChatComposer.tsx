@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
+  CalendarCheck,
   Camera,
   DollarSign,
   Gift,
@@ -88,6 +89,11 @@ export function ChatComposer({
   onBroadcast,
   replyingTo,
   onCancelReply,
+  hideCallInvite,
+  hideBroadcast,
+  scheduledAt,
+  onOpenSchedule,
+  placeholder,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -101,7 +107,13 @@ export function ChatComposer({
   onBroadcast?: () => void;
   replyingTo?: ComposerReplyPreview | null;
   onCancelReply?: () => void;
+  hideCallInvite?: boolean;
+  hideBroadcast?: boolean;
+  scheduledAt?: Date | null;
+  onOpenSchedule?: () => void;
+  placeholder?: string;
 }) {
+
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
   const [priceCents, setPriceCents] = useState<number | null>(null);
@@ -320,7 +332,7 @@ export function ChatComposer({
               ? `Gravando… ${recordSec}s (solte para enviar)`
               : priceCents
                 ? "Escreva a mensagem exclusiva…"
-                : "Escreva uma mensagem…"
+                : (placeholder ?? "Escreva uma mensagem…")
           }
           rows={1}
           disabled={disabled || recording}
@@ -403,16 +415,28 @@ export function ChatComposer({
                   active={!!priceCents}
                   disabled={media.length === 0}
                 />
-                <IconAction
-                  icon={Video}
-                  label="Convite de videochamada"
-                  onClick={onCallInvite}
-                />
-                <IconAction
-                  icon={Megaphone}
-                  label="Mensagem em massa"
-                  onClick={onBroadcast}
-                />
+                {!hideCallInvite ? (
+                  <IconAction
+                    icon={Video}
+                    label="Convite de videochamada"
+                    onClick={onCallInvite}
+                  />
+                ) : null}
+                {!hideBroadcast ? (
+                  <IconAction
+                    icon={Megaphone}
+                    label="Mensagem em massa"
+                    onClick={onBroadcast}
+                  />
+                ) : null}
+                {onOpenSchedule ? (
+                  <IconAction
+                    icon={CalendarCheck}
+                    label={scheduledAt ? "Reagendar envio" : "Agendar envio"}
+                    onClick={onOpenSchedule}
+                    active={!!scheduledAt}
+                  />
+                ) : null}
               </>
             ) : null}
 

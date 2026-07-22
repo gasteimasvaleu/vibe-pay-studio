@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   addDays,
   addMonths,
@@ -17,7 +17,6 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Archive,
   ArrowLeft,
   CalendarCheck,
   CalendarDays,
@@ -25,21 +24,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Image as ImageIcon,
-  Images,
   Info,
-  Mic,
   Plus,
   Search,
-  Smile,
-  Tag,
   X,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 
 import {
@@ -48,7 +40,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FilterChip } from "@/components/chat/FilterChip";
-import { ComposerIcon } from "@/components/chat/ComposerIcon";
+import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -318,7 +312,27 @@ function Composer({
   onOpenDateDialog: () => void;
   onClearSchedule: () => void;
 }) {
-  const canContinue = message.trim().length > 0 && activeFilters.size > 0;
+  const [meId, setMeId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
+  }, []);
+
+  const canContinue = activeFilters.size > 0;
+
+  async function onSubmitBroadcast(payload: ComposerSendPayload) {
+    if (activeFilters.size === 0) {
+      toast.error("Selecione ao menos um filtro de contatos");
+      return;
+    }
+    onMessageChange(payload.text);
+    toast.success(
+      scheduledAt
+        ? `Mensagem agendada para ${format(scheduledAt, "dd/MM 'às' HH:mm", { locale: ptBR })}`
+        : "Mensagem em massa enfileirada para envio",
+    );
+    onClose();
+  }
+
 
   return (
     <div className="flex-1 relative">
@@ -439,40 +453,23 @@ function Composer({
                 </div>
               )}
 
-              <Textarea
-                value={message}
-                onChange={(e) => onMessageChange(e.target.value)}
-                placeholder="Digite uma mensagem"
-                className="min-h-14 resize-none border-0 shadow-none focus-visible:ring-0 px-1"
+              <ChatComposer
+                meId={meId}
+                isCreator
+                disabled={!canContinue}
+                placeholder="Escreva sua mensagem em massa…"
+                hideCallInvite
+                hideBroadcast
+                scheduledAt={scheduledAt}
+                onOpenSchedule={onOpenDateDialog}
+                onSend={async (payload) => {
+                  onMessageChange(payload.text);
+                  onSubmitBroadcast(payload);
+                }}
+                onFloatEmoji={() => {
+                  /* no-op em broadcast */
+                }}
               />
-
-              <div className="border-b border-border" />
-
-              <TooltipProvider delayDuration={200}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <ComposerIcon icon={ImageIcon} label="Adicionar mídia" />
-                    <ComposerIcon icon={Mic} label="Gravar um áudio" />
-                    <ComposerIcon icon={Archive} label="Adicionar mídia do acervo" />
-                    <ComposerIcon
-                      icon={CalendarCheck}
-                      label="Agendar mensagem"
-                      onClick={onOpenDateDialog}
-                      active={!!scheduledAt}
-                    />
-                    <ComposerIcon icon={Images} label="Adicionar GIF" />
-                    <ComposerIcon icon={Smile} label="Adicionar um emoji" />
-                    <ComposerIcon icon={Tag} label="Adicionar tag" />
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={!canContinue}
-                    className="rounded-md px-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95 font-semibold uppercase tracking-wide"
-                  >
-                    Continuar
-                  </Button>
-                </div>
-              </TooltipProvider>
             </div>
           </section>
         </div>
