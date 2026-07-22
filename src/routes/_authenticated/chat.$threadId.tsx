@@ -535,8 +535,9 @@ function ChatThreadView() {
 
       </header>
 
-      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-6 space-y-3">
+      <div className="relative flex-1 min-h-0">
         <FloatingEmojiLayer items={floaters} />
+        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto px-4 py-6 space-y-3">
         {isLoading && (
           <div className="text-center text-muted-foreground text-sm">Carregando…</div>
         )}
