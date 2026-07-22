@@ -125,8 +125,9 @@ function ChatSchedulingPage() {
   };
 
   const jobsByDay = useMemo(() => {
-    const map = new Map<string, typeof monthQuery.data.jobs>();
+    const map = new Map<string, { id: string; scheduledAt: string | null; status: string; message: string; totalRecipients: number }[]>();
     for (const job of monthQuery.data?.jobs ?? []) {
+
       if (!job.scheduledAt) continue;
       const key = format(new Date(job.scheduledAt), "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
