@@ -427,6 +427,9 @@ function Composer({
   scheduledAt,
   onOpenDateDialog,
   onClearSchedule,
+  previewAudience,
+  sendBroadcastFn,
+  onSuccess,
 }: {
   onClose: () => void;
   message: string;
@@ -438,27 +441,78 @@ function Composer({
   scheduledAt: Date | null;
   onOpenDateDialog: () => void;
   onClearSchedule: () => void;
+  previewAudience: ReturnType<typeof useServerFn<typeof previewBroadcastAudience>>;
+  sendBroadcastFn: ReturnType<typeof useServerFn<typeof sendBroadcast>>;
+  onSuccess: () => void;
 }) {
   const [meId, setMeId] = useState<string | null>(null);
+  const [audienceCount, setAudienceCount] = useState<number | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
 
+  const audienceNames = useMemo(
+    () => Array.from(activeFilters),
+    [activeFilters]
+  );
+
+  useEffect(() => {
+    if (!meId || audienceNames.length === 0) {
+      setAudienceCount(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    previewAudience({ data: { audienceNames } })
+      .then((res) => {
+        if (!cancelled) setAudienceCount(res.count);
+      })
+      .catch(() => {
+        if (!cancelled) setAudienceCount(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [meId, audienceNames, previewAudience]);
+
   const canContinue = activeFilters.size > 0;
 
   async function onSubmitBroadcast(payload: ComposerSendPayload) {
+    if (!meId) return;
     if (activeFilters.size === 0) {
       toast.error("Selecione ao menos um filtro de contatos");
       return;
     }
-    onMessageChange(payload.text);
-    toast.success(
-      scheduledAt
-        ? `Mensagem agendada para ${format(scheduledAt, "dd/MM 'às' HH:mm", { locale: ptBR })}`
-        : "Mensagem em massa enfileirada para envio",
-    );
-    onClose();
+    try {
+      setSending(true);
+      const res = await sendBroadcastFn({
+        data: {
+          message: payload.text,
+          media: payload.media,
+          priceCents: payload.priceCents ?? 0,
+          audienceNames,
+          scheduledAt: scheduledAt?.toISOString(),
+        },
+      });
+      if (res.scheduled) {
+        toast.success(`Mensagem agendada para ${format(new Date(res.scheduledAt!), "dd/MM 'às' HH:mm", { locale: ptBR })}`);
+      } else {
+        toast.success(`${res.sent} mensagens enviadas`);
+      }
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar mensagem");
+    } finally {
+      setSending(false);
+    }
   }
+
 
 
   return (
