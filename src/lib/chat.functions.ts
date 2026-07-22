@@ -59,14 +59,25 @@ export const listThreads = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: threads, error } = await supabase
       .from("chat_threads")
-      .select("id, user_a, user_b, last_message_at")
+      .select(
+        "id, user_a, user_b, last_message_at, cleared_at_a, cleared_at_b, deleted_at_a, deleted_at_b",
+      )
       .order("last_message_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
     if (!threads || threads.length === 0) return [];
 
+    // Filter out threads deleted by this user (unless a new message arrived after)
+    const visible = threads.filter((t) => {
+      const side = t.user_a === userId ? "a" : "b";
+      const deletedAt = side === "a" ? t.deleted_at_a : t.deleted_at_b;
+      if (!deletedAt) return true;
+      return t.last_message_at && new Date(t.last_message_at) > new Date(deletedAt);
+    });
+    if (visible.length === 0) return [];
+
     const partnerIds = Array.from(
-      new Set(threads.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
+      new Set(visible.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
     );
 
     const { data: profiles } = await supabase
@@ -86,23 +97,29 @@ export const listThreads = createServerFn({ method: "GET" })
     const mutedSet = new Set((mutedRows ?? []).map((r) => r.muted_id));
 
     const results: ThreadListItem[] = [];
-    for (const t of threads) {
+    for (const t of visible) {
       const partnerId = t.user_a === userId ? t.user_b : t.user_a;
       const profile = profileMap.get(partnerId);
+      const side = t.user_a === userId ? "a" : "b";
+      const clearedAt = side === "a" ? t.cleared_at_a : t.cleared_at_b;
 
-      const { data: lastMsgRows } = await supabase
+      let lastMsgQuery = supabase
         .from("chat_messages")
         .select("content")
         .eq("thread_id", t.id)
         .order("created_at", { ascending: false })
         .limit(1);
+      if (clearedAt) lastMsgQuery = lastMsgQuery.gt("created_at", clearedAt);
+      const { data: lastMsgRows } = await lastMsgQuery;
 
-      const { count: unread } = await supabase
+      let unreadQuery = supabase
         .from("chat_messages")
         .select("id", { count: "exact", head: true })
         .eq("thread_id", t.id)
         .is("read_at", null)
         .neq("sender_id", userId);
+      if (clearedAt) unreadQuery = unreadQuery.gt("created_at", clearedAt);
+      const { count: unread } = await unreadQuery;
 
       results.push({
         threadId: t.id,
@@ -118,6 +135,7 @@ export const listThreads = createServerFn({ method: "GET" })
 
     return results;
   });
+
 
 export const searchUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
