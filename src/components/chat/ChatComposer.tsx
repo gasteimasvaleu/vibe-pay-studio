@@ -69,15 +69,23 @@ async function uploadOne(file: File, userId: string): Promise<ComposerMedia> {
 export function ChatComposer({
   meId,
   isCreator,
+  isSubscriber,
   disabled,
   onSend,
   onFloatEmoji,
+  onCallInvite,
+  onPaidDmRequest,
+  onTip,
 }: {
   meId: string | null;
   isCreator: boolean;
+  isSubscriber?: boolean;
   disabled?: boolean;
   onSend: (payload: ComposerSendPayload) => Promise<void> | void;
   onFloatEmoji: (emoji: string) => void;
+  onCallInvite?: () => void;
+  onPaidDmRequest?: () => void;
+  onTip?: () => void;
 }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
