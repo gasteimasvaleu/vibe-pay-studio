@@ -451,9 +451,10 @@ export const sendBroadcast = createServerFn({ method: "POST" })
     }
 
     const resolved = data.filters.map(uiFilterToAudience).filter(Boolean) as {
-      audience: typeof BROADCAST_AUDIENCES[number];
+      audience: BroadcastAudience;
       topN?: number;
     }[];
+
     if (resolved.length === 0) throw new Error("Nenhum filtro válido");
 
     const ids = new Set<string>();
