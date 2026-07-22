@@ -88,6 +88,11 @@ export function ChatComposer({
   onBroadcast,
   replyingTo,
   onCancelReply,
+  hideCallInvite,
+  hideBroadcast,
+  scheduledAt,
+  onOpenSchedule,
+  placeholder,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -101,7 +106,13 @@ export function ChatComposer({
   onBroadcast?: () => void;
   replyingTo?: ComposerReplyPreview | null;
   onCancelReply?: () => void;
+  hideCallInvite?: boolean;
+  hideBroadcast?: boolean;
+  scheduledAt?: Date | null;
+  onOpenSchedule?: () => void;
+  placeholder?: string;
 }) {
+
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
   const [priceCents, setPriceCents] = useState<number | null>(null);
