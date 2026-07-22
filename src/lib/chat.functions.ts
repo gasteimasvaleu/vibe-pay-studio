@@ -830,3 +830,171 @@ export const reportUser = createServerFn({ method: "POST" })
   });
 
 
+
+// ---- Message-level actions ----
+
+async function assertMessageInThreadOfUser(
+  supabase: any,
+  userId: string,
+  messageId: string,
+): Promise<{ id: string; sender_id: string; thread_id: string; created_at: string; content: string; price_cents: number | null; metadata: any }> {
+  const { data: m, error } = await supabase
+    .from("chat_messages")
+    .select("id, sender_id, thread_id, created_at, content, price_cents, metadata")
+    .eq("id", messageId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!m) throw new Error("Mensagem não encontrada");
+  const { data: t, error: tErr } = await supabase
+    .from("chat_threads")
+    .select("user_a, user_b")
+    .eq("id", m.thread_id)
+    .maybeSingle();
+  if (tErr) throw new Error(tErr.message);
+  if (!t || (t.user_a !== userId && t.user_b !== userId)) {
+    throw new Error("Sem acesso a esta mensagem");
+  }
+  return m;
+}
+
+export const hideMessageForMe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ messageId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertMessageInThreadOfUser(supabase, userId, data.messageId);
+    const { error } = await supabase
+      .from("chat_message_hides")
+      .insert({ message_id: data.messageId, user_id: userId });
+    if (error && !`${error.message}`.includes("duplicate")) {
+      throw new Error(error.message);
+    }
+    return { ok: true as const };
+  });
+
+export const deleteMessageForAll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ messageId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const m = await assertMessageInThreadOfUser(supabase, userId, data.messageId);
+    if (m.sender_id !== userId) {
+      throw new Error("Você só pode apagar suas próprias mensagens");
+    }
+    const ageMs = Date.now() - new Date(m.created_at).getTime();
+    if (ageMs > 15 * 60 * 1000) {
+      throw new Error("Só é possível apagar para todos por até 15 minutos");
+    }
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", data.messageId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const forwardMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        messageId: z.string().uuid(),
+        toThreadId: z.string().uuid(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const m = await assertMessageInThreadOfUser(supabase, userId, data.messageId);
+    await getThreadSide(supabase, userId, data.toThreadId);
+    // Do not forward paid/locked media or special cards
+    const meta = m.metadata ?? {};
+    const forwardMeta: Record<string, unknown> = {};
+    if (Array.isArray(meta.media) && meta.media.length > 0 && !meta.paidUpload) {
+      forwardMeta.media = meta.media;
+    }
+    const content = m.content ?? "";
+    if (!content.trim() && !forwardMeta.media) {
+      throw new Error("Nada para encaminhar nesta mensagem");
+    }
+    const { error } = await supabase.from("chat_messages").insert({
+      thread_id: data.toThreadId,
+      sender_id: userId,
+      content,
+      price_cents: 0,
+      metadata: forwardMeta as unknown as never,
+    });
+    if (error) throw new Error(error.message);
+    await supabase
+      .from("chat_threads")
+      .update({ deleted_at_a: null, deleted_at_b: null })
+      .eq("id", data.toThreadId);
+    return { ok: true as const };
+  });
+
+export const reportMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        messageId: z.string().uuid(),
+        reason: z.string().trim().min(1).max(80),
+        details: z.string().trim().max(2000).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const m = await assertMessageInThreadOfUser(supabase, userId, data.messageId);
+    if (m.sender_id === userId) {
+      throw new Error("Você não pode denunciar sua própria mensagem");
+    }
+    const { error } = await supabase.from("content_reports").insert({
+      reporter_id: userId,
+      target_type: "chat_message",
+      target_id: data.messageId,
+      reason: data.reason,
+      details: data.details ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const listForwardTargets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ThreadListItem[]> => {
+    // Reuse listThreads shape via direct query to avoid RPC recursion
+    const { supabase, userId } = context;
+    const { data: threads } = await supabase
+      .from("chat_threads")
+      .select("id, user_a, user_b, last_message_at")
+      .order("last_message_at", { ascending: false })
+      .limit(50);
+    if (!threads || threads.length === 0) return [];
+    const partnerIds = Array.from(
+      new Set(threads.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
+    );
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, username, avatar_url")
+      .in("user_id", partnerIds);
+    const pmap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+    return threads.map((t) => {
+      const partnerId = t.user_a === userId ? t.user_b : t.user_a;
+      const p = pmap.get(partnerId);
+      return {
+        threadId: t.id,
+        partnerId,
+        partnerUsername: p?.username ?? "usuário",
+        partnerAvatar: (p as { avatar_url?: string | null } | undefined)?.avatar_url ?? null,
+        lastMessage: null,
+        lastMessageAt: t.last_message_at ?? new Date().toISOString(),
+        unreadCount: 0,
+        isMuted: false,
+      };
+    });
+  });
