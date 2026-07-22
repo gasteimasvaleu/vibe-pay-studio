@@ -57,12 +57,12 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
       username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
     return {
-      coverUrl: activeCoverUrl,
+      coverUrl: activeCoverUrl ?? account?.cover_url ?? null,
       avatarUrl: inFreeView
-        ? account?.free_avatar_url ?? activeAvatarUrl
-        : activeAvatarUrl,
+        ? account?.free_avatar_url ?? activeAvatarUrl ?? account?.avatar_url ?? null
+        : activeAvatarUrl ?? account?.avatar_url ?? null,
       displayName,
-      bio: activeBio ?? "",
+      bio: activeBio ?? account?.bio ?? "",
       location: account?.location ?? "",
     };
   },
