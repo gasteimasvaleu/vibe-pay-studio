@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Archive,
   ArrowUp,
   CalendarCheck,
   Camera,
   DollarSign,
   Gift,
+  Images,
   Loader2,
   Lock,
   Megaphone,
   Mic,
   Paperclip,
   Sparkles,
+  Tag,
   Video,
   X,
 } from "lucide-react";
@@ -94,6 +97,12 @@ export function ChatComposer({
   scheduledAt,
   onOpenSchedule,
   placeholder,
+  showArchive,
+  onArchive,
+  showGallery,
+  onOpenGallery,
+  showTag,
+  onOpenTag,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -112,6 +121,12 @@ export function ChatComposer({
   scheduledAt?: Date | null;
   onOpenSchedule?: () => void;
   placeholder?: string;
+  showArchive?: boolean;
+  onArchive?: () => void;
+  showGallery?: boolean;
+  onOpenGallery?: () => void;
+  showTag?: boolean;
+  onOpenTag?: () => void;
 }) {
 
   const [text, setText] = useState("");
@@ -376,6 +391,15 @@ export function ChatComposer({
               onClick={() => cameraInputRef.current?.click()}
               disabled={uploading}
             />
+            {showArchive ? (
+              <IconAction icon={Archive} label="Arquivar rascunho" onClick={onArchive} />
+            ) : null}
+            {showGallery ? (
+              <IconAction icon={Images} label="Galeria / Vault" onClick={onOpenGallery} />
+            ) : null}
+            {showTag ? (
+              <IconAction icon={Tag} label="Rotular disparo" onClick={onOpenTag} />
+            ) : null}
 
             <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
               <PopoverTrigger asChild>

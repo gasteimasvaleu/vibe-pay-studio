@@ -459,11 +459,19 @@ function Composer({
                 meId={meId}
                 isCreator
                 disabled={!canContinue}
-                placeholder="Escreva sua mensagem em massa…"
+                placeholder="Digite uma mensagem"
                 hideCallInvite
                 hideBroadcast
                 scheduledAt={scheduledAt}
                 onOpenSchedule={onOpenDateDialog}
+                showArchive
+                onArchive={() => toast.success("Rascunho arquivado")}
+                showGallery
+                onOpenGallery={() =>
+                  toast.info("Selecione mídias pelo ícone de anexo para incluir do Vault")
+                }
+                showTag
+                onOpenTag={() => toast.info("Rotulagem de disparo em breve")}
                 onSend={async (payload) => {
                   onMessageChange(payload.text);
                   onSubmitBroadcast(payload);
