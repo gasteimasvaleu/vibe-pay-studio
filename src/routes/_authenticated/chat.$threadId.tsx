@@ -512,11 +512,40 @@ function ChatThreadView() {
                     </div>
                   </div>
                 )}
-                {m.content && (
+                {m.metadata?.callInvite && (
+                  <CallInviteCard
+                    invite={m.metadata.callInvite}
+                    mine={mine}
+                    onPay={() =>
+                      openPaymentForCallInvite(m.id, m.metadata!.callInvite!.callId, m.metadata!.callInvite!.priceCents)
+                    }
+                    onCancel={() =>
+                      cancelCallInviteFn({ data: { callId: m.metadata!.callInvite!.callId } }).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+                        toast.success("Convite cancelado");
+                      })
+                    }
+                  />
+                )}
+                {m.metadata?.tip && (
+                  <TipCard tip={m.metadata.tip} mine={mine} />
+                )}
+                {m.metadata?.paidUpload && (
+                  <PaidDmCard
+                    upload={m.metadata.paidUpload}
+                    media={m.metadata.media ?? []}
+                    mine={mine}
+                    onPay={() =>
+                      openPaymentForPaidDm(m.id, m.metadata!.paidUpload!.requestId, m.metadata!.paidUpload!.priceCents)
+                    }
+                  />
+                )}
+
+                {m.content && !m.metadata?.callInvite && !m.metadata?.tip && (
                   <div className="whitespace-pre-wrap break-words">{m.content}</div>
                 )}
 
-                {m.metadata?.media && m.metadata.media.length > 0 && (
+                {m.metadata?.media && m.metadata.media.length > 0 && (!m.metadata?.paidUpload || m.metadata.paidUpload.priceCents === 0) && (
                   <div className="mt-2 grid gap-2 grid-cols-2">
                     {m.metadata.media.map((mm, idx) =>
                       mm.url ? (
