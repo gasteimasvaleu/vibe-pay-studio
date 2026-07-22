@@ -62,15 +62,27 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
 
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
+    // Prioriza creator_profiles (perfis pagos/gratuitos vinculados).
+    // Se não houver, cai no profiles legado.
+    const { data: creatorProfile } = await supabase
+      .from("creator_profiles")
+      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual")
       .eq("username", params.username)
       .maybeSingle();
 
+    let profile: any = creatorProfile;
+    if (!profile) {
+      const { data: legacyProfile } = await supabase
+        .from("profiles")
+        .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
+        .eq("username", params.username)
+        .maybeSingle();
+      profile = legacyProfile;
+    }
+
     if (!profile) throw notFound();
-    if (profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
+    const isCreatorProfile = !!creatorProfile;
+    if (!isCreatorProfile && profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
 
 
     const [
@@ -162,6 +174,10 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
           }
         : null;
 
+    const accountType = isCreatorProfile
+      ? (profile.kind === "free" ? "free_creator" : "creator")
+      : profile.account_type;
+
     return {
       viewerId: user.id,
       profile: {
@@ -169,17 +185,17 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         username: profile.username,
         displayName: (profile.display_name as string | null) ?? null,
         bio: (profile.bio as string | null) ?? null,
-        location: (profile.location as string | null) ?? null,
+        location: isCreatorProfile ? null : ((profile.location as string | null) ?? null),
         avatarUrl: (profile.avatar_url as string | null) ?? null,
         coverUrl: (profile.cover_url as string | null) ?? null,
         instagram: (profile.instagram_handle as string | null) ?? null,
         tiktok: (profile.tiktok_handle as string | null) ?? null,
         x: (profile.x_handle as string | null) ?? null,
-        accountType: profile.account_type,
+        accountType,
         priceMonthly: Number(profile.price_monthly ?? 0),
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
-        restrictFriendships: !!profile.restrict_friendships,
+        restrictFriendships: isCreatorProfile ? false : !!profile.restrict_friendships,
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,

@@ -49,34 +49,55 @@ type ProfileData = {
 };
 
 async function fetchProfileByUsername(username: string): Promise<ProfileData> {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select(
-      "user_id, username, display_name, bio, avatar_url, cover_url, account_type, free_username, free_display_name, free_avatar_url",
-    )
-    .or(`username.eq.${username},free_username.eq.${username}`)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!profile) throw notFound();
-
-  const isFreeView = (profile as any).free_username === username && profile.username !== username;
-
-  // Resolve creator_profile_id (paid vs free) para escopo do feed
-  const { data: cp } = await supabase
+  // Tenta resolver diretamente pelo creator_profiles (fonte de verdade por perfil).
+  const { data: creatorProfile, error: cpError } = await supabase
     .from("creator_profiles")
-    .select("id, kind")
-    .eq("user_id", profile.user_id);
-  const creatorProfileId =
-    (cp ?? []).find((r: any) => r.kind === (isFreeView ? "free" : "paid"))?.id ?? null;
+    .select(
+      "id, user_id, kind, username, display_name, bio, avatar_url, cover_url",
+    )
+    .eq("username", username)
+    .maybeSingle();
+  if (cpError) throw new Error(cpError.message);
+
+  let profile: any = creatorProfile;
+  let isFreeView = false;
+  let creatorProfileId: string | null = creatorProfile?.id ?? null;
+
+  if (!profile) {
+    // Fallback legado: profiles com free_username.
+    const { data: legacyProfile, error } = await supabase
+      .from("profiles")
+      .select(
+        "user_id, username, display_name, bio, avatar_url, cover_url, account_type, free_username, free_display_name, free_avatar_url",
+      )
+      .or(`username.eq.${username},free_username.eq.${username}`)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!legacyProfile) throw notFound();
+
+    profile = legacyProfile;
+    isFreeView = (legacyProfile as any).free_username === username && legacyProfile.username !== username;
+
+    const { data: cp } = await supabase
+      .from("creator_profiles")
+      .select("id, kind")
+      .eq("user_id", legacyProfile.user_id);
+    creatorProfileId =
+      (cp ?? []).find((r: any) => r.kind === (isFreeView ? "free" : "paid"))?.id ?? null;
+  } else {
+    isFreeView = creatorProfile!.kind === "free";
+  }
+
+  const userId = profile.user_id;
 
   const pubsQuery = supabase
     .from("publications")
     .select("id", { count: "exact", head: true })
-    .eq("author_id", profile.user_id);
+    .eq("author_id", userId);
   const mediasQuery = supabase
     .from("publication_media")
     .select("id, publications!inner(author_id, creator_profile_id)", { count: "exact", head: true })
-    .eq("publications.author_id", profile.user_id);
+    .eq("publications.author_id", userId);
 
   const [{ count: postsCount }, { count: mediasCount }] = await Promise.all([
     creatorProfileId ? pubsQuery.eq("creator_profile_id", creatorProfileId) : pubsQuery,
@@ -85,20 +106,21 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
       : mediasQuery,
   ]);
 
+  const isCreatorProfile = !!creatorProfile;
+  const accountType = isCreatorProfile
+    ? (creatorProfile!.kind === "free" ? "free_creator" : "creator")
+    : (isFreeView ? "free_creator" : ((profile.account_type ?? "subscriber") as AccountType));
+
   return {
-    userId: profile.user_id,
+    userId,
     username,
-    displayName: isFreeView
-      ? ((profile as any).free_display_name ?? username)
-      : (profile.display_name ?? profile.username),
-    bio: profile.bio ?? "",
-    avatarUrl: isFreeView ? ((profile as any).free_avatar_url ?? null) : profile.avatar_url,
-    coverUrl: profile.cover_url,
+    displayName: (profile.display_name ?? username) as string,
+    bio: (profile.bio ?? "") as string,
+    avatarUrl: (profile.avatar_url ?? null) as string | null,
+    coverUrl: (profile.cover_url ?? null) as string | null,
     postsCount: postsCount ?? 0,
     mediasCount: mediasCount ?? 0,
-    accountType: (isFreeView
-      ? "free_creator"
-      : ((profile as any).account_type ?? "subscriber")) as AccountType,
+    accountType,
     isFreeView,
     creatorProfileId,
   };

@@ -8,9 +8,37 @@ export const updateAvatarUrl = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const url = data.avatarUrl.trim();
     if (!url) throw new Error("url inválida");
+
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("active_profile_id, account_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const updates: { avatar_url: string; free_avatar_url?: string | null } = {
+      avatar_url: url,
+    };
+    if (me?.active_profile_id) {
+      const { data: cp } = await supabase
+        .from("creator_profiles")
+        .select("kind")
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cp?.kind === "free") {
+        updates.free_avatar_url = url;
+      }
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ avatar_url: url })
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({ avatar_url: url })
+      .update(updates)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { avatarUrl: url };
@@ -23,6 +51,22 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const url = data.coverUrl.trim();
     if (!url) throw new Error("url inválida");
+
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("active_profile_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (me?.active_profile_id) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ cover_url: url })
+        .eq("id", me.active_profile_id)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({ cover_url: url })
@@ -30,6 +74,18 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { coverUrl: url };
   });
+
+async function getActiveCreatorProfileId(
+  supabase: any,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("active_profile_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data?.active_profile_id as string | null) ?? null;
+}
 
 export const updateProfileDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -40,6 +96,17 @@ export const updateProfileDetails = createServerFn({ method: "POST" })
     const locTrimmed = data.location.replace(/\s+/g, " ").trim();
     if (bioTrimmed.length > 3000) throw new Error("bio muito longa");
     if (locTrimmed.length > 120) throw new Error("localização muito longa");
+
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ bio: bioTrimmed.length ? bioTrimmed : null })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -62,6 +129,21 @@ export const updateSocialLinks = createServerFn({ method: "POST" })
     const ig = sanitizeHandle(data.instagram);
     const tk = sanitizeHandle(data.tiktok);
     const xh = sanitizeHandle(data.x);
+
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({
+          instagram_handle: ig.length ? ig : null,
+          tiktok_handle: tk.length ? tk : null,
+          x_handle: xh.length ? xh : null,
+        })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -136,12 +218,31 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
     // Verifica colisão cross-table: creator_profiles pode ter o mesmo username.
     const { data: existingCreator, error: creatorError } = await supabase
       .from("creator_profiles")
-      .select("user_id")
+      .select("user_id, id")
       .eq("username", userCheck.value)
       .maybeSingle();
     if (creatorError) throw new Error(creatorError.message);
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
     if (existingCreator && existingCreator.user_id !== userId) {
       return { ok: false, reason: "username_taken" } as const;
+    }
+    // Impede trocar para o username de OUTRO perfil do mesmo usuário.
+    if (existingCreator && activeId && existingCreator.id !== activeId) {
+      return { ok: false, reason: "username_taken" } as const;
+    }
+
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ display_name: nameCheck.value, username: userCheck.value })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) {
+        if ((cpErr as { code?: string }).code === "23505") {
+          return { ok: false, reason: "username_taken" } as const;
+        }
+        throw new Error(cpErr.message);
+      }
     }
 
     const { error } = await supabase
