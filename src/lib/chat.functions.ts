@@ -237,7 +237,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         partner: {
           userId: partnerId,
           username: profile?.username ?? "usuário",
-          avatarUrl: null,
+          avatarUrl: (profile as { avatar_url?: string | null } | undefined)?.avatar_url ?? null,
         },
         messages: (msgs ?? []).map((m: any) => {
           const price = m.price_cents ?? 0;
