@@ -41,7 +41,15 @@ export type ComposerSendPayload = {
   text: string;
   media: ComposerMedia[];
   priceCents: number | null;
+  replyToId?: string | null;
 };
+
+export type ComposerReplyPreview = {
+  messageId: string;
+  authorLabel: string;
+  snippet: string;
+};
+
 
 const FLOAT_EMOJIS = ["❤️", "🔥", "😍", "👏", "😂", "🎉"];
 
@@ -78,6 +86,8 @@ export function ChatComposer({
   onPaidDmRequest,
   onTip,
   onBroadcast,
+  replyingTo,
+  onCancelReply,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -89,6 +99,8 @@ export function ChatComposer({
   onPaidDmRequest?: () => void;
   onTip?: () => void;
   onBroadcast?: () => void;
+  replyingTo?: ComposerReplyPreview | null;
+  onCancelReply?: () => void;
 }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
@@ -97,6 +109,7 @@ export function ChatComposer({
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+
 
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
@@ -150,17 +163,24 @@ export function ChatComposer({
     if (!canSend) return;
     setSending(true);
     try {
-      await onSend({ text: text.trim(), media, priceCents });
+      await onSend({
+        text: text.trim(),
+        media,
+        priceCents,
+        replyToId: replyingTo?.messageId ?? null,
+      });
       setText("");
       for (const m of media) URL.revokeObjectURL(m.previewUrl);
       setMedia([]);
       setPriceCents(null);
+      onCancelReply?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao enviar");
     } finally {
       setSending(false);
     }
   }
+
 
   async function startRecording() {
     if (recording || !meId) return;
@@ -217,6 +237,28 @@ export function ChatComposer({
 
   return (
     <div className="w-full space-y-2">
+      {replyingTo ? (
+        <div className="flex items-stretch gap-2 rounded-xl border border-primary/30 bg-primary/5 pl-3 pr-2 py-2">
+          <div className="w-0.5 self-stretch bg-primary rounded-full" />
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+              Respondendo a {replyingTo.authorLabel}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {replyingTo.snippet}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onCancelReply?.()}
+            aria-label="Cancelar resposta"
+            className="h-6 w-6 grid place-items-center rounded-full text-muted-foreground hover:bg-accent"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       {priceCents ? (
         <div className="flex items-center gap-2 text-xs">
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">

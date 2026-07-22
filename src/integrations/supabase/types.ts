@@ -260,6 +260,32 @@ export type Database = {
           },
         ]
       }
+      chat_message_hides: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_message_hides_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_message_unlocks: {
         Row: {
           amount_cents: number
@@ -331,34 +357,47 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
           id: string
           metadata: Json
           price_cents: number
           read_at: string | null
+          reply_to_id: string | null
           sender_id: string
           thread_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           metadata?: Json
           price_cents?: number
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id: string
           thread_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           metadata?: Json
           price_cents?: number
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id?: string
           thread_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_thread_id_fkey"
             columns: ["thread_id"]
