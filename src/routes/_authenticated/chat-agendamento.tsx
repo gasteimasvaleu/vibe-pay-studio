@@ -313,7 +313,7 @@ function Composer({
   onClearSchedule: () => void;
 }) {
   const [meId, setMeId] = useState<string | null>(null);
-  useMemo(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
 
