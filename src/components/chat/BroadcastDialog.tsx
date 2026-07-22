@@ -25,6 +25,7 @@ import {
 } from "@/lib/chat-monetization.functions";
 import { createChatWelcomeUploadUrl, type ChatWelcomeMedia } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { PriceDialog } from "@/components/chat/PriceDialog";
 
 type Audience = "all_followers" | "active_subscribers" | "expired_subscribers" | "top_buyers";
 
