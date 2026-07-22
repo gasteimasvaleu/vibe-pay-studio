@@ -71,6 +71,65 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_jobs: {
+        Row: {
+          audience: string
+          created_at: string
+          creator_id: string
+          creator_profile_id: string | null
+          failed_count: number
+          filters: Json
+          id: string
+          media: Json
+          message: string
+          price_cents: number
+          sent_count: number
+          status: string
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          creator_id: string
+          creator_profile_id?: string | null
+          failed_count?: number
+          filters?: Json
+          id?: string
+          media?: Json
+          message: string
+          price_cents?: number
+          sent_count?: number
+          status?: string
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          creator_id?: string
+          creator_profile_id?: string | null
+          failed_count?: number
+          filters?: Json
+          id?: string
+          media?: Json
+          message?: string
+          price_cents?: number
+          sent_count?: number
+          status?: string
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_jobs_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bug_reports: {
         Row: {
           admin_notes: string | null
@@ -115,6 +174,88 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      chat_media_requests: {
+        Row: {
+          created_at: string
+          creator_id: string
+          creator_profile_id: string | null
+          delivered_at: string | null
+          expires_at: string
+          id: string
+          media: Json
+          message_id: string | null
+          paid_at: string | null
+          payment_intent_id: string | null
+          price_cents: number
+          provider: string | null
+          provider_ref: string | null
+          requester_id: string
+          status: string
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          creator_profile_id?: string | null
+          delivered_at?: string | null
+          expires_at?: string
+          id?: string
+          media?: Json
+          message_id?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          price_cents: number
+          provider?: string | null
+          provider_ref?: string | null
+          requester_id: string
+          status?: string
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          creator_profile_id?: string | null
+          delivered_at?: string | null
+          expires_at?: string
+          id?: string
+          media?: Json
+          message_id?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          price_cents?: number
+          provider?: string | null
+          provider_ref?: string | null
+          requester_id?: string
+          status?: string
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_media_requests_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_media_requests_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_media_requests_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_message_unlocks: {
         Row: {
@@ -945,6 +1086,9 @@ export type Database = {
           location: string | null
           nickname: string | null
           onboarding_completed_at: string | null
+          paid_dm_upload_enabled: boolean
+          paid_dm_upload_max_cents: number
+          paid_dm_upload_min_cents: number
           phone: string | null
           price_monthly: number | null
           referred_by: string | null
@@ -1011,6 +1155,9 @@ export type Database = {
           location?: string | null
           nickname?: string | null
           onboarding_completed_at?: string | null
+          paid_dm_upload_enabled?: boolean
+          paid_dm_upload_max_cents?: number
+          paid_dm_upload_min_cents?: number
           phone?: string | null
           price_monthly?: number | null
           referred_by?: string | null
@@ -1077,6 +1224,9 @@ export type Database = {
           location?: string | null
           nickname?: string | null
           onboarding_completed_at?: string | null
+          paid_dm_upload_enabled?: boolean
+          paid_dm_upload_max_cents?: number
+          paid_dm_upload_min_cents?: number
           phone?: string | null
           price_monthly?: number | null
           referred_by?: string | null
@@ -2227,6 +2377,7 @@ export type Database = {
           creator_profile_id: string | null
           duration_minutes: number
           ended_at: string | null
+          expires_at: string | null
           id: string
           notes: string | null
           payment_status: Database["public"]["Enums"]["transaction_status"]
@@ -2247,6 +2398,7 @@ export type Database = {
           creator_profile_id?: string | null
           duration_minutes?: number
           ended_at?: string | null
+          expires_at?: string | null
           id?: string
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["transaction_status"]
@@ -2267,6 +2419,7 @@ export type Database = {
           creator_profile_id?: string | null
           duration_minutes?: number
           ended_at?: string | null
+          expires_at?: string | null
           id?: string
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["transaction_status"]
@@ -2620,6 +2773,8 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "no_show"
+        | "pending_payment"
+        | "expired"
       withdrawal_status:
         | "requested"
         | "in_review"
@@ -2801,6 +2956,8 @@ export const Constants = {
         "cancelled",
         "completed",
         "no_show",
+        "pending_payment",
+        "expired",
       ],
       withdrawal_status: [
         "requested",
