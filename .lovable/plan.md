@@ -1,52 +1,41 @@
-## Problema
+## Diagnóstico do pagamento `pay_8qw0ylwfpi1zvuq7`
 
-O toast `Cartão requer creditCardToken ou creditCard+creditCardHolderInfo` vem do `asaas.server.ts:createPayment`: hoje ele exige token/cartão quando `billingType=CREDIT_CARD`, mas a conta Asaas do usuário ainda **não tem tokenização liberada**. Tokenização fica só para a recarga 1-clique da carteira. Para compras (assinatura, mimo, unlock, story), o cartão deve ser cobrado via **checkout externo hospedado pelo Asaas** — que o `CardCheckout.tsx` já sabe abrir e polar.
+**O que funcionou ✅**
+- Checkout de cartão abriu no Asaas (fluxo `UNDEFINED` → invoiceUrl gerou corretamente).
+- Sanitização de texto: descrição foi enviada como "Assinatura MTX".
+- Webhook `PAYMENT_CONFIRMED` chegou às 08:35:08, foi persistido em `asaas_events` e o `payment_intents.processed_at` foi carimbado às 08:35:14.
+- Split calculado pelo Asaas: bruto R$ 29,00 → líquido R$ 27,65.
 
-## Causa exata
+**O que NÃO funcionou ❌**
+- `subscriptions.status` continua **`pending`** (deveria ser `active`).
+- `subscriptions.updated_at` não mudou desde 08:29:44 — ou seja, o `UPDATE` disparado pelo reconcile **não persistiu**.
+- Nenhuma linha foi criada em `public.transactions` para esse pagamento (o trigger `trg_subscriptions_sync_tx` só dispara quando `status` vira `active`).
+- Consequência: comissão da plataforma e valor líquido do creator não foram registrados no ledger interno; o botão "welcome message" e o bump de promoção também não rodaram.
 
-Para gerar um `invoiceUrl` hospedado onde o comprador digita o cartão no site do Asaas, a `/payments` precisa ser criada com `billingType=UNDEFINED` (comprador escolhe o método na tela do Asaas) — não `CREDIT_CARD`. Ao mandar `CREDIT_CARD` sem token, a própria checagem local (`asaas.server.ts:397`) lança o erro visto no toast.
+**Causa provável (a confirmar)**
+`applyPaidIntent` chama `supabase.from("subscriptions").update({ status: "active", provider_ref }).eq("id", id)` mas **não checa o `error` retornado**. Como `processed_at` no intent é escrito na sequência, um erro silencioso do UPDATE (RLS do service_role via PostgREST em coluna com trigger `SECURITY DEFINER`, ou falha no trigger `send_welcome_message_on_subscription`/`sync_transaction`) fica invisível.
 
-## Solução
+## Plano
 
-Rotear a chamada ao Asaas conforme o método escolhido pelo comprador, mantendo o UX atual:
+1. **Reproduzir e confirmar a causa**
+   - Executar manualmente `UPDATE subscriptions SET status='active' WHERE id='5c441af4…'` via migração e observar se algum trigger (welcome message, sync_tx) lança erro.
+   - Se o UPDATE passar, o bug estava só na falta de checagem de erro; se falhar, corrigir o trigger que estoura.
 
-- `PIX` → continua igual, `billingType=PIX` + QR code inline.
-- `WALLET` → continua igual, débito de saldo.
-- `CREDIT_CARD` → mudar para `billingType=UNDEFINED` no backend; o `invoiceUrl` retornado é o checkout hospedado que aceita cartão. O `CardCheckout.tsx` já abre em nova aba e faz polling do status — nenhuma mudança no componente.
+2. **Endurecer `applyPaidIntent` (`src/lib/payments-reconcile.server.ts`)**
+   - `markStatusPaid` passa a retornar `{ error }` do Supabase e lançar `Error` em caso de falha.
+   - `applyPaidIntent` só carimba `processed_at` no intent **depois** que o `UPDATE` do referenceTable foi bem-sucedido. Se der erro, deixa o intent sem processar para que o poller/webhook tente de novo.
+   - Log estruturado (`console.error`) com `intent.id`, `referenceTable`, `referenceId` para facilitar debug futuro.
 
-Isso preserva:
-- Split para o creator (o Asaas aplica o split mesmo em `UNDEFINED`, pelo `walletId`).
-- Recarga 1-clique da carteira via `chargeSavedCardTopUp` (continua usando `CREDIT_CARD` + token, único caminho com tokenização).
+3. **Reconciliar retroativamente o pagamento atual**
+   - Após o fix, executar uma migração one-off que:
+     - marca `subscriptions.id = 5c441af4…` como `active` (dispara triggers → cria transaction, envia welcome, bump de promoção se houver).
+     - reprocessa qualquer outro `payment_intents` cujo `event_type='PAYMENT_CONFIRMED'` esteja com `processed_at` mas cujo referenceTable ainda esteja `pending`/não-paid (varredura defensiva).
 
-## Passos
-
-1. **`src/lib/asaas.server.ts`**
-   - Expandir `AsaasBillingType` para incluir `"UNDEFINED"`.
-   - Em `createPayment`, tratar `UNDEFINED` exatamente como PIX/BOLETO (sem exigir campos de cartão). Bloco `if (input.billingType === "CREDIT_CARD")` só é acionado quando um token/cartão é passado explicitamente (fluxo da recarga 1-clique).
-
-2. **`src/lib/payments.functions.ts`** — nos handlers de compra que aceitam método do comprador:
-   - `createSubscriptionPayment`
-   - `createTipPayment`
-   - `createChatUnlockPayment`
-   - `createPublicationUnlockPayment`
-   - `createStoryUnlockPayment` (e qualquer outro `createXxxPayment` que aceite `method: Method`)
-   
-   Mapear internamente: se `data.method === "CREDIT_CARD"`, chamar `asaas.createPayment({ billingType: "UNDEFINED", ... })`. Manter o campo `method: "CREDIT_CARD"` gravado no `payment_intents`/tabelas (não mudar contrato do frontend). Sem alterar splits nem `netCreatorCents`.
-
-3. **`chargeSavedCardTopUp` (recarga)** — **não mexer**. Continua `billingType=CREDIT_CARD` + `creditCardToken`.
-
-4. **Webhook `/api/public/webhooks/asaas.ts`** — verificar se o handler diferencia por `billingType` para atualizar status; se sim, tratar `UNDEFINED` cujo pagamento efetivo foi `CREDIT_CARD` (Asaas troca o `billingType` do evento pelo método real após o pagamento). Nenhuma alteração se ele já reage só ao `status` do evento.
-
-5. **`PaymentModal.tsx` / `SubscribeDialog.tsx`** — o branch `isCard` já usa `CardCheckout` com `invoiceUrl`. Verificar que `invoiceUrl` volta sempre preenchido para `UNDEFINED` (o Asaas retorna). Ajustar mensagem interna do `CardCheckout` de "checkout seguro do Asaas" continua correta.
+4. **Verificação final**
+   - Confirmar `subscriptions.status='active'`, presença de uma linha em `transactions` com `kind='subscription'`, `net_cents=2329`, `provider_ref='pay_8qw0ylwfpi1zvuq7'` e `creator_profile_id` correto.
 
 ## Detalhes técnicos
 
-- `billingType=UNDEFINED` no Asaas: cria a cobrança sem forçar método; `invoiceUrl` mostra opções (Cartão, PIX, Boleto). Como já rotulamos a preferência do usuário como "Cartão" na UI, e a tela do Asaas prioriza cartão, o UX percebido é o mesmo.
-- Alternativa possível se o comportamento acima incomodar: usar `/paymentLinks` ou `/checkout` do Asaas para pré-selecionar cartão. Mais trabalho, deixar para uma iteração futura se necessário.
-- Não alterar `AsaasBillingType` guardado no banco em `payment_intents.method` — a coluna reflete o método que o comprador **escolheu** na nossa UI (`CREDIT_CARD`), não o `billingType` enviado ao Asaas.
-
-## Fora do escopo
-
-- Trocar de provider.
-- Formulário inline de cartão (foi meu plano anterior — descartado, tokenização não está liberada).
-- Suporte a parcelamento / 3DS custom (só via checkout hospedado).
+- Arquivos afetados: `src/lib/payments-reconcile.server.ts` (fix principal). Sem alterações no webhook route — ele apenas delega para `applyPaidIntent`.
+- Migração de correção pontual: um `UPDATE` numa migração, sem alterar schema.
+- Sem alterações de UI, sem mudanças em fluxo de checkout — o pagamento em si já funcionou; o bug é apenas na etapa de reconciliação/observabilidade.
