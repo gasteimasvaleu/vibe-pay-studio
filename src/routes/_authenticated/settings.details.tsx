@@ -22,21 +22,48 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
     const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
-    const { data: profile } = await supabase
+
+    const { data: account } = await supabase
       .from("profiles")
-      .select("cover_url, avatar_url, username, display_name, bio, location")
+      .select("username, display_name, bio, location, cover_url, avatar_url, active_profile_id, active_view, free_username, free_display_name, free_avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();
-    const username = profile?.username ?? user.email?.split("@")[0] ?? "voce";
+
+    // Preferir dados do creator_profiles ativo (pago ou gratuito) para avatar/capa/bio.
+    let activeCoverUrl: string | null = null;
+    let activeAvatarUrl: string | null = null;
+    let activeBio: string | null = null;
+    let activeDisplayName: string | null = null;
+    if (account?.active_profile_id) {
+      const { data: cp } = await supabase
+        .from("creator_profiles")
+        .select("cover_url, avatar_url, bio, display_name")
+        .eq("id", account.active_profile_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      activeCoverUrl = cp?.cover_url ?? null;
+      activeAvatarUrl = cp?.avatar_url ?? null;
+      activeBio = cp?.bio ?? null;
+      activeDisplayName = cp?.display_name ?? null;
+    }
+
+    const inFreeView = account?.active_view === "free";
+    const username = (inFreeView ? account?.free_username : account?.username) ??
+      user.email?.split("@")[0] ??
+      "voce";
     const displayName =
-      profile?.display_name ??
+      activeDisplayName ??
+      (inFreeView ? account?.free_display_name : account?.display_name) ??
       username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+
     return {
-      coverUrl: profile?.cover_url ?? null,
-      avatarUrl: profile?.avatar_url ?? null,
+      coverUrl: activeCoverUrl ?? account?.cover_url ?? null,
+      avatarUrl: inFreeView
+        ? account?.free_avatar_url ?? activeAvatarUrl ?? account?.avatar_url ?? null
+        : activeAvatarUrl ?? account?.avatar_url ?? null,
       displayName,
-      bio: profile?.bio ?? "",
-      location: profile?.location ?? "",
+      bio: activeBio ?? account?.bio ?? "",
+      location: account?.location ?? "",
     };
   },
   component: SettingsDetailsPage,
