@@ -77,6 +77,115 @@ function formatBRL(cents: number) {
   });
 }
 
+function isExpired(expiresAt: string) {
+  return new Date(expiresAt) < new Date();
+}
+
+function CallInviteCard({
+  invite,
+  mine,
+  onPay,
+  onCancel,
+}: {
+  invite: NonNullable<ChatMessage["metadata"]>["callInvite"];
+  mine: boolean;
+  onPay: () => void;
+  onCancel: () => void;
+}) {
+  const expired = isExpired(invite.expiresAt) || invite.status === "expired";
+  const paid = invite.status === "paid";
+  const cancelled = invite.status === "cancelled";
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2 min-w-[220px]">
+      <div className="flex items-center gap-2 text-primary">
+        <Video className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Videochamada</span>
+      </div>
+      <div className="text-sm">
+        {invite.durationMin} min · {formatBRL(invite.priceCents)}
+      </div>
+      {expired ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Timer className="h-3 w-3" /> Expirado
+        </div>
+      ) : cancelled ? (
+        <div className="text-xs text-muted-foreground">Cancelado</div>
+      ) : paid ? (
+        <div className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+          <Phone className="h-3 w-3" /> Pago · aguardando início
+        </div>
+      ) : mine ? (
+        <Button size="sm" variant="outline" className="w-full h-8" onClick={onCancel}>
+          Cancelar convite
+        </Button>
+      ) : (
+        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
+          Pagar {formatBRL(invite.priceCents)}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function TipCard({
+  tip,
+  mine,
+}: {
+  tip: NonNullable<ChatMessage["metadata"]>["tip"];
+  mine: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-1">
+      <div className="flex items-center gap-2 text-amber-500">
+        <Gift className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Mimo</span>
+      </div>
+      <div className="text-sm font-medium">{formatBRL(tip.amountCents)}</div>
+      <div className="text-[10px] text-muted-foreground">{mine ? "Você enviou um mimo" : "Enviou um mimo"}</div>
+    </div>
+  );
+}
+
+function PaidDmCard({
+  upload,
+  media,
+  mine,
+  onPay,
+}: {
+  upload: NonNullable<ChatMessage["metadata"]>["paidUpload"];
+  media: { url?: string | null; kind: string; mime: string }[];
+  mine: boolean;
+  onPay: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+      <div className="flex items-center gap-2 text-primary">
+        <Lock className="h-4 w-4" />
+        <span className="text-xs font-semibold uppercase tracking-wide">Mídia paga</span>
+      </div>
+      <div className="text-sm">{formatBRL(upload.priceCents)} · desbloqueie para visualizar</div>
+      {media.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {media.map((m, idx) =>
+            m.url ? (
+              m.kind === "image" ? (
+                <img key={idx} src={m.url} alt="" className="rounded-lg w-full object-cover max-h-48" />
+              ) : m.kind === "video" ? (
+                <video key={idx} src={m.url} controls className="rounded-lg w-full max-h-48" />
+              ) : null
+            ) : null,
+          )}
+        </div>
+      )}
+      {!mine && (
+        <Button size="sm" className="w-full h-8 bg-gradient-primary" onClick={onPay}>
+          Desbloquear por {formatBRL(upload.priceCents)}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function ChatThreadView() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
