@@ -485,8 +485,9 @@ export const sendBroadcast = createServerFn({ method: "POST" })
     if (jErr) throw new Error(jErr.message);
 
     if (data.scheduledAt) {
-      return { sent: 0, failed: 0, jobId: job.id, scheduled: true };
+      return { sent: 0, failed: 0, jobId: job.id, scheduled: true, scheduledAt: data.scheduledAt };
     }
+
 
     let sent = 0;
     let failed = 0;
