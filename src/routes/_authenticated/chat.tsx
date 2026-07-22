@@ -145,12 +145,13 @@ function ChatLayout() {
 
         <aside
           className={cn(
-            "border-r border-border bg-card/80 backdrop-blur-xl",
+            "border-r border-border bg-white",
             activeThreadId ? "hidden md:flex" : "flex",
             "flex-col",
           )}
         >
-          <div className="h-16 shrink-0 px-4 flex items-center justify-between border-b border-border">
+          <div className="h-16 shrink-0 px-4 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl">
+
             <h1 className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
               Conversas
             </h1>
@@ -190,7 +191,7 @@ function ChatLayout() {
             </div>
           </div>
 
-          <div className="px-4">
+          <div className="px-4 pt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input

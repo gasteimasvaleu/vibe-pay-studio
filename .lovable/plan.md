@@ -1,6 +1,7 @@
-## Ajuste de altura do header "Conversas"
+## Ajuste da sidebar do chat
 
-O header da sidebar (`chat.tsx`, linha 153) usa `pt-6 pb-3`, ficando mais alto que o header direito da conversa, que é `h-16` fixo (`chat.$threadId.tsx`, linha 266).
+Em `src/routes/_authenticated/chat.tsx`:
 
-### Alteração
-- Em `src/routes/_authenticated/chat.tsx`, trocar `px-4 pt-6 pb-3 flex items-center justify-between` por `h-16 shrink-0 px-4 flex items-center justify-between border-b border-border`, alinhando exatamente com a altura (`h-16`) do header da direita e mantendo a divisória inferior.
+1. Aside (linha 146-152): trocar `bg-card/80 backdrop-blur-xl` por `bg-white` para o corpo inteiro ficar branco.
+2. Header "Conversas" (linha 153): adicionar `bg-card/80 backdrop-blur-xl` para preservar a cor atual do topo.
+3. Wrapper do input de busca (linha 193): trocar `px-4` por `px-4 pt-4`, criando o respiro entre a linha inferior do header e o campo de busca.
