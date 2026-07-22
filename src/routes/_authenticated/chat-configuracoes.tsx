@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { AppTopBar } from "@/components/site/AppTopBar";
+
 
 export const Route = createFileRoute("/_authenticated/chat-configuracoes")({
   component: ChatSettingsPage,
@@ -26,7 +26,6 @@ function ChatSettingsPage() {
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground flex flex-col">
-      <AppTopBar />
       <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
         <button
           type="button"

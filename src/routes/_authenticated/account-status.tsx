@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Check, MessageCircle } from "lucide-react";
-import { AppTopBar } from "@/components/site/AppTopBar";
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -83,7 +83,6 @@ function AccountStatusPage() {
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground">
-      <AppTopBar />
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
         <div className="relative flex items-center justify-center mb-8">
           <button

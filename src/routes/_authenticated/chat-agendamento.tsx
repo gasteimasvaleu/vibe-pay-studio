@@ -35,7 +35,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { AppTopBar } from "@/components/site/AppTopBar";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -99,8 +99,6 @@ function ChatSchedulingPage() {
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground flex flex-col">
-      <AppTopBar />
-
       {view === "calendar" ? (
         <>
           <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
