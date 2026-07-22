@@ -131,7 +131,7 @@ function TipCard({
   tip,
   mine,
 }: {
-  tip: NonNullable<ChatMessage["metadata"]>["tip"];
+  tip: Required<NonNullable<ChatMessage["metadata"]>>["tip"];
   mine: boolean;
 }) {
   return (
