@@ -206,7 +206,9 @@ function ChatThreadView() {
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
   const [floaters, setFloaters] = useState<FloatingEmoji[]>([]);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
 
   // Monetization dialogs
   const [callInviteOpen, setCallInviteOpen] = useState(false);
