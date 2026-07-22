@@ -108,7 +108,7 @@ export const listThreads = createServerFn({ method: "GET" })
         threadId: t.id,
         partnerId,
         partnerUsername: profile?.username ?? "usuário",
-        partnerAvatar: null,
+        partnerAvatar: (profile as { avatar_url?: string | null } | undefined)?.avatar_url ?? null,
         lastMessage: lastMsgRows?.[0]?.content ?? null,
         lastMessageAt: t.last_message_at,
         unreadCount: unread ?? 0,
