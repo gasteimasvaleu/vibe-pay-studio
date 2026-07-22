@@ -98,7 +98,7 @@ function ChatSchedulingPage() {
   };
 
   return (
-    <div className="min-h-[100svh] bg-background text-foreground flex flex-col">
+    <div className="h-[calc(100svh-56px-96px)] bg-background text-foreground flex flex-col">
       {view === "calendar" ? (
         <>
           <header className="relative h-14 flex items-center justify-center border-b border-border px-4">
@@ -330,7 +330,7 @@ function Composer({
       >
         <X className="h-5 w-5" />
       </button>
-      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full min-h-[calc(100svh-56px)]">
+      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
         {/* Left: contacts */}
         <aside className="border-r border-border p-6 flex flex-col overflow-y-auto">
           <div className="flex items-center gap-2 mb-4">
