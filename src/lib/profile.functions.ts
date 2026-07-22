@@ -218,12 +218,31 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
     // Verifica colisão cross-table: creator_profiles pode ter o mesmo username.
     const { data: existingCreator, error: creatorError } = await supabase
       .from("creator_profiles")
-      .select("user_id")
+      .select("user_id, id")
       .eq("username", userCheck.value)
       .maybeSingle();
     if (creatorError) throw new Error(creatorError.message);
+    const activeId = await getActiveCreatorProfileId(supabase, userId);
     if (existingCreator && existingCreator.user_id !== userId) {
       return { ok: false, reason: "username_taken" } as const;
+    }
+    // Impede trocar para o username de OUTRO perfil do mesmo usuário.
+    if (existingCreator && activeId && existingCreator.id !== activeId) {
+      return { ok: false, reason: "username_taken" } as const;
+    }
+
+    if (activeId) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update({ display_name: nameCheck.value, username: userCheck.value })
+        .eq("id", activeId)
+        .eq("user_id", userId);
+      if (cpErr) {
+        if ((cpErr as { code?: string }).code === "23505") {
+          return { ok: false, reason: "username_taken" } as const;
+        }
+        throw new Error(cpErr.message);
+      }
     }
 
     const { error } = await supabase
