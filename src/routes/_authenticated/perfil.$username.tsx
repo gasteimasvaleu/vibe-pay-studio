@@ -962,6 +962,7 @@ function PerfilPage() {
             creatorId={profile.userId}
             creatorName={displayName}
             initialPlan={selectedPlan}
+            onCpfRequired={() => setCpfPromptForSubscription(true)}
           />
           <TipDialog
             open={tipOpen}
