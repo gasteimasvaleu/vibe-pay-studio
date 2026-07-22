@@ -40,6 +40,13 @@ function providerForMethod(method: Method): "asaas_pix" | "asaas_card" {
   return method === "PIX" ? "asaas_pix" : "asaas_card";
 }
 
+// Asaas billingType para o /payments. Como a conta ainda não tem tokenização
+// liberada para compras, cartão sempre vai via checkout hospedado — enviamos
+// UNDEFINED para receber invoiceUrl que aceita cartão. PIX permanece direto.
+function asaasBillingTypeForMethod(method: Method): "PIX" | "UNDEFINED" {
+  return method === "PIX" ? "PIX" : "UNDEFINED";
+}
+
 async function ensureCustomerId(
   supabase: any,
   userId: string,
