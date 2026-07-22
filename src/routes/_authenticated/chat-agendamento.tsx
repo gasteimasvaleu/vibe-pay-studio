@@ -25,8 +25,10 @@ import {
   ChevronRight,
   ChevronUp,
   Info,
+  Loader2,
   Plus,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -45,6 +47,15 @@ import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatCo
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  previewBroadcastAudience,
+  sendBroadcast,
+  listScheduledBroadcastsByMonth,
+  cancelBroadcast,
+} from "@/lib/chat-monetization.functions";
+
 
 const searchSchema = z.object({
   view: fallback(z.string(), "calendar").default("calendar"),
