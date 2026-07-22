@@ -496,10 +496,11 @@ function Composer({
           message: payload.text,
           media: payload.media,
           priceCents: payload.priceCents ?? 0,
-          audienceNames,
+          filters: audienceNames,
           scheduledAt: scheduledAt?.toISOString(),
         },
       });
+
       if (res.scheduled) {
         toast.success(`Mensagem agendada para ${format(new Date(res.scheduledAt!), "dd/MM 'às' HH:mm", { locale: ptBR })}`);
       } else {
