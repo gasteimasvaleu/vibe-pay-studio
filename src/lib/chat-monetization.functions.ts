@@ -488,6 +488,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
         .limit(1000);
       const grossByBuyer = new Map<string, number>();
       for (const t of txs ?? []) {
+        if (!t.buyer_id) continue;
         grossByBuyer.set(t.buyer_id, (grossByBuyer.get(t.buyer_id) ?? 0) + (t.amount_cents_gross ?? 0));
       }
       recipientIds = Array.from(grossByBuyer.entries())
@@ -498,7 +499,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       const { data: rows } = await supabase
         .from("follows")
         .select("follower_id")
-        .eq("following_id", userId)
+        .eq("followee_id", userId)
         .limit(500);
       recipientIds = Array.from(new Set((rows ?? []).map((r) => r.follower_id)));
     }
