@@ -216,7 +216,7 @@ export function ChatComposer({
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-2">
+    <div className="w-full space-y-2">
       {priceCents ? (
         <div className="flex items-center gap-2 text-xs">
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 font-medium">
