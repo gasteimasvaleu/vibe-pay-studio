@@ -62,15 +62,27 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
 
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
+    // Prioriza creator_profiles (perfis pagos/gratuitos vinculados).
+    // Se não houver, cai no profiles legado.
+    const { data: creatorProfile } = await supabase
+      .from("creator_profiles")
+      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual")
       .eq("username", params.username)
       .maybeSingle();
 
+    let profile: any = creatorProfile;
+    if (!profile) {
+      const { data: legacyProfile } = await supabase
+        .from("profiles")
+        .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
+        .eq("username", params.username)
+        .maybeSingle();
+      profile = legacyProfile;
+    }
+
     if (!profile) throw notFound();
-    if (profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
+    const isCreatorProfile = !!creatorProfile;
+    if (!isCreatorProfile && profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
 
 
     const [
