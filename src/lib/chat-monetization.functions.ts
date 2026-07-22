@@ -190,21 +190,17 @@ export const sendTipMessage = createServerFn({ method: "POST" })
     const partnerId = await partnerIdOf(supabase, userId, data.threadId);
     if (partnerId === userId) throw new Error("Não pode enviar Mimo para si mesmo");
 
-    const { data: tip, error } = await supabase
-      .from("tips")
-      .insert({
-        creator_id: partnerId,
-        sender_id: userId,
-        amount_cents: data.amountCents,
-        provider: "wallet",
-        status: "paid",
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
+    const { data: walletResult, error: rpcErr } = await supabase.rpc("pay_with_wallet", {
+      _kind: "tip",
+      _creator_id: partnerId,
+      _amount_cents: data.amountCents,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
+    const tipId = (walletResult as { referenceId?: string } | null)?.referenceId;
+    if (!tipId) throw new Error("Falha ao processar mimo");
 
     const meta: { tip: ChatTipMeta } = {
-      tip: { tipId: tip.id, amountCents: data.amountCents },
+      tip: { tipId, amountCents: data.amountCents },
     };
     const msg = await insertSystemMessage(
       supabase,
@@ -213,7 +209,7 @@ export const sendTipMessage = createServerFn({ method: "POST" })
       `Mimo de ${(data.amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
       meta as unknown as Record<string, unknown>,
     );
-    return { messageId: msg.id, tipId: tip.id };
+    return { messageId: msg.id, tipId };
   });
 
 // ---- Paid DM upload (subscriber pays to send media to creator) ----
