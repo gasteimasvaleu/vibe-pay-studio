@@ -3,10 +3,13 @@ import {
   ArrowUp,
   Camera,
   DollarSign,
+  Gift,
   Loader2,
+  Lock,
   Mic,
   Paperclip,
   Sparkles,
+  Video,
   X,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
