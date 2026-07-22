@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Archive,
   ArrowUp,
   CalendarCheck,
   Camera,
   DollarSign,
   Gift,
+  Images,
   Loader2,
   Lock,
   Megaphone,
   Mic,
   Paperclip,
   Sparkles,
+  Tag,
   Video,
   X,
 } from "lucide-react";
