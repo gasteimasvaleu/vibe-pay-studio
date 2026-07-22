@@ -432,6 +432,7 @@ export const sendMessage = createServerFn({ method: "POST" })
         threadId: z.string().uuid(),
         content: z.string().max(4000).default(""),
         priceCents: z.number().int().min(0).max(50000).optional(),
+        replyToId: z.string().uuid().optional(),
         media: z
           .array(
             z.object({
@@ -464,8 +465,10 @@ export const sendMessage = createServerFn({ method: "POST" })
         sender_id: userId,
         content: data.content ?? "",
         price_cents: price,
+        reply_to_id: data.replyToId ?? null,
         metadata,
       })
+
       .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
       .single();
     if (error) throw new Error(error.message);
