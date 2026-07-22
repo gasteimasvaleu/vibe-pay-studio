@@ -741,18 +741,127 @@ function ChatThreadView() {
         onConfirm={confirmUnlockPayment}
       />
 
+      <PaymentMethodDialog
+        open={!!pendingAction}
+        onOpenChange={(v) => !v && setPendingAction(null)}
+        title={pendingAction?.type === "call" ? "Pagar videochamada" : "Pagar envio de mídia"}
+        amountCents={pendingAction?.priceCents ?? 0}
+        loading={!!unlockingId}
+        onConfirm={confirmActionPayment}
+      />
+
       <PaymentModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        title="Desbloquear mensagem"
+        title={pendingAction?.type === "call" ? "Pagar videochamada" : pendingAction?.type === "paidDm" ? "Pagar envio de mídia" : "Desbloquear mensagem"}
         checkout={checkout}
         onPaid={() => {
           queryClient.invalidateQueries({
             queryKey: ["chat", "messages", threadId],
           });
-          toast.success("Mensagem desbloqueada");
+          toast.success("Pagamento confirmado");
         }}
       />
+
+      {/* Call invite dialog */}
+      <Dialog open={callInviteOpen} onOpenChange={setCallInviteOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Convite de videochamada</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Duração (min)</label>
+              <Input
+                type="number"
+                min={5}
+                max={120}
+                value={callDuration}
+                onChange={(e) => setCallDuration(Math.max(5, Math.min(120, Number(e.target.value))))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor (R$)</label>
+              <Input
+                type="number"
+                min={39.9}
+                max={5000}
+                step={0.01}
+                value={(callPrice / 100).toFixed(2)}
+                onChange={(e) => setCallPrice(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={callInviteMutation.isPending}
+              onClick={() => callInviteMutation.mutate({ priceCents: callPrice, durationMinutes: callDuration })}
+            >
+              Enviar convite · válido por 10 min
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Paid DM dialog */}
+      <Dialog open={paidDmOpen} onOpenChange={setPaidDmOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pagar para enviar mídia</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              O criador cobra para receber mídias nesta conversa. Após o pagamento você poderá enviar fotos e vídeos.
+            </p>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor oferecido (R$)</label>
+              <Input
+                type="number"
+                min={14.9}
+                max={2000}
+                step={0.01}
+                value={(paidDmPrice / 100).toFixed(2)}
+                onChange={(e) => setPaidDmPrice(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={paidDmMutation.isPending}
+              onClick={() => paidDmMutation.mutate({ priceCents: paidDmPrice })}
+            >
+              Continuar para pagamento
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tip dialog */}
+      <Dialog open={tipOpen} onOpenChange={setTipOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Enviar mimo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Valor (R$)</label>
+              <Input
+                type="number"
+                min={5}
+                max={2000}
+                step={0.01}
+                value={(tipAmount / 100).toFixed(2)}
+                onChange={(e) => setTipAmount(Math.round(Number(e.target.value) * 100))}
+              />
+            </div>
+            <Button
+              className="w-full bg-gradient-primary"
+              disabled={tipMutation.isPending}
+              onClick={() => tipMutation.mutate({ amountCents: tipAmount })}
+            >
+              Enviar mimo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
