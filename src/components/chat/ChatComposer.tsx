@@ -86,6 +86,8 @@ export function ChatComposer({
   onPaidDmRequest,
   onTip,
   onBroadcast,
+  replyingTo,
+  onCancelReply,
 }: {
   meId: string | null;
   isCreator: boolean;
@@ -97,6 +99,8 @@ export function ChatComposer({
   onPaidDmRequest?: () => void;
   onTip?: () => void;
   onBroadcast?: () => void;
+  replyingTo?: ComposerReplyPreview | null;
+  onCancelReply?: () => void;
 }) {
   const [text, setText] = useState("");
   const [media, setMedia] = useState<ComposerMedia[]>([]);
@@ -105,6 +109,7 @@ export function ChatComposer({
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+
 
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
