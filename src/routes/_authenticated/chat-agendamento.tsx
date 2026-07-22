@@ -220,13 +220,15 @@ function ChatSchedulingPage() {
                   const inMonth = isSameMonth(day, currentMonth);
                   const isToday = isSameDay(day, today);
                   const isSelected = isSameDay(day, selectedDate);
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  const hasJobs = (jobsByDay.get(dayKey) ?? []).length > 0;
                   return (
                     <button
                       type="button"
                       key={day.toISOString()}
                       onClick={() => setSelectedDate(day)}
                       className={cn(
-                        "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
+                        "aspect-square rounded-lg text-sm flex flex-col items-center justify-center gap-0.5 transition-colors",
                         !inMonth && "text-muted-foreground/50",
                         inMonth && !isSelected && "text-foreground hover:bg-accent",
                         isToday && !isSelected && "bg-accent/40",
@@ -234,11 +236,15 @@ function ChatSchedulingPage() {
                           "bg-card border border-border font-bold shadow-sm",
                       )}
                     >
-                      {format(day, "d")}
+                      <span>{format(day, "d")}</span>
+                      {hasJobs && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
                     </button>
                   );
                 })}
               </div>
+
             </div>
 
             {/* Selected day column */}
