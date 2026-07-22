@@ -439,7 +439,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data, context }): Promise<{ sent: number; failed: number; jobId: string; scheduled: boolean }> => {
+  .handler(async ({ data, context }): Promise<{ sent: number; failed: number; jobId: string; scheduled: boolean; scheduledAt?: string }> => {
     const { supabase, userId } = context;
 
     const { data: me } = await supabase
