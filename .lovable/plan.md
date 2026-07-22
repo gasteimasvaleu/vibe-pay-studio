@@ -1,12 +1,6 @@
-## Correção
+## Ajuste de altura do header "Conversas"
 
-Exibir avatar real do parceiro na lista de conversas, com fallback nas iniciais (como no header da conversa aberta).
+O header da sidebar (`chat.tsx`, linha 153) usa `pt-6 pb-3`, ficando mais alto que o header direito da conversa, que é `h-16` fixo (`chat.$threadId.tsx`, linha 266).
 
-1. **`src/lib/chat.functions.ts`** — em `listThreads`:
-   - Incluir `avatar_url` no `select` de `profiles`.
-   - Passar `partnerAvatar: profile?.avatar_url ?? null` no resultado.
-
-2. **`src/routes/_authenticated/chat.tsx`** — em `ThreadRow` (linha 287-294):
-   - Se `thread.partnerAvatar` existir, renderizar `<img src={thread.partnerAvatar} className="h-11 w-11 rounded-full object-cover" />`.
-   - Caso contrário, manter o círculo com iniciais como fallback.
-   - Preservar o dot verde de online por cima.
+### Alteração
+- Em `src/routes/_authenticated/chat.tsx`, trocar `px-4 pt-6 pb-3 flex items-center justify-between` por `h-16 shrink-0 px-4 flex items-center justify-between border-b border-border`, alinhando exatamente com a altura (`h-16`) do header da direita e mantendo a divisória inferior.

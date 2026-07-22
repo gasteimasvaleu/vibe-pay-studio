@@ -150,7 +150,7 @@ function ChatLayout() {
             "flex-col",
           )}
         >
-          <div className="px-4 pt-6 pb-3 flex items-center justify-between">
+          <div className="h-16 shrink-0 px-4 flex items-center justify-between border-b border-border">
             <h1 className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
               Conversas
             </h1>
