@@ -421,7 +421,7 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
 
     const { data: current, error: readErr } = await supabase
       .from("profiles")
-      .select("account_type, username")
+      .select("account_type, username, display_name, bio, cover_url, kyc_status")
       .eq("user_id", userId)
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
@@ -441,6 +441,15 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
       if (takenErr) throw new Error(takenErr.message);
       if (taken) throw new Error("handle_taken");
 
+      const { data: cpTaken, error: cpTakenErr } = await supabase
+        .from("creator_profiles")
+        .select("user_id")
+        .eq("username", data.handle)
+        .neq("user_id", userId)
+        .maybeSingle();
+      if (cpTakenErr) throw new Error(cpTakenErr.message);
+      if (cpTaken) throw new Error("handle_taken");
+
       const { error: upErr } = await supabase
         .from("profiles")
         .update({
@@ -452,6 +461,55 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
         })
         .eq("user_id", userId);
       if (upErr) throw new Error(upErr.message);
+
+      // Sincroniza/cria o creator_profiles(kind='free') para que busca e perfil
+      // usem avatar/capas próprios do perfil gratuito.
+      const { data: existingFree } = await supabase
+        .from("creator_profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("kind", "free")
+        .maybeSingle();
+
+      const freePayload = {
+        user_id: userId,
+        kind: "free" as const,
+        username: data.handle,
+        display_name: data.displayName,
+        avatar_url: data.avatarUrl ?? null,
+        cover_url: data.coverUrl ?? current?.cover_url ?? null,
+        bio: data.bio ?? current?.bio ?? null,
+        kyc_status: current?.kyc_status ?? "pending",
+      };
+
+      if (existingFree?.id) {
+        const { error: cpErr } = await supabase
+          .from("creator_profiles")
+          .update(freePayload)
+          .eq("id", existingFree.id)
+          .eq("user_id", userId);
+        if (cpErr) throw new Error(cpErr.message);
+      } else {
+        const { error: cpErr } = await supabase
+          .from("creator_profiles")
+          .insert(freePayload);
+        if (cpErr) throw new Error(cpErr.message);
+      }
+
+      // Ativa o perfil gratuito criado/atualizado.
+      const { data: freeCp } = await supabase
+        .from("creator_profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("kind", "free")
+        .maybeSingle();
+      if (freeCp?.id) {
+        await supabase
+          .from("profiles")
+          .update({ active_profile_id: freeCp.id })
+          .eq("user_id", userId);
+      }
+
       return { ok: true, username: data.handle, mode: "linked" as const };
     }
 
@@ -467,6 +525,15 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
     if (takenErr) throw new Error(takenErr.message);
     if (taken) throw new Error("handle_taken");
 
+    const { data: cpTaken, error: cpTakenErr } = await supabase
+      .from("creator_profiles")
+      .select("user_id")
+      .eq("username", data.handle)
+      .neq("user_id", userId)
+      .maybeSingle();
+    if (cpTakenErr) throw new Error(cpTakenErr.message);
+    if (cpTaken) throw new Error("handle_taken");
+
     const { error: upErr } = await supabase
       .from("profiles")
       .update({
@@ -480,6 +547,51 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
       })
       .eq("user_id", userId);
     if (upErr) throw new Error(upErr.message);
+
+    const { data: existingFree } = await supabase
+      .from("creator_profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("kind", "free")
+      .maybeSingle();
+
+    const freePayload = {
+      user_id: userId,
+      kind: "free" as const,
+      username: data.handle,
+      display_name: data.displayName,
+      avatar_url: data.avatarUrl ?? null,
+      cover_url: data.coverUrl ?? null,
+      bio: data.bio ?? null,
+      kyc_status: current?.kyc_status ?? "pending",
+    };
+
+    if (existingFree?.id) {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .update(freePayload)
+        .eq("id", existingFree.id)
+        .eq("user_id", userId);
+      if (cpErr) throw new Error(cpErr.message);
+    } else {
+      const { error: cpErr } = await supabase
+        .from("creator_profiles")
+        .insert(freePayload);
+      if (cpErr) throw new Error(cpErr.message);
+    }
+
+    const { data: freeCp } = await supabase
+      .from("creator_profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("kind", "free")
+      .maybeSingle();
+    if (freeCp?.id) {
+      await supabase
+        .from("profiles")
+        .update({ active_profile_id: freeCp.id })
+        .eq("user_id", userId);
+    }
 
     return { ok: true, username: data.handle, mode: "created" as const };
   });
