@@ -352,6 +352,9 @@ export const sendMessage = createServerFn({ method: "POST" })
       .refine((v) => (v.content?.trim().length ?? 0) > 0 || (v.media?.length ?? 0) > 0, {
         message: "Mensagem vazia",
       })
+      .refine((v) => (v.priceCents ?? 0) === 0 || (v.media?.length ?? 0) > 0, {
+        message: "Anexe uma mídia para definir um preço",
+      })
       .parse(data),
   )
   .handler(async ({ data, context }): Promise<ChatMessage> => {
