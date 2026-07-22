@@ -53,23 +53,25 @@ async function fetchCreators({
   const isMentionLookup = trimmed.startsWith("@");
   const term = isMentionLookup ? trimmed.slice(1) : trimmed;
 
-  // Queries `creator_profiles` (paid + free) with the owner's `profiles` row
-  // embedded so we can filter by the owner's privacy flags.
+  // Queries the dedicated search view that already joins creator_profiles
+  // with the owner's profiles row by user_id, so every profile (paid + free)
+  // of the same owner is returned and privacy flags are available as plain
+  // columns.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase
-    .from("creator_profiles")
+    .from("creator_profiles_search")
     .select(
-      "id, user_id, username, display_name, avatar_url, cover_url, created_at, profiles!inner(kyc_verified_at, country, restrict_search, restrict_search_br, restrict_search_country, restrict_mentions)",
+      "id, user_id, username, display_name, avatar_url, cover_url, created_at, kyc_verified_at, country, restrict_search, restrict_search_br, restrict_search_country, restrict_mentions",
     )
     .order("created_at", { ascending: false })
     .range(from, to);
 
   // Global search restriction.
-  q = q.eq("profiles.restrict_search", false);
+  q = q.eq("restrict_search", false);
 
   // "Não aparecer em pesquisas no Brasil" — só filtra quando o viewer está no BR.
   if (viewerCountry === "BR") {
-    q = q.eq("profiles.restrict_search_br", false);
+    q = q.eq("restrict_search_br", false);
   }
 
   // "Não aparecer em pesquisas do meu país" — mantém rows onde: flag=false
@@ -77,13 +79,12 @@ async function fetchCreators({
   if (viewerCountry) {
     q = q.or(
       `restrict_search_country.eq.false,country.neq.${viewerCountry},country.is.null`,
-      { foreignTable: "profiles" },
     );
   }
 
   // @mention lookup — also honor restrict_mentions.
   if (isMentionLookup) {
-    q = q.eq("profiles.restrict_mentions", false);
+    q = q.eq("restrict_mentions", false);
   }
 
   if (term.length > 0) {
@@ -104,7 +105,7 @@ async function fetchCreators({
     display_name: r.display_name,
     avatar_url: r.avatar_url,
     cover_url: r.cover_url,
-    kyc_verified_at: r.profiles?.kyc_verified_at ?? null,
+    kyc_verified_at: r.kyc_verified_at ?? null,
   }));
   return {
     items,
