@@ -35,7 +35,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly" }: Props) {
+export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [loading, setLoading] = useState(false);
