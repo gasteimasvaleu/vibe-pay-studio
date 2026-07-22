@@ -245,16 +245,29 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       let msgQuery = supabase
         .from("chat_messages")
-        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
+        .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata, deleted_at, reply_to_id")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
       if (clearedAt) msgQuery = msgQuery.gt("created_at", clearedAt);
-      const { data: msgs, error: mErr } = await msgQuery;
+      const { data: msgsRaw, error: mErr } = await msgQuery;
       if (mErr) throw new Error(mErr.message);
 
-      const paidPartnerMsgIds = (msgs ?? [])
-        .filter((m) => m.sender_id !== userId && (m.price_cents ?? 0) > 0)
+      // Filter out messages this user has hidden ("apagar para mim")
+      const allIds = (msgsRaw ?? []).map((m) => m.id);
+      const hiddenSet = new Set<string>();
+      if (allIds.length > 0) {
+        const { data: hides } = await supabase
+          .from("chat_message_hides")
+          .select("message_id")
+          .eq("user_id", userId)
+          .in("message_id", allIds);
+        for (const h of hides ?? []) hiddenSet.add(h.message_id);
+      }
+      const msgs = (msgsRaw ?? []).filter((m) => !hiddenSet.has(m.id));
+
+      const paidPartnerMsgIds = msgs
+        .filter((m) => m.sender_id !== userId && (m.price_cents ?? 0) > 0 && !m.deleted_at)
         .map((m) => m.id);
       const unlockedSet = new Set<string>();
       if (paidPartnerMsgIds.length > 0) {
@@ -266,6 +279,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           .eq("status", "paid");
         for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
       }
+
 
 
       // Collect media paths across messages and sign in one batch
