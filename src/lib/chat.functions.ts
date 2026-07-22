@@ -332,6 +332,11 @@ export const sendMessage = createServerFn({ method: "POST" })
       .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
       .single();
     if (error) throw new Error(error.message);
+    // Reset "deleted for me" flags so the thread reappears for both sides
+    await supabase
+      .from("chat_threads")
+      .update({ deleted_at_a: null, deleted_at_b: null })
+      .eq("id", data.threadId);
     const finalPrice = row.price_cents ?? 0;
     return {
       id: row.id,
