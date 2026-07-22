@@ -1,28 +1,11 @@
-## Objetivo
-Restaurar no `/chat-agendamento` as funções que o composer antigo tinha (mostradas no screenshot: imagem, microfone, arquivar, calendário, galeria, emoji flutuante, preço/tag) e substituir o botão **CONTINUAR** pela seta de envio atual do `ChatComposer`, mantendo o fluxo de disparo em massa.
+Envolver o bloco "Voltar + Mensagem em massa" (aside esquerdo do composer em `/chat-agendamento`) em um `<header>` com a mesma altura do header da direita (`h-16`), padding horizontal equivalente (`px-6`) e `border-b border-border` para criar a linha divisória harmônica entre as duas colunas.
 
-## Escopo
-Somente `src/components/chat/ChatComposer.tsx` e `src/routes/_authenticated/chat-agendamento.tsx`. Sem tocar em backend, tabelas ou funções de broadcast já criadas.
+## Alterações
 
-## Mudanças
+**Arquivo:** `src/routes/_authenticated/chat-agendamento.tsx`
 
-### 1. `ChatComposer.tsx` — novas props opcionais de broadcast
-Adicionar props opcionais que só ficam visíveis quando passadas (para não afetar o chat 1:1):
-- `showArchive?: boolean` + `onArchive?: () => void` → ícone `Archive`.
-- `showGallery?: boolean` + `onOpenGallery?: () => void` → ícone `Images` (galeria/vault).
-- `showTag?: boolean` + `onOpenTag?: () => void` → ícone `Tag` (rotular disparo).
-- Renderizar cada botão no bloco de ícones da esquerda somente quando `show*` for true.
-- Não mexer nos ícones existentes (Paperclip, Camera, Sparkles, DollarSign, CalendarCheck, Mic, ArrowUp).
+1. No `aside` esquerdo (linha ~351), remover o `p-6` do container e trocar o `div` que contém o botão Voltar + título por um `<header className="h-16 flex items-center gap-2 px-6 border-b border-border shrink-0">`.
+2. Envolver o restante do conteúdo do aside (busca, filtros, card informativo, botão Aplicar filtro) em um `<div className="flex-1 flex flex-col overflow-y-auto p-6">` para preservar o padding original e o scroll.
+3. Manter o header direito `"Selecionar usuários..."` como está (`h-16` equivalente via `py-4`) — se necessário ajustar para `h-16 flex items-center justify-center` para casar exatamente a altura.
 
-### 2. `chat-agendamento.tsx` — usar `ChatComposer` como único botão de envio
-- Remover o bloco "Escreva sua mensagem / Digite e envie…" central (placeholder antigo) e o botão **CONTINUAR** — o disparo passa a ser feito pela seta de envio do `ChatComposer`.
-- Passar ao `ChatComposer`:
-  - `showArchive` + `onArchive` (toast "Rascunho arquivado" — placeholder de UI, sem persistência nova).
-  - `showGallery` + `onOpenGallery` (abrir dialog simples informando que a seleção da galeria/vault será feita pelos anexos — reutiliza `Paperclip`).
-  - `showTag` + `onOpenTag` (toast "Em breve" — mantém paridade visual com o screenshot).
-  - `hideCallInvite`, `hideBroadcast` (já existentes), `scheduledAt`, `onOpenSchedule` (mantém agendamento).
-  - `disabled={activeFilters.size === 0}` para exigir seleção de contatos antes do envio, preservando a regra do CONTINUAR.
-- O handler `onSend` continua chamando `onSubmitBroadcast`, que já valida filtros e mostra o toast de agendamento.
-
-## Resultado
-A área inferior do `/chat-agendamento` exibe os mesmos ícones do screenshot (anexo/imagem, câmera, arquivar, calendário, galeria, emoji flutuante, preço, tag) e a seta roxa de envio no lugar do CONTINUAR, disparando ou agendando a mensagem em massa conforme o estado atual.
+Resultado: os dois headers ficam alinhados na mesma linha horizontal, com divisórias contínuas.
