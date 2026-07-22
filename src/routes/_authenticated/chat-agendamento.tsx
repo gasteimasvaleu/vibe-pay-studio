@@ -79,6 +79,7 @@ const CONTACT_FILTERS = [
 
 function ChatSchedulingPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -92,7 +93,27 @@ function ChatSchedulingPage() {
   const [contactSearch, setContactSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
+  const previewAudience = useServerFn(previewBroadcastAudience);
+  const sendBroadcastFn = useServerFn(sendBroadcast);
+  const listBroadcastsFn = useServerFn(listScheduledBroadcastsByMonth);
+  const cancelBroadcastFn = useServerFn(cancelBroadcast);
+
   const weeks = useMemo(() => buildMonthMatrix(currentMonth), [currentMonth]);
+
+  const monthQuery = useQuery({
+    queryKey: ["scheduled-broadcasts", currentMonth.getFullYear(), currentMonth.getMonth() + 1],
+    queryFn: () =>
+      listBroadcastsFn({ data: { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 } }),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (jobId: string) => cancelBroadcastFn({ data: { jobId } }),
+    onSuccess: () => {
+      toast.success("Agendamento cancelado");
+      queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao cancelar"),
+  });
 
   const toggleFilter = (name: string) => {
     setActiveFilters((prev) => {
@@ -103,7 +124,24 @@ function ChatSchedulingPage() {
     });
   };
 
+  const jobsByDay = useMemo(() => {
+    const map = new Map<string, typeof monthQuery.data.jobs>();
+    for (const job of monthQuery.data?.jobs ?? []) {
+      if (!job.scheduledAt) continue;
+      const key = format(new Date(job.scheduledAt), "yyyy-MM-dd");
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(job);
+    }
+    return map;
+  }, [monthQuery.data]);
+
+  const selectedDayJobs = useMemo(() => {
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return jobsByDay.get(key) ?? [];
+  }, [jobsByDay, selectedDate]);
+
   return (
+
     <div className="h-[calc(100svh-56px-96px)] bg-background text-foreground flex flex-col">
       {view === "calendar" ? (
         <>
