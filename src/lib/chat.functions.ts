@@ -48,6 +48,13 @@ export type ChatPaidUploadMeta = {
   priceCents: number;
 };
 
+export type ChatReplyPreview = {
+  messageId: string;
+  senderId: string;
+  snippet: string;
+  hasMedia: boolean;
+};
+
 export type ChatMessage = {
   id: string;
   threadId: string;
@@ -57,6 +64,7 @@ export type ChatMessage = {
   createdAt: string;
   priceCents: number | null;
   unlocked: boolean;
+  deletedAt?: string | null;
   metadata?: {
     welcome?: boolean;
     tag?: string | null;
@@ -65,8 +73,10 @@ export type ChatMessage = {
     callInvite?: ChatCallInvite;
     tip?: ChatTipMeta;
     paidUpload?: ChatPaidUploadMeta;
+    replyTo?: ChatReplyPreview;
   } | null;
 };
+
 
 
 export type PartnerProfile = {
