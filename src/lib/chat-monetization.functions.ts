@@ -406,6 +406,7 @@ export const previewBroadcastAudience = createServerFn({ method: "POST" })
         .limit(1000);
       const grossByBuyer = new Map<string, number>();
       for (const t of txs ?? []) {
+        if (!t.buyer_id) continue;
         grossByBuyer.set(t.buyer_id, (grossByBuyer.get(t.buyer_id) ?? 0) + (t.amount_cents_gross ?? 0));
       }
       const sorted = Array.from(grossByBuyer.entries())
