@@ -24,6 +24,7 @@ type Props = {
   creatorId: string;
   creatorName?: string;
   initialPlan?: Plan;
+  onCpfRequired?: () => void;
 };
 
 type Checkout = {
