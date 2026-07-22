@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Gift, Lock, Phone, Timer, Video, X } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,15 @@ import {
   sendMessage,
   type ChatMessage,
 } from "@/lib/chat.functions";
-import { createChatUnlockPayment } from "@/lib/payments.functions";
+import {
+  createCallInvite,
+  cancelCallInvite,
+  createPaidDmRequest,
+  cancelPaidDmRequest,
+  sendTipMessage,
+  expireStaleInvites,
+} from "@/lib/chat-monetization.functions";
+import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
@@ -22,6 +30,14 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
 import { VideoCallHeaderButton } from "@/components/chat/VideoCallHeaderButton";
 import { ThreadActionsMenu } from "@/components/chat/ThreadActionsMenu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
