@@ -217,6 +217,7 @@ function ChatThreadView() {
   const [tipOpen, setTipOpen] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(1000);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [deliveringPaidDm, setDeliveringPaidDm] = useState<{ requestId: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<
     { type: "call" | "paidDm"; id: string; priceCents: number } | null
   >(null);
