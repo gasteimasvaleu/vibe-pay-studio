@@ -302,6 +302,83 @@ function ChatThreadView() {
     setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
   };
 
+  const callInviteMutation = useMutation({
+    mutationFn: (vars: { priceCents: number; durationMinutes: number }) =>
+      callInviteFn({ data: { threadId, priceCents: vars.priceCents, durationMinutes: vars.durationMinutes } }),
+    onSuccess: () => {
+      setCallInviteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+      toast.success("Convite de videochamada enviado");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const paidDmMutation = useMutation({
+    mutationFn: (vars: { priceCents: number }) =>
+      paidDmRequestFn({ data: { threadId, priceCents: vars.priceCents } }),
+    onSuccess: (res) => {
+      setPaidDmOpen(false);
+      setPendingAction({ type: "paidDm", id: res.requestId, priceCents: paidDmPrice });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const tipMutation = useMutation({
+    mutationFn: (vars: { amountCents: number }) =>
+      sendTipFn({ data: { threadId, amountCents: vars.amountCents } }),
+    onSuccess: () => {
+      setTipOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+      queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+      toast.success("Mimo enviado");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const confirmActionPayment = async (method: PaymentMethod) => {
+    if (!pendingAction) return;
+    try {
+      setUnlockingId(pendingAction.id);
+      if (method === "WALLET") {
+        if (pendingAction.type === "call") {
+          await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
+        } else {
+          await walletPay({ data: { kind: "paid_dm", requestId: pendingAction.id } });
+        }
+        setPendingAction(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Pagamento confirmado");
+        return;
+      }
+      const res =
+        pendingAction.type === "call"
+          ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
+          : await paidDmPayFn({ data: { requestId: pendingAction.id, method } });
+      setPendingAction(null);
+      setCheckout({
+        paymentIntentId: res.paymentIntentId,
+        method,
+        pixQrCode: res.pixQrCode,
+        pixCopyPaste: res.pixCopyPaste,
+        invoiceUrl: res.invoiceUrl,
+      });
+      setModalOpen(true);
+    } catch (err: any) {
+      toast.error(translatePaymentError(err, "Erro ao gerar pagamento"));
+    } finally {
+      setUnlockingId(null);
+    }
+  };
+
+  function openPaymentForCallInvite(messageId: string, callId: string, priceCents: number) {
+    setPendingAction({ type: "call", id: callId, priceCents });
+  }
+
+  function openPaymentForPaidDm(messageId: string, requestId: string, priceCents: number) {
+    setPendingAction({ type: "paidDm", id: requestId, priceCents });
+  }
+
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-white">
