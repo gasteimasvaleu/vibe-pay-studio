@@ -336,21 +336,9 @@ function ChatThreadView() {
   });
 
   const confirmActionPayment = async (method: PaymentMethod) => {
-    if (!pendingAction) return;
+    if (!pendingAction || method === "WALLET") return;
     try {
       setUnlockingId(pendingAction.id);
-      if (method === "WALLET") {
-        if (pendingAction.type === "call") {
-          await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
-        } else {
-          await walletPay({ data: { kind: "paid_dm", requestId: pendingAction.id } });
-        }
-        setPendingAction(null);
-        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
-        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-        toast.success("Pagamento confirmado");
-        return;
-      }
       const res =
         pendingAction.type === "call"
           ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
