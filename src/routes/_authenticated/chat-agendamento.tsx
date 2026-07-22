@@ -476,6 +476,8 @@ function Composer({
           </section>
         </div>
       </div>
+      </div>
+    </TooltipProvider>
   );
 }
 
