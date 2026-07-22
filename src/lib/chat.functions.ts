@@ -313,23 +313,40 @@ export const sendMessage = createServerFn({ method: "POST" })
     z
       .object({
         threadId: z.string().uuid(),
-        content: z.string().min(1).max(4000),
+        content: z.string().max(4000).default(""),
         priceCents: z.number().int().min(0).max(50000).optional(),
+        media: z
+          .array(
+            z.object({
+              path: z.string().min(1),
+              mime: z.string().min(1),
+              kind: z.enum(["image", "video", "audio"]),
+              durationSec: z.number().int().positive().optional(),
+            }),
+          )
+          .max(10)
+          .optional(),
+      })
+      .refine((v) => (v.content?.trim().length ?? 0) > 0 || (v.media?.length ?? 0) > 0, {
+        message: "Mensagem vazia",
       })
       .parse(data),
   )
   .handler(async ({ data, context }): Promise<ChatMessage> => {
     const { supabase, userId } = context;
     const price = data.priceCents ?? 0;
+    const metadata: Record<string, unknown> =
+      data.media && data.media.length > 0 ? { media: data.media } : {};
     const { data: row, error } = await supabase
       .from("chat_messages")
       .insert({
         thread_id: data.threadId,
         sender_id: userId,
-        content: data.content,
+        content: data.content ?? "",
         price_cents: price,
+        metadata,
       })
-      .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
+      .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
       .single();
     if (error) throw new Error(error.message);
     // Reset "deleted for me" flags so the thread reappears for both sides
@@ -338,6 +355,17 @@ export const sendMessage = createServerFn({ method: "POST" })
       .update({ deleted_at_a: null, deleted_at_b: null })
       .eq("id", data.threadId);
     const finalPrice = row.price_cents ?? 0;
+    // Sign URLs for returned media so it renders immediately
+    const mediaOut = (row as { metadata?: { media?: ChatWelcomeMedia[] } }).metadata?.media;
+    let signedMedia: ChatWelcomeMedia[] | undefined;
+    if (mediaOut && mediaOut.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from("publications")
+        .createSignedUrls(mediaOut.map((m) => m.path), 60 * 60);
+      const map = new Map<string, string>();
+      for (const s of signed ?? []) if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
+      signedMedia = mediaOut.map((m) => ({ ...m, url: map.get(m.path) ?? null }));
+    }
     return {
       id: row.id,
       threadId: row.thread_id,
@@ -347,6 +375,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       createdAt: row.created_at,
       priceCents: finalPrice > 0 ? finalPrice : null,
       unlocked: true,
+      metadata: signedMedia ? { media: signedMedia } : null,
     };
   });
 
