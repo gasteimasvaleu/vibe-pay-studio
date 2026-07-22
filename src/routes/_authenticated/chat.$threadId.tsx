@@ -349,9 +349,11 @@ function ChatThreadView() {
           content: vars.text,
           priceCents: vars.priceCents ?? 0,
           media: vars.media,
+          replyToId: vars.replyToId ?? undefined,
         },
       }),
     onSuccess: (msg) => {
+
       queryClient.setQueryData<ThreadData>(
         ["chat", "messages", threadId],
         (old) => {
