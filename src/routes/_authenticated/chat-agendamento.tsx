@@ -293,12 +293,54 @@ function ChatSchedulingPage() {
                 </button>
               </div>
 
-              <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
-                <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
-                <p className="text-muted-foreground">
-                  Não há mensagens agendadas para esse dia
-                </p>
-              </div>
+              {selectedDayJobs.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
+                  <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
+                  <p className="text-muted-foreground">
+                    Não há mensagens agendadas para esse dia
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                  {selectedDayJobs.map((job) => (
+                    <div
+                      key={job.id}
+                      className="rounded-xl border border-border bg-card p-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground line-clamp-2">
+                            {job.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {job.scheduledAt
+                              ? format(new Date(job.scheduledAt), "HH:mm", { locale: ptBR })
+                              : "--:--"}{" "}
+                            · {job.totalRecipients} destinatário(s) ·{" "}
+                            {statusLabel(job.status)}
+                          </p>
+                        </div>
+                        {job.status === "scheduled" && (
+                          <button
+                            type="button"
+                            aria-label="Cancelar agendamento"
+                            onClick={() => cancelMutation.mutate(job.id)}
+                            disabled={cancelMutation.isPending}
+                            className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                          >
+                            {cancelMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </div>
           </div>
         </>
