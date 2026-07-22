@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/search")({
 });
 
 type CreatorRow = {
+  id: string;
   user_id: string;
   username: string;
   display_name: string | null;
@@ -52,34 +53,37 @@ async function fetchCreators({
   const isMentionLookup = trimmed.startsWith("@");
   const term = isMentionLookup ? trimmed.slice(1) : trimmed;
 
-  const ownEscape = viewerId ? `,user_id.eq.${viewerId}` : "";
-
+  // Queries `creator_profiles` (paid + free) with the owner's `profiles` row
+  // embedded so we can filter by the owner's privacy flags.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase
-    .from("profiles")
-    .select("user_id, username, display_name, avatar_url, cover_url, kyc_verified_at")
+    .from("creator_profiles")
+    .select(
+      "id, user_id, username, display_name, avatar_url, cover_url, created_at, profiles!inner(kyc_verified_at, country, restrict_search, restrict_search_br, restrict_search_country, restrict_mentions)",
+    )
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  // Global search restriction (own profile never filtered).
-  q = q.or(`restrict_search.eq.false${ownEscape}`);
+  // Global search restriction.
+  q = q.eq("profiles.restrict_search", false);
 
   // "Não aparecer em pesquisas no Brasil" — só filtra quando o viewer está no BR.
   if (viewerCountry === "BR") {
-    q = q.or(`restrict_search_br.eq.false${ownEscape}`);
+    q = q.eq("profiles.restrict_search_br", false);
   }
 
-  // "Não aparecer em pesquisas do meu país" — só filtra quando viewer country == owner country.
-  // Mantém rows onde: flag=false OR owner.country != viewer country OR owner.country IS NULL OR own profile.
+  // "Não aparecer em pesquisas do meu país" — mantém rows onde: flag=false
+  // OR owner.country != viewer country OR owner.country IS NULL.
   if (viewerCountry) {
     q = q.or(
-      `restrict_search_country.eq.false,country.neq.${viewerCountry},country.is.null${ownEscape}`,
+      `restrict_search_country.eq.false,country.neq.${viewerCountry},country.is.null`,
+      { foreignTable: "profiles" },
     );
   }
 
   // @mention lookup — also honor restrict_mentions.
   if (isMentionLookup) {
-    q = q.or(`restrict_mentions.eq.false${ownEscape}`);
+    q = q.eq("profiles.restrict_mentions", false);
   }
 
   if (term.length > 0) {
@@ -89,8 +93,21 @@ async function fetchCreators({
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
+  // Exclude the viewer's own profiles from results.
+  const rows = (data ?? []).filter(
+    (r: any) => !viewerId || r.user_id !== viewerId,
+  );
+  const items: CreatorRow[] = rows.map((r: any) => ({
+    id: r.id,
+    user_id: r.user_id,
+    username: r.username,
+    display_name: r.display_name,
+    avatar_url: r.avatar_url,
+    cover_url: r.cover_url,
+    kyc_verified_at: r.profiles?.kyc_verified_at ?? null,
+  }));
   return {
-    items: (data ?? []) as CreatorRow[],
+    items,
     nextPage: (data?.length ?? 0) < PAGE_SIZE ? undefined : pageParam + 1,
   };
 }
