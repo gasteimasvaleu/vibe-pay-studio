@@ -374,7 +374,17 @@ function ChatSchedulingPage() {
           scheduledAt={scheduledAt}
           onOpenDateDialog={() => setDateDialogOpen(true)}
           onClearSchedule={() => setScheduledAt(null)}
+          previewAudience={previewAudience}
+          sendBroadcastFn={sendBroadcastFn}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
+            setMessage("");
+            setActiveFilters(new Set());
+            setScheduledAt(null);
+            setView("calendar");
+          }}
         />
+
       )}
 
       <DateDialog
