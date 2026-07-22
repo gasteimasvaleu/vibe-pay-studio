@@ -414,16 +414,28 @@ export function ChatComposer({
                   active={!!priceCents}
                   disabled={media.length === 0}
                 />
-                <IconAction
-                  icon={Video}
-                  label="Convite de videochamada"
-                  onClick={onCallInvite}
-                />
-                <IconAction
-                  icon={Megaphone}
-                  label="Mensagem em massa"
-                  onClick={onBroadcast}
-                />
+                {!hideCallInvite ? (
+                  <IconAction
+                    icon={Video}
+                    label="Convite de videochamada"
+                    onClick={onCallInvite}
+                  />
+                ) : null}
+                {!hideBroadcast ? (
+                  <IconAction
+                    icon={Megaphone}
+                    label="Mensagem em massa"
+                    onClick={onBroadcast}
+                  />
+                ) : null}
+                {onOpenSchedule ? (
+                  <IconAction
+                    icon={CalendarCheck}
+                    label={scheduledAt ? "Reagendar envio" : "Agendar envio"}
+                    onClick={onOpenSchedule}
+                    active={!!scheduledAt}
+                  />
+                ) : null}
               </>
             ) : null}
 
