@@ -226,7 +226,11 @@ export type Database = {
       }
       chat_threads: {
         Row: {
+          cleared_at_a: string | null
+          cleared_at_b: string | null
           created_at: string
+          deleted_at_a: string | null
+          deleted_at_b: string | null
           id: string
           last_message_at: string
           updated_at: string
@@ -234,7 +238,11 @@ export type Database = {
           user_b: string
         }
         Insert: {
+          cleared_at_a?: string | null
+          cleared_at_b?: string | null
           created_at?: string
+          deleted_at_a?: string | null
+          deleted_at_b?: string | null
           id?: string
           last_message_at?: string
           updated_at?: string
@@ -242,7 +250,11 @@ export type Database = {
           user_b: string
         }
         Update: {
+          cleared_at_a?: string | null
+          cleared_at_b?: string | null
           created_at?: string
+          deleted_at_a?: string | null
+          deleted_at_b?: string | null
           id?: string
           last_message_at?: string
           updated_at?: string
