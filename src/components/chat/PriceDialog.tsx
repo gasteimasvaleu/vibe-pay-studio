@@ -18,6 +18,9 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   initialCents: number | null;
   onConfirm: (cents: number | null) => void;
+  title?: string;
+  description?: React.ReactNode;
+  allowZero?: boolean;
 };
 
 function formatBRL(cents: number) {
@@ -27,7 +30,15 @@ function formatBRL(cents: number) {
   });
 }
 
-export function PriceDialog({ open, onOpenChange, initialCents, onConfirm }: Props) {
+export function PriceDialog({
+  open,
+  onOpenChange,
+  initialCents,
+  onConfirm,
+  title = "Definir valor da mensagem",
+  description = "Cobre pelo conteúdo da próxima mensagem. O assinante só verá o texto após pagar via PIX.",
+  allowZero = false,
+}: Props) {
   const [value, setValue] = useState<string>("");
 
   useEffect(() => {
@@ -38,16 +49,16 @@ export function PriceDialog({ open, onOpenChange, initialCents, onConfirm }: Pro
 
   const parsed = Math.round(parseFloat(value.replace(",", ".")) * 100);
   const cents = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-  const valid = cents >= 100 && cents <= 50000;
+  const valid = allowZero
+    ? cents === 0 || (cents >= 100 && cents <= 50000)
+    : cents >= 100 && cents <= 50000;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Definir valor da mensagem</DialogTitle>
-          <DialogDescription>
-            Cobre pelo conteúdo da próxima mensagem. O assinante só verá o texto após pagar via PIX.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -73,7 +84,7 @@ export function PriceDialog({ open, onOpenChange, initialCents, onConfirm }: Pro
             <label className="text-xs text-muted-foreground">Valor personalizado (R$)</label>
             <Input
               type="number"
-              min="1"
+              min={allowZero ? "0" : "1"}
               max="500"
               step="0.01"
               inputMode="decimal"
@@ -82,7 +93,7 @@ export function PriceDialog({ open, onOpenChange, initialCents, onConfirm }: Pro
               placeholder="Ex.: 25,00"
             />
             <p className="text-[11px] text-muted-foreground">
-              Mínimo R$ 1,00 · máximo R$ 500,00
+              {allowZero ? "Opcional · " : ""}Mínimo R$ 1,00 · máximo R$ 500,00
             </p>
           </div>
         </div>
@@ -107,7 +118,9 @@ export function PriceDialog({ open, onOpenChange, initialCents, onConfirm }: Pro
               onOpenChange(false);
             }}
           >
-            Definir {valid ? formatBRL(cents) : ""}
+            {allowZero && cents === 0
+              ? "Definir gratuito"
+              : `Definir ${valid ? formatBRL(cents) : ""}`}
           </Button>
         </DialogFooter>
       </DialogContent>

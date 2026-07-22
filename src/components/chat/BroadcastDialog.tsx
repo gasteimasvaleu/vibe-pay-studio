@@ -25,6 +25,7 @@ import {
 } from "@/lib/chat-monetization.functions";
 import { createChatWelcomeUploadUrl, type ChatWelcomeMedia } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { PriceDialog } from "@/components/chat/PriceDialog";
 
 type Audience = "all_followers" | "active_subscribers" | "expired_subscribers" | "top_buyers";
 
@@ -61,6 +62,7 @@ export function BroadcastDialog({
   const [message, setMessage] = useState("");
   const [media, setMedia] = useState<ChatWelcomeMedia[]>([]);
   const [priceCents, setPriceCents] = useState(0);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [topN, setTopN] = useState(100);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -282,18 +284,23 @@ export function BroadcastDialog({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => {
-                const raw = window.prompt("Preço em centavos (ex: 500 = R$ 5,00):", String(priceCents));
-                if (raw === null) return;
-                const cents = Math.max(0, Math.min(50000, parseInt(raw.replace(/\D/g, ""), 10) || 0));
-                setPriceCents(cents);
-              }}
+              onClick={() => setPriceDialogOpen(true)}
             >
               <Tag className="h-4 w-4 mr-2" />
               {priceCents > 0 ? formatBRL(priceCents) : "Preço"}
             </Button>
           </div>
         </div>
+
+        <PriceDialog
+          open={priceDialogOpen}
+          onOpenChange={setPriceDialogOpen}
+          initialCents={priceCents > 0 ? priceCents : null}
+          onConfirm={(cents) => setPriceCents(cents ?? 0)}
+          title="Definir valor do broadcast"
+          description="Cobre pelo conteúdo de mídia anexada. Seguidores só visualizam após pagar."
+          allowZero
+        />
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
