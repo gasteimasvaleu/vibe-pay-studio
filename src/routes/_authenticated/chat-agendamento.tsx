@@ -40,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FilterChip } from "@/components/chat/FilterChip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
