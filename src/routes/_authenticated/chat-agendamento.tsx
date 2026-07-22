@@ -25,8 +25,10 @@ import {
   ChevronRight,
   ChevronUp,
   Info,
+  Loader2,
   Plus,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -45,6 +47,15 @@ import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatCo
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  previewBroadcastAudience,
+  sendBroadcast,
+  listScheduledBroadcastsByMonth,
+  cancelBroadcast,
+} from "@/lib/chat-monetization.functions";
+
 
 const searchSchema = z.object({
   view: fallback(z.string(), "calendar").default("calendar"),
@@ -66,8 +77,27 @@ const CONTACT_FILTERS = [
   "Top 1000 Compradores",
 ];
 
+function statusLabel(status: string) {
+  switch (status) {
+    case "scheduled":
+      return "Agendado";
+    case "running":
+      return "Enviando";
+    case "completed":
+      return "Enviado";
+    case "failed":
+      return "Falhou";
+    case "cancelled":
+      return "Cancelado";
+    default:
+      return status;
+  }
+}
+
 function ChatSchedulingPage() {
+
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentMonth, setCurrentMonth] = useState<Date>(today);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -81,7 +111,27 @@ function ChatSchedulingPage() {
   const [contactSearch, setContactSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
+  const previewAudience = useServerFn(previewBroadcastAudience);
+  const sendBroadcastFn = useServerFn(sendBroadcast);
+  const listBroadcastsFn = useServerFn(listScheduledBroadcastsByMonth);
+  const cancelBroadcastFn = useServerFn(cancelBroadcast);
+
   const weeks = useMemo(() => buildMonthMatrix(currentMonth), [currentMonth]);
+
+  const monthQuery = useQuery({
+    queryKey: ["scheduled-broadcasts", currentMonth.getFullYear(), currentMonth.getMonth() + 1],
+    queryFn: () =>
+      listBroadcastsFn({ data: { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 } }),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (jobId: string) => cancelBroadcastFn({ data: { jobId } }),
+    onSuccess: () => {
+      toast.success("Agendamento cancelado");
+      queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao cancelar"),
+  });
 
   const toggleFilter = (name: string) => {
     setActiveFilters((prev) => {
@@ -92,7 +142,25 @@ function ChatSchedulingPage() {
     });
   };
 
+  const jobsByDay = useMemo(() => {
+    const map = new Map<string, { id: string; scheduledAt: string | null; status: string; message: string; totalRecipients: number }[]>();
+    for (const job of monthQuery.data?.jobs ?? []) {
+
+      if (!job.scheduledAt) continue;
+      const key = format(new Date(job.scheduledAt), "yyyy-MM-dd");
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(job);
+    }
+    return map;
+  }, [monthQuery.data]);
+
+  const selectedDayJobs = useMemo(() => {
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return jobsByDay.get(key) ?? [];
+  }, [jobsByDay, selectedDate]);
+
   return (
+
     <div className="h-[calc(100svh-56px-96px)] bg-background text-foreground flex flex-col">
       {view === "calendar" ? (
         <>
@@ -170,13 +238,15 @@ function ChatSchedulingPage() {
                   const inMonth = isSameMonth(day, currentMonth);
                   const isToday = isSameDay(day, today);
                   const isSelected = isSameDay(day, selectedDate);
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  const hasJobs = (jobsByDay.get(dayKey) ?? []).length > 0;
                   return (
                     <button
                       type="button"
                       key={day.toISOString()}
                       onClick={() => setSelectedDate(day)}
                       className={cn(
-                        "aspect-square rounded-lg text-sm flex items-center justify-center transition-colors",
+                        "aspect-square rounded-lg text-sm flex flex-col items-center justify-center gap-0.5 transition-colors",
                         !inMonth && "text-muted-foreground/50",
                         inMonth && !isSelected && "text-foreground hover:bg-accent",
                         isToday && !isSelected && "bg-accent/40",
@@ -184,11 +254,15 @@ function ChatSchedulingPage() {
                           "bg-card border border-border font-bold shadow-sm",
                       )}
                     >
-                      {format(day, "d")}
+                      <span>{format(day, "d")}</span>
+                      {hasJobs && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
                     </button>
                   );
                 })}
               </div>
+
             </div>
 
             {/* Selected day column */}
@@ -237,12 +311,54 @@ function ChatSchedulingPage() {
                 </button>
               </div>
 
-              <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
-                <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
-                <p className="text-muted-foreground">
-                  Não há mensagens agendadas para esse dia
-                </p>
-              </div>
+              {selectedDayJobs.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
+                  <CalendarDays className="h-16 w-16 text-muted-foreground/40" />
+                  <p className="text-muted-foreground">
+                    Não há mensagens agendadas para esse dia
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                  {selectedDayJobs.map((job) => (
+                    <div
+                      key={job.id}
+                      className="rounded-xl border border-border bg-card p-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground line-clamp-2">
+                            {job.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {job.scheduledAt
+                              ? format(new Date(job.scheduledAt), "HH:mm", { locale: ptBR })
+                              : "--:--"}{" "}
+                            · {job.totalRecipients} destinatário(s) ·{" "}
+                            {statusLabel(job.status)}
+                          </p>
+                        </div>
+                        {job.status === "scheduled" && (
+                          <button
+                            type="button"
+                            aria-label="Cancelar agendamento"
+                            onClick={() => cancelMutation.mutate(job.id)}
+                            disabled={cancelMutation.isPending}
+                            className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                          >
+                            {cancelMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </div>
           </div>
         </>
@@ -258,7 +374,17 @@ function ChatSchedulingPage() {
           scheduledAt={scheduledAt}
           onOpenDateDialog={() => setDateDialogOpen(true)}
           onClearSchedule={() => setScheduledAt(null)}
+          previewAudience={previewAudience}
+          sendBroadcastFn={sendBroadcastFn}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
+            setMessage("");
+            setActiveFilters(new Set());
+            setScheduledAt(null);
+            setView("calendar");
+          }}
         />
+
       )}
 
       <DateDialog
@@ -301,6 +427,9 @@ function Composer({
   scheduledAt,
   onOpenDateDialog,
   onClearSchedule,
+  previewAudience,
+  sendBroadcastFn,
+  onSuccess,
 }: {
   onClose: () => void;
   message: string;
@@ -312,27 +441,80 @@ function Composer({
   scheduledAt: Date | null;
   onOpenDateDialog: () => void;
   onClearSchedule: () => void;
+  previewAudience: ReturnType<typeof useServerFn<typeof previewBroadcastAudience>>;
+  sendBroadcastFn: ReturnType<typeof useServerFn<typeof sendBroadcast>>;
+  onSuccess: () => void;
 }) {
   const [meId, setMeId] = useState<string | null>(null);
+  const [audienceCount, setAudienceCount] = useState<number | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
 
+  const audienceNames = useMemo(
+    () => Array.from(activeFilters),
+    [activeFilters]
+  );
+
+  useEffect(() => {
+    if (!meId || audienceNames.length === 0) {
+      setAudienceCount(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    previewAudience({ data: { filters: audienceNames, creatorId: meId } })
+
+      .then((res) => {
+        if (!cancelled) setAudienceCount(res.count);
+      })
+      .catch(() => {
+        if (!cancelled) setAudienceCount(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [meId, audienceNames, previewAudience]);
+
   const canContinue = activeFilters.size > 0;
 
   async function onSubmitBroadcast(payload: ComposerSendPayload) {
+    if (!meId) return;
     if (activeFilters.size === 0) {
       toast.error("Selecione ao menos um filtro de contatos");
       return;
     }
-    onMessageChange(payload.text);
-    toast.success(
-      scheduledAt
-        ? `Mensagem agendada para ${format(scheduledAt, "dd/MM 'às' HH:mm", { locale: ptBR })}`
-        : "Mensagem em massa enfileirada para envio",
-    );
-    onClose();
+    try {
+      setSending(true);
+      const res = await sendBroadcastFn({
+        data: {
+          message: payload.text,
+          media: payload.media,
+          priceCents: payload.priceCents ?? 0,
+          filters: audienceNames,
+          scheduledAt: scheduledAt?.toISOString(),
+        },
+      });
+
+      if (res.scheduled) {
+        toast.success(`Mensagem agendada para ${format(new Date(res.scheduledAt!), "dd/MM 'às' HH:mm", { locale: ptBR })}`);
+      } else {
+        toast.success(`${res.sent} mensagens enviadas`);
+      }
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar mensagem");
+    } finally {
+      setSending(false);
+    }
   }
+
 
 
   return (
@@ -402,7 +584,19 @@ function Composer({
               </div>
             </div>
 
-            <div className="mt-auto pt-6">
+            <div className="mt-auto pt-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Destinatários estimados</span>
+                <span className="font-semibold text-foreground">
+                  {previewLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin inline" />
+                  ) : audienceCount !== null ? (
+                    `${audienceCount.toLocaleString("pt-BR")}`
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </div>
               <Button
                 type="button"
                 disabled={activeFilters.size === 0}
@@ -411,6 +605,7 @@ function Composer({
                 Aplicar filtro
               </Button>
             </div>
+
           </div>
         </aside>
 
