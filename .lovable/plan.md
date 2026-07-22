@@ -1,14 +1,21 @@
-## Objetivo
-Fazer o composer do chat ocupar toda a largura disponível na área inferior da conversa em telas grandes, em vez de ficar limitado a `max-w-3xl` e centralizado.
+O usuário quer que o fundo interno do campo de digitação do chat (componente `ChatComposer`) seja branco, conforme seleção no preview.
 
-## Mudança
-Arquivo: `src/components/chat/ChatComposer.tsx` (linha 219)
+### Escopo
+- Arquivo: `src/components/chat/ChatComposer.tsx`
+- Alvo: container principal do input de mensagem (linha aproximada 266)
 
-- Remover `max-w-3xl mx-auto` do wrapper raiz do composer.
-- Trocar por `w-full` puro, deixando o container pai (footer da conversa em `chat.$threadId.tsx`) controlar o padding lateral.
+### Mudança
+Trocar a classe de fundo do container de `bg-card` para `bg-white`, forçando o fundo branco no composer.
 
-Resultado: em desktop o input + ícones se estendem por toda a largura do painel de conversa (screenshot 2), sem alterar o comportamento em mobile.
+```diff
+- <div className="rounded-2xl border border-border bg-card px-4 pt-3 pb-2 shadow-sm">
++ <div className="rounded-2xl border border-border bg-white px-4 pt-3 pb-2 shadow-sm">
+```
 
-## Fora do escopo
-- Nenhuma mudança em lógica, ícones, upload, gravação ou envio.
-- Nenhuma alteração no layout do `chat.$threadId.tsx` — só se o padding lateral não estiver adequado após a mudança, ajustamos ali.
+### Considerações
+- O `Textarea` interno usa `bg-transparent`, então herda a cor do container — trocar o container é suficiente.
+- A área de preview de mídia acima (quando há anexos) permanece com `bg-card`, pois não faz parte do fundo interno do campo de digitação. Se o usuário quiser que ela também fique branca, isso pode ser incluído no mesmo ajuste.
+
+### Validação
+- Verificar visualmente no preview se o fundo do composer ficou branco.
+- Confirmar que o build/typecheck continua passando.

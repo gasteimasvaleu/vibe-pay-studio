@@ -263,7 +263,7 @@ export function ChatComposer({
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-border bg-card px-4 pt-3 pb-2 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white px-4 pt-3 pb-2 shadow-sm">
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
