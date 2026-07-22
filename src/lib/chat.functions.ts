@@ -177,9 +177,10 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_id, username")
+        .select("user_id, username, avatar_url")
         .eq("user_id", partnerId)
         .maybeSingle();
+
 
       const { data: msgs, error: mErr } = await supabase
         .from("chat_messages")
