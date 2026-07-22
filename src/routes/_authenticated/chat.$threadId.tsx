@@ -86,6 +86,14 @@ function ChatThreadView() {
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const callInviteFn = useServerFn(createCallInvite);
+  const cancelCallInviteFn = useServerFn(cancelCallInvite);
+  const paidDmRequestFn = useServerFn(createPaidDmRequest);
+  const cancelPaidDmRequestFn = useServerFn(cancelPaidDmRequest);
+  const sendTipFn = useServerFn(sendTipMessage);
+  const expireInvitesFn = useServerFn(expireStaleInvites);
+  const videoCallPayFn = useServerFn(createVideoCallPayment);
+  const paidDmPayFn = useServerFn(createPaidDmPayment);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -94,6 +102,18 @@ function ChatThreadView() {
   const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
   const [floaters, setFloaters] = useState<FloatingEmoji[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Monetization dialogs
+  const [callInviteOpen, setCallInviteOpen] = useState(false);
+  const [callPrice, setCallPrice] = useState<number>(3990);
+  const [callDuration, setCallDuration] = useState<number>(15);
+  const [paidDmOpen, setPaidDmOpen] = useState(false);
+  const [paidDmPrice, setPaidDmPrice] = useState<number>(1490);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipAmount, setTipAmount] = useState<number>(1000);
+  const [pendingAction, setPendingAction] = useState<
+    { type: "call" | "paidDm"; id: string; priceCents: number } | null
+  >(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
