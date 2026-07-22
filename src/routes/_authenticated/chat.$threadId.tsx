@@ -72,13 +72,11 @@ function ChatThreadView() {
   const walletPay = useServerFn(payWithWallet);
 
   const [meId, setMeId] = useState<string | null>(null);
-  const [text, setText] = useState("");
-  const [priceCents, setPriceCents] = useState<number | null>(null);
-  const [priceOpen, setPriceOpen] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [pendingMsg, setPendingMsg] = useState<{ id: string; priceCents: number } | null>(null);
+  const [floaters, setFloaters] = useState<FloatingEmoji[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
