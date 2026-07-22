@@ -140,8 +140,9 @@ function ChatLayout() {
   }, [threads, onlineOnly, onlineUsers, filters.muted, filters.unread]);
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] min-h-svh">
+    <div className="h-[calc(100svh-10rem)] bg-background text-foreground">
+      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] h-full">
+
         <aside
           className={cn(
             "border-r border-border bg-card/80 backdrop-blur-xl",
