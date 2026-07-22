@@ -163,6 +163,14 @@ function ChatThreadView() {
           );
         },
       )
+      .on("broadcast", { event: "float-emoji" }, ({ payload }) => {
+        const emoji = (payload as { emoji?: string })?.emoji;
+        if (!emoji) return;
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const x = (Math.random() - 0.5) * 200;
+        setFloaters((prev) => [...prev, { id, emoji, x }]);
+        setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
