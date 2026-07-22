@@ -83,6 +83,7 @@ export type Database = {
           media: Json
           message: string
           price_cents: number
+          scheduled_at: string | null
           sent_count: number
           status: string
           total_recipients: number
@@ -99,6 +100,7 @@ export type Database = {
           media?: Json
           message: string
           price_cents?: number
+          scheduled_at?: string | null
           sent_count?: number
           status?: string
           total_recipients?: number
@@ -115,6 +117,7 @@ export type Database = {
           media?: Json
           message?: string
           price_cents?: number
+          scheduled_at?: string | null
           sent_count?: number
           status?: string
           total_recipients?: number
