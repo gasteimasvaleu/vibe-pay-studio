@@ -59,14 +59,25 @@ export const listThreads = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: threads, error } = await supabase
       .from("chat_threads")
-      .select("id, user_a, user_b, last_message_at")
+      .select(
+        "id, user_a, user_b, last_message_at, cleared_at_a, cleared_at_b, deleted_at_a, deleted_at_b",
+      )
       .order("last_message_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
     if (!threads || threads.length === 0) return [];
 
+    // Filter out threads deleted by this user (unless a new message arrived after)
+    const visible = threads.filter((t) => {
+      const side = t.user_a === userId ? "a" : "b";
+      const deletedAt = side === "a" ? t.deleted_at_a : t.deleted_at_b;
+      if (!deletedAt) return true;
+      return t.last_message_at && new Date(t.last_message_at) > new Date(deletedAt);
+    });
+    if (visible.length === 0) return [];
+
     const partnerIds = Array.from(
-      new Set(threads.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
+      new Set(visible.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
     );
 
     const { data: profiles } = await supabase
@@ -86,23 +97,29 @@ export const listThreads = createServerFn({ method: "GET" })
     const mutedSet = new Set((mutedRows ?? []).map((r) => r.muted_id));
 
     const results: ThreadListItem[] = [];
-    for (const t of threads) {
+    for (const t of visible) {
       const partnerId = t.user_a === userId ? t.user_b : t.user_a;
       const profile = profileMap.get(partnerId);
+      const side = t.user_a === userId ? "a" : "b";
+      const clearedAt = side === "a" ? t.cleared_at_a : t.cleared_at_b;
 
-      const { data: lastMsgRows } = await supabase
+      let lastMsgQuery = supabase
         .from("chat_messages")
         .select("content")
         .eq("thread_id", t.id)
         .order("created_at", { ascending: false })
         .limit(1);
+      if (clearedAt) lastMsgQuery = lastMsgQuery.gt("created_at", clearedAt);
+      const { data: lastMsgRows } = await lastMsgQuery;
 
-      const { count: unread } = await supabase
+      let unreadQuery = supabase
         .from("chat_messages")
         .select("id", { count: "exact", head: true })
         .eq("thread_id", t.id)
         .is("read_at", null)
         .neq("sender_id", userId);
+      if (clearedAt) unreadQuery = unreadQuery.gt("created_at", clearedAt);
+      const { count: unread } = await unreadQuery;
 
       results.push({
         threadId: t.id,
@@ -118,6 +135,7 @@ export const listThreads = createServerFn({ method: "GET" })
 
     return results;
   });
+
 
 export const searchUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -182,12 +200,25 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         .maybeSingle();
 
 
-      const { data: msgs, error: mErr } = await supabase
+      const { data: threadRow } = await supabase
+        .from("chat_threads")
+        .select("cleared_at_a, cleared_at_b")
+        .eq("id", data.threadId)
+        .maybeSingle();
+      const mySide = thread.user_a === userId ? "a" : "b";
+      const clearedAt =
+        mySide === "a"
+          ? (threadRow as { cleared_at_a?: string | null } | null)?.cleared_at_a
+          : (threadRow as { cleared_at_b?: string | null } | null)?.cleared_at_b;
+
+      let msgQuery = supabase
         .from("chat_messages")
         .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
+      if (clearedAt) msgQuery = msgQuery.gt("created_at", clearedAt);
+      const { data: msgs, error: mErr } = await msgQuery;
       if (mErr) throw new Error(mErr.message);
 
       const paidPartnerMsgIds = (msgs ?? [])
@@ -203,6 +234,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           .eq("status", "paid");
         for (const u of unlocks ?? []) unlockedSet.add(u.message_id);
       }
+
 
       // Collect media paths across messages and sign in one batch
       const allPaths: string[] = [];
@@ -300,6 +332,11 @@ export const sendMessage = createServerFn({ method: "POST" })
       .select("id, thread_id, sender_id, content, read_at, created_at, price_cents")
       .single();
     if (error) throw new Error(error.message);
+    // Reset "deleted for me" flags so the thread reappears for both sides
+    await supabase
+      .from("chat_threads")
+      .update({ deleted_at_a: null, deleted_at_b: null })
+      .eq("id", data.threadId);
     const finalPrice = row.price_cents ?? 0;
     return {
       id: row.id,
@@ -504,4 +541,91 @@ export const createChatWelcomeUploadUrl = createServerFn({ method: "POST" })
     if (error || !signed) throw new Error(error?.message ?? "upload_url_failed");
     return { path, token: signed.token, signedUrl: signed.signedUrl };
   });
+
+async function getThreadSide(
+  supabase: any,
+  userId: string,
+  threadId: string,
+): Promise<"a" | "b"> {
+  const { data: t, error } = await supabase
+    .from("chat_threads")
+    .select("user_a, user_b")
+    .eq("id", threadId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!t) throw new Error("Conversa não encontrada");
+  if (t.user_a !== userId && t.user_b !== userId) {
+    throw new Error("Sem acesso a esta conversa");
+  }
+  return t.user_a === userId ? "a" : "b";
+}
+
+export const clearThread = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ threadId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const side = await getThreadSide(supabase, userId, data.threadId);
+    const patch =
+      side === "a"
+        ? { cleared_at_a: new Date().toISOString() }
+        : { cleared_at_b: new Date().toISOString() };
+    const { error } = await supabase
+      .from("chat_threads")
+      .update(patch)
+      .eq("id", data.threadId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const deleteThreadForMe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ threadId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const side = await getThreadSide(supabase, userId, data.threadId);
+    const now = new Date().toISOString();
+    const patch =
+      side === "a"
+        ? { cleared_at_a: now, deleted_at_a: now }
+        : { cleared_at_b: now, deleted_at_b: now };
+    const { error } = await supabase
+      .from("chat_threads")
+      .update(patch)
+      .eq("id", data.threadId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const reportUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        targetUserId: z.string().uuid(),
+        reason: z.string().trim().min(1).max(80),
+        details: z.string().trim().max(2000).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.targetUserId === userId) {
+      throw new Error("Você não pode denunciar a si mesmo.");
+    }
+    const { error } = await supabase.from("content_reports").insert({
+      reporter_id: userId,
+      target_type: "profile",
+      target_id: data.targetUserId,
+      reason: data.reason,
+      details: data.details ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 

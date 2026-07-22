@@ -22,6 +22,7 @@ import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/component
 import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { cn } from "@/lib/utils";
 import { VideoCallHeaderButton } from "@/components/chat/VideoCallHeaderButton";
+import { ThreadActionsMenu } from "@/components/chat/ThreadActionsMenu";
 
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -289,10 +290,17 @@ function ChatThreadView() {
           </div>
         </div>
         {data?.partner && (
-          <VideoCallHeaderButton
-            partnerId={data.partner.userId}
-            partnerUsername={data.partner.username}
-          />
+          <div className="flex items-center gap-1">
+            <VideoCallHeaderButton
+              partnerId={data.partner.userId}
+              partnerUsername={data.partner.username}
+            />
+            <ThreadActionsMenu
+              threadId={threadId}
+              partnerId={data.partner.userId}
+              partnerUsername={data.partner.username}
+            />
+          </div>
         )}
 
       </header>
