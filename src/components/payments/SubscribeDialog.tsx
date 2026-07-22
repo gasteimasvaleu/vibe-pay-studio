@@ -24,6 +24,7 @@ type Props = {
   creatorId: string;
   creatorName?: string;
   initialPlan?: Plan;
+  onCpfRequired?: () => void;
 };
 
 type Checkout = {
@@ -34,7 +35,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly" }: Props) {
+export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [loading, setLoading] = useState(false);
@@ -118,6 +119,11 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
       if (e?.message === "already_subscribed") {
         toast.info("Você já assina este criador");
         onOpenChange(false);
+        return;
+      }
+      if (e?.message === "cpf_required") {
+        onOpenChange(false);
+        onCpfRequired?.();
         return;
       }
       toast.error(translatePaymentError(e, "Erro ao assinar"));

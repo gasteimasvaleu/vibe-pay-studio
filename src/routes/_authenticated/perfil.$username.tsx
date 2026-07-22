@@ -383,6 +383,7 @@ function PerfilPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [cpfPromptFor, setCpfPromptFor] = useState<PaymentMethod | null>(null);
+  const [cpfPromptForSubscription, setCpfPromptForSubscription] = useState(false);
 
   const pubsQueryKey = ["user-publications", profile.userId] as const;
   const pubsQuery = useQuery({
@@ -961,6 +962,7 @@ function PerfilPage() {
             creatorId={profile.userId}
             creatorName={displayName}
             initialPlan={selectedPlan}
+            onCpfRequired={() => setCpfPromptForSubscription(true)}
           />
           <TipDialog
             open={tipOpen}
@@ -1022,12 +1024,23 @@ function PerfilPage() {
       />
 
       <CpfPromptDialog
-        open={!!cpfPromptFor}
-        onOpenChange={(v) => !v && setCpfPromptFor(null)}
+        open={!!cpfPromptFor || cpfPromptForSubscription}
+        onOpenChange={(v) => {
+          if (!v) {
+            setCpfPromptFor(null);
+            setCpfPromptForSubscription(false);
+          }
+        }}
         onSaved={() => {
           const method = cpfPromptFor;
+          const wasSubscription = cpfPromptForSubscription;
           setCpfPromptFor(null);
-          if (method) void confirmPayment(method);
+          setCpfPromptForSubscription(false);
+          if (wasSubscription) {
+            setSubscribeOpen(true);
+          } else if (method) {
+            void confirmPayment(method);
+          }
         }}
       />
 
