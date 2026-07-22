@@ -350,12 +350,35 @@ export function ChatComposer({
             </Popover>
 
             {isCreator ? (
-              <IconAction
-                icon={DollarSign}
-                label="Definir valor da mensagem"
-                onClick={() => setPriceOpen(true)}
-                active={!!priceCents}
-              />
+              <>
+                <IconAction
+                  icon={DollarSign}
+                  label={media.length > 0 ? "Definir valor da mensagem" : "Anexe uma mídia para definir preço"}
+                  onClick={() => media.length > 0 && setPriceOpen(true)}
+                  active={!!priceCents}
+                  disabled={media.length === 0}
+                />
+                <IconAction
+                  icon={Video}
+                  label="Convite de videochamada"
+                  onClick={onCallInvite}
+                />
+              </>
+            ) : null}
+
+            {!isCreator && isSubscriber ? (
+              <>
+                <IconAction
+                  icon={Gift}
+                  label="Enviar mimo"
+                  onClick={onTip}
+                />
+                <IconAction
+                  icon={Lock}
+                  label="Pagar para enviar mídia"
+                  onClick={onPaidDmRequest}
+                />
+              </>
             ) : null}
 
             {uploading ? (
