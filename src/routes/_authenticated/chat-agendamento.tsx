@@ -336,6 +336,7 @@ function Composer({
 
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="flex-1 relative">
       <button
         type="button"
