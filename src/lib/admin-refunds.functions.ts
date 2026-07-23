@@ -135,11 +135,10 @@ export const approveRefund = createServerFn({ method: "POST" })
     const table = tableMap[req.reference_type as string];
 
     if (table) {
-      const statusColumn = table === "subscriptions" ? "status" : "status";
       const newStatus = table === "subscriptions" ? "cancelled" : "refunded";
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await (supabaseAdmin as any)
         .from(table)
-        .update({ [statusColumn]: newStatus })
+        .update({ status: newStatus })
         .eq("id", req.reference_id as string);
       if (updateError) throw new Error(updateError.message);
     }
