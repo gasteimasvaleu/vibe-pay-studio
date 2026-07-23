@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
@@ -111,6 +112,11 @@ const SobreRoute = SobreRouteImport.update({
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
   id: '/privacidade',
   path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
+  id: '/politicadereclamacoes',
+  path: '/politicadereclamacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntrarRoute = EntrarRouteImport.update({
@@ -598,6 +604,7 @@ export interface FileRoutesByFullPath {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
+  '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
@@ -687,6 +694,7 @@ export interface FileRoutesByTo {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
+  '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
@@ -772,6 +780,7 @@ export interface FileRoutesById {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
+  '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
@@ -863,6 +872,7 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
+    | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
@@ -952,6 +962,7 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
+    | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
@@ -1036,6 +1047,7 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
+    | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
@@ -1127,6 +1139,7 @@ export interface RootRouteChildren {
   CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
+  PoliticadereclamacoesRoute: typeof PoliticadereclamacoesRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
   TermosEPoliticasRoute: typeof TermosEPoliticasRoute
@@ -1160,6 +1173,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidade'
       fullPath: '/privacidade'
       preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politicadereclamacoes': {
+      id: '/politicadereclamacoes'
+      path: '/politicadereclamacoes'
+      fullPath: '/politicadereclamacoes'
+      preLoaderRoute: typeof PoliticadereclamacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entrar': {
@@ -2016,6 +2036,7 @@ const rootRouteChildren: RootRouteChildren = {
   CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
+  PoliticadereclamacoesRoute: PoliticadereclamacoesRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
   TermosEPoliticasRoute: TermosEPoliticasRoute,
