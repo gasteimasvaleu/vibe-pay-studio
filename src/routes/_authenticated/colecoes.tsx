@@ -465,11 +465,21 @@ function ColecoesPage() {
     }
   }
 
-  function renderContent() {
-    if (active === "ocultados") {
-      return <EmptyState text={current.empty} />;
+  async function handleUnhide(publicationId: string) {
+    setIsUnhiding(publicationId);
+    try {
+      await unhideFn({ data: { publicationId } });
+      toast.success("Post reexibido no feed");
+      queryClient.invalidateQueries({ queryKey: ["collections", "hidden"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao reexibir");
+    } finally {
+      setIsUnhiding(null);
     }
+  }
 
+  function renderContent() {
     const q =
       active === "favoritos"
         ? bookmarks
@@ -481,6 +491,8 @@ function ColecoesPage() {
         ? tips
         : active === "reembolsos"
         ? refundRequests
+        : active === "ocultados"
+        ? hidden
         : purchases;
 
     if (q.isLoading) {
