@@ -52,7 +52,7 @@ export function Footer() {
                 title="Legal"
                 links={[
                   ["Privacidade", "/privacidade"],
-                  ["Termos e Políticas", "#"],
+                  ["Termos e Políticas", "/termos-e-politicas"],
                   ["Centro de Segurança", "#"],
                   ["Política de Reclamações", "#"],
                   ["DMCA", "#"],
