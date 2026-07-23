@@ -19,6 +19,11 @@ import {
   type RefundableItem,
   type RefundRequestItem,
 } from "@/lib/refunds.functions";
+import {
+  listMyHiddenPublications,
+  unhidePublication,
+  type HiddenPublicationItem,
+} from "@/lib/hides.functions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -94,9 +99,7 @@ function PublicationRow({
   const authorHref = item.author?.username
     ? `/perfil/${item.author.username}`
     : null;
-  const pubHref = item.publication_id
-    ? `/post/${item.publication_id}`
-    : authorHref ?? "/colecoes";
+  const pubHref = authorHref ?? "/colecoes";
   return (
     <Link
       to={pubHref}
@@ -365,6 +368,9 @@ function ColecoesPage() {
   const refundRequestsFn = useServerFn(listMyRefundRequests);
   const requestRefundFn = useServerFn(requestRefund);
   const cancelRefundFn = useServerFn(cancelRefundRequest);
+  const hiddenFn = useServerFn(listMyHiddenPublications);
+  const unhideFn = useServerFn(unhidePublication);
+  const [isUnhiding, setIsUnhiding] = useState<string | null>(null);
 
   const bookmarks = useQuery({
     queryKey: ["collections", "bookmarks"],
@@ -400,6 +406,12 @@ function ColecoesPage() {
     queryKey: ["refunds", "requests"],
     queryFn: () => refundRequestsFn(),
     enabled: active === "reembolsos",
+    staleTime: 30_000,
+  });
+  const hidden = useQuery({
+    queryKey: ["collections", "hidden"],
+    queryFn: () => hiddenFn(),
+    enabled: active === "ocultados",
     staleTime: 30_000,
   });
 
@@ -453,11 +465,21 @@ function ColecoesPage() {
     }
   }
 
-  function renderContent() {
-    if (active === "ocultados") {
-      return <EmptyState text={current.empty} />;
+  async function handleUnhide(publicationId: string) {
+    setIsUnhiding(publicationId);
+    try {
+      await unhideFn({ data: { publicationId } });
+      toast.success("Post reexibido no feed");
+      queryClient.invalidateQueries({ queryKey: ["collections", "hidden"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao reexibir");
+    } finally {
+      setIsUnhiding(null);
     }
+  }
 
+  function renderContent() {
     const q =
       active === "favoritos"
         ? bookmarks
@@ -469,6 +491,8 @@ function ColecoesPage() {
         ? tips
         : active === "reembolsos"
         ? refundRequests
+        : active === "ocultados"
+        ? hidden
         : purchases;
 
     if (q.isLoading) {
@@ -494,6 +518,34 @@ function ColecoesPage() {
                 onCancel={handleCancel}
                 isCancelling={isCancelling === it.id}
               />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    if (active === "ocultados") {
+      return (
+        <ul className="space-y-2">
+          {(items as HiddenPublicationItem[]).map((it) => (
+            <li key={it.id} className="relative">
+              <PublicationRow item={it} />
+              <div className="absolute top-2 right-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={() => handleUnhide(it.publication_id)}
+                  disabled={isUnhiding === it.publication_id}
+                >
+                  {isUnhiding === it.publication_id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCcw className="h-3.5 w-3.5" />
+                  )}
+                  Reexibir
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

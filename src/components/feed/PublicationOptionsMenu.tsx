@@ -35,6 +35,7 @@ import {
   setPublicationArchived,
   setPublicationCommentsDisabled,
 } from "@/lib/publications.functions";
+import { hidePublication } from "@/lib/hides.functions";
 
 export function PublicationOptionsMenu({
   item,
@@ -55,6 +56,18 @@ export function PublicationOptionsMenu({
   const toggleCommentsFn = useServerFn(setPublicationCommentsDisabled);
   const archiveFn = useServerFn(setPublicationArchived);
   const deleteFn = useServerFn(deletePublication);
+  const hideFn = useServerFn(hidePublication);
+
+  const hideMutation = useMutation({
+    mutationFn: () => hideFn({ data: { publicationId: item.id } }),
+    onSuccess: () => {
+      showTopBanner("Post ocultado");
+      invalidateFeeds();
+      queryClient.invalidateQueries({ queryKey: ["collections", "hidden"] });
+    },
+    onError: (e: unknown) =>
+      showTopBanner(e instanceof Error ? e.message : "Erro ao ocultar"),
+  });
 
   const invalidateFeeds = () => {
     queryClient.invalidateQueries({ queryKey: ["feed"] });
@@ -219,9 +232,12 @@ export function PublicationOptionsMenu({
     },
     {
       key: "not-interested",
-      label: "Não tenho interesse",
+      label: "Ocultar post",
       icon: <EyeOff className="h-6 w-6" strokeWidth={1.75} />,
-      onClick: soon,
+      onClick: () => {
+        close();
+        hideMutation.mutate();
+      },
     },
   ];
 

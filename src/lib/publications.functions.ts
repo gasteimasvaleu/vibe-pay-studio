@@ -224,9 +224,19 @@ export const getFeed = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const rows = pubs ?? [];
 
+    const { data: hideRows } = await client
+      .from("publication_hides")
+      .select("publication_id")
+      .eq("user_id", currentUserId);
+    const hiddenIds = new Set(
+      (hideRows ?? []).map((h: any) => h.publication_id as string),
+    );
+
     const nowMs = Date.now();
     const visible = rows.filter(
-      (p) => !p.expires_at || new Date(p.expires_at).getTime() > nowMs,
+      (p) =>
+        !hiddenIds.has(p.id) &&
+        (!p.expires_at || new Date(p.expires_at).getTime() > nowMs),
     );
 
     const page = visible.slice(0, limit);
