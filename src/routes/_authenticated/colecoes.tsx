@@ -150,7 +150,7 @@ function PublicationRow({
   );
 }
 
-function ChatPurchaseRow({ item, onRefund }: { item: any; onRefund?: (item: RefundableItem) => void }) {
+function ChatPurchaseRow({ item, onRefund }: { item: any; onRefund?: (id: string) => void }) {
   return (
     <Link
       to={item.thread_id ? "/chat/$threadId" : "/colecoes"}
