@@ -19,6 +19,11 @@ import {
   type RefundableItem,
   type RefundRequestItem,
 } from "@/lib/refunds.functions";
+import {
+  listMyHiddenPublications,
+  unhidePublication,
+  type HiddenPublicationItem,
+} from "@/lib/hides.functions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
