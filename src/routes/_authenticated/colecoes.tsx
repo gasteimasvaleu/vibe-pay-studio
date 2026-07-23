@@ -416,16 +416,12 @@ function ColecoesPage() {
           reason: reason.trim(),
         },
       });
-      toast({ title: "Solicitação enviada", description: "Seu pedido de reembolso foi registrado." });
+      toast.success("Solicitação enviada", { description: "Seu pedido de reembolso foi registrado." });
       queryClient.invalidateQueries({ queryKey: ["refunds"] });
       queryClient.invalidateQueries({ queryKey: ["collections"] });
       setRefundItem(null);
     } catch (e: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao solicitar reembolso",
-        description: e?.message || "Tente novamente.",
-      });
+      toast.error(e?.message || "Erro ao solicitar reembolso. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -435,14 +431,10 @@ function ColecoesPage() {
     setIsCancelling(requestId);
     try {
       await cancelRefundFn({ data: { requestId } });
-      toast({ title: "Solicitação cancelada" });
+      toast.success("Solicitação cancelada");
       queryClient.invalidateQueries({ queryKey: ["refunds", "requests"] });
     } catch (e: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao cancelar",
-        description: e?.message || "Tente novamente.",
-      });
+      toast.error(e?.message || "Erro ao cancelar. Tente novamente.");
     } finally {
       setIsCancelling(null);
     }
