@@ -195,7 +195,7 @@ function ComoFuncionaPage() {
         </div>
       </section>
 
-      <section className="py-16">
+      <section className="pb-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <Link
             to="/cadastro"
