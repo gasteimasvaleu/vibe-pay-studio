@@ -413,6 +413,11 @@ function ColecoesPage() {
     return m;
   }, [refundable.data]);
 
+  function openRefund(id: string) {
+    const item = refundableById.get(id);
+    if (item) setRefundItem(item);
+  }
+
   async function handleRefundSubmit(reason: string) {
     if (!refundItem) return;
     setIsSubmitting(true);
