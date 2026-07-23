@@ -94,9 +94,7 @@ function PublicationRow({
   const authorHref = item.author?.username
     ? `/perfil/${item.author.username}`
     : null;
-  const pubHref = item.publication_id
-    ? `/post/${item.publication_id}`
-    : authorHref ?? "/colecoes";
+  const pubHref = authorHref ?? "/colecoes";
   return (
     <Link
       to={pubHref}
