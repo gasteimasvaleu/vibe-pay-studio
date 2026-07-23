@@ -35,6 +35,7 @@ import {
   setPublicationArchived,
   setPublicationCommentsDisabled,
 } from "@/lib/publications.functions";
+import { hidePublication } from "@/lib/hides.functions";
 
 export function PublicationOptionsMenu({
   item,
