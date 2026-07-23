@@ -524,6 +524,34 @@ function ColecoesPage() {
       );
     }
 
+    if (active === "ocultados") {
+      return (
+        <ul className="space-y-2">
+          {(items as HiddenPublicationItem[]).map((it) => (
+            <li key={it.id} className="relative">
+              <PublicationRow item={it} />
+              <div className="absolute top-2 right-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={() => handleUnhide(it.publication_id)}
+                  disabled={isUnhiding === it.publication_id}
+                >
+                  {isUnhiding === it.publication_id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCcw className="h-3.5 w-3.5" />
+                  )}
+                  Reexibir
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
     return (
       <ul className="space-y-2">
         {items.map((it) => (
