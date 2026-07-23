@@ -99,7 +99,7 @@ function PublicationRow({
     : authorHref ?? "/colecoes";
   return (
     <Link
-      to={pubHref
+      to={pubHref}
       className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors"
     >
       <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
