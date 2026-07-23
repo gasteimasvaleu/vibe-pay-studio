@@ -80,7 +80,7 @@ function ComoFuncionaPage() {
   return (
     <SiteLayout>
       {/* Hero */}
-      <section className="py-20 md:py-24 border-b border-border">
+      <section className="py-8 md:py-12 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="label-caps text-primary">Guia completo</span>
           <h1 className="mt-4 text-3xl md:text-4xl font-black tracking-tight">
