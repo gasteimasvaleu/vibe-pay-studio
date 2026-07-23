@@ -55,7 +55,7 @@ export function Footer() {
                   ["Termos e Políticas", "/termos-e-politicas"],
                   ["Centro de Segurança", "/centro-e-seguranca"],
                   ["Política de Reclamações", "/politicadereclamacoes"],
-                  ["DMCA", "#"],
+                  ["DMCA", "/dmca"],
                 ]}
               />
             </div>
