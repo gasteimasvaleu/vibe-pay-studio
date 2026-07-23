@@ -14,6 +14,7 @@ import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as DmcaRouteImport } from './routes/dmca'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -122,6 +123,11 @@ const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
 const EntrarRoute = EntrarRouteImport.update({
   id: '/entrar',
   path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DmcaRoute = DmcaRouteImport.update({
+  id: '/dmca',
+  path: '/dmca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
@@ -603,6 +609,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -693,6 +700,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -779,6 +787,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -871,6 +880,7 @@ export interface FileRouteTypes {
     | '/'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
     | '/privacidade'
@@ -961,6 +971,7 @@ export interface FileRouteTypes {
     | '/'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
     | '/privacidade'
@@ -1046,6 +1057,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
     | '/privacidade'
@@ -1138,6 +1150,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
+  DmcaRoute: typeof DmcaRoute
   EntrarRoute: typeof EntrarRoute
   PoliticadereclamacoesRoute: typeof PoliticadereclamacoesRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
@@ -1187,6 +1200,13 @@ declare module '@tanstack/react-router' {
       path: '/entrar'
       fullPath: '/entrar'
       preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dmca': {
+      id: '/dmca'
+      path: '/dmca'
+      fullPath: '/dmca'
+      preLoaderRoute: typeof DmcaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/como-funciona': {
@@ -2035,6 +2055,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
+  DmcaRoute: DmcaRoute,
   EntrarRoute: EntrarRoute,
   PoliticadereclamacoesRoute: PoliticadereclamacoesRoute,
   PrivacidadeRoute: PrivacidadeRoute,
