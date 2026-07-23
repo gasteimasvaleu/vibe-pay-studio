@@ -94,9 +94,12 @@ function PublicationRow({
   const authorHref = item.author?.username
     ? `/perfil/${item.author.username}`
     : null;
+  const pubHref = item.publication_id
+    ? `/post/${item.publication_id}`
+    : authorHref ?? "/colecoes";
   return (
     <Link
-      to={authorHref ?? "/colecoes"}
+      to={pubHref
       className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors"
     >
       <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
