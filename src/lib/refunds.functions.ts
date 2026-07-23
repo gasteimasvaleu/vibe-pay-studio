@@ -70,7 +70,7 @@ async function fetchAuthorsMap(client: any, ids: string[]) {
 
 async function hydratePublications(client: any, pubIds: string[]) {
   if (pubIds.length === 0) {
-    return { pubs: new Map<string, any>(), media: new Map<string, any>() };
+    return { pubs: new Map<string, any>(), media: [] as any[] };
   }
   const [{ data: pubs }, { data: media }] = await Promise.all([
     client
@@ -85,11 +85,7 @@ async function hydratePublications(client: any, pubIds: string[]) {
   ]);
   const pubMap = new Map<string, any>();
   (pubs ?? []).forEach((p: any) => pubMap.set(p.id as string, p));
-  const mediaMap = new Map<string, any>();
-  (media ?? []).forEach((m: any) => {
-    if (!mediaMap.has(m.publication_id as string)) mediaMap.set(m.publication_id as string, m);
-  });
-  return { pubs: pubMap, media };
+  return { pubs: pubMap, media: (media ?? []) as any[] };
 }
 
 async function fetchTransactionsMap(client: any, ids: string[]) {
@@ -111,21 +107,21 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
     const [{ data: pubUnlocks }, { data: chatUnlocks }, { data: subs }] = await Promise.all([
       supabase
         .from("publication_unlocks")
-        .select("id, publication_id, amount_cents, created_at, status, transaction_id")
+        .select("id, publication_id, amount_cents, created_at, status, transaction_id, provider_ref")
         .eq("buyer_id", userId)
         .eq("status", "paid")
         .order("created_at", { ascending: false })
         .limit(200),
       supabase
         .from("chat_message_unlocks")
-        .select("id, message_id, creator_id, amount_cents, created_at, status, transaction_id")
+        .select("id, message_id, creator_id, amount_cents, created_at, status, transaction_id, provider_ref")
         .eq("buyer_id", userId)
         .eq("status", "paid")
         .order("created_at", { ascending: false })
         .limit(200),
       supabase
         .from("subscriptions")
-        .select("id, creator_id, plan, price_cents_paid, started_at, status, transaction_id")
+        .select("id, creator_id, plan, price_cents_paid, started_at, status, provider_ref")
         .eq("subscriber_id", userId)
         .eq("status", "active")
         .order("started_at", { ascending: false })
@@ -154,7 +150,6 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
         [
           ...(pubUnlocks ?? []).map((r: any) => r.transaction_id),
           ...(chatUnlocks ?? []).map((r: any) => r.transaction_id),
-          ...(subs ?? []).map((r: any) => r.transaction_id),
         ].filter(Boolean) as string[],
       ),
     );
@@ -164,8 +159,10 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
 
     for (const r of pubUnlocks ?? []) {
       const p = pubs.get(r.publication_id as string);
-      const m = p ? (media as any[]).find((x: any) => x.publication_id === p.id) : undefined;
-      const author = p ? await fetchAuthorsMap(supabase, [p.author_id as string]).then(m => m.get(p.author_id as string)) : null;
+      const m = p ? media.find((x: any) => x.publication_id === p.id) : undefined;
+      const author = p
+        ? await fetchAuthorsMap(supabase, [p.author_id as string]).then((m) => m.get(p.author_id as string))
+        : null;
       items.push({
         id: r.id as string,
         referenceType: "publication_unlock",
@@ -174,7 +171,7 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
         createdAt: r.created_at as string,
         status: r.status as string as "paid",
         transactionId: r.transaction_id as string | null,
-        asaasPaymentId: txMap.get(r.transaction_id as string)?.provider_ref ?? null,
+        asaasPaymentId: (r.provider_ref as string | null) ?? txMap.get(r.transaction_id as string)?.provider_ref ?? null,
         creator: author
           ? {
               userId: author.user_id as string,
@@ -202,7 +199,7 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
         createdAt: r.created_at as string,
         status: r.status as string as "paid",
         transactionId: r.transaction_id as string | null,
-        asaasPaymentId: txMap.get(r.transaction_id as string)?.provider_ref ?? null,
+        asaasPaymentId: (r.provider_ref as string | null) ?? txMap.get(r.transaction_id as string)?.provider_ref ?? null,
         creator: author
           ? {
               userId: author.user_id as string,
@@ -226,8 +223,8 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
         amountCents: Number(r.price_cents_paid),
         createdAt: r.started_at as string,
         status: "active",
-        transactionId: r.transaction_id as string | null,
-        asaasPaymentId: txMap.get(r.transaction_id as string)?.provider_ref ?? null,
+        transactionId: null,
+        asaasPaymentId: r.provider_ref as string | null,
         creator: author
           ? {
               userId: author.user_id as string,
@@ -275,14 +272,20 @@ export const requestRefund = createServerFn({ method: "POST" })
 
     const { data: row, error: rowError } = await supabase
       .from(table)
-      .select("id, transaction_id, amount_cents, created_at, status")
+      .select("id, transaction_id, provider_ref, amount_cents, created_at, status")
       .eq("id", data.referenceId)
       .maybeSingle();
 
     if (rowError) throw new Error(rowError.message);
     if (!row) throw new Error("compra não encontrada");
 
-    const ownerColumn = data.referenceType === "subscription" ? "subscriber_id" : data.referenceType === "tip" ? "sender_id" : "buyer_id";
+    const ownerColumn =
+      data.referenceType === "subscription"
+        ? "subscriber_id"
+        : data.referenceType === "tip"
+          ? "sender_id"
+          : "buyer_id";
+
     const { data: ownerCheck, error: ownerError } = await supabase
       .from(table)
       .select("id")
@@ -310,9 +313,9 @@ export const requestRefund = createServerFn({ method: "POST" })
     if (existingError) throw new Error(existingError.message);
     if (existing) throw new Error("já existe uma solicitação de reembolso para esta compra");
 
-    const txId = row.transaction_id as string | null;
-    let asaasPaymentId: string | null = null;
-    if (txId) {
+    const txId = (row.transaction_id as string | null) ?? null;
+    let asaasPaymentId: string | null = (row.provider_ref as string | null) ?? null;
+    if (!asaasPaymentId && txId) {
       const { data: tx } = await supabase
         .from("transactions")
         .select("provider_ref")
@@ -371,12 +374,10 @@ export const listMyRefundRequests = createServerFn({ method: "GET" })
 
     const pubIds: string[] = [];
     const msgIds: string[] = [];
-    const creatorIds: string[] = [];
 
     for (const r of rows ?? []) {
       if (r.reference_type === "publication_unlock") pubIds.push(r.reference_id as string);
       if (r.reference_type === "chat_message_unlock") msgIds.push(r.reference_id as string);
-      if (r.reference_type === "subscription") creatorIds.push((r as any).creator_id);
     }
 
     const [{ pubs, media }, { data: msgs }] = await Promise.all([
@@ -390,7 +391,7 @@ export const listMyRefundRequests = createServerFn({ method: "GET" })
       let details: RefundRequestItem["details"] = null;
       if (r.reference_type === "publication_unlock") {
         const p = pubs.get(r.reference_id as string);
-        const m = p ? (media as any[]).find((x: any) => x.publication_id === p.id) : undefined;
+        const m = p ? media.find((x: any) => x.publication_id === p.id) : undefined;
         details = {
           caption: p?.caption as string | null,
           thumbUrl: (m?.url ?? p?.preview_url) as string | null,
