@@ -1,18 +1,19 @@
-# Criar página /privacidade
+# Criar página /termos-e-politicas
 
 ## Novo arquivo
-`src/routes/privacidade.tsx` — rota pública usando `createFileRoute("/privacidade")`.
+`src/routes/termos-e-politicas.tsx` — rota pública usando `createFileRoute("/termos-e-politicas")`.
 
 ## Estrutura
-- Envolver com `SiteLayout` (`src/components/site/Layout.tsx`) para reutilizar a `Navbar` superior e o `Footer` da home.
-- `head()` com título/descrição próprios ("Política de Privacidade — Monetisexy") e `robots: index`.
-- Container `max-w-3xl mx-auto px-4 md:px-6 py-12` com tipografia semântica: `h1` para o título, `h2` para cada seção numerada (1–15), `p`, `ul`/`li` para as listas de bullets, `strong` para termos definidos.
+- Envolver com `SiteLayout` (`src/components/site/Layout.tsx`) para reutilizar Navbar superior e Footer.
+- `head()` próprio: título "Termos e Políticas — Monetisexy", description, og:title, og:description, twitter:card.
+- Container `max-w-3xl mx-auto px-4 md:px-6 py-12` com tipografia semântica: `h1` para o título, `h2` para cada seção numerada, `p`, `ul`/`li` para listas, `strong` para termos.
 - Data de atualização em destaque (`text-muted-foreground`) logo abaixo do h1.
 - E-mail de contato como `<a href="mailto:contato@monetisexy.com">`.
+- Estrutura pronta com placeholder de conteúdo — você cola o texto final no arquivo depois.
 
-## Conteúdo
-Renderizar exatamente o texto fornecido pelo usuário, preservando a numeração das seções e os itens de lista. Sem alterações editoriais.
+## Footer
+Atualizar `src/components/site/Footer.tsx`: trocar o link "Termos e Políticas" de `#` para `/termos-e-politicas`.
 
 ## Não fazer
-- Nenhuma mudança no `Footer` (o link "Privacidade" segue como `#`; se quiser apontar para `/privacidade` depois, é um ajuste separado).
 - Nenhuma mudança de backend/dados.
+- Nenhuma alteração em outras rotas.
