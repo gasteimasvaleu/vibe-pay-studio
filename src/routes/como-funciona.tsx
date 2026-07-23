@@ -2,12 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SiteLayout } from "@/components/site/Layout";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -39,14 +33,6 @@ export const Route = createFileRoute("/como-funciona")({
   }),
   component: ComoFuncionaPage,
 });
-
-const faqs = [
-  { q: "Como recebo meus pagamentos?", a: "Via Pix, com saque disponível em até 24h após a solicitação. Você também pode receber por transferência bancária." },
-  { q: "Qual é a taxa da plataforma?", a: "Você fica com 85% do valor bruto de assinaturas, PPV e mimos. Sem taxas escondidas ou mensalidades." },
-  { q: "Meu conteúdo fica protegido?", a: "Sim. Aplicamos DRM, marca d'água dinâmica e bloqueio de print em dispositivos suportados." },
-  { q: "Posso ter conta gratuita e paga ao mesmo tempo?", a: "Sim. Você pode oferecer prévias gratuitas e conteúdo premium por assinatura no mesmo perfil." },
-  { q: "Preciso pagar para começar?", a: "Não. O cadastro é 100% gratuito e sem cartão de crédito." },
-];
 
 const LEVELS = [
   { key: "iniciante", label: "Iniciante", icon: Sprout, min: 0 },
@@ -206,32 +192,6 @@ function ComoFuncionaPage() {
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-16 md:py-20 bg-surface">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <span className="label-caps text-primary">FAQ</span>
-            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-              Perguntas frequentes
-            </h2>
-          </div>
-          <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((f, i) => (
-              <AccordionItem
-                key={i}
-                value={`i${i}`}
-                className="rounded-2xl border border-border bg-background px-6"
-              >
-                <AccordionTrigger className="text-left font-semibold text-base hover:no-underline">
-                  {f.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
         </div>
       </section>
 
