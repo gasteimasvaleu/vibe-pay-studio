@@ -348,7 +348,6 @@ function RefundDialog({
 function ColecoesPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [active, setActive] = useState<TabKey>("favoritos");
   const [refundItem, setRefundItem] = useState<RefundableItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
