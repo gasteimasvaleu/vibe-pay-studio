@@ -270,7 +270,7 @@ export const requestRefund = createServerFn({ method: "POST" })
 
     const table = tableMap[data.referenceType];
 
-    const { data: row, error: rowError } = await supabase
+    const { data: row, error: rowError } = await (supabase as any)
       .from(table)
       .select("id, transaction_id, provider_ref, amount_cents, created_at, status")
       .eq("id", data.referenceId)
@@ -286,7 +286,7 @@ export const requestRefund = createServerFn({ method: "POST" })
           ? "sender_id"
           : "buyer_id";
 
-    const { data: ownerCheck, error: ownerError } = await supabase
+    const { data: ownerCheck, error: ownerError } = await (supabase as any)
       .from(table)
       .select("id")
       .eq("id", data.referenceId)
