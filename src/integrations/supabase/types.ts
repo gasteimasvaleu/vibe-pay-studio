@@ -1936,6 +1936,62 @@ export type Database = {
           },
         ]
       }
+      refund_requests: {
+        Row: {
+          admin_notes: string | null
+          amount_cents: number
+          asaas_payment_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          reference_id: string
+          reference_type: Database["public"]["Enums"]["refund_request_type"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["refund_request_status"]
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_cents: number
+          asaas_payment_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          reference_id: string
+          reference_type: Database["public"]["Enums"]["refund_request_type"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["refund_request_status"]
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_cents?: number
+          asaas_payment_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          reference_id?: string
+          reference_type?: Database["public"]["Enums"]["refund_request_type"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["refund_request_status"]
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revoked_sessions: {
         Row: {
           id: string
@@ -2998,6 +3054,12 @@ export type Database = {
       moderation_status: "pending" | "approved" | "hidden" | "removed"
       payment_method: "pix" | "credit_card" | "boleto" | "wallet" | "manual"
       promotion_status: "active" | "paused" | "ended"
+      refund_request_status: "pending" | "approved" | "rejected" | "cancelled"
+      refund_request_type:
+        | "publication_unlock"
+        | "chat_message_unlock"
+        | "subscription"
+        | "tip"
       report_status: "open" | "reviewing" | "actioned" | "dismissed"
       report_target: "publication" | "profile" | "chat_message"
       subscription_plan: "monthly" | "quarterly" | "semiannual"
@@ -3179,6 +3241,13 @@ export const Constants = {
       moderation_status: ["pending", "approved", "hidden", "removed"],
       payment_method: ["pix", "credit_card", "boleto", "wallet", "manual"],
       promotion_status: ["active", "paused", "ended"],
+      refund_request_status: ["pending", "approved", "rejected", "cancelled"],
+      refund_request_type: [
+        "publication_unlock",
+        "chat_message_unlock",
+        "subscription",
+        "tip",
+      ],
       report_status: ["open", "reviewing", "actioned", "dismissed"],
       report_target: ["publication", "profile", "chat_message"],
       subscription_plan: ["monthly", "quarterly", "semiannual"],

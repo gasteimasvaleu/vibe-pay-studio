@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type CollectionPubItem = {
   id: string;
+  publication_id: string;
   caption: string | null;
   thumb_url: string | null;
   media_type: "image" | "video" | null;
@@ -88,6 +89,7 @@ export const listMyBookmarks = createServerFn({ method: "GET" })
         const thumb = m?.url ?? p.preview_url ?? null;
         return {
           id: p.id,
+          publication_id: p.id,
           caption: p.caption,
           thumb_url: thumb,
           media_type: (m?.type ?? null) as any,
@@ -122,7 +124,8 @@ export const listMyPurchases = createServerFn({ method: "GET" })
         const m = media.get(p.id);
         const thumb = m?.url ?? p.preview_url ?? null;
         return {
-          id: p.id,
+          id: r.id,
+          publication_id: p.id,
           caption: p.caption,
           thumb_url: thumb,
           media_type: (m?.type ?? null) as any,
