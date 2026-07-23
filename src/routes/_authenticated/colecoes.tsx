@@ -408,6 +408,12 @@ function ColecoesPage() {
     enabled: active === "reembolsos",
     staleTime: 30_000,
   });
+  const hidden = useQuery({
+    queryKey: ["collections", "hidden"],
+    queryFn: () => hiddenFn(),
+    enabled: active === "ocultados",
+    staleTime: 30_000,
+  });
 
   const refundableIds = useMemo(
     () => new Set((refundable.data ?? []).map((r) => r.referenceId)),
