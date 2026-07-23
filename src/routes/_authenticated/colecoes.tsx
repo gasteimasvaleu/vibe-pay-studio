@@ -3,6 +3,7 @@ import { createFileRoute, redirect, useRouter, Link } from "@tanstack/react-rout
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Lock, Play, MessageCircle, Gift, Bookmark, RefreshCcw, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listMyBookmarks,
@@ -28,7 +29,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 
 export const Route = createFileRoute("/_authenticated/colecoes")({
   head: () => ({
