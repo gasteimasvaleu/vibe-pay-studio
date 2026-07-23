@@ -56,6 +56,18 @@ export function PublicationOptionsMenu({
   const toggleCommentsFn = useServerFn(setPublicationCommentsDisabled);
   const archiveFn = useServerFn(setPublicationArchived);
   const deleteFn = useServerFn(deletePublication);
+  const hideFn = useServerFn(hidePublication);
+
+  const hideMutation = useMutation({
+    mutationFn: () => hideFn({ data: { publicationId: item.id } }),
+    onSuccess: () => {
+      showTopBanner("Post ocultado");
+      invalidateFeeds();
+      queryClient.invalidateQueries({ queryKey: ["collections", "hidden"] });
+    },
+    onError: (e: unknown) =>
+      showTopBanner(e instanceof Error ? e.message : "Erro ao ocultar"),
+  });
 
   const invalidateFeeds = () => {
     queryClient.invalidateQueries({ queryKey: ["feed"] });
