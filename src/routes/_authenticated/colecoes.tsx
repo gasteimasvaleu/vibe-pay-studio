@@ -368,6 +368,9 @@ function ColecoesPage() {
   const refundRequestsFn = useServerFn(listMyRefundRequests);
   const requestRefundFn = useServerFn(requestRefund);
   const cancelRefundFn = useServerFn(cancelRefundRequest);
+  const hiddenFn = useServerFn(listMyHiddenPublications);
+  const unhideFn = useServerFn(unhidePublication);
+  const [isUnhiding, setIsUnhiding] = useState<string | null>(null);
 
   const bookmarks = useQuery({
     queryKey: ["collections", "bookmarks"],
