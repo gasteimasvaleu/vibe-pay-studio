@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type CollectionPubItem = {
   id: string;
+  publication_id: string;
   caption: string | null;
   thumb_url: string | null;
   media_type: "image" | "video" | null;
