@@ -512,7 +512,7 @@ function ColecoesPage() {
                   refundable: refundableIds.has(it.id),
                 }}
                 showAmount
-                onRefund={refundableIds.has(it.id) ? setRefundItem : undefined}
+                onRefund={refundableIds.has(it.id) ? openRefund : undefined}
               />
             )}
             {active === "compras_chat" && (
@@ -521,7 +521,7 @@ function ColecoesPage() {
                   ...it,
                   refundable: refundableIds.has(it.id),
                 }}
-                onRefund={refundableIds.has(it.id) ? setRefundItem : undefined}
+                onRefund={refundableIds.has(it.id) ? openRefund : undefined}
               />
             )}
             {active === "mimos" && <TipRow item={it} />}
