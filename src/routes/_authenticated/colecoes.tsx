@@ -89,7 +89,7 @@ function PublicationRow({
 }: {
   item: any;
   showAmount?: boolean;
-  onRefund?: (item: RefundableItem) => void;
+  onRefund?: (id: string) => void;
 }) {
   const authorHref = item.author?.username
     ? `/perfil/${item.author.username}`
