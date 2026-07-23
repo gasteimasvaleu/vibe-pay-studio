@@ -51,7 +51,7 @@ export function Footer() {
               <FooterCol
                 title="Legal"
                 links={[
-                  ["Privacidade", "#"],
+                  ["Privacidade", "/privacidade"],
                   ["Termos e Políticas", "#"],
                   ["Centro de Segurança", "#"],
                   ["Política de Reclamações", "#"],
