@@ -1,23 +1,21 @@
-# Criar página /centro-e-seguranca
+# Criar página /politicadereclamacoes
 
 ## Novo arquivo
-`src/routes/centro-e-seguranca.tsx` — rota pública com `createFileRoute("/centro-e-seguranca")`.
+`src/routes/politicadereclamacoes.tsx` — rota pública com `createFileRoute("/politicadereclamacoes")`.
 
 ## Estrutura
-- Envolver com `SiteLayout` para reutilizar Navbar superior + Footer (mesmo padrão de `/termos-e-politicas` e `/privacidade`).
-- `head()` próprio: title "Centro de Segurança e Transparência — Monetisexy", description, og:title, og:description, og:type, og:url, twitter:card, twitter:title, twitter:description, canonical `https://monetisexy.com/centro-e-seguranca`.
-- Container `max-w-3xl mx-auto px-4 md:px-6 py-12 text-foreground`.
-- `h1` com título + linha "Última atualização: 23/07/2026" em `text-muted-foreground`.
-- Componente auxiliar `Secao({ titulo, children })` (mesmo padrão do arquivo de termos) para cada uma das 13 seções, renderizando `h2` + parágrafos/listas.
-- Listas com `ul` + `list-disc pl-5` para itens de Valores (Seção 2), Compromisso com Segurança (Seção 4) e Canais de Denúncia (Seção 13).
-- Link interno para `/privacidade` no lugar do placeholder "[Política de Privacidade]" na Seção 9, usando `<Link to="/privacidade">`.
-- E-mail `contato@monetisexy.com` como `<a href="mailto:...">` na Seção 13.
+- Envolver com `SiteLayout` (Navbar superior + Footer), mesmo padrão das rotas legais existentes.
+- `head()` próprio: title "Política de Reclamações — Monetisexy", description, og:title, og:description, og:type "website", og:url, twitter:card/title/description, canonical `https://monetisexy.com/politicadereclamacoes`.
+- Container `max-w-3xl mx-auto px-4 md:px-6 py-12 text-foreground` com `h1` + linha "Última atualização: 23/07/2026" em `text-muted-foreground`.
+- Componente auxiliar `Secao({ titulo, children })` (mesmo padrão) para as 9 seções.
+- Listas com `ul list-disc pl-5` para: Escopo (Seção 3), Diretrizes Gerais (Seção 4), Como Enviar (Seção 5) e sub-prazos da Seção 6.2.
+- E-mail `contato@monetysex.com` como `<a href="mailto:...">` na Seção 5 (mantido conforme texto do usuário).
 
 ## Footer
-Atualizar `src/components/site/Footer.tsx`: trocar o link "Centro de Segurança" (atualmente `href="#"`) para `/centro-e-seguranca` na coluna Legal.
+Atualizar `src/components/site/Footer.tsx`: trocar o link "Política de Reclamações" (atualmente `href="#"`) para `/politicadereclamacoes` na coluna Legal.
 
 ## Conteúdo
-Texto exato fornecido pelo usuário nas 13 seções (Introdução; Missão, Visão e Valores; Monitoramento de Conteúdo; Compromisso com Segurança; Verificação de Idade e Identidade; Jurisdição; Proteção Contra Abuso de Menores; Direitos Autorais; Privacidade do Usuário; Prevenção a Fraude e Lavagem de Dinheiro; Discurso de Ódio; Prevenção a Trabalho Escravo e Tráfico de Pessoas; Canais de Denúncia e Contato).
+Texto exato fornecido pelo usuário nas 9 seções (Introdução; Propósito; Escopo; Diretrizes Gerais; Como Enviar uma Reclamação; Procedimento de Análise; Resultado da Reclamação; Aspectos Regulatórios; Considerações Finais).
 
 ## Não fazer
 - Nenhuma mudança de backend/dados.
