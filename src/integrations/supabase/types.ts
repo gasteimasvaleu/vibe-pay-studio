@@ -1637,6 +1637,32 @@ export type Database = {
           },
         ]
       }
+      publication_hides: {
+        Row: {
+          created_at: string
+          publication_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          publication_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          publication_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_hides_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publication_likes: {
         Row: {
           created_at: string
