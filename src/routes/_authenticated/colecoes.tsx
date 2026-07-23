@@ -407,6 +407,11 @@ function ColecoesPage() {
     () => new Set((refundable.data ?? []).map((r) => r.referenceId)),
     [refundable.data],
   );
+  const refundableById = useMemo(() => {
+    const m = new Map<string, RefundableItem>();
+    (refundable.data ?? []).forEach((r) => m.set(r.referenceId, r));
+    return m;
+  }, [refundable.data]);
 
   async function handleRefundSubmit(reason: string) {
     if (!refundItem) return;
