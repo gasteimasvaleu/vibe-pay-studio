@@ -14,6 +14,7 @@ import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
+import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CadastroIndexRouteImport } from './routes/cadastro.index'
@@ -120,6 +121,11 @@ const EntrarRoute = EntrarRouteImport.update({
 const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
   id: '/como-funciona',
   path: '/como-funciona',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentroESegurancaRoute = CentroESegurancaRouteImport.update({
+  id: '/centro-e-seguranca',
+  path: '/centro-e-seguranca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -589,6 +595,7 @@ const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -677,6 +684,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -761,6 +769,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -851,6 +860,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
     | '/privacidade'
@@ -939,6 +949,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
     | '/privacidade'
@@ -1022,6 +1033,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/centro-e-seguranca'
     | '/como-funciona'
     | '/entrar'
     | '/privacidade'
@@ -1112,6 +1124,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   EntrarRoute: typeof EntrarRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
@@ -1161,6 +1174,13 @@ declare module '@tanstack/react-router' {
       path: '/como-funciona'
       fullPath: '/como-funciona'
       preLoaderRoute: typeof ComoFuncionaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centro-e-seguranca': {
+      id: '/centro-e-seguranca'
+      path: '/centro-e-seguranca'
+      fullPath: '/centro-e-seguranca'
+      preLoaderRoute: typeof CentroESegurancaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1993,6 +2013,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
   EntrarRoute: EntrarRoute,
   PrivacidadeRoute: PrivacidadeRoute,
