@@ -53,7 +53,7 @@ export function Footer() {
                 links={[
                   ["Privacidade", "/privacidade"],
                   ["Termos e Políticas", "/termos-e-politicas"],
-                  ["Centro de Segurança", "#"],
+                  ["Centro de Segurança", "/centro-e-seguranca"],
                   ["Política de Reclamações", "#"],
                   ["DMCA", "#"],
                 ]}
