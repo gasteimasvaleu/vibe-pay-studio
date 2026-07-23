@@ -54,7 +54,7 @@ export function Footer() {
                   ["Privacidade", "/privacidade"],
                   ["Termos e Políticas", "/termos-e-politicas"],
                   ["Centro de Segurança", "/centro-e-seguranca"],
-                  ["Política de Reclamações", "#"],
+                  ["Política de Reclamações", "/politicadereclamacoes"],
                   ["DMCA", "#"],
                 ]}
               />
