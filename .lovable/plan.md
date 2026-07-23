@@ -1,78 +1,47 @@
-## Objetivo
-Adicionar à página existente `/colecoes` uma aba **"Reembolsos"** e botões de **"Solicitar reembolso"** na aba "Minhas Compras", permitindo que o usuário peça e acompanhe reembolsos. No admin, criar interface para aprovar/rejeitar e executar o estorno no Asaas.
+## Estado atual da `/colecoes`
 
-## Onde fica `/colecoes` hoje
-- Acessível pelo dashboard do assinante e do creator no card **"Atividades"**.
-- Já tem as abas: Favoritos, Minhas Compras, Compras Chat, Ocultados, Mimos.
+Auditando o código real hoje na página:
 
-## O que será feito
+| Aba | Funciona? | Observação |
+|---|---|---|
+| FAVORITOS | Sim | Lê `publication_bookmarks` via `listMyBookmarks`. |
+| MINHAS COMPRAS | Sim | Lê `publication_unlocks` pagas via `listMyPurchases`. |
+| COMPRAS CHAT | Sim | Lê `chat_message_unlocks` pagas via `listMyChatPurchases`. |
+| MIMOS | Sim | Lê `tips` enviadas via `listMyTipsSent`. |
+| REEMBOLSOS | Sim | Fluxo completo (solicitar / listar / cancelar / admin aprovar com estorno Asaas) já implementado no turno anterior. |
+| OCULTADOS | **Não** | Mostra apenas `EmptyState` fixo — sem tabela, sem ação, sem listagem. |
 
-### 1. Banco de dados
-- Criar tabela `public.refund_requests`:
-  - `id` uuid PK
-  - `user_id` uuid -> auth.users
-  - `reference_type` enum: `publication_unlock`, `chat_message_unlock`, `subscription`, `tip`
-  - `reference_id` uuid
-  - `transaction_id` uuid -> transactions (opcional)
-  - `amount_cents` int
-  - `reason` text
-  - `status` enum: `pending`, `approved`, `rejected`, `cancelled`
-  - `admin_notes` text
-  - `asaas_payment_id` text
-  - `created_at`, `updated_at`, `resolved_at`
-- GRANTs e RLS:
-  - Usuário vê/cria/atualiza apenas seus próprios pedidos.
-  - Admin vê/atualiza todos.
-- Adicionar coluna `asaas_payment_id` nas tabelas `publication_unlocks`, `chat_message_unlocks`, `subscriptions` e `tips` (onde ainda não existir), populada no pagamento.
+Bug adicional identificado: os cards de post apontam para `/post/${publication_id}`, mas **essa rota não existe** no app (só existem `postsarquivados` e `publicacoes-agendadas`). Todos os cliques em posts vão para 404.
 
-### 2. Backend
-- Criar `src/lib/refunds.functions.ts`:
-  - `requestRefund`: valida se a compra pertence ao usuário, se não foi reembolsada, se está dentro do prazo (7 dias corridos), cria pedido `pending`.
-  - `cancelRefundRequest`: usuário cancela pedido `pending`.
-  - `listMyRefundRequests`: lista pedidos do usuário com dados da compra.
-- Criar `src/lib/admin-refunds.functions.ts` (protegido por role admin):
-  - `listPendingRefunds`: pedidos pendentes com comprador e criador.
-  - `approveRefund`: aprova, chama `refundPayment` no Asaas, atualiza transação original para `refunded` e reverte saldo do criador.
-  - `rejectRefund`: rejeita com nota do admin.
+## O que este plano entrega
 
-### 3. Frontend — Aba Reembolsos em `/colecoes`
-- Adicionar nova tab `reembolsos` no array `TABS`.
-- Na aba "Minhas Compras" e "Compras Chat", adicionar botão/menu "Solicitar reembolso" em itens elegíveis:
-  - comprado há até 7 dias;
-  - status `paid`;
-  - sem pedido pendente/aprovado.
-- Abrir `Dialog` com motivos pré-definidos e campo de texto.
-- Aba "Reembolsos" mostra lista com status, valor, data e botão "Cancelar" para pedidos pendentes.
-- Atualizar query keys para invalidar listas após solicitação/cancelamento.
+Fechar as duas lacunas para que **todas as abas** tenham funcionalidade real, ponta-a-ponta.
 
-### 4. Frontend — Admin
-- Adicionar seção "Reembolsos" no dashboard admin (`/admin`):
-  - Lista de pedidos pendentes.
-  - Ações: Aprovar (com confirmação) / Rejeitar (com nota).
-  - Histórico de pedidos resolvidos.
+### 1. Aba OCULTADOS (nova funcionalidade)
 
-### 5. Regras de negócio
-- Prazo de solicitação: 7 dias corridos após a compra.
-- Mimos não são reembolsáveis (conforme termos) e não terão botão.
-- Assinaturas: apenas ciclo atual pago e não utilizado pode ser reembolsado.
-- Ao aprovar:
-  - Chamar Asaas `refundPayment`.
-  - Marcar registro original como `refunded`.
-  - Reverter saldo do criador em `transactions`.
-  - Enviar e-mails transacionais para comprador e criador.
+Padrão semelhante a Instagram/OnlyFans: usuário oculta um post do próprio feed e depois pode reexibir aqui.
 
-### 6. Navegação
-- Manter acesso atual pelo dashboard via card "Atividades".
-- Considerar renomear o card para "Compras e Atividades" ou adicionar card separado "Minhas Compras" no dashboard (a decidir na implementação).
+- Migração SQL: nova tabela `public.publication_hides` (`user_id`, `publication_id`, `created_at`), com PK composto, GRANTs para `authenticated` + `service_role`, RLS restrita a `auth.uid() = user_id` (select/insert/delete próprios).
+- Alterar `src/lib/publications.functions.ts`: filtrar publicações ocultas nas listagens de feed do usuário logado (LEFT JOIN / NOT IN).
+- Novo `src/lib/hides.functions.ts` com `hidePublication`, `unhidePublication`, `listMyHiddenPublications` (hidratando capa, autor, tipo — reusando o helper `hydratePublications` de `collections.functions.ts`, exposto/duplicado conforme necessário).
+- Adicionar item "Ocultar post" no `PublicationOptionsMenu` chamando `hidePublication` + invalidando queries do feed.
+- Em `colecoes.tsx`: substituir o `EmptyState` fixo da aba `ocultados` por lista real com botão **"Reexibir"** por card (chama `unhidePublication`, invalida `["collections", "hidden"]` e `["feed"]`).
 
-## O que não será alterado
-- A rota `/colecoes` continua existindo.
-- Termos de uso já tratam reembolso; nenhuma alteração textual necessária.
+### 2. Corrigir navegação dos cards para posts
 
-## Próximos passos
-1. Aprovar escopo e prazo de 7 dias.
-2. Criar migration de banco.
-3. Implementar server functions.
-4. Implementar aba e dialogs no frontend.
-5. Implementar painel admin.
-6. Testar fluxo end-to-end no Asaas sandbox.
+Rota `/post/$publicationId` não existe. Opções: criar rota ou apontar para o perfil do autor. Escolha: **apontar para o perfil do autor** (`/perfil/$username`), que já existe e é o comportamento esperado (o post fica acessível pelo feed do criador). Sem criar rota nova para não expandir escopo.
+
+- Em `PublicationRow`, remover `pubHref = /post/...`; usar sempre `authorHref` (`/perfil/$username`) como destino. Fallback para `/colecoes` quando não houver username.
+- Aplica-se apenas à `colecoes.tsx` — não altera outras telas.
+
+### 3. Verificação
+
+- Rodar linter Supabase após migração.
+- Fluxo manual esperado: ocultar post no feed → aparece em `/colecoes` aba OCULTADOS → botão "Reexibir" remove da lista e volta ao feed; clique em qualquer card de compra/favorito/mimo abre perfil do autor; solicitar reembolso continua funcionando.
+
+### Detalhes técnicos
+
+- `publication_hides` chave: `PRIMARY KEY (user_id, publication_id)` para idempotência do "ocultar de novo".
+- RLS: `USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)` em todas as policies (select/insert/delete). Sem policy anon.
+- Filtragem no feed via subquery `NOT IN (SELECT publication_id FROM publication_hides WHERE user_id = auth.uid())` dentro das server fns já autenticadas.
+- Nenhuma alteração em pagamentos, Asaas, admin, ou nas outras abas.
