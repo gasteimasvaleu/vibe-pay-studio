@@ -78,6 +78,7 @@ import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
+import { Route as AuthenticatedAdminRefundsRouteImport } from './routes/_authenticated/admin.refunds'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
@@ -482,6 +483,12 @@ const AuthenticatedAdminTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminRefundsRoute =
+  AuthenticatedAdminRefundsRouteImport.update({
+    id: '/refunds',
+    path: '/refunds',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminModerationRoute =
   AuthenticatedAdminModerationRouteImport.update({
     id: '/moderation',
@@ -646,6 +653,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -734,6 +742,7 @@ export interface FileRoutesByTo {
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -824,6 +833,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/_authenticated/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -917,6 +927,7 @@ export interface FileRouteTypes {
     | '/admin/emails'
     | '/admin/leaks'
     | '/admin/moderation'
+    | '/admin/refunds'
     | '/admin/transactions'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -1005,6 +1016,7 @@ export interface FileRouteTypes {
     | '/admin/emails'
     | '/admin/leaks'
     | '/admin/moderation'
+    | '/admin/refunds'
     | '/admin/transactions'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -1094,6 +1106,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/leaks'
     | '/_authenticated/admin/moderation'
+    | '/_authenticated/admin/refunds'
     | '/_authenticated/admin/transactions'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/withdrawals'
@@ -1650,6 +1663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/refunds': {
+      id: '/_authenticated/admin/refunds'
+      path: '/refunds'
+      fullPath: '/admin/refunds'
+      preLoaderRoute: typeof AuthenticatedAdminRefundsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/moderation': {
       id: '/_authenticated/admin/moderation'
       path: '/moderation'
@@ -1805,6 +1825,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
+  AuthenticatedAdminRefundsRoute: typeof AuthenticatedAdminRefundsRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
@@ -1816,6 +1837,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
+  AuthenticatedAdminRefundsRoute: AuthenticatedAdminRefundsRoute,
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
