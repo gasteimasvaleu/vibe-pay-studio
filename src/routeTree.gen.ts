@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as EntrarRouteImport } from './routes/entrar'
@@ -96,6 +97,11 @@ import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
 import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
 import { Route as AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.aprovado'
 
+const TermosEPoliticasRoute = TermosEPoliticasRouteImport.update({
+  id: '/termos-e-politicas',
+  path: '/termos-e-politicas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
@@ -587,6 +593,7 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/banco': typeof AuthenticatedBancoRouteWithChildren
@@ -674,6 +681,7 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
@@ -757,6 +765,7 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
@@ -846,6 +855,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/privacidade'
     | '/sobre'
+    | '/termos-e-politicas'
     | '/account-status'
     | '/admin'
     | '/banco'
@@ -933,6 +943,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/privacidade'
     | '/sobre'
+    | '/termos-e-politicas'
     | '/account-status'
     | '/banco'
     | '/bugreport'
@@ -1015,6 +1026,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/privacidade'
     | '/sobre'
+    | '/termos-e-politicas'
     | '/_authenticated/account-status'
     | '/_authenticated/admin'
     | '/_authenticated/banco'
@@ -1104,6 +1116,7 @@ export interface RootRouteChildren {
   EntrarRoute: typeof EntrarRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
+  TermosEPoliticasRoute: typeof TermosEPoliticasRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
   CadastroIndexRoute: typeof CadastroIndexRoute
@@ -1115,6 +1128,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos-e-politicas': {
+      id: '/termos-e-politicas'
+      path: '/termos-e-politicas'
+      fullPath: '/termos-e-politicas'
+      preLoaderRoute: typeof TermosEPoliticasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sobre': {
       id: '/sobre'
       path: '/sobre'
@@ -1977,6 +1997,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntrarRoute: EntrarRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
+  TermosEPoliticasRoute: TermosEPoliticasRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
   CadastroIndexRoute: CadastroIndexRoute,
