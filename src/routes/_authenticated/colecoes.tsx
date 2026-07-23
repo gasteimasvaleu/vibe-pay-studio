@@ -138,7 +138,7 @@ function PublicationRow({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onRefund(item as RefundableItem);
+              onRefund(item.id as string);
             }}
             className="text-[11px] font-medium text-destructive hover:underline"
           >
