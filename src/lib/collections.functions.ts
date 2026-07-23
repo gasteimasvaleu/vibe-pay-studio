@@ -89,6 +89,7 @@ export const listMyBookmarks = createServerFn({ method: "GET" })
         const thumb = m?.url ?? p.preview_url ?? null;
         return {
           id: p.id,
+          publication_id: p.id,
           caption: p.caption,
           thumb_url: thumb,
           media_type: (m?.type ?? null) as any,
