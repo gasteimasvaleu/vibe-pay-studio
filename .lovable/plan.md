@@ -1,51 +1,78 @@
 ## Objetivo
-Reformular `/como-funciona` para replicar o layout do screenshot (calculadora com 3 sliders + card escuro de resultado com níveis, e faixa "Como funciona" com 4 ícones horizontais), adaptado ao tema roxo do app.
+Adicionar à página existente `/colecoes` uma aba **"Reembolsos"** e botões de **"Solicitar reembolso"** na aba "Minhas Compras", permitindo que o usuário peça e acompanhe reembolsos. No admin, criar interface para aprovar/rejeitar e executar o estorno no Asaas.
 
-## Mudanças em `src/routes/como-funciona.tsx`
+## Onde fica `/colecoes` hoje
+- Acessível pelo dashboard do assinante e do creator no card **"Atividades"**.
+- Já tem as abas: Favoritos, Minhas Compras, Compras Chat, Ocultados, Mimos.
 
-### 1. Hero (manter simples)
-Mantém título/subtítulo, encurta para dar destaque à calculadora logo abaixo.
+## O que será feito
 
-### 2. Nova seção "Quanto você pode ganhar?" (substitui a calculadora atual)
-Grid 2 colunas (empilha no mobile):
+### 1. Banco de dados
+- Criar tabela `public.refund_requests`:
+  - `id` uuid PK
+  - `user_id` uuid -> auth.users
+  - `reference_type` enum: `publication_unlock`, `chat_message_unlock`, `subscription`, `tip`
+  - `reference_id` uuid
+  - `transaction_id` uuid -> transactions (opcional)
+  - `amount_cents` int
+  - `reason` text
+  - `status` enum: `pending`, `approved`, `rejected`, `cancelled`
+  - `admin_notes` text
+  - `asaas_payment_id` text
+  - `created_at`, `updated_at`, `resolved_at`
+- GRANTs e RLS:
+  - Usuário vê/cria/atualiza apenas seus próprios pedidos.
+  - Admin vê/atualiza todos.
+- Adicionar coluna `asaas_payment_id` nas tabelas `publication_unlocks`, `chat_message_unlocks`, `subscriptions` e `tips` (onde ainda não existir), populada no pagamento.
 
-**Coluna esquerda — card claro com 3 sliders:**
-- `Assinatura mensal` — R$ 9,90 a R$ 199,90 (default R$ 19,90)
-- `Seguidores nas redes sociais` — 100 a 500.000 (default 100, escala log)
-- `Posts por semana na Privacy` — 1x a 30x (default 1x)
+### 2. Backend
+- Criar `src/lib/refunds.functions.ts`:
+  - `requestRefund`: valida se a compra pertence ao usuário, se não foi reembolsada, se está dentro do prazo (7 dias corridos), cria pedido `pending`.
+  - `cancelRefundRequest`: usuário cancela pedido `pending`.
+  - `listMyRefundRequests`: lista pedidos do usuário com dados da compra.
+- Criar `src/lib/admin-refunds.functions.ts` (protegido por role admin):
+  - `listPendingRefunds`: pedidos pendentes com comprador e criador.
+  - `approveRefund`: aprova, chama `refundPayment` no Asaas, atualiza transação original para `refunded` e reverte saldo do criador.
+  - `rejectRefund`: rejeita com nota do admin.
 
-Sliders usam `accent-primary` (roxo) e o mesmo estilo do arquivo atual.
+### 3. Frontend — Aba Reembolsos em `/colecoes`
+- Adicionar nova tab `reembolsos` no array `TABS`.
+- Na aba "Minhas Compras" e "Compras Chat", adicionar botão/menu "Solicitar reembolso" em itens elegíveis:
+  - comprado há até 7 dias;
+  - status `paid`;
+  - sem pedido pendente/aprovado.
+- Abrir `Dialog` com motivos pré-definidos e campo de texto.
+- Aba "Reembolsos" mostra lista com status, valor, data e botão "Cancelar" para pedidos pendentes.
+- Atualizar query keys para invalidar listas após solicitação/cancelamento.
 
-**Coluna direita — card escuro (gradiente `from-background to-primary/20`):**
-- Label "VOCÊ RECEBE" (label-caps)
-- Valor grande em `text-gradient-primary` (roxo) — ex: `R$ 32`
-- "por mês"
-- Pill secundária com valor anual (`R$ X por ano`)
-- Badge de nível ativo + 4 ícones dos próximos níveis (Iniciante 🌱, Crescente 🔥, Destaque ⭐, Top 👑)
-- Ícone `Info` no canto superior direito abrindo Tooltip com a fórmula
+### 4. Frontend — Admin
+- Adicionar seção "Reembolsos" no dashboard admin (`/admin`):
+  - Lista de pedidos pendentes.
+  - Ações: Aprovar (com confirmação) / Rejeitar (com nota).
+  - Histórico de pedidos resolvidos.
 
-**Fórmula:** `ganho = assinatura × 0.85 × estimativa_conversao(seguidores) × frequencia_boost(posts)`
-- conversão base: 1,5% dos seguidores viram assinantes; ajustada por posts/semana (1x=1.0, 7x=1.4, 30x=2.0)
-- split 85/15 (conforme `asaas.server.ts` atual — não alterar backend)
-- Níveis por faixa mensal líquida: Iniciante <R$500, Crescente R$500–5k, Destaque R$5k–20k, Top >R$20k
+### 5. Regras de negócio
+- Prazo de solicitação: 7 dias corridos após a compra.
+- Mimos não são reembolsáveis (conforme termos) e não terão botão.
+- Assinaturas: apenas ciclo atual pago e não utilizado pode ser reembolsado.
+- Ao aprovar:
+  - Chamar Asaas `refundPayment`.
+  - Marcar registro original como `refunded`.
+  - Reverter saldo do criador em `transactions`.
+  - Enviar e-mails transacionais para comprador e criador.
 
-### 3. Seção "Como funciona" (4 passos em ícones)
-Faixa horizontal em card `rounded-3xl border bg-card` com 4 colunas (empilha no mobile):
-- 👤✓ **Crie sua conta** — Cadastro gratuito em 2 minutos
-- 🎛️ **Configure seu perfil** — Capriche na bio, foto de capa, preço e divulgue em outras redes
-- 📷 **Publique conteúdo** — Fotos, vídeos e mensagens exclusivas
-- 💲 **Receba pagamentos** — Saque quando quiser, via Pix em até 24h
+### 6. Navegação
+- Manter acesso atual pelo dashboard via card "Atividades".
+- Considerar renomear o card para "Compras e Atividades" ou adicionar card separado "Minhas Compras" no dashboard (a decidir na implementação).
 
-Ícones em quadrado `rounded-2xl bg-primary/10 text-primary` (adapta o laranja do screenshot para o roxo do app).
+## O que não será alterado
+- A rota `/colecoes` continua existindo.
+- Termos de uso já tratam reembolso; nenhuma alteração textual necessária.
 
-Substitui a seção "Steps detailed 01–04" atual.
-
-### 4. Mantém
-FAQ e CTA final inalterados.
-
-## Detalhes técnicos
-- Sem mudanças no backend, sem migração, sem novas dependências.
-- Ícones do `lucide-react` já disponíveis: `UserCheck`, `SlidersHorizontal`, `Camera`, `DollarSign`, `Info`, `Sprout`, `Flame`, `Star`, `Crown`.
-- Tooltip via `@/components/ui/tooltip` (já usado no projeto).
-- Cores 100% via tokens semânticos (`primary`, `card`, `muted-foreground`, `border`) — nada de laranja hardcoded.
-- Split exibido = 85% (coerente com o resto do app).
+## Próximos passos
+1. Aprovar escopo e prazo de 7 dias.
+2. Criar migration de banco.
+3. Implementar server functions.
+4. Implementar aba e dialogs no frontend.
+5. Implementar painel admin.
+6. Testar fluxo end-to-end no Asaas sandbox.
