@@ -250,12 +250,14 @@ export const createPaidDmRequest = createServerFn({ method: "POST" })
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const creatorActiveProfileId = await getActiveProfileIdFor(supabase, creatorId);
     const { data: req, error } = await supabase
       .from("chat_media_requests")
       .insert({
         thread_id: data.threadId,
         requester_id: userId,
         creator_id: creatorId,
+        creator_profile_id: creatorActiveProfileId,
         price_cents: data.priceCents,
         status: "pending_payment",
         expires_at: expiresAt,
