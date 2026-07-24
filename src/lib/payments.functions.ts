@@ -669,7 +669,32 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     }
 
     const customerId = await ensureCustomerId(supabase, userId);
-    const periodEnd = new Date(Date.now() + months * 30 * 86400_000).toISOString();
+
+    // Detecta assinatura ativa para lidar com upgrade (soma de tempo restante)
+    const nowMs = Date.now();
+    const { data: existingSub } = await supabase
+      .from("subscriptions")
+      .select("id, plan, current_period_end, asaas_subscription_id")
+      .eq("creator_id", data.creatorId)
+      .eq("subscriber_id", userId)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .order("current_period_end", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let remainingMs = 0;
+    let supersedesId: string | null = null;
+    if (existingSub) {
+      const existingMonths = PLAN_MONTHS[existingSub.plan as "monthly" | "quarterly" | "semiannual"] ?? 1;
+      if (months <= existingMonths) {
+        throw new Error("plan_downgrade_not_allowed");
+      }
+      remainingMs = Math.max(0, new Date(existingSub.current_period_end as string).getTime() - nowMs);
+      supersedesId = existingSub.id as string;
+    }
+
+    const periodEnd = new Date(nowMs + months * 30 * 86400_000 + remainingMs).toISOString();
 
     const asaas = await loadAsaas();
     const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method);
