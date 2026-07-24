@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, notFound } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, notFound, useRouter } from "@tanstack/react-router";
 import { MediaLightbox } from "@/components/feed/MediaLightbox";
-import { useSuspenseQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
@@ -33,6 +33,7 @@ import {
   type GridMediaFilter,
 } from "@/lib/publications.functions";
 import { PublicationCard } from "@/components/feed/PublicationCard";
+import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 
 type ProfileData = {
   userId: string;
@@ -146,6 +147,8 @@ export const Route = createFileRoute("/_authenticated/profile/$username")({
 function ProfilePage() {
   const { username } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"posts" | "medias">("posts");
   const [mediaFilter, setMediaFilter] = useState<GridMediaFilter>("all");
   const [openMedia, setOpenMedia] = useState<GridMediaItem | null>(null);
@@ -156,6 +159,25 @@ function ProfilePage() {
 
   const fetchUserPubs = useServerFn(getUserPublications);
   const fetchMedias = useServerFn(getUserMediasGrid);
+  const setActiveCreatorProfileFn = useServerFn(setActiveCreatorProfile);
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  const handleEditProfile = async () => {
+    if (editingProfile) return;
+    setEditingProfile(true);
+    try {
+      if (profile.creatorProfileId && isCreatorLike(profile.accountType)) {
+        await setActiveCreatorProfileFn({ data: { creatorProfileId: profile.creatorProfileId } });
+        await queryClient.invalidateQueries();
+        await router.invalidate();
+      }
+      await navigate({
+        to: isCreatorLike(profile.accountType) ? "/settings/creator" : "/settings/myprofile",
+      });
+    } finally {
+      setEditingProfile(false);
+    }
+  };
 
   const postsQueryKey = ["user-feed", profile.userId, profile.creatorProfileId] as const;
   const postsQuery = useInfiniteQuery({
@@ -262,7 +284,11 @@ function ProfilePage() {
             </DropdownMenuItem>
             <DropdownMenuItem
               className="gap-3 rounded-xl py-3 text-base"
-              onSelect={() => navigate({ to: "/settings/myprofile" })}
+              disabled={editingProfile}
+              onSelect={(event) => {
+                event.preventDefault();
+                void handleEditProfile();
+              }}
             >
               <Settings className="h-5 w-5" />
               Editar perfil
@@ -322,16 +348,11 @@ function ProfilePage() {
 
             <button
               type="button"
-              onClick={() =>
-                navigate({
-                  to: isCreatorLike(profile.accountType)
-                    ? "/settings/creator"
-                    : "/settings/myprofile",
-                })
-              }
+              onClick={handleEditProfile}
+              disabled={editingProfile}
               className="mt-5 w-full rounded-md bg-muted py-3 text-base font-semibold text-foreground hover:bg-muted/80 transition-colors"
             >
-              Editar perfil
+              {editingProfile ? "Abrindo…" : "Editar perfil"}
             </button>
           </div>
         </section>
