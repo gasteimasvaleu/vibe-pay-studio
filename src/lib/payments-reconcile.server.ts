@@ -94,6 +94,7 @@ export async function applyPaidIntent(
     referenceId?: string;
     buyerId?: string;
     amountCents?: number;
+    supersedesSubscriptionId?: string;
   };
 
   if (!meta.referenceTable) {
@@ -121,6 +122,38 @@ export async function applyPaidIntent(
       meta.referenceId,
       providerRef,
     );
+
+    // Upgrade de assinatura: marca a assinatura antiga como substituída
+    // (o novo current_period_end já foi calculado somando o tempo restante).
+    if (meta.referenceTable === "subscriptions" && meta.supersedesSubscriptionId) {
+      try {
+        // Carrega o asaas_subscription_id antigo para cancelar a recorrência.
+        const { data: oldSub } = await supabaseAdmin
+          .from("subscriptions")
+          .select("asaas_subscription_id")
+          .eq("id", meta.supersedesSubscriptionId)
+          .maybeSingle();
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            status: "superseded",
+            auto_renew: false,
+            cancelled_at: new Date().toISOString(),
+          })
+          .eq("id", meta.supersedesSubscriptionId);
+        const oldAsaasId = oldSub?.asaas_subscription_id as string | null;
+        if (oldAsaasId) {
+          try {
+            const asaas = await import("./asaas.server");
+            await asaas.deleteAsaasSubscription(oldAsaasId);
+          } catch (err) {
+            console.warn("[reconcile] falha ao cancelar assinatura antiga no Asaas", err);
+          }
+        }
+      } catch (err) {
+        console.error("[reconcile] supersede subscription failed", err);
+      }
+    }
 
     // Fire-and-forget email notifications (never blocks reconcile).
     try {
