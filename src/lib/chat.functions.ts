@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
 export type ThreadListItem = {
   threadId: string;
@@ -89,22 +90,28 @@ export const listThreads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ThreadListItem[]> => {
     const { supabase, userId } = context;
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
     const { data: threads, error } = await supabase
       .from("chat_threads")
       .select(
-        "id, user_a, user_b, last_message_at, cleared_at_a, cleared_at_b, deleted_at_a, deleted_at_b",
+        "id, user_a, user_b, user_a_profile_id, user_b_profile_id, last_message_at, cleared_at_a, cleared_at_b, deleted_at_a, deleted_at_b",
       )
       .order("last_message_at", { ascending: false })
-      .limit(100);
+      .limit(200);
     if (error) throw new Error(error.message);
     if (!threads || threads.length === 0) return [];
 
     // Filter out threads deleted by this user (unless a new message arrived after)
+    // AND filter by active persona: my side must match my active profile OR be null (legacy).
     const visible = threads.filter((t) => {
       const side = t.user_a === userId ? "a" : "b";
       const deletedAt = side === "a" ? t.deleted_at_a : t.deleted_at_b;
-      if (!deletedAt) return true;
-      return t.last_message_at && new Date(t.last_message_at) > new Date(deletedAt);
+      if (deletedAt && !(t.last_message_at && new Date(t.last_message_at) > new Date(deletedAt))) {
+        return false;
+      }
+      const mySideProfile = side === "a" ? t.user_a_profile_id : t.user_b_profile_id;
+      if (mySideProfile && activeProfileId && mySideProfile !== activeProfileId) return false;
+      return true;
     });
     if (visible.length === 0) return [];
 
@@ -196,12 +203,30 @@ export const openThreadWith = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data, context }): Promise<{ threadId: string }> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: threadId, error } = await supabase.rpc(
       "get_or_create_thread",
       { other_user: data.userId },
     );
     if (error) throw new Error(error.message);
+    // Stamp my side's active persona on the thread (best-effort).
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
+    if (activeProfileId && threadId) {
+      const { data: row } = await supabase
+        .from("chat_threads")
+        .select("user_a, user_a_profile_id, user_b_profile_id")
+        .eq("id", threadId as string)
+        .maybeSingle();
+      if (row) {
+        const patch: { user_a_profile_id?: string; user_b_profile_id?: string } = {};
+        if (row.user_a === userId && !row.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
+        if (row.user_a !== userId && !row.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
+        if (Object.keys(patch).length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("chat_threads") as any).update(patch).eq("id", threadId as string);
+        }
+      }
+    }
     return { threadId: threadId as string };
   });
 
