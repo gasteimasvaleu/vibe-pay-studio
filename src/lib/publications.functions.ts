@@ -1364,6 +1364,10 @@ export const getScheduledPublications = createServerFn({ method: "POST" })
       const limit = data.limit ?? 20;
       const nowIso = new Date().toISOString();
 
+      // Escopo por perfil ativo — cada persona vê só seus próprios agendados.
+      const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
+      const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+
       let query = context.supabase
         .from("publications")
         .select("id, caption, visibility, price_cents, scheduled_at")
@@ -1374,6 +1378,7 @@ export const getScheduledPublications = createServerFn({ method: "POST" })
         .order("scheduled_at", { ascending: true })
         .limit(limit + 1);
 
+      if (profileId) query = query.eq("creator_profile_id", profileId);
       if (data.cursor) query = query.gt("scheduled_at", data.cursor);
 
       const { data: pubs, error } = await query;

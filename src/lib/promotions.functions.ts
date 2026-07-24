@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
 const createPromotionSchema = z.object({
   name: z.string().trim().min(3).max(80),
@@ -15,6 +16,8 @@ export const createPromotion = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createPromotionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) throw new Error("Perfil de criador ativo não encontrado.");
 
     const { data: profile, error: profileErr } = await supabase
       .from("profiles")
@@ -36,6 +39,7 @@ export const createPromotion = createServerFn({ method: "POST" })
       .from("promotions")
       .insert({
         creator_id: userId,
+        creator_profile_id: profileId,
         name: data.name,
         max_subscriptions: data.maxSubscriptions,
         duration_days: data.durationDays,
@@ -57,10 +61,12 @@ export const listMyPromotions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) return [];
     const { data, error } = await supabase
       .from("promotions")
       .select("*")
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const now = Date.now();
@@ -110,3 +116,4 @@ export const deletePromotion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
