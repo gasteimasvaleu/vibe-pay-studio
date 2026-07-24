@@ -284,7 +284,11 @@ function ProfilePage() {
             </DropdownMenuItem>
             <DropdownMenuItem
               className="gap-3 rounded-xl py-3 text-base"
-              onSelect={() => navigate({ to: "/settings/myprofile" })}
+              disabled={editingProfile}
+              onSelect={(event) => {
+                event.preventDefault();
+                void handleEditProfile();
+              }}
             >
               <Settings className="h-5 w-5" />
               Editar perfil
