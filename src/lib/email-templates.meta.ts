@@ -9,6 +9,7 @@ export const EMAIL_KINDS = [
   "post_sales",
   "subscription_sales",
   "content_purchase",
+  "pix_invoice",
 ] as const;
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 
@@ -17,6 +18,7 @@ export const EMAIL_KIND_LABELS: Record<EmailKind, string> = {
   post_sales: "Vendas de postagens",
   subscription_sales: "Vendas por inscrições",
   content_purchase: "Compra de conteúdo",
+  pix_invoice: "Cobrança PIX (com QR code)",
 };
 
 export const EMAIL_KIND_DESCRIPTIONS: Record<EmailKind, string> = {
@@ -28,6 +30,8 @@ export const EMAIL_KIND_DESCRIPTIONS: Record<EmailKind, string> = {
     "Enviado ao criador quando alguém ativa uma assinatura do seu perfil.",
   content_purchase:
     "Recibo enviado ao comprador quando ele desbloqueia uma publicação ou mensagem.",
+  pix_invoice:
+    "Enviado ao assinante com o QR code e copia-e-cola do PIX (1ª cobrança e renovações automáticas).",
 };
 
 export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
@@ -35,6 +39,15 @@ export const AVAILABLE_VARS: Record<EmailKind, string[]> = {
   content_purchase: ["creatorName", "amountBRL", "publicationUrl", "what"],
   subscription_sales: ["subscriberName", "amountBRL", "planLabel", "dashboardUrl"],
   free_to_paid: ["creatorName", "creatorUrl"],
+  pix_invoice: [
+    "creatorName",
+    "planLabel",
+    "amountBRL",
+    "dueDate",
+    "invoiceUrl",
+    "qrImageDataUrl",
+    "qrCopyPaste",
+  ],
 };
 
 const APP_BASE_URL_CLIENT = "https://monetisexy.com";
@@ -60,6 +73,18 @@ export const SAMPLE_VARS: Record<EmailKind, Record<string, string>> = {
   free_to_paid: {
     creatorName: "Diego Alves",
     creatorUrl: `${APP_BASE_URL_CLIENT}/perfil/diegoalves`,
+  },
+  pix_invoice: {
+    creatorName: "Bruno Lima",
+    planLabel: "mensal",
+    amountBRL: "R$ 49,90",
+    dueDate: "25/07/2026",
+    invoiceUrl: `${APP_BASE_URL_CLIENT}/subscriptions`,
+    // 1x1 placeholder PNG so the preview shows an image slot
+    qrImageDataUrl:
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAeImBZsAAAAASUVORK5CYII=",
+    qrCopyPaste:
+      "00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5920Monetisexy6009SAO PAULO62070503***6304ABCD",
   },
 };
 

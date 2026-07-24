@@ -7,6 +7,7 @@ const KINDS = [
   "post_sales",
   "subscription_sales",
   "content_purchase",
+  "pix_invoice",
 ] as const;
 export type AdminEmailKind = (typeof KINDS)[number];
 

@@ -247,3 +247,47 @@ export async function notifyFreeToPaid(creatorUserId: string): Promise<void> {
     console.error("[email-events] notifyFreeToPaid failed", err);
   }
 }
+
+/**
+ * Envia o e-mail com QR code do PIX ao assinante. Chamado no 1º ciclo
+ * (checkout) e em cada renovação automática (webhook PAYMENT_CREATED).
+ */
+export async function notifyPixInvoice(input: {
+  subscriberId: string;
+  creatorId: string;
+  plan: string;
+  amountCents: number;
+  dueDate: string; // dd/mm/yyyy
+  invoiceUrl: string;
+  qrImageBase64: string; // base64 (sem prefixo data:)
+  qrPayload: string;
+}): Promise<void> {
+  try {
+    const admin = await getAdmin();
+    const [buyerEmail, creatorName] = await Promise.all([
+      resolveUserEmail(input.subscriberId),
+      getDisplayName(admin, input.creatorId),
+    ]);
+    if (!buyerEmail) return;
+
+    const tpl = await renderTemplate("pix_invoice", {
+      creatorName,
+      planLabel: planLabel(input.plan),
+      amountBRL: brl(input.amountCents),
+      dueDate: input.dueDate,
+      invoiceUrl: input.invoiceUrl,
+      qrImageDataUrl: `data:image/png;base64,${input.qrImageBase64}`,
+      qrCopyPaste: input.qrPayload,
+    });
+
+    await sendTransactionalEmail({
+      userId: input.subscriberId,
+      kind: "pix_invoice",
+      to: buyerEmail,
+      subject: tpl.subject,
+      html: tpl.html,
+    });
+  } catch (err) {
+    console.error("[email-events] notifyPixInvoice failed", err);
+  }
+}

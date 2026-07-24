@@ -2276,6 +2276,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          asaas_subscription_id: string | null
           auto_renew: boolean
           cancelled_at: string | null
           created_at: string
@@ -2283,6 +2284,8 @@ export type Database = {
           creator_profile_id: string | null
           current_period_end: string
           id: string
+          last_payment_id: string | null
+          next_charge_at: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           price_cents_paid: number
           promotion_id: string | null
@@ -2294,6 +2297,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asaas_subscription_id?: string | null
           auto_renew?: boolean
           cancelled_at?: string | null
           created_at?: string
@@ -2301,6 +2305,8 @@ export type Database = {
           creator_profile_id?: string | null
           current_period_end: string
           id?: string
+          last_payment_id?: string | null
+          next_charge_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           price_cents_paid: number
           promotion_id?: string | null
@@ -2312,6 +2318,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asaas_subscription_id?: string | null
           auto_renew?: boolean
           cancelled_at?: string | null
           created_at?: string
@@ -2319,6 +2326,8 @@ export type Database = {
           creator_profile_id?: string | null
           current_period_end?: string
           id?: string
+          last_payment_id?: string | null
+          next_charge_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           price_cents_paid?: number
           promotion_id?: string | null
@@ -3077,6 +3086,7 @@ export type Database = {
         | "subscription_sales"
         | "content_purchase"
         | "creator_referrals"
+        | "pix_invoice"
       moderation_status: "pending" | "approved" | "hidden" | "removed"
       payment_method: "pix" | "credit_card" | "boleto" | "wallet" | "manual"
       promotion_status: "active" | "paused" | "ended"
@@ -3263,6 +3273,7 @@ export const Constants = {
         "subscription_sales",
         "content_purchase",
         "creator_referrals",
+        "pix_invoice",
       ],
       moderation_status: ["pending", "approved", "hidden", "removed"],
       payment_method: ["pix", "credit_card", "boleto", "wallet", "manual"],
