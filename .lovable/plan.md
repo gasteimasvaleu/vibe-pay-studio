@@ -1,77 +1,58 @@
-# Renovação automática de assinaturas + E-mail de cobrança PIX
 
-## Parte 1 — Renovação automática via Asaas Subscriptions
+## Situação atual (confirmado no código)
 
-Asaas suporta nativamente via `POST /v3/subscriptions`: cria cobrança recorrente com `cycle` (MONTHLY/QUARTERLY/SEMIANNUALLY), aplica o mesmo split configurado hoje, e a cada vencimento gera automaticamente um novo `payment` que dispara os webhooks já tratados. Cancelamento via `DELETE /subscriptions/{id}`.
+- `perfil.$username.tsx` já busca a assinatura ativa (`activeSub` em L126–134) e expõe `isSubscribed` no componente, mas o card **"Assinaturas"** (L845–853, `SubscriptionPlansCard`) é renderizado sempre que `!isOwner && monthlyPrice > 0`, ignorando `isSubscribed`. Por isso o usuário assinante continua vendo "1 mês / 3 meses / 6 meses" como se não tivesse plano.
+- O loader não retorna qual plano está ativo nem `current_period_end`, só um boolean.
+- `subscribeToCreator` sempre `INSERT` em `subscriptions` com `current_period_end = agora + N dias`, sem somar tempo remanescente da assinatura anterior.
 
-### UX do assinante
-- Paga o **1º ciclo** normalmente (PIX ou cartão). Depois disso o Asaas cobra sozinho: cartão é debitado; PIX recebe novo QR/link.
-- Botão **"Cancelar renovação"** em `/subscriptions` passa a cancelar de fato (mantém acesso até `current_period_end`).
-- Card mostra "Renova automaticamente em DD/MM" ou "Acesso até DD/MM (renovação cancelada)".
-- Checkout ganha linha "Renovação automática — cancele quando quiser".
+## O que vou construir
 
-### Backend / schema
-1. **Migração** — em `subscriptions`: `asaas_subscription_id text`, `next_charge_at timestamptz`, `last_payment_id text` + índice em `asaas_subscription_id`.
-2. **`src/lib/asaas.server.ts`** — `createAsaasSubscription`, `deleteAsaasSubscription`, `getAsaasSubscription`, `listSubscriptionPayments`. Mapeamento plano → cycle: mensal→MONTHLY, trimestral→QUARTERLY, semestral→SEMIANNUALLY.
-3. **`src/lib/payments.functions.ts` — `createSubscriptionCheckout`**: cria row local `pending`, chama `createAsaasSubscription` com split 85/15, e para o 1º ciclo busca o payment criado automaticamente (via `listSubscriptionPayments`) para devolver `pixQrCode`/`invoiceUrl` (UI atual não muda). `externalReference` do payment: `subscription:{id}:cycle:{n}`.
-4. **`src/routes/api/public/webhooks/asaas.ts`**:
-   - `PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED` de `cycle:1` → ativa (fluxo atual).
-   - `PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED` de `cycle:N>1` → estende `current_period_end` (+1 ciclo), atualiza `next_charge_at`, grava `last_payment_id`, cria `transactions` de renovação com split, credita `creator_wallets`, dispara e-mail PIX da Parte 2 quando aplicável.
-   - `PAYMENT_OVERDUE` → `status=past_due` (sem cancelar).
-   - `SUBSCRIPTION_INACTIVATED` → `status=cancelled`.
-5. **`src/lib/monetization.functions.ts` — `cancelSubscription`**: mantém `auto_renew=false`+`cancelled_at` e chama `deleteAsaasSubscription` (idempotente, ignora 404).
+### 1. UX no perfil (visual conforme screenshot, adaptado ao caso "assinado")
 
-### Frontend
-- `/subscriptions.tsx`: texto do card muda conforme `auto_renew`/`cancelled_at`; adiciona confirm dialog explicando que acesso continua até fim do ciclo.
-- Dialog de assinatura no perfil: linha "Renovação automática".
+Quando `isSubscribed`:
 
-### Migração de assinaturas existentes
-**Grandfather** — assinaturas atuais continuam no modelo antigo até vencer; ao reassinar, entram no novo fluxo. Zero risco de cobrança duplicada.
+- Substituir o bloco `SubscriptionPlansCard` por um `ActiveSubscriptionCard` com:
+  - Badge "Assinatura ativa" + nome do plano atual (1 mês / 3 meses / 6 meses).
+  - Linha "Válida até dd/mm/aaaa" e "Renova automaticamente" / "Renovação cancelada — acesso até …" conforme `auto_renew`.
+  - Botão secundário "Gerenciar assinatura" → link para `/subscriptions`.
+  - Sub-seção "Trocar de plano" listando apenas planos **maiores** que o atual (upgrade), com selo "+X dias somados ao seu acesso atual" calculado a partir de `current_period_end`. Planos iguais/menores ficam ocultos (downgrade não faz sentido enquanto há período pago).
+- Se `auto_renew=false` e o período expirou, cair de volta no card de planos normal (não é mais assinante).
+- Manter a estética atual dos pills roxos; só muda o topo (estado ativo) e a lista fica reduzida a upgrades.
 
-## Parte 2 — E-mail com QR Code PIX via Resend
+### 2. Dados que o loader passa a devolver
 
-Toda cobrança PIX gerada (1º ciclo, renovações automáticas, e futuras compras avulsas se quisermos habilitar) manda e-mail ao assinante com QR + copia-e-cola + link do Asaas + vencimento.
+Estender a query de `activeSub` para trazer `id, plan, price_cents_paid, current_period_end, auto_renew, started_at` e propagar para o componente como `activeSubscription`.
 
-### Requisitos
-- Conector **Resend** (via `standard_connectors--connect`) — se ainda não houver conexão, abrir o card de conexão antes de habilitar o envio.
-- Domínio verificado no Resend (`no-reply@monetisexy.com` idealmente); enquanto não estiver, usar `onboarding@resend.dev` só para testes.
+### 3. Regra de troca de plano (backend)
 
-### Backend
-1. **`src/lib/email.server.ts`** — helper `sendEmail({ to, subject, html })` chamando o gateway `https://connector-gateway.lovable.dev/resend/emails` com `LOVABLE_API_KEY` + `RESEND_API_KEY`.
-2. **`src/lib/emails/pix-invoice.tsx`** — template HTML responsivo:
-   - Header roxo com logo/nome "Monetisexy".
-   - Título "Sua cobrança PIX está pronta".
-   - Bloco branco com nome do creator, plano, valor, vencimento.
-   - QR code renderizado como `<img>` (base64 vindo do Asaas: `payment.pixQrCode.encodedImage`).
-   - Campo copia-e-cola em `<code>` com botão "Copiar" (via mailto instrução textual — botão real só no link web).
-   - Botão CTA "Abrir cobrança" → `invoiceUrl` do Asaas.
-   - Rodapé com aviso de expiração, suporte e link para `/centro-e-seguranca`.
-3. **`sendPixInvoiceEmail(paymentId)`** — busca `payment_intents`/`payments`, monta contexto e chama `sendEmail`. Idempotente por `payment_id`.
-4. **Disparos automáticos**:
-   - Ao criar 1º ciclo em `createSubscriptionCheckout` (após ter `pixQrCode`).
-   - No webhook, ao processar renovação (quando novo payment PIX é criado — evento `PAYMENT_CREATED` da subscription).
-5. **Preferências**: respeitar `email_preferences.transactional` (se `false`, não envia).
+Alterar `subscribeToCreator` em `src/lib/monetization.functions.ts`:
 
-### Dashboard admin (`/admin/emails`)
-Nova aba dentro do `/admin` existente:
-- **Configurações**: status da conexão Resend (linked/not linked), domínio remetente, toggle global "Enviar cobranças PIX por e-mail".
-- **Preview do template**: renderiza o `pix-invoice.tsx` com dados fake para o admin conferir o layout antes de ativar.
-- **Botão "Enviar teste"**: manda o template para o próprio e-mail do admin logado.
-- **Log**: últimas 50 tentativas de envio (nova tabela `email_log`: `id`, `payment_id`, `to`, `template`, `status`, `provider_message_id`, `error`, `sent_at`) — com filtros por status.
-- **Reenviar**: por linha do log, botão para reenviar o mesmo e-mail.
+- Antes de inserir, buscar assinatura ativa do mesmo `subscriber_id` + `creator_profile_id` com `status='active'` e `current_period_end > now()`.
+- Se existir:
+  - Se o novo plano é **igual ou menor** em duração → erro amigável ("Você já possui um plano igual ou maior ativo").
+  - Se é **maior** (upgrade):
+    - Calcular `remainingMs = current_period_end - now()`.
+    - Novo `current_period_end = now() + PLAN_DAYS[novoPlano] + remainingMs` (soma o restante).
+    - Cancelar a assinatura Asaas antiga (`deleteAsaasSubscription`) se houver `asaas_subscription_id`, para evitar cobrança dupla.
+    - Marcar a assinatura antiga como `status='superseded'`, `auto_renew=false`, `cancelled_at=now()`.
+    - Criar nova assinatura `pending` com o `current_period_end` estendido; o fluxo de pagamento (PIX/cartão) segue igual, e o webhook a ativa.
+- Sem assinatura ativa → comportamento atual.
 
-### Schema
-- `email_log` — tabela nova, RLS: apenas admin via `has_role`.
-- Setting global em nova tabela `app_settings` (`key text pk`, `value jsonb`) para o toggle "pix_email_enabled". RLS: leitura para `authenticated`, escrita só admin.
+Isso responde diretamente à pergunta: **sim, no upgrade o tempo restante do plano atual é somado ao novo período**.
 
-## Testes (sandbox Asaas + Resend)
-1. Assinatura mensal PIX → recebe e-mail com QR → paga → confirma ativação.
-2. Simular `PAYMENT_CREATED` do 2º ciclo → recebe novo e-mail; simular `PAYMENT_CONFIRMED` → período estendido, split registrado.
-3. Cancelar via UI → `DELETE /subscriptions` no Asaas; acesso mantido até `current_period_end`; nenhum novo e-mail enviado.
-4. `PAYMENT_OVERDUE` → status `past_due`.
-5. Preview e "Enviar teste" no `/admin/emails` funcionam sem cobrança real.
+### 4. Ajustes secundários
 
-## Fora do escopo
-- Recorrência para tips/PPV/Paid DM/chamadas.
-- Upgrade/downgrade proporcional de plano.
-- E-mails de recibo, "obrigado", ou marketing (só a cobrança PIX transacional entra agora).
+- `SubscribeDialog` recebe prop opcional `mode: "new" | "upgrade"` e, em upgrade, mostra label "Fazer upgrade — soma X dias ao seu acesso" no CTA.
+- `listMySubscriptions` já ordena por `started_at`; nada a mudar.
+- Sem migração de banco — reutilizando colunas existentes; apenas um novo valor lógico `'superseded'` no campo `status` (texto livre; políticas RLS atuais não restringem valores).
+
+## Detalhes técnicos
+
+- Arquivos a editar: `src/routes/_authenticated/perfil.$username.tsx` (loader + render), `src/lib/monetization.functions.ts` (`subscribeToCreator`), `src/components/payments/SubscribeDialog.tsx` (label/estado upgrade), e um novo `ActiveSubscriptionCard` inline no perfil (ou como componente separado se preferir).
+- Nada muda no webhook Asaas: a nova subscription entra pelo mesmo caminho de checkout já existente.
+- Não altero nenhum comportamento para não-assinantes nem para o dono do perfil.
+
+## Fora de escopo
+
+- Downgrade / troca para plano menor (não faz sentido enquanto há tempo pago; posso adicionar depois se quiser).
+- Reembolso proporcional do plano antigo (a lógica é somar tempo, não reembolsar).
