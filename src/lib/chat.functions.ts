@@ -222,7 +222,8 @@ export const openThreadWith = createServerFn({ method: "POST" })
         if (row.user_a === userId && !row.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
         if (row.user_a !== userId && !row.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
         if (Object.keys(patch).length) {
-          await (supabase.from("chat_threads").update as (v: unknown) => ReturnType<typeof supabase.from>["update"] extends (v: unknown) => infer R ? R : never)(patch).eq("id", threadId as string);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("chat_threads") as any).update(patch).eq("id", threadId as string);
         }
       }
     }
