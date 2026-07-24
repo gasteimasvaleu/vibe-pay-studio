@@ -159,38 +159,54 @@ export const listVaultChatMedia = createServerFn({ method: "GET" })
 export const getVaultCounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    const pubMediaQuery = context.supabase
+      .from("publication_media")
+      .select("id, publications!inner(author_id, archived_at, creator_profile_id)", { count: "exact", head: true })
+      .eq("publications.author_id", context.userId)
+      .is("publications.archived_at", null);
+    const uploadsQuery = context.supabase
+      .from("vault_uploads")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", context.userId);
+    const pubMediaPrevQuery = context.supabase
+      .from("publication_media")
+      .select("url, created_at, publications!inner(author_id, archived_at, creator_profile_id)")
+      .eq("publications.author_id", context.userId)
+      .is("publications.archived_at", null)
+      .order("created_at", { ascending: false })
+      .limit(6);
+    const pubAudioPrevQuery = context.supabase
+      .from("publications")
+      .select("preview_url, audio_url, published_at")
+      .eq("author_id", context.userId)
+      .is("archived_at", null)
+      .not("audio_url", "is", null)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(3);
+    const uploadsPrevQuery = context.supabase
+      .from("vault_uploads")
+      .select("url, created_at, type")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    if (profileId) {
+      pubMediaQuery.eq("publications.creator_profile_id", profileId);
+      uploadsQuery.eq("creator_profile_id", profileId);
+      pubMediaPrevQuery.eq("publications.creator_profile_id", profileId);
+      pubAudioPrevQuery.eq("creator_profile_id", profileId);
+      uploadsPrevQuery.eq("creator_profile_id", profileId);
+    }
+
     const [{ count: pubMediaCount }, { count: uploadsCount }, pubMediaPrev, pubAudioPrev, uploadsPrev] = await Promise.all([
-      context.supabase
-        .from("publication_media")
-        .select("id, publications!inner(author_id, archived_at)", { count: "exact", head: true })
-        .eq("publications.author_id", context.userId)
-        .is("publications.archived_at", null),
-      context.supabase
-        .from("vault_uploads")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", context.userId),
-      context.supabase
-        .from("publication_media")
-        .select("url, created_at, publications!inner(author_id, archived_at)")
-        .eq("publications.author_id", context.userId)
-        .is("publications.archived_at", null)
-        .order("created_at", { ascending: false })
-        .limit(6),
-      context.supabase
-        .from("publications")
-        .select("preview_url, audio_url, published_at")
-        .eq("author_id", context.userId)
-        .is("archived_at", null)
-        .not("audio_url", "is", null)
-        .order("published_at", { ascending: false, nullsFirst: false })
-        .limit(3),
-      context.supabase
-        .from("vault_uploads")
-        .select("url, created_at, type")
-        .eq("user_id", context.userId)
-        .order("created_at", { ascending: false })
-        .limit(6),
+      pubMediaQuery,
+      uploadsQuery,
+      pubMediaPrevQuery,
+      pubAudioPrevQuery,
+      uploadsPrevQuery,
     ]);
+
 
     const publications = pubMediaCount ?? 0;
     const uploads = uploadsCount ?? 0;
@@ -225,12 +241,15 @@ export const getVaultCounts = createServerFn({ method: "GET" })
 export const listVaultCategories = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: cats, error } = await context.supabase
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    let q = context.supabase
       .from("vault_categories")
       .select("id, name, position, created_at, updated_at")
       .eq("user_id", context.userId)
       .order("position", { ascending: true })
       .order("created_at", { ascending: true });
+    if (profileId) q = q.eq("creator_profile_id", profileId);
+    const { data: cats, error } = await q;
     if (error) throw new Error(error.message);
 
     const ids = (cats ?? []).map((c) => c.id);
