@@ -23,11 +23,13 @@ import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/component
 
 export function StoryViewer({
   creatorId,
+  creatorProfileId,
   open,
   onOpenChange,
   onChanged,
 }: {
   creatorId: string | null;
+  creatorProfileId?: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onChanged: () => void;
@@ -53,8 +55,14 @@ export function StoryViewer({
 
 
   const storiesQuery = useQuery({
-    queryKey: ["creator-stories", creatorId],
-    queryFn: () => fetchStories({ data: { creatorId: creatorId as string } }),
+    queryKey: ["creator-stories", creatorId, creatorProfileId ?? null],
+    queryFn: () =>
+      fetchStories({
+        data: {
+          creatorId: creatorId as string,
+          creatorProfileId: creatorProfileId ?? null,
+        },
+      }),
     enabled: !!creatorId && open,
   });
 
