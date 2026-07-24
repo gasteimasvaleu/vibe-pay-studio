@@ -99,12 +99,14 @@ export const createCallInvite = createServerFn({ method: "POST" })
     }
 
     const expiresAt = new Date(Date.now() + INVITE_TTL_MIN * 60 * 1000).toISOString();
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
 
     const { data: call, error: cErr } = await supabase
       .from("video_calls")
       .insert({
         requester_id: partnerId,
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         price_cents: data.priceCents,
         duration_minutes: data.durationMinutes,
         status: "pending_payment",
