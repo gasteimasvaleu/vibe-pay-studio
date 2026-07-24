@@ -301,17 +301,25 @@ export const createVaultCategory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createCategorySchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: last } = await context.supabase
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    let lastQ = context.supabase
       .from("vault_categories")
       .select("position")
       .eq("user_id", context.userId)
       .order("position", { ascending: false })
       .limit(1)
       .maybeSingle();
+    if (profileId) lastQ = lastQ.eq("creator_profile_id", profileId);
+    const { data: last } = await lastQ;
     const nextPos = (last?.position ?? -1) + 1;
     const { data: row, error } = await context.supabase
       .from("vault_categories")
-      .insert({ user_id: context.userId, name: data.name, position: nextPos })
+      .insert({
+        user_id: context.userId,
+        creator_profile_id: profileId,
+        name: data.name,
+        position: nextPos,
+      })
       .select("id, name, position, created_at, updated_at")
       .single();
     if (error) {
