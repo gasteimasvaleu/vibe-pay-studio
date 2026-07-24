@@ -475,10 +475,12 @@ export const sendBroadcast = createServerFn({ method: "POST" })
 
     const audienceValues = resolved.map((r) => r.audience);
     const primaryAudience = audienceValues[0];
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
     const { data: job, error: jErr } = await supabase
       .from("broadcast_jobs")
       .insert({
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         audience: primaryAudience,
         filters: { audiences: resolved } as unknown as never,
         message: data.message,
@@ -508,9 +510,27 @@ export const sendBroadcast = createServerFn({ method: "POST" })
           failed++;
           continue;
         }
+        // Stamp sender-side persona on the thread (best-effort).
+        if (activeProfileId) {
+          const { data: tRow } = await supabase
+            .from("chat_threads")
+            .select("user_a, user_a_profile_id, user_b_profile_id")
+            .eq("id", threadId as string)
+            .maybeSingle();
+          if (tRow) {
+            const patch: { user_a_profile_id?: string; user_b_profile_id?: string } = {};
+            if (tRow.user_a === userId && !tRow.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
+            if (tRow.user_a !== userId && !tRow.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
+            if (Object.keys(patch).length) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase.from("chat_threads") as any).update(patch).eq("id", threadId as string);
+            }
+          }
+        }
         const { error: mErr } = await supabase.from("chat_messages").insert({
           thread_id: threadId as string,
           sender_id: userId,
+          creator_profile_id: activeProfileId,
           content: data.message,
           price_cents: data.priceCents,
           metadata: data.media.length > 0 ? ({ media: data.media } as unknown as never) : ({} as unknown as never),
