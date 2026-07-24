@@ -126,11 +126,13 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("id")
+        .select("id, plan, price_cents_paid, current_period_end, started_at, auto_renew, status")
         .eq("subscriber_id", user.id)
         .eq("creator_id", profile.user_id)
         .eq("status", "active")
         .gt("current_period_end", nowIso)
+        .order("current_period_end", { ascending: false })
+        .limit(1)
         .maybeSingle(),
       supabase
         .from("follows")
