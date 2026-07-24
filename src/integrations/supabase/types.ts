@@ -455,6 +455,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          creator_profile_id: string | null
           deleted_at: string | null
           id: string
           metadata: Json
@@ -467,6 +468,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          creator_profile_id?: string | null
           deleted_at?: string | null
           id?: string
           metadata?: Json
@@ -479,6 +481,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          creator_profile_id?: string | null
           deleted_at?: string | null
           id?: string
           metadata?: Json
@@ -489,6 +492,20 @@ export type Database = {
           thread_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_reply_to_id_fkey"
             columns: ["reply_to_id"]
@@ -516,7 +533,9 @@ export type Database = {
           last_message_at: string
           updated_at: string
           user_a: string
+          user_a_profile_id: string | null
           user_b: string
+          user_b_profile_id: string | null
         }
         Insert: {
           cleared_at_a?: string | null
@@ -528,7 +547,9 @@ export type Database = {
           last_message_at?: string
           updated_at?: string
           user_a: string
+          user_a_profile_id?: string | null
           user_b: string
+          user_b_profile_id?: string | null
         }
         Update: {
           cleared_at_a?: string | null
@@ -540,9 +561,40 @@ export type Database = {
           last_message_at?: string
           updated_at?: string
           user_a?: string
+          user_a_profile_id?: string | null
           user_b?: string
+          user_b_profile_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_threads_user_a_profile_id_fkey"
+            columns: ["user_a_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_threads_user_a_profile_id_fkey"
+            columns: ["user_a_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_threads_user_b_profile_id_fkey"
+            columns: ["user_b_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_threads_user_b_profile_id_fkey"
+            columns: ["user_b_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_leak_reports: {
         Row: {
@@ -1318,6 +1370,7 @@ export type Database = {
           agency: string
           bank_name: string
           created_at: string
+          creator_profile_id: string | null
           id: string
           pix_key: string
           pix_key_type: string
@@ -1330,6 +1383,7 @@ export type Database = {
           agency: string
           bank_name: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           pix_key: string
           pix_key_type: string
@@ -1342,13 +1396,29 @@ export type Database = {
           agency?: string
           bank_name?: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           pix_key?: string
           pix_key_type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payout_accounts_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_accounts_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_views: {
         Row: {
@@ -2784,6 +2854,7 @@ export type Database = {
       vault_categories: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           id: string
           name: string
           position: number
@@ -2792,6 +2863,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           name: string
           position?: number
@@ -2800,18 +2872,35 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           name?: string
           position?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vault_categories_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_categories_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vault_category_items: {
         Row: {
           category_id: string
           created_at: string
+          creator_profile_id: string | null
           id: string
           position: number
           publication_media_id: string | null
@@ -2821,6 +2910,7 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_media_id?: string | null
@@ -2830,6 +2920,7 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           position?: number
           publication_media_id?: string | null
@@ -2842,6 +2933,20 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "vault_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_category_items_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_category_items_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
             referencedColumns: ["id"]
           },
           {
@@ -2863,6 +2968,7 @@ export type Database = {
       vault_uploads: {
         Row: {
           created_at: string
+          creator_profile_id: string | null
           duration_seconds: number | null
           height: number | null
           id: string
@@ -2876,6 +2982,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          creator_profile_id?: string | null
           duration_seconds?: number | null
           height?: number | null
           id?: string
@@ -2889,6 +2996,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creator_profile_id?: string | null
           duration_seconds?: number | null
           height?: number | null
           id?: string
@@ -2900,7 +3008,22 @@ export type Database = {
           user_id?: string
           width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vault_uploads_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_uploads_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_calls: {
         Row: {

@@ -1,134 +1,134 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
 /**
- * Saldo da carteira do criador (liberado + a liberar nacional/internacional).
+ * Todas as métricas financeiras são derivadas de `transactions` filtrando
+ * por `creator_profile_id = perfil ativo`. Assim paid e free vinculado têm
+ * saldos/extratos independentes. O agregado em `creator_wallets` continua
+ * user-level (uma linha por user); o split de released/pending por persona
+ * é reconstituído aqui a partir do histórico de transações do perfil.
+ */
+async function computeProfileWallet(
+  supabase: any,
+  userId: string,
+  profileId: string,
+) {
+  const [txRes, wRes] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("net_cents, is_international, wallet_released_at")
+      .eq("creator_profile_id", profileId)
+      .eq("status", "paid")
+      .gt("net_cents", 0)
+      .not("kind", "in", "(withdrawal,refund,wallet_topup,wallet_bonus)"),
+    supabase
+      .from("withdrawals")
+      .select("amount_cents, status")
+      .eq("creator_profile_id", profileId)
+      .in("status", ["requested", "paid"] as any),
+  ]);
+  if (txRes.error) throw new Error(txRes.error.message);
+  if (wRes.error) throw new Error(wRes.error.message);
+
+  let releasedNational = 0;
+  let releasedIntl = 0;
+  let pendingNational = 0;
+  let pendingIntl = 0;
+  for (const t of txRes.data ?? []) {
+    const net = t.net_cents ?? 0;
+    const isIntl = !!t.is_international;
+    const released = !!t.wallet_released_at;
+    if (released && isIntl) releasedIntl += net;
+    else if (released) releasedNational += net;
+    else if (isIntl) pendingIntl += net;
+    else pendingNational += net;
+  }
+  const reservedWithdrawalCents = (wRes.data ?? []).reduce(
+    (acc: number, r: any) => acc + (r.amount_cents ?? 0),
+    0,
+  );
+  const releasedTotal = Math.max(
+    releasedNational + releasedIntl - reservedWithdrawalCents,
+    0,
+  );
+  // preserva proporção do split ao aplicar os saques
+  const histTotal = releasedNational + releasedIntl;
+  let dispIntl = 0;
+  let dispNat = releasedTotal;
+  if (histTotal > 0 && releasedTotal > 0) {
+    dispIntl = Math.round((releasedTotal * releasedIntl) / histTotal);
+    dispNat = Math.max(releasedTotal - dispIntl, 0);
+  }
+  return {
+    releasedNational: dispNat,
+    releasedInternational: dispIntl,
+    pendingNational,
+    pendingInternational: pendingIntl,
+  };
+}
+
+/**
+ * Saldo consolidado do criador para o perfil ativo.
  */
 export const getCreatorWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const [walletRes, withdrawalsRes] = await Promise.all([
-      supabase
-        .from("creator_wallets")
-        .select("released_cents, pending_national_cents, pending_international_cents, updated_at")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("withdrawals")
-        .select("amount_cents")
-        .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any),
-    ]);
-
-    if (walletRes.error) throw new Error(walletRes.error.message);
-    if (withdrawalsRes.error) throw new Error(withdrawalsRes.error.message);
-
-    const reservedWithdrawalCents =
-      withdrawalsRes.data?.reduce(
-        (acc, row) => acc + (row.amount_cents ?? 0),
-        0,
-      ) ?? 0;
-    const releasedCents = Math.max(
-      (walletRes.data?.released_cents ?? 0) - reservedWithdrawalCents,
-      0,
-    );
-
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) {
+      return {
+        releasedCents: 0,
+        pendingNationalCents: 0,
+        pendingInternationalCents: 0,
+        updatedAt: null as string | null,
+      };
+    }
+    const w = await computeProfileWallet(supabase, userId, profileId);
     return {
-      releasedCents,
-      pendingNationalCents: walletRes.data?.pending_national_cents ?? 0,
-      pendingInternationalCents: walletRes.data?.pending_international_cents ?? 0,
-      updatedAt: walletRes.data?.updated_at ?? null,
+      releasedCents: w.releasedNational + w.releasedInternational,
+      pendingNationalCents: w.pendingNational,
+      pendingInternationalCents: w.pendingInternational,
+      updatedAt: null as string | null,
     };
   });
 
 /**
- * Visão geral do banco do criador: saldos separados por origem (Nacional/Internacional).
- * Deriva o split de `released` a partir das próprias transactions, já que
- * `creator_wallets.released_cents` é um pool único.
+ * Visão geral do banco do criador com split nacional × internacional.
  */
 export const getCreatorBancoOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-
-    const [walletRes, txRes, withdrawalsRes] = await Promise.all([
-      supabase
-        .from("creator_wallets")
-        .select(
-          "released_cents, pending_national_cents, pending_international_cents, updated_at",
-        )
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("transactions")
-        .select("net_cents, is_international, wallet_released_at")
-        .eq("creator_id", userId)
-        .eq("status", "paid")
-        .gt("net_cents", 0)
-        .not("kind", "in", "(withdrawal,refund,wallet_topup,wallet_bonus)"),
-      supabase
-        .from("withdrawals")
-        .select("amount_cents")
-        .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any),
-    ]);
-
-    if (walletRes.error) throw new Error(walletRes.error.message);
-    if (txRes.error) throw new Error(txRes.error.message);
-    if (withdrawalsRes.error) throw new Error(withdrawalsRes.error.message);
-
-    let releasedNationalHist = 0;
-    let releasedIntlHist = 0;
-    let pendingNational = 0;
-    let pendingIntl = 0;
-    for (const t of txRes.data ?? []) {
-      const net = t.net_cents ?? 0;
-      const isIntl = !!t.is_international;
-      const released = !!t.wallet_released_at;
-      if (released && isIntl) releasedIntlHist += net;
-      else if (released) releasedNationalHist += net;
-      else if (isIntl) pendingIntl += net;
-      else pendingNational += net;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) {
+      return {
+        national: { releasedCents: 0, pendingCents: 0 },
+        international: { releasedCents: 0, pendingCents: 0 },
+        totals: { releasedCents: 0, pendingCents: 0 },
+        updatedAt: null,
+      };
     }
-
-    // Fonte da verdade do saldo liberado atual é a wallet (debitada em saques).
-    // Como saques são o livro-caixa dos débitos, subtrai requested/paid para
-    // cobrir wallets antigas que não foram debitadas por RLS.
-    const reservedWithdrawalCents =
-      withdrawalsRes.data?.reduce(
-        (acc, row) => acc + (row.amount_cents ?? 0),
-        0,
-      ) ?? 0;
-    const walletReleased = Math.max(
-      (walletRes.data?.released_cents ?? 0) - reservedWithdrawalCents,
-      0,
-    );
-    // O split nacional × internacional vem da proporção histórica das transações.
-    const histTotal = releasedNationalHist + releasedIntlHist;
-    let releasedNational = 0;
-    let releasedIntl = 0;
-    if (histTotal > 0 && walletReleased > 0) {
-      releasedIntl = Math.round((walletReleased * releasedIntlHist) / histTotal);
-      releasedNational = Math.max(walletReleased - releasedIntl, 0);
-    } else {
-      releasedNational = walletReleased;
-    }
-
+    const w = await computeProfileWallet(supabase, userId, profileId);
     return {
-      national: { releasedCents: releasedNational, pendingCents: pendingNational },
-      international: { releasedCents: releasedIntl, pendingCents: pendingIntl },
-      totals: {
-        releasedCents: releasedNational + releasedIntl,
-        pendingCents: pendingNational + pendingIntl,
+      national: {
+        releasedCents: w.releasedNational,
+        pendingCents: w.pendingNational,
       },
-      updatedAt: walletRes.data?.updated_at ?? null,
+      international: {
+        releasedCents: w.releasedInternational,
+        pendingCents: w.pendingInternational,
+      },
+      totals: {
+        releasedCents: w.releasedNational + w.releasedInternational,
+        pendingCents: w.pendingNational + w.pendingInternational,
+      },
+      updatedAt: null,
     };
   });
 
-
 /**
- * Saldo pré-pago (wallet) do assinante.
+ * Saldo pré-pago (wallet) do assinante. Continua user-level (compra pessoal).
  */
 export const getSubscriberWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -149,67 +149,55 @@ export const getSubscriberWallet = createServerFn({ method: "GET" })
   });
 
 /**
- * Resumo de faturamento do criador para o dashboard:
- * - hoje (bruto pago)
- * - liberado
- * - total (liberado + a liberar)
+ * Resumo de faturamento do perfil ativo para o dashboard.
  */
 export const getCreatorEarningsSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) {
+      return {
+        revenueTodayCents: 0,
+        releasedCents: 0,
+        totalCents: 0,
+        pendingNationalCents: 0,
+        pendingInternationalCents: 0,
+      };
+    }
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const [walletRes, todayRes, withdrawalsRes] = await Promise.all([
-      supabase
-        .from("creator_wallets")
-        .select("released_cents, pending_national_cents, pending_international_cents")
-        .eq("user_id", userId)
-        .maybeSingle(),
+    const [w, todayRes] = await Promise.all([
+      computeProfileWallet(supabase, userId, profileId),
       supabase
         .from("transactions")
         .select("amount_cents_gross")
-        .eq("creator_id", userId)
+        .eq("creator_profile_id", profileId)
         .eq("status", "paid")
         .gte("created_at", startOfToday.toISOString()),
-      supabase
-        .from("withdrawals")
-        .select("amount_cents")
-        .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any),
     ]);
-
-    if (walletRes.error) throw new Error(walletRes.error.message);
     if (todayRes.error) throw new Error(todayRes.error.message);
-    if (withdrawalsRes.error) throw new Error(withdrawalsRes.error.message);
 
-    const reservedWithdrawalCents =
-      withdrawalsRes.data?.reduce(
-        (acc, row) => acc + (row.amount_cents ?? 0),
+    const released = w.releasedNational + w.releasedInternational;
+    const revenueToday =
+      todayRes.data?.reduce(
+        (acc: number, r: any) => acc + (r.amount_cents_gross ?? 0),
         0,
       ) ?? 0;
-    const released = Math.max(
-      (walletRes.data?.released_cents ?? 0) - reservedWithdrawalCents,
-      0,
-    );
-    const pendingNational = walletRes.data?.pending_national_cents ?? 0;
-    const pendingIntl = walletRes.data?.pending_international_cents ?? 0;
-    const revenueToday =
-      todayRes.data?.reduce((acc, r) => acc + (r.amount_cents_gross ?? 0), 0) ?? 0;
 
     return {
       revenueTodayCents: revenueToday,
       releasedCents: released,
-      totalCents: released + pendingNational + pendingIntl,
-      pendingNationalCents: pendingNational,
-      pendingInternationalCents: pendingIntl,
+      totalCents: released + w.pendingNational + w.pendingInternational,
+      pendingNationalCents: w.pendingNational,
+      pendingInternationalCents: w.pendingInternational,
     };
   });
 
 /**
- * Extrato paginado do criador.
+ * Extrato paginado do criador (do perfil ativo).
  */
 export const listCreatorTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -219,12 +207,14 @@ export const listCreatorTransactions = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) return [];
     const { data: rows, error } = await supabase
       .from("transactions")
       .select(
         "id, kind, status, amount_cents_gross, platform_fee_cents, net_cents, payment_method, is_international, buyer_id, created_at, released_at",
       )
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .order("created_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
 
@@ -233,18 +223,20 @@ export const listCreatorTransactions = createServerFn({ method: "GET" })
   });
 
 /**
- * Lista de saques do criador.
+ * Lista de saques do criador (do perfil ativo).
  */
 export const listCreatorWithdrawals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    if (!profileId) return [];
     const { data, error } = await supabase
       .from("withdrawals")
       .select(
         "id, amount_cents, fee_cents, net_cents, status, pix_key, is_first_withdrawal, requested_at, processed_at, rejection_reason",
       )
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .order("requested_at", { ascending: false });
 
     if (error) throw new Error(error.message);
@@ -252,7 +244,7 @@ export const listCreatorWithdrawals = createServerFn({ method: "GET" })
   });
 
 /**
- * Últimas transações do assinante (comprador).
+ * Últimas transações do assinante (comprador). User-level por design.
  */
 export const listSubscriberTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

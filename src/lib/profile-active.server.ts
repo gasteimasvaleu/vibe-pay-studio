@@ -85,3 +85,26 @@ export async function getProfileAndActiveCreator(supabase: any, userId: string) 
 
   return { profile, activeCreator, creators };
 }
+
+/**
+ * Resolve o creator_profile_id ATIVO do usuário — apenas o id.
+ * Usa profiles.active_profile_id; se ausente, cai para o perfil paid.
+ * Retorna null quando o usuário não tem nenhum creator_profile.
+ */
+export async function getActiveProfileIdFor(
+  supabase: any,
+  userId: string,
+): Promise<string | null> {
+  const [{ data: prof }, { data: cps }] = await Promise.all([
+    supabase.from("profiles").select("active_profile_id").eq("user_id", userId).maybeSingle(),
+    supabase.from("creator_profiles").select("id, kind").eq("user_id", userId),
+  ]);
+  const rows = (cps ?? []) as Array<{ id: string; kind: "paid" | "free" }>;
+  if (!rows.length) return null;
+  const activeId = prof?.active_profile_id ?? null;
+  return (
+    rows.find((r) => r.id === activeId)?.id ??
+    rows.find((r) => r.kind === "paid")?.id ??
+    rows[0].id
+  );
+}

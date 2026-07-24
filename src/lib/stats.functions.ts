@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
 type Range = { from: string; to: string };
 
@@ -32,10 +33,11 @@ export const getEarningsSeries = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("created_at, amount_cents_gross, net_cents, kind")
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .eq("status", "paid")
       .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from)
@@ -62,10 +64,11 @@ export const getEarningsByProduct = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("kind, amount_cents_gross, net_cents")
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .eq("status", "paid")
       .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from)
@@ -96,6 +99,7 @@ export const getPeriodTotals = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const from = new Date(data.from);
     const to = new Date(data.to);
     const spanMs = to.getTime() - from.getTime();
@@ -106,7 +110,7 @@ export const getPeriodTotals = createServerFn({ method: "GET" })
       const { data: rows, error } = await supabase
         .from("transactions")
         .select("amount_cents_gross, net_cents, kind, is_international, country_code")
-        .eq("creator_id", userId)
+        .eq("creator_profile_id", profileId)
         .eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", a.toISOString())
@@ -136,6 +140,7 @@ export const getResumoStats = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = new Date();
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -145,18 +150,18 @@ export const getResumoStats = createServerFn({ method: "GET" })
 
     const [todayRes, monthRes, historyRes, periodRes] = await Promise.all([
       supabase.from("transactions").select(baseSelect)
-        .eq("creator_id", userId).eq("status", "paid")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", startOfDay.toISOString()),
       supabase.from("transactions").select(baseSelect)
-        .eq("creator_id", userId).eq("status", "paid")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", startOfMonth.toISOString()),
       supabase.from("transactions").select(baseSelect)
-        .eq("creator_id", userId).eq("status", "paid")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[]),
       supabase.from("transactions").select(baseSelect)
-        .eq("creator_id", userId).eq("status", "paid")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", data.from).lte("created_at", data.to),
     ]);
@@ -212,6 +217,7 @@ export const getRecordes = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const startOfMonth = new Date();
     startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
 
@@ -219,7 +225,7 @@ export const getRecordes = createServerFn({ method: "GET" })
       const { data: rows, error } = await supabase
         .from("transactions")
         .select("created_at, amount_cents_gross")
-        .eq("creator_id", userId).eq("status", "paid")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
         .in("kind", EARNING_KINDS as unknown as never[])
         .gte("created_at", fromIso).lte("created_at", toIso);
       if (error) throw new Error(error.message);
@@ -259,10 +265,11 @@ export const listExtrato = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     let q = supabase
       .from("transactions")
       .select("id, kind, status, amount_cents_gross, net_cents, payment_method, buyer_id, created_at, released_at, wallet_released_at, is_international", { count: "exact" })
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .gte("created_at", data.from).lte("created_at", data.to)
       .order("created_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
@@ -302,15 +309,16 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = new Date().toISOString();
 
     const [allRes, periodRes] = await Promise.all([
       supabase.from("subscriptions")
         .select("id, subscriber_id, status, price_cents_paid, current_period_end, started_at, created_at, provider_ref")
-        .eq("creator_id", userId),
+        .eq("creator_profile_id", profileId),
       supabase.from("subscriptions")
         .select("id, subscriber_id, status, price_cents_paid, started_at, created_at, provider_ref, provider")
-        .eq("creator_id", userId)
+        .eq("creator_profile_id", profileId)
         .gte("created_at", data.from).lte("created_at", data.to)
         .order("created_at", { ascending: true }),
     ]);
@@ -374,10 +382,11 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     let q = supabase
       .from("transactions")
       .select("buyer_id, amount_cents_gross, kind")
-      .eq("creator_id", userId).eq("status", "paid")
+      .eq("creator_profile_id", profileId).eq("status", "paid")
       .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from).lte("created_at", data.to);
 
@@ -428,15 +437,16 @@ export const getAssinantesList = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = Date.now();
 
     const [allRes, periodRes] = await Promise.all([
       supabase.from("subscriptions")
         .select("subscriber_id, created_at")
-        .eq("creator_id", userId),
+        .eq("creator_profile_id", profileId),
       supabase.from("subscriptions")
         .select("id, subscriber_id, status, price_cents_paid, started_at, current_period_end, created_at")
-        .eq("creator_id", userId)
+        .eq("creator_profile_id", profileId)
         .gte("created_at", data.from).lte("created_at", data.to)
         .order("started_at", { ascending: false })
         .limit(500),
@@ -522,10 +532,11 @@ export const getTopPaises = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("country_code, amount_cents_gross")
-      .eq("creator_id", userId).eq("status", "paid")
+      .eq("creator_profile_id", profileId).eq("status", "paid")
       .in("kind", EARNING_KINDS as unknown as never[])
       .not("country_code", "is", null)
       .gte("created_at", data.from).lte("created_at", data.to);
@@ -548,6 +559,7 @@ export const getStreak = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const startOfMonth = new Date();
     startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
     const startWindow = new Date(); startWindow.setDate(startWindow.getDate() - 400); startWindow.setHours(0, 0, 0, 0);
@@ -555,7 +567,7 @@ export const getStreak = createServerFn({ method: "GET" })
     const { data, error } = await supabase
       .from("creator_streak_days")
       .select("day, publications_count, live_minutes, chat_replies, revenue_cents")
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .gte("day", startWindow.toISOString().slice(0, 10))
       .order("day", { ascending: true });
     if (error) throw new Error(error.message);
@@ -611,11 +623,12 @@ export const getAlcance = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
 
     const { data: pubIds } = await supabase
       .from("publications")
       .select("id")
-      .eq("author_id", userId);
+      .eq("creator_profile_id", profileId);
     const ids = (pubIds ?? []).map(p => p.id as string);
 
     const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes] = await Promise.all([
@@ -635,10 +648,10 @@ export const getAlcance = createServerFn({ method: "GET" })
         .gte("created_at", data.from).lte("created_at", data.to),
       supabase.from("subscriptions")
         .select("subscriber_id, created_at")
-        .eq("creator_id", userId),
+        .eq("creator_profile_id", profileId),
       supabase.from("subscriptions")
         .select("subscriber_id, price_cents_paid, created_at")
-        .eq("creator_id", userId)
+        .eq("creator_profile_id", profileId)
         .gte("created_at", data.from).lte("created_at", data.to)
         .order("created_at", { ascending: true }),
     ]);
@@ -728,10 +741,11 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: pubs, error } = await supabase
       .from("publications")
       .select("id, caption, visibility, price_cents, published_at, created_at, pinned, archived_at, preview_url")
-      .eq("author_id", userId)
+      .eq("creator_profile_id", profileId)
       .gte("created_at", data.from).lte("created_at", data.to);
     if (error) throw new Error(error.message);
     const { data: profileRow } = await supabase
@@ -823,10 +837,11 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("live_sessions")
       .select("id, title, started_at, ended_at, viewers_peak, total_views, gross_cents, tips_cents, cover_url")
-      .eq("creator_id", userId)
+      .eq("creator_profile_id", profileId)
       .gte("started_at", data.from).lte("started_at", data.to);
     if (error) throw new Error(error.message);
     const base = rows ?? [];
@@ -937,6 +952,7 @@ export const getAssinantesActivity = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("profile_views")
       .select("created_at")
