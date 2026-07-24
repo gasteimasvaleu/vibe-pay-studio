@@ -60,5 +60,9 @@ export function translatePaymentError(err: unknown, fallback = "Erro ao processa
     return "Saldo insuficiente na carteira.";
   }
 
+  if (raw === "plan_downgrade_not_allowed") {
+    return "Você já tem uma assinatura ativa com esse plano ou maior. Escolha um plano maior para fazer upgrade.";
+  }
+
   return raw || fallback;
 }
