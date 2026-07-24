@@ -194,10 +194,12 @@ export const sendTipMessage = createServerFn({ method: "POST" })
     const partnerId = await partnerIdOf(supabase, userId, data.threadId);
     if (partnerId === userId) throw new Error("Não pode enviar Mimo para si mesmo");
 
+    const creatorActiveProfileId = await getActiveProfileIdFor(supabase, partnerId);
     const { data: walletResult, error: rpcErr } = await supabase.rpc("pay_with_wallet", {
       _kind: "tip",
       _creator_id: partnerId,
       _amount_cents: data.amountCents,
+      _creator_profile_id: creatorActiveProfileId,
     });
     if (rpcErr) throw new Error(rpcErr.message);
     const tipId = (walletResult as { referenceId?: string } | null)?.referenceId;
