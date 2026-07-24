@@ -33,6 +33,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   listMySubscriptions,
   cancelSubscription,
   type MySubscription,
@@ -519,16 +530,40 @@ function SubscriptionsPage() {
                           </Button>
 
                           {!expired && !cancelled && paid && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-9 gap-1 rounded-lg"
-                              disabled={cancelMutation.isPending}
-                              onClick={() => cancelMutation.mutate(sub.id)}
-                            >
-                              <XCircle className="h-4 w-4" />
-                              Cancelar renovação
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 gap-1 rounded-lg"
+                                  disabled={cancelMutation.isPending}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  Cancelar renovação
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Cancelar renovação automática?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Sua assinatura continuará ativa até{" "}
+                                    <strong>{formatDate(sub.currentPeriodEnd)}</strong>,
+                                    mas não será cobrada novamente. Você pode
+                                    reassinar a qualquer momento.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Manter renovação</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => cancelMutation.mutate(sub.id)}
+                                  >
+                                    Sim, cancelar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
                         </div>
                       </div>
