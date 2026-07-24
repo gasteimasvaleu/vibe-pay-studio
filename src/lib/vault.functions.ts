@@ -305,12 +305,12 @@ export const createVaultCategory = createServerFn({ method: "POST" })
     let lastQ = context.supabase
       .from("vault_categories")
       .select("position")
-      .eq("user_id", context.userId)
+      .eq("user_id", context.userId);
+    if (profileId) lastQ = lastQ.eq("creator_profile_id", profileId);
+    const { data: last } = await lastQ
       .order("position", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (profileId) lastQ = lastQ.eq("creator_profile_id", profileId);
-    const { data: last } = await lastQ;
     const nextPos = (last?.position ?? -1) + 1;
     const { data: row, error } = await context.supabase
       .from("vault_categories")
@@ -494,10 +494,12 @@ export const createVaultUpload = createServerFn({ method: "POST" })
     if (!data.storagePath.startsWith(expectedPrefix)) {
       throw new Error("Caminho de armazenamento inválido");
     }
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
     const { data: row, error } = await context.supabase
       .from("vault_uploads")
       .insert({
         user_id: context.userId,
+        creator_profile_id: profileId,
         storage_path: data.storagePath,
         url: data.url,
         type: data.type,
