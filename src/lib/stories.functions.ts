@@ -28,10 +28,15 @@ export const publishStory = createServerFn({ method: "POST" })
     if (!profile || !["creator", "free_creator"].includes(profile.account_type)) {
       throw new Error("apenas creators podem publicar stories");
     }
+    const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    if (!activeProfileId) {
+      throw new Error("nenhum perfil de creator ativo");
+    }
     const { data: row, error } = await context.supabase
       .from("stories")
       .insert({
         creator_id: context.userId,
+        creator_profile_id: activeProfileId,
         media_path: data.mediaPath,
         media_type: data.mediaType,
         thumb_path: data.thumbPath ?? null,
