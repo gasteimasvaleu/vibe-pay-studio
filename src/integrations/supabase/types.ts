@@ -71,6 +71,77 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_categories: {
+        Row: {
+          created_at: string
+          order: number
+          slug: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          order?: number
+          slug: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          order?: number
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author: string
+          category_slug: string
+          content: string
+          created_at: string
+          excerpt: string
+          featured_order: number | null
+          is_featured: boolean
+          published_at: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          category_slug: string
+          content?: string
+          created_at?: string
+          excerpt?: string
+          featured_order?: number | null
+          is_featured?: boolean
+          published_at?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          category_slug?: string
+          content?: string
+          created_at?: string
+          excerpt?: string
+          featured_order?: number | null
+          is_featured?: boolean
+          published_at?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       broadcast_jobs: {
         Row: {
           audience: string
@@ -3190,6 +3261,22 @@ export type Database = {
               _message_id?: string
               _plan?: string
               _publication_id?: string
+              _story_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount_cents?: number
+              _call_id?: string
+              _creator_id?: string
+              _creator_profile_id?: string
+              _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+              _request_id?: string
               _story_id?: string
             }
             Returns: Json
