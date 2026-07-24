@@ -311,7 +311,7 @@ function BenefitItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 
 function PerfilPage() {
-  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount, followersCount } =
+  const { viewerId, profile, isFollowing: initialFollowing, isSubscribed: initialSubscribed, activeSubscription, promotion, postsCount, mediaCount, photosCount, videosCount, lockedCount, likesCount, followersCount } =
     Route.useLoaderData();
 
   const router = useRouter();
