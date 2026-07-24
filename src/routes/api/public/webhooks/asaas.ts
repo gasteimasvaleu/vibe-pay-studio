@@ -349,6 +349,125 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           });
         }
 
+        // ---- Renovações automáticas de assinatura (ciclos > 1) ----
+        // Quando o Asaas gera uma nova cobrança para uma assinatura recorrente,
+        // não existe payment_intent local. Detectamos pelo campo `payment.subscription`
+        // (buscamos direto na API) e reagimos aos eventos PAYMENT_CREATED (envia
+        // e-mail com QR PIX) e PAYMENT_CONFIRMED/RECEIVED (estende período + registra
+        // transação/split).
+        if (!intent && (eventType === "PAYMENT_CREATED" || targetStatus === "paid")) {
+          try {
+            const asaas = await import("@/lib/asaas.server");
+            const remotePayment = await asaas.getPayment(paymentId).catch(() => null);
+            const asaasSubId = remotePayment?.subscription ?? null;
+
+            if (asaasSubId) {
+              const { data: sub } = await supabaseAdmin
+                .from("subscriptions")
+                .select(
+                  "id, subscriber_id, creator_id, plan, price_cents_paid, current_period_end, creator_profile_id",
+                )
+                .eq("asaas_subscription_id", asaasSubId)
+                .maybeSingle();
+
+              if (sub) {
+                if (eventType === "PAYMENT_CREATED" && remotePayment?.billingType === "PIX") {
+                  try {
+                    const pixQr = await asaas.getPixQrCode(paymentId);
+                    const { notifyPixInvoice } = await import("@/lib/email-events.server");
+                    const dueBr = new Date(
+                      (remotePayment.dueDate ?? new Date().toISOString().slice(0, 10)) +
+                        "T12:00:00Z",
+                    ).toLocaleDateString("pt-BR");
+                    await notifyPixInvoice({
+                      subscriberId: sub.subscriber_id,
+                      creatorId: sub.creator_id,
+                      plan: sub.plan,
+                      amountCents: Math.round((remotePayment.value ?? 0) * 100),
+                      dueDate: dueBr,
+                      invoiceUrl:
+                        remotePayment.invoiceUrl ??
+                        `${process.env.APP_BASE_URL ?? "https://monetisexy.com"}/subscriptions`,
+                      qrImageBase64: pixQr.encodedImage,
+                      qrPayload: pixQr.payload,
+                    });
+                  } catch (e) {
+                    console.warn("[asaas webhook] renewal pix email failed", e);
+                  }
+                }
+
+                if (targetStatus === "paid") {
+                  const months =
+                    sub.plan === "quarterly" ? 3 : sub.plan === "semiannual" ? 6 : 1;
+                  const base = new Date(sub.current_period_end);
+                  const now = new Date();
+                  const from = base > now ? base : now;
+                  const newEnd = new Date(from);
+                  newEnd.setMonth(newEnd.getMonth() + months);
+                  const nextDue = new Date(newEnd);
+
+                  await supabaseAdmin
+                    .from("subscriptions")
+                    .update({
+                      status: "active",
+                      current_period_end: newEnd.toISOString(),
+                      last_payment_id: paymentId,
+                      next_charge_at: nextDue.toISOString(),
+                    })
+                    .eq("id", sub.id);
+
+                  // Registra transação (o trigger `subscriptions_sync_transaction`
+                  // só dispara na 1ª transição para active). Renovações precisam
+                  // de INSERT direto em transactions para reconhecer split/rev.
+                  const gross = Math.round((remotePayment?.value ?? sub.price_cents_paid) * 100 / 100) * 100;
+                  const amountCents = Math.round((remotePayment?.value ?? sub.price_cents_paid / 100) * 100);
+                  const { data: split } = await supabaseAdmin.rpc("apply_transaction_split", {
+                    _gross_cents: amountCents,
+                    _commission_pct: 15,
+                    _method:
+                      remotePayment?.billingType === "CREDIT_CARD"
+                        ? "credit_card"
+                        : remotePayment?.billingType === "BOLETO"
+                          ? "boleto"
+                          : "pix",
+                  });
+                  const s = Array.isArray(split) ? split[0] : split;
+                  await supabaseAdmin.from("transactions").insert({
+                    kind: "subscription",
+                    status: "paid",
+                    buyer_id: sub.subscriber_id,
+                    creator_id: sub.creator_id,
+                    creator_profile_id: sub.creator_profile_id,
+                    amount_cents_gross: amountCents,
+                    platform_fee_cents: s?.platform_fee_cents ?? 0,
+                    gateway_fee_cents: s?.gateway_fee_cents ?? 0,
+                    net_cents: s?.net_cents ?? amountCents,
+                    commission_pct_applied: s?.commission_pct_applied ?? 15,
+                    payment_method:
+                      remotePayment?.billingType === "CREDIT_CARD"
+                        ? "credit_card"
+                        : remotePayment?.billingType === "BOLETO"
+                          ? "boleto"
+                          : "pix",
+                    provider: "asaas",
+                    provider_ref: paymentId,
+                    reference_table: "subscriptions",
+                    reference_id: sub.id,
+                    metadata: { plan: sub.plan, cycle: "renewal" },
+                  });
+                }
+
+                await supabaseAdmin
+                  .from("asaas_events")
+                  .update({ processed_at: new Date().toISOString() })
+                  .eq("event_id", eventId);
+                return new Response("ok", { status: 200 });
+              }
+            }
+          } catch (e) {
+            console.error("[asaas webhook] subscription renewal handling failed", e);
+          }
+        }
 
         try {
           if (targetStatus === "paid" && intent) {
