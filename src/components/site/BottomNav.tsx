@@ -66,6 +66,8 @@ export function BottomNav() {
         />
         {isSubscriber ? (
           <NavItem
+            to="/search"
+            active={pathname.startsWith("/search")}
             icon={<Search className="h-5 w-5" />}
             label="Busca"
           />
