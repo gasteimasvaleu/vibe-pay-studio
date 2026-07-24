@@ -270,7 +270,7 @@ export function StoryViewer({
                 </div>
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => setConfirmDeleteOpen(true)}
                   disabled={deleting}
                   className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
                   aria-label="Apagar"
