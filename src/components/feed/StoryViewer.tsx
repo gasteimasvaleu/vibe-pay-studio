@@ -199,7 +199,6 @@ export function StoryViewer({
 
   const handleDelete = async () => {
     if (!current || deleting) return;
-    if (!confirm("Apagar este story?")) return;
     setDeleting(true);
     try {
       await removeStory({ data: { id: current.id } });
@@ -212,6 +211,7 @@ export function StoryViewer({
       toast.error(e?.message ?? "Erro ao apagar");
     } finally {
       setDeleting(false);
+      setConfirmDeleteOpen(false);
     }
   };
 
