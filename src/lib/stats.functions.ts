@@ -33,7 +33,7 @@ export const getEarningsSeries = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("created_at, amount_cents_gross, net_cents, kind")
@@ -64,7 +64,7 @@ export const getEarningsByProduct = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("kind, amount_cents_gross, net_cents")
@@ -99,7 +99,7 @@ export const getPeriodTotals = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const from = new Date(data.from);
     const to = new Date(data.to);
     const spanMs = to.getTime() - from.getTime();
@@ -140,7 +140,7 @@ export const getResumoStats = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = new Date();
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -217,7 +217,7 @@ export const getRecordes = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const startOfMonth = new Date();
     startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
 
@@ -265,7 +265,7 @@ export const listExtrato = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     let q = supabase
       .from("transactions")
       .select("id, kind, status, amount_cents_gross, net_cents, payment_method, buyer_id, created_at, released_at, wallet_released_at, is_international", { count: "exact" })
@@ -309,7 +309,7 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = new Date().toISOString();
 
     const [allRes, periodRes] = await Promise.all([
@@ -382,7 +382,7 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     let q = supabase
       .from("transactions")
       .select("buyer_id, amount_cents_gross, kind")
@@ -437,7 +437,7 @@ export const getAssinantesList = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const now = Date.now();
 
     const [allRes, periodRes] = await Promise.all([
@@ -532,7 +532,7 @@ export const getTopPaises = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("transactions")
       .select("country_code, amount_cents_gross")
@@ -559,7 +559,7 @@ export const getStreak = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const startOfMonth = new Date();
     startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
     const startWindow = new Date(); startWindow.setDate(startWindow.getDate() - 400); startWindow.setHours(0, 0, 0, 0);
@@ -623,7 +623,7 @@ export const getAlcance = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
 
     const { data: pubIds } = await supabase
       .from("publications")
@@ -741,7 +741,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: pubs, error } = await supabase
       .from("publications")
       .select("id, caption, visibility, price_cents, published_at, created_at, pinned, archived_at, preview_url")
@@ -837,7 +837,7 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("live_sessions")
       .select("id, title, started_at, ended_at, viewers_peak, total_views, gross_cents, tips_cents, cover_url")
@@ -952,7 +952,7 @@ export const getAssinantesActivity = createServerFn({ method: "GET" })
   .inputValidator(rangeValidator)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
     const { data: rows, error } = await supabase
       .from("profile_views")
       .select("created_at")
