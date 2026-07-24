@@ -34,35 +34,52 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
     let activeAvatarUrl: string | null = null;
     let activeBio: string | null = null;
     let activeDisplayName: string | null = null;
-    if (account?.active_profile_id) {
-      const { data: cp } = await supabase
-        .from("creator_profiles")
-        .select("cover_url, avatar_url, bio, display_name")
-        .eq("id", account.active_profile_id)
-        .eq("user_id", user.id)
-        .maybeSingle();
+    let activeUsername: string | null = null;
+    const { data: creatorProfiles } = await supabase
+      .from("creator_profiles")
+      .select("id, kind, username, cover_url, avatar_url, bio, display_name")
+      .eq("user_id", user.id);
+    const rows = (creatorProfiles ?? []) as Array<{
+      id: string;
+      kind: "paid" | "free";
+      username: string;
+      cover_url: string | null;
+      avatar_url: string | null;
+      bio: string | null;
+      display_name: string | null;
+    }>;
+    const cp =
+      rows.find((row) => row.id === account?.active_profile_id) ??
+      rows.find((row) => row.kind === "paid") ??
+      rows[0] ??
+      null;
+    const hasActiveCreator = !!cp;
+    const activeIsPaid = cp?.kind === "paid";
+    if (cp) {
       activeCoverUrl = cp?.cover_url ?? null;
       activeAvatarUrl = cp?.avatar_url ?? null;
       activeBio = cp?.bio ?? null;
       activeDisplayName = cp?.display_name ?? null;
+      activeUsername = cp?.username ?? null;
     }
 
     const inFreeView = account?.active_view === "free";
-    const username = (inFreeView ? account?.free_username : account?.username) ??
+    const username = activeUsername ??
+      (inFreeView ? account?.free_username : account?.username) ??
       user.email?.split("@")[0] ??
       "voce";
     const displayName =
       activeDisplayName ??
-      (inFreeView ? account?.free_display_name : account?.display_name) ??
+      (hasActiveCreator && !activeIsPaid ? null : inFreeView ? account?.free_display_name : account?.display_name) ??
       username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
 
     return {
-      coverUrl: activeCoverUrl ?? account?.cover_url ?? null,
-      avatarUrl: inFreeView
-        ? account?.free_avatar_url ?? activeAvatarUrl ?? account?.avatar_url ?? null
-        : activeAvatarUrl ?? account?.avatar_url ?? null,
+      coverUrl: hasActiveCreator && !activeIsPaid ? activeCoverUrl : activeCoverUrl ?? account?.cover_url ?? null,
+      avatarUrl: hasActiveCreator
+        ? activeAvatarUrl ?? (activeIsPaid ? account?.avatar_url ?? null : null)
+        : (inFreeView ? account?.free_avatar_url : null) ?? account?.avatar_url ?? null,
       displayName,
-      bio: activeBio ?? account?.bio ?? "",
+      bio: hasActiveCreator && !activeIsPaid ? activeBio ?? "" : activeBio ?? account?.bio ?? "",
       location: account?.location ?? "",
     };
   },

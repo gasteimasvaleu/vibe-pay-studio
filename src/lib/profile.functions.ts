@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  getProfileAndActiveCreator,
+  sanitizeHandle,
+  validateDisplayName,
+  validateUsername,
+} from "@/lib/profile-active.server";
 
 export const updateAvatarUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -9,32 +15,21 @@ export const updateAvatarUrl = createServerFn({ method: "POST" })
     const url = data.avatarUrl.trim();
     if (!url) throw new Error("url inválida");
 
-    const { data: me } = await supabase
-      .from("profiles")
-      .select("active_profile_id, account_type")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const updates: { avatar_url: string; free_avatar_url?: string | null } = {
-      avatar_url: url,
-    };
-    if (me?.active_profile_id) {
-      const { data: cp } = await supabase
-        .from("creator_profiles")
-        .select("kind")
-        .eq("id", me.active_profile_id)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (cp?.kind === "free") {
-        updates.free_avatar_url = url;
-      }
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+    if (activeCreator) {
       const { error: cpErr } = await supabase
         .from("creator_profiles")
         .update({ avatar_url: url })
-        .eq("id", me.active_profile_id)
+        .eq("id", activeCreator.id)
         .eq("user_id", userId);
       if (cpErr) throw new Error(cpErr.message);
     }
+
+    const updates: { avatar_url?: string; free_avatar_url?: string | null } = {};
+    if (!activeCreator || activeCreator.kind === "paid") updates.avatar_url = url;
+    if (activeCreator?.kind === "free") updates.free_avatar_url = url;
+
+    if (!Object.keys(updates).length) return { avatarUrl: url };
 
     const { error } = await supabase
       .from("profiles")
@@ -52,40 +47,26 @@ export const updateCoverUrl = createServerFn({ method: "POST" })
     const url = data.coverUrl.trim();
     if (!url) throw new Error("url inválida");
 
-    const { data: me } = await supabase
-      .from("profiles")
-      .select("active_profile_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (me?.active_profile_id) {
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+    if (activeCreator) {
       const { error: cpErr } = await supabase
         .from("creator_profiles")
         .update({ cover_url: url })
-        .eq("id", me.active_profile_id)
+        .eq("id", activeCreator.id)
         .eq("user_id", userId);
       if (cpErr) throw new Error(cpErr.message);
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ cover_url: url })
-      .eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (!activeCreator || activeCreator.kind === "paid") {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ cover_url: url })
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+    }
+
     return { coverUrl: url };
   });
-
-async function getActiveCreatorProfileId(
-  supabase: any,
-  userId: string,
-): Promise<string | null> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("active_profile_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  return (data?.active_profile_id as string | null) ?? null;
-}
 
 export const updateProfileDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -97,29 +78,27 @@ export const updateProfileDetails = createServerFn({ method: "POST" })
     if (bioTrimmed.length > 3000) throw new Error("bio muito longa");
     if (locTrimmed.length > 120) throw new Error("localização muito longa");
 
-    const activeId = await getActiveCreatorProfileId(supabase, userId);
-    if (activeId) {
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+    if (activeCreator) {
       const { error: cpErr } = await supabase
         .from("creator_profiles")
         .update({ bio: bioTrimmed.length ? bioTrimmed : null })
-        .eq("id", activeId)
+        .eq("id", activeCreator.id)
         .eq("user_id", userId);
       if (cpErr) throw new Error(cpErr.message);
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        bio: bioTrimmed.length ? bioTrimmed : null,
-        location: locTrimmed.length ? locTrimmed : null,
-      })
-      .eq("user_id", userId);
+    const profileUpdates: { bio?: string | null; location: string | null } = {
+      location: locTrimmed.length ? locTrimmed : null,
+    };
+    if (!activeCreator || activeCreator.kind === "paid") {
+      profileUpdates.bio = bioTrimmed.length ? bioTrimmed : null;
+    }
+
+    const { error } = await supabase.from("profiles").update(profileUpdates).eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true, bio: bioTrimmed, location: locTrimmed } as const;
   });
-
-const sanitizeHandle = (v: string) =>
-  v.toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 30);
 
 export const updateSocialLinks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -130,8 +109,8 @@ export const updateSocialLinks = createServerFn({ method: "POST" })
     const tk = sanitizeHandle(data.tiktok);
     const xh = sanitizeHandle(data.x);
 
-    const activeId = await getActiveCreatorProfileId(supabase, userId);
-    if (activeId) {
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+    if (activeCreator) {
       const { error: cpErr } = await supabase
         .from("creator_profiles")
         .update({
@@ -139,46 +118,25 @@ export const updateSocialLinks = createServerFn({ method: "POST" })
           tiktok_handle: tk.length ? tk : null,
           x_handle: xh.length ? xh : null,
         })
-        .eq("id", activeId)
+        .eq("id", activeCreator.id)
         .eq("user_id", userId);
       if (cpErr) throw new Error(cpErr.message);
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        instagram_handle: ig.length ? ig : null,
-        tiktok_handle: tk.length ? tk : null,
-        x_handle: xh.length ? xh : null,
-      })
-      .eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (!activeCreator || activeCreator.kind === "paid") {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          instagram_handle: ig.length ? ig : null,
+          tiktok_handle: tk.length ? tk : null,
+          x_handle: xh.length ? xh : null,
+        })
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+    }
+
     return { ok: true, instagram: ig, tiktok: tk, x: xh } as const;
   });
-
-const RESERVED_USERNAMES = new Set([
-  "admin", "api", "auth", "settings", "perfil", "profile", "monetisexy",
-  "monetisex", "root", "support", "help", "about", "login", "logout",
-  "signup", "signin", "register", "entrar", "cadastro", "home", "explore",
-  "search", "notifications", "messages", "chat", "www", "app", "public",
-]);
-
-const USERNAME_RE = /^[a-z0-9_][a-z0-9_]{2,29}$/;
-
-function validateUsername(raw: string): { ok: true; value: string } | { ok: false; reason: "invalid_format" | "reserved" } {
-  const value = raw.trim().toLowerCase();
-  if (!USERNAME_RE.test(value)) return { ok: false, reason: "invalid_format" };
-  if (value.startsWith("_")) return { ok: false, reason: "invalid_format" };
-  if (RESERVED_USERNAMES.has(value)) return { ok: false, reason: "reserved" };
-  return { ok: true, value };
-}
-
-function validateDisplayName(raw: string): { ok: true; value: string } | { ok: false } {
-  const value = raw.replace(/\s+/g, " ").trim();
-  if (value.length < 2 || value.length > 40) return { ok: false };
-  if (/[\r\n]/.test(value)) return { ok: false };
-  return { ok: true, value };
-}
 
 export const checkUsernameAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -189,20 +147,40 @@ export const checkUsernameAvailability = createServerFn({ method: "POST" })
       return { available: false, isSelf: false, reason: check.reason } as const;
     }
     const { supabase, userId } = context;
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
     const [profilesRes, creatorProfilesRes] = await Promise.all([
-      supabase.from("profiles").select("user_id").eq("username", check.value).maybeSingle(),
-      supabase.from("creator_profiles").select("user_id").eq("username", check.value).maybeSingle(),
+      supabase.from("profiles").select("user_id, username").eq("username", check.value).maybeSingle(),
+      supabase.from("creator_profiles").select("id, user_id, username").eq("username", check.value).maybeSingle(),
     ]);
     if (profilesRes.error) throw new Error(profilesRes.error.message);
     if (creatorProfilesRes.error) throw new Error(creatorProfilesRes.error.message);
 
-    const owners = new Set<string>();
-    if (profilesRes.data?.user_id) owners.add(profilesRes.data.user_id);
-    if (creatorProfilesRes.data?.user_id) owners.add(creatorProfilesRes.data.user_id);
+    const profileOwner = profilesRes.data?.user_id as string | undefined;
+    const creatorOwner = creatorProfilesRes.data?.user_id as string | undefined;
+    const creatorId = creatorProfilesRes.data?.id as string | undefined;
 
-    if (owners.size === 0) return { available: true, isSelf: false } as const;
-    if (owners.size === 1 && owners.has(userId)) return { available: true, isSelf: true } as const;
-    return { available: false, isSelf: false, reason: "taken" } as const;
+    if (profileOwner && profileOwner !== userId) {
+      return { available: false, isSelf: false, reason: "taken" } as const;
+    }
+    if (creatorOwner && creatorOwner !== userId) {
+      return { available: false, isSelf: false, reason: "taken" } as const;
+    }
+    if (activeCreator) {
+      if (creatorId && creatorId !== activeCreator.id) {
+        return { available: false, isSelf: false, reason: "taken" } as const;
+      }
+      if (profileOwner && !creatorId && activeCreator.kind === "free") {
+        return { available: false, isSelf: false, reason: "taken" } as const;
+      }
+      if (creatorId === activeCreator.id) {
+        return { available: true, isSelf: true } as const;
+      }
+      return { available: true, isSelf: false } as const;
+    }
+
+    if (profileOwner === userId) return { available: true, isSelf: true } as const;
+    if (creatorOwner === userId) return { available: false, isSelf: false, reason: "taken" } as const;
+    return { available: true, isSelf: false } as const;
   });
 
 export const updateProfileIdentity = createServerFn({ method: "POST" })
@@ -214,28 +192,27 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
     const userCheck = validateUsername(data.username);
     if (!userCheck.ok) return { ok: false, reason: userCheck.reason } as const;
     const { supabase, userId } = context;
+    const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
 
-    // Verifica colisão cross-table: creator_profiles pode ter o mesmo username.
-    const { data: existingCreator, error: creatorError } = await supabase
-      .from("creator_profiles")
-      .select("user_id, id")
-      .eq("username", userCheck.value)
-      .maybeSingle();
-    if (creatorError) throw new Error(creatorError.message);
-    const activeId = await getActiveCreatorProfileId(supabase, userId);
-    if (existingCreator && existingCreator.user_id !== userId) {
-      return { ok: false, reason: "username_taken" } as const;
-    }
-    // Impede trocar para o username de OUTRO perfil do mesmo usuário.
-    if (existingCreator && activeId && existingCreator.id !== activeId) {
-      return { ok: false, reason: "username_taken" } as const;
-    }
+    const [existingProfileRes, existingCreatorRes] = await Promise.all([
+      supabase.from("profiles").select("user_id").eq("username", userCheck.value).maybeSingle(),
+      supabase.from("creator_profiles").select("user_id, id").eq("username", userCheck.value).maybeSingle(),
+    ]);
+    if (existingProfileRes.error) throw new Error(existingProfileRes.error.message);
+    if (existingCreatorRes.error) throw new Error(existingCreatorRes.error.message);
 
-    if (activeId) {
+    const existingProfile = existingProfileRes.data;
+    const existingCreator = existingCreatorRes.data;
+    if (existingProfile && existingProfile.user_id !== userId) return { ok: false, reason: "username_taken" } as const;
+    if (existingCreator && existingCreator.user_id !== userId) return { ok: false, reason: "username_taken" } as const;
+    if (activeCreator && existingCreator && existingCreator.id !== activeCreator.id) return { ok: false, reason: "username_taken" } as const;
+    if (activeCreator?.kind === "free" && existingProfile && !existingCreator) return { ok: false, reason: "username_taken" } as const;
+
+    if (activeCreator) {
       const { error: cpErr } = await supabase
         .from("creator_profiles")
         .update({ display_name: nameCheck.value, username: userCheck.value })
-        .eq("id", activeId)
+        .eq("id", activeCreator.id)
         .eq("user_id", userId);
       if (cpErr) {
         if ((cpErr as { code?: string }).code === "23505") {
@@ -245,9 +222,13 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
       }
     }
 
+    const profileUpdates = activeCreator?.kind === "free"
+      ? { free_display_name: nameCheck.value, free_username: userCheck.value }
+      : { display_name: nameCheck.value, username: userCheck.value };
+
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: nameCheck.value, username: userCheck.value })
+      .update(profileUpdates)
       .eq("user_id", userId);
     if (error) {
       if ((error as { code?: string }).code === "23505") {

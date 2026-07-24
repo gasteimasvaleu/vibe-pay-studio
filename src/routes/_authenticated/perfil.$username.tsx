@@ -46,6 +46,7 @@ import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
 import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.functions";
 import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
+import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
 
 
@@ -183,6 +184,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     return {
       viewerId: user.id,
       profile: {
+        creatorProfileId: isCreatorProfile ? (profile.id as string) : null,
         userId: profile.user_id,
         username: profile.username,
         displayName: (profile.display_name as string | null) ?? null,
@@ -341,6 +343,25 @@ function PerfilPage() {
   const muteFn = useServerFn(muteProfile);
   const unmuteFn = useServerFn(unmuteProfile);
   const isMutedServerFn = useServerFn(isMutedFn);
+  const setActiveCreatorProfileFn = useServerFn(setActiveCreatorProfile);
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  const handleEditProfile = async () => {
+    if (editingProfile) return;
+    setEditingProfile(true);
+    try {
+      if (profile.creatorProfileId) {
+        await setActiveCreatorProfileFn({ data: { creatorProfileId: profile.creatorProfileId } });
+        await queryClient.invalidateQueries();
+        await router.invalidate();
+      }
+      await navigate({ to: "/settings/creator" });
+    } catch {
+      toast.error("Não foi possível abrir a edição deste perfil");
+    } finally {
+      setEditingProfile(false);
+    }
+  };
 
   const friendQueryKey = ["friends", "is", viewerId, profile.userId] as const;
   const friendQuery = useQuery({
@@ -830,12 +851,14 @@ function PerfilPage() {
 
           {isOwner && (
             <div className="pr-4 md:pr-6">
-              <Link
-                to="/settings/creator"
+              <button
+                type="button"
+                onClick={handleEditProfile}
+                disabled={editingProfile}
                 className="flex items-center justify-center w-full h-9 rounded-xl border border-primary/30 bg-secondary text-sm font-semibold text-secondary-foreground hover:bg-muted transition-colors"
               >
-                Editar perfil
-              </Link>
+                {editingProfile ? "Abrindo…" : "Editar perfil"}
+              </button>
             </div>
           )}
 

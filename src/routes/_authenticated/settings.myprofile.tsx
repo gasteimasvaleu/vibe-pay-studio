@@ -39,21 +39,45 @@ export const Route = createFileRoute("/_authenticated/settings/myprofile")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, avatar_url")
+      .select("username, display_name, avatar_url, active_profile_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    const { data: creatorProfiles } = await supabase
+      .from("creator_profiles")
+      .select("id, kind, username, display_name, avatar_url")
+      .eq("user_id", user.id);
+    const rows = (creatorProfiles ?? []) as Array<{
+      id: string;
+      kind: "paid" | "free";
+      username: string;
+      display_name: string | null;
+      avatar_url: string | null;
+    }>;
+    const activeCreator =
+      rows.find((row) => row.id === profile?.active_profile_id) ??
+      rows.find((row) => row.kind === "paid") ??
+      rows[0] ??
+      null;
     const username =
-      profile?.username ?? user.email?.split("@")[0] ?? "voce";
-    return { username, avatarUrl: profile?.avatar_url ?? null };
+      activeCreator?.username ?? profile?.username ?? user.email?.split("@")[0] ?? "voce";
+    const displayName =
+      activeCreator?.display_name ??
+      (activeCreator?.kind === "paid" ? profile?.display_name : null) ??
+      username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+    return {
+      username,
+      displayName,
+      avatarUrl: activeCreator
+        ? activeCreator.avatar_url ?? (activeCreator.kind === "paid" ? profile?.avatar_url ?? null : null)
+        : profile?.avatar_url ?? null,
+    };
   },
   component: SettingsMyProfilePage,
 });
 
 function SettingsMyProfilePage() {
   const router = useRouter();
-  const { username, avatarUrl: initialAvatarUrl } = Route.useRouteContext();
-  const displayName =
-    username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+  const { username, displayName, avatarUrl: initialAvatarUrl } = Route.useRouteContext();
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);

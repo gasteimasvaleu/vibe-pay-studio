@@ -30,16 +30,45 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, account_type, avatar_url")
+      .select("username, display_name, account_type, avatar_url, active_profile_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    const { data: creatorProfiles } = await supabase
+      .from("creator_profiles")
+      .select("id, kind, username, display_name, avatar_url")
+      .eq("user_id", user.id);
+    const rows = (creatorProfiles ?? []) as Array<{
+      id: string;
+      kind: "paid" | "free";
+      username: string;
+      display_name: string | null;
+      avatar_url: string | null;
+    }>;
+    const activeCreator =
+      rows.find((row) => row.id === profile?.active_profile_id) ??
+      rows.find((row) => row.kind === "paid") ??
+      rows[0] ??
+      null;
     const username =
-      profile?.username ?? user.email?.split("@")[0] ?? "voce";
+      activeCreator?.username ?? profile?.username ?? user.email?.split("@")[0] ?? "voce";
+    const displayName =
+      activeCreator?.display_name ??
+      (activeCreator?.kind === "paid" ? profile?.display_name : null) ??
+      username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
     const accountType = (profile?.account_type ?? "subscriber") as
       | "subscriber"
       | "creator"
       | "free_creator";
-    return { username, accountType, avatarUrl: profile?.avatar_url ?? null };
+    const activeKind = activeCreator?.kind ?? null;
+    return {
+      username,
+      displayName,
+      accountType,
+      activeKind,
+      avatarUrl: activeCreator
+        ? activeCreator.avatar_url ?? (activeCreator.kind === "paid" ? profile?.avatar_url ?? null : null)
+        : profile?.avatar_url ?? null,
+    };
   },
 
   component: SettingsCreatorPage,
@@ -47,9 +76,7 @@ export const Route = createFileRoute("/_authenticated/settings/creator")({
 
 function SettingsCreatorPage() {
   const router = useRouter();
-  const { username, accountType, avatarUrl } = Route.useRouteContext();
-  const displayName =
-    username.charAt(0).toUpperCase() + username.slice(1).split(/[._-]/)[0];
+  const { username, displayName, accountType, activeKind, avatarUrl } = Route.useRouteContext();
   const isSubscriber = accountType === "subscriber";
 
   return (
@@ -93,6 +120,11 @@ function SettingsCreatorPage() {
             {isSubscriber && (
               <p className="text-sm font-semibold text-orange-500 mt-0.5">
                 Perfil Grátis
+              </p>
+            )}
+            {!isSubscriber && activeKind === "free" && (
+              <p className="text-sm font-semibold text-primary mt-0.5">
+                Perfil gratuito vinculado
               </p>
             )}
           </div>

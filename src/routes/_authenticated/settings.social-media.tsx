@@ -21,13 +21,41 @@ export const Route = createFileRoute("/_authenticated/settings/social-media")({
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("instagram_handle, tiktok_handle, x_handle")
+      .select("instagram_handle, tiktok_handle, x_handle, active_profile_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    const { data: creatorProfiles } = await supabase
+      .from("creator_profiles")
+      .select("id, kind, instagram_handle, tiktok_handle, x_handle")
+      .eq("user_id", user.id);
+    const rows = (creatorProfiles ?? []) as Array<{
+      id: string;
+      kind: "paid" | "free";
+      instagram_handle: string | null;
+      tiktok_handle: string | null;
+      x_handle: string | null;
+    }>;
+    const activeSocials: {
+      kind: "paid" | "free";
+      instagram_handle: string | null;
+      tiktok_handle: string | null;
+      x_handle: string | null;
+    } | null =
+      rows.find((row) => row.id === profile?.active_profile_id) ??
+      rows.find((row) => row.kind === "paid") ??
+      rows[0] ??
+      null;
+    const activeIsPaid = activeSocials?.kind === "paid";
     return {
-      instagram: profile?.instagram_handle ?? "",
-      tiktok: profile?.tiktok_handle ?? "",
-      x: profile?.x_handle ?? "",
+      instagram: activeSocials
+        ? activeSocials.instagram_handle ?? (activeIsPaid ? profile?.instagram_handle ?? "" : "")
+        : profile?.instagram_handle ?? "",
+      tiktok: activeSocials
+        ? activeSocials.tiktok_handle ?? (activeIsPaid ? profile?.tiktok_handle ?? "" : "")
+        : profile?.tiktok_handle ?? "",
+      x: activeSocials
+        ? activeSocials.x_handle ?? (activeIsPaid ? profile?.x_handle ?? "" : "")
+        : profile?.x_handle ?? "",
     };
   },
   component: SettingsSocialMediaPage,
