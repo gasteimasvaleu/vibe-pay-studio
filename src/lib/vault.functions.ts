@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
 // ---------- Types ----------
 export type VaultMediaType = "image" | "video" | "audio" | "gif";
@@ -53,15 +54,18 @@ export const listVaultPublicationMedia = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => listArgs.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const ascending = data.sort === "oldest";
-    const { data: pubs, error } = await context.supabase
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    let q = context.supabase
       .from("publications")
       .select(
-        "id, caption, created_at, published_at, audio_url, audio_storage_path, publication_media(id, url, storage_path, type, position, created_at)",
+        "id, caption, created_at, published_at, audio_url, audio_storage_path, creator_profile_id, publication_media(id, url, storage_path, type, position, created_at)",
       )
       .eq("author_id", context.userId)
       .is("archived_at", null)
       .order("published_at", { ascending, nullsFirst: false })
       .limit(data.limit);
+    if (profileId) q = q.eq("creator_profile_id", profileId);
+    const { data: pubs, error } = await q;
     if (error) throw new Error(error.message);
 
     const items: VaultMediaItem[] = [];
@@ -119,12 +123,15 @@ export const listVaultUploads = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => listArgs.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const ascending = data.sort === "oldest";
-    const { data: rows, error } = await context.supabase
+    const profileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    let q = context.supabase
       .from("vault_uploads")
       .select("id, url, storage_path, type, mime, duration_seconds, created_at")
       .eq("user_id", context.userId)
       .order("created_at", { ascending })
       .limit(data.limit);
+    if (profileId) q = q.eq("creator_profile_id", profileId);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
     const items: VaultMediaItem[] = (rows ?? []).map((r) => ({
