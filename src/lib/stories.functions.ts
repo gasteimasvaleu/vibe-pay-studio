@@ -57,11 +57,17 @@ export const deleteStory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row } = await context.supabase
       .from("stories")
-      .select("id, media_path, thumb_path, creator_id")
+      .select("id, media_path, thumb_path, creator_id, creator_profile_id")
       .eq("id", data.id)
       .maybeSingle();
     if (!row) throw new Error("story não encontrado");
     if (row.creator_id !== context.userId) throw new Error("não autorizado");
+    if (row.creator_profile_id) {
+      const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);
+      if (activeProfileId && activeProfileId !== row.creator_profile_id) {
+        throw new Error("troque para a persona que publicou este story");
+      }
+    }
     const paths = [row.media_path, row.thumb_path].filter(Boolean) as string[];
     if (paths.length) {
       await context.supabase.storage.from("stories").remove(paths);
