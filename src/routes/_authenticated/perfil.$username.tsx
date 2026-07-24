@@ -1082,20 +1082,100 @@ function SubscriptionPlansCard({
   semiannual,
   onSelect,
   format,
+  currentPlanMonths,
 }: {
   monthly: number;
   quarterly: number;
   semiannual: number;
   onSelect: (plan: SubscriptionPlan) => void;
   format: (v: number) => string;
+  currentPlanMonths?: number | null;
 }) {
+  const canMonthly = !currentPlanMonths || 1 > currentPlanMonths;
+  const canQuarterly = !currentPlanMonths || 3 > currentPlanMonths;
+  const canSemi = !currentPlanMonths || 6 > currentPlanMonths;
+  if (currentPlanMonths && !canMonthly && !canQuarterly && !canSemi) return null;
   return (
     <div>
-      <h3 className="text-base font-bold text-foreground mb-2">Assinaturas</h3>
+      <h3 className="text-base font-bold text-foreground mb-2">
+        {currentPlanMonths ? "Fazer upgrade" : "Assinaturas"}
+      </h3>
+      {currentPlanMonths ? (
+        <p className="text-xs text-muted-foreground mb-2">
+          Ao fazer upgrade, o tempo restante da sua assinatura atual é somado ao novo período.
+        </p>
+      ) : null}
       <div className="space-y-2">
-        <PlanPill label="1 mês" price={format(monthly)} onClick={() => onSelect("monthly")} />
-        <PlanPill label="3 meses" price={format(quarterly)} onClick={() => onSelect("quarterly")} />
-        <PlanPill label="6 meses" price={format(semiannual)} onClick={() => onSelect("semiannual")} />
+        {canMonthly && (
+          <PlanPill label="1 mês" price={format(monthly)} onClick={() => onSelect("monthly")} />
+        )}
+        {canQuarterly && (
+          <PlanPill label="3 meses" price={format(quarterly)} onClick={() => onSelect("quarterly")} />
+        )}
+        {canSemi && (
+          <PlanPill label="6 meses" price={format(semiannual)} onClick={() => onSelect("semiannual")} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActiveSubscriptionCard({
+  plan,
+  priceCents,
+  currentPeriodEnd,
+  autoRenew,
+  onCancel,
+  onManage,
+  format,
+}: {
+  plan: "monthly" | "quarterly" | "semiannual";
+  priceCents: number;
+  currentPeriodEnd: string;
+  autoRenew: boolean;
+  onCancel: () => void;
+  onManage: () => void;
+  format: (v: number) => string;
+}) {
+  const planLabel = plan === "monthly" ? "1 mês" : plan === "quarterly" ? "3 meses" : "6 meses";
+  const endDate = new Date(currentPeriodEnd);
+  const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / 86_400_000));
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="inline-flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
+          ✓ Assinatura ativa
+        </span>
+        <span className="text-xs text-muted-foreground">{planLabel}</span>
+      </div>
+      <div className="flex items-baseline justify-between mb-3">
+        <span className="text-sm text-muted-foreground">Pago no plano atual</span>
+        <span className="text-lg font-bold text-foreground">{format(priceCents / 100)}</span>
+      </div>
+      <div className="text-sm text-foreground">
+        Válida até <strong>{endDate.toLocaleDateString("pt-BR")}</strong>
+        <span className="text-muted-foreground"> · {daysLeft} dia{daysLeft === 1 ? "" : "s"} restante{daysLeft === 1 ? "" : "s"}</span>
+      </div>
+      <div className="text-xs text-muted-foreground mt-1">
+        {autoRenew ? "Renovação automática ativada" : "Renovação automática cancelada"}
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={onManage}
+          className="flex-1 h-9 rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+        >
+          Gerenciar
+        </button>
+        {autoRenew && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 h-9 rounded-md border border-destructive/30 bg-transparent text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            Cancelar renovação
+          </button>
+        )}
       </div>
     </div>
   );
