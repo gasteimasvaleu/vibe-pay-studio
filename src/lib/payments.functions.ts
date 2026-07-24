@@ -776,6 +776,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       referenceTable: "subscriptions",
       referenceId: sub.id,
       pixQr,
+      metadata: supersedesId ? { supersedesSubscriptionId: supersedesId } : undefined,
     });
 
     // Dispara o e-mail com o QR code (1º ciclo) — best-effort, não bloqueia.
