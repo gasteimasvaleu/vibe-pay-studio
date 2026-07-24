@@ -483,6 +483,27 @@ export const sendMessage = createServerFn({ method: "POST" })
     const price = data.priceCents ?? 0;
     const metadata =
       data.media && data.media.length > 0 ? ({ media: data.media } as unknown as never) : ({} as unknown as never);
+
+    // Stamp sender's active persona on legacy threads (best-effort) so future
+    // inbox reads by other personas of this account no longer see it.
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
+    if (activeProfileId) {
+      const { data: tRow } = await supabase
+        .from("chat_threads")
+        .select("user_a, user_a_profile_id, user_b_profile_id")
+        .eq("id", data.threadId)
+        .maybeSingle();
+      if (tRow) {
+        const patch: { user_a_profile_id?: string; user_b_profile_id?: string } = {};
+        if (tRow.user_a === userId && !tRow.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
+        if (tRow.user_a !== userId && !tRow.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
+        if (Object.keys(patch).length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("chat_threads") as any).update(patch).eq("id", data.threadId);
+        }
+      }
+    }
+
     const { data: row, error } = await supabase
       .from("chat_messages")
       .insert({
