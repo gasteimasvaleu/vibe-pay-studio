@@ -702,7 +702,47 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       ...buildCardArgs(data.card),
     });
 
-    await supabase.from("subscriptions").update({ provider_ref: payment.id }).eq("id", sub.id);
+    // Cria a assinatura recorrente no Asaas para gerar as próximas cobranças
+    // automaticamente. Se falhar, seguimos com o 1º pagamento avulso — a UI
+    // ainda mostra a assinatura ativa; o job só não terá cobrança auto.
+    let asaasSubId: string | null = null;
+    let nextDueDate: string | null = null;
+    try {
+      const cycle =
+        data.plan === "quarterly"
+          ? "QUARTERLY"
+          : data.plan === "semiannual"
+            ? "SEMIANNUALLY"
+            : "MONTHLY";
+      // Próxima cobrança 1 ciclo após a atual (renovação)
+      const next = new Date(Date.now() + months * 30 * 86400_000);
+      nextDueDate = next.toISOString().slice(0, 10);
+      const asub = await asaas.createAsaasSubscription({
+        customerId,
+        billingType: asaasBillingTypeForMethod(data.method),
+        amountCents,
+        cycle,
+        nextDueDate,
+        description: `Assinatura MTX`,
+        externalReference: `subscription:${sub.id}`,
+        creatorWalletId: creator.asaas_wallet_id,
+        netCreatorCents,
+        ...buildCardArgs(data.card),
+      });
+      asaasSubId = asub.id;
+    } catch (err) {
+      console.warn("[subscription] falha ao criar assinatura recorrente no Asaas", err);
+    }
+
+    await supabase
+      .from("subscriptions")
+      .update({
+        provider_ref: payment.id,
+        last_payment_id: payment.id,
+        asaas_subscription_id: asaasSubId,
+        next_charge_at: nextDueDate ? `${nextDueDate}T12:00:00Z` : null,
+      } as any)
+      .eq("id", sub.id);
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
@@ -712,6 +752,27 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       referenceId: sub.id,
       pixQr,
     });
+
+    // Dispara o e-mail com o QR code (1º ciclo) — best-effort, não bloqueia.
+    if (data.method === "PIX" && pixQr) {
+      try {
+        const { notifyPixInvoice } = await import("./email-events.server");
+        const dueBr = new Date(payment.dueDate + "T12:00:00Z").toLocaleDateString("pt-BR");
+        void notifyPixInvoice({
+          subscriberId: userId,
+          creatorId: data.creatorId,
+          plan: data.plan,
+          amountCents,
+          dueDate: dueBr,
+          invoiceUrl: payment.invoiceUrl ?? `${process.env.APP_BASE_URL ?? "https://monetisexy.com"}/subscriptions`,
+          qrImageBase64: pixQr.encodedImage,
+          qrPayload: pixQr.payload,
+        });
+      } catch (e) {
+        console.warn("[subscription] pix invoice email dispatch failed", e);
+      }
+    }
+
     return {
       paymentIntentId: intentId,
       asaasPaymentId: payment.id,
