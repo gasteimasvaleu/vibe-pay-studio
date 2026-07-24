@@ -325,6 +325,7 @@ export type AsaasPayment = {
   bankSlipUrl?: string;
   dueDate: string;
   customer: string;
+  subscription?: string | null;
   externalReference?: string | null;
 };
 
@@ -495,4 +496,83 @@ export async function getTransfer(
   transferId: string,
 ): Promise<AsaasTransfer> {
   return asaasFetch<AsaasTransfer>(`/transfers/${transferId}`, {}, apiKey);
+}
+
+// ---------- Subscriptions (recurring) ----------
+
+export type AsaasSubscriptionCycle = "MONTHLY" | "QUARTERLY" | "SEMIANNUALLY" | "YEARLY";
+
+export type AsaasSubscription = {
+  id: string;
+  status: string;
+  nextDueDate: string;
+  value: number;
+  cycle: AsaasSubscriptionCycle;
+  customer: string;
+  externalReference?: string | null;
+  billingType: AsaasBillingType;
+};
+
+export async function createAsaasSubscription(input: {
+  customerId: string;
+  billingType: AsaasBillingType;
+  amountCents: number;
+  cycle: AsaasSubscriptionCycle;
+  nextDueDate: string; // yyyy-MM-dd
+  description: string;
+  externalReference: string;
+  creatorWalletId?: string | null;
+  netCreatorCents?: number | null;
+  creditCard?: CreditCardInput;
+  creditCardHolderInfo?: CreditCardHolderInfo;
+  creditCardToken?: string;
+  remoteIp?: string;
+}): Promise<AsaasSubscription> {
+  const body: Record<string, unknown> = {
+    customer: input.customerId,
+    billingType: input.billingType,
+    value: centsToBrl(input.amountCents),
+    nextDueDate: input.nextDueDate,
+    cycle: input.cycle,
+    description: sanitizeAsaasText(input.description, 60),
+    externalReference: input.externalReference,
+  };
+
+  if (input.creatorWalletId) {
+    const platformWalletId = await getPlatformWalletId();
+    if (!platformWalletId || platformWalletId !== input.creatorWalletId) {
+      if (input.netCreatorCents == null || input.netCreatorCents <= 0) {
+        throw new Error("netCreatorCents obrigatório para split de creator");
+      }
+      body.split = [
+        {
+          walletId: input.creatorWalletId,
+          fixedValue: centsToBrl(input.netCreatorCents),
+        },
+      ];
+    }
+  }
+
+  if (input.billingType === "CREDIT_CARD") {
+    if (input.creditCardToken) {
+      body.creditCardToken = input.creditCardToken;
+    } else if (input.creditCard && input.creditCardHolderInfo) {
+      body.creditCard = input.creditCard;
+      body.creditCardHolderInfo = input.creditCardHolderInfo;
+      if (input.remoteIp) body.remoteIp = input.remoteIp;
+    }
+  }
+
+  return asaasFetch<AsaasSubscription>("/subscriptions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteAsaasSubscription(id: string): Promise<void> {
+  await asaasFetch(`/subscriptions/${id}`, { method: "DELETE" });
+}
+
+export async function getAsaasSubscription(id: string): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>(`/subscriptions/${id}`);
 }
