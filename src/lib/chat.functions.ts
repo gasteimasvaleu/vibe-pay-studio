@@ -218,7 +218,7 @@ export const openThreadWith = createServerFn({ method: "POST" })
         .eq("id", threadId as string)
         .maybeSingle();
       if (row) {
-        const patch: Record<string, string> = {};
+        const patch: { user_a_profile_id?: string; user_b_profile_id?: string } = {};
         if (row.user_a === userId && !row.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
         if (row.user_a !== userId && !row.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
         if (Object.keys(patch).length) {
