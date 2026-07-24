@@ -842,6 +842,160 @@ export type Database = {
         }
         Relationships: []
       }
+      help_article_votes: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          vote_type: string
+          voter_fingerprint: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          vote_type: string
+          voter_fingerprint: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          vote_type?: string
+          voter_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_article_votes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "help_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_articles: {
+        Row: {
+          category_id: string
+          content: string
+          created_at: string
+          id: string
+          promoted: boolean
+          section_id: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          content: string
+          created_at?: string
+          id?: string
+          promoted?: boolean
+          section_id: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          promoted?: boolean
+          section_id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "help_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_articles_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "help_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_categories: {
+        Row: {
+          card_label: string
+          created_at: string
+          id: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          card_label: string
+          created_at?: string
+          id?: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          card_label?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_sections: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_sections_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "help_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_comments: {
         Row: {
           content: string
