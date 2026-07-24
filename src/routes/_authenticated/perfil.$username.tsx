@@ -854,6 +854,17 @@ function PerfilPage() {
 
 
         {/* Assinaturas */}
+        {!isOwner && isSubscribed && activeSubscription && (
+          <ActiveSubscriptionCard
+            plan={activeSubscription.plan}
+            priceCents={activeSubscription.priceCents}
+            currentPeriodEnd={activeSubscription.currentPeriodEnd}
+            autoRenew={activeSubscription.autoRenew}
+            onCancel={() => navigate({ to: "/subscriptions" })}
+            onManage={() => navigate({ to: "/subscriptions" })}
+            format={(v) => brl.format(v)}
+          />
+        )}
         {!isOwner && monthlyPrice > 0 && (
           <SubscriptionPlansCard
             monthly={monthlyPrice}
@@ -861,6 +872,15 @@ function PerfilPage() {
             semiannual={semiannualPrice}
             onSelect={openSubscribe}
             format={(v) => brl.format(v)}
+            currentPlanMonths={
+              isSubscribed && activeSubscription
+                ? activeSubscription.plan === "monthly"
+                  ? 1
+                  : activeSubscription.plan === "quarterly"
+                    ? 3
+                    : 6
+                : null
+            }
           />
         )}
 
