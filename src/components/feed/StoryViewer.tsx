@@ -18,6 +18,16 @@ import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 
@@ -50,6 +60,7 @@ export function StoryViewer({
   const [sendingReply, setSendingReply] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const progressRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
@@ -188,7 +199,6 @@ export function StoryViewer({
 
   const handleDelete = async () => {
     if (!current || deleting) return;
-    if (!confirm("Apagar este story?")) return;
     setDeleting(true);
     try {
       await removeStory({ data: { id: current.id } });
@@ -201,6 +211,7 @@ export function StoryViewer({
       toast.error(e?.message ?? "Erro ao apagar");
     } finally {
       setDeleting(false);
+      setConfirmDeleteOpen(false);
     }
   };
 
@@ -259,7 +270,7 @@ export function StoryViewer({
                 </div>
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => setConfirmDeleteOpen(true)}
                   disabled={deleting}
                   className="h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
                   aria-label="Apagar"
@@ -391,6 +402,28 @@ export function StoryViewer({
         checkout={checkout}
         onPaid={handleCheckoutPaid}
       />
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar story?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
