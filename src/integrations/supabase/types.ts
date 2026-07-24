@@ -97,6 +97,7 @@ export type Database = {
           author: string
           category_slug: string
           content: string
+          cover_image: string | null
           created_at: string
           excerpt: string
           featured_order: number | null
@@ -110,6 +111,7 @@ export type Database = {
           author?: string
           category_slug: string
           content?: string
+          cover_image?: string | null
           created_at?: string
           excerpt?: string
           featured_order?: number | null
@@ -123,6 +125,7 @@ export type Database = {
           author?: string
           category_slug?: string
           content?: string
+          cover_image?: string | null
           created_at?: string
           excerpt?: string
           featured_order?: number | null
