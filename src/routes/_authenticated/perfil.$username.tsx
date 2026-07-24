@@ -201,6 +201,16 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
+      activeSubscription: activeSub
+        ? {
+            id: activeSub.id as string,
+            plan: activeSub.plan as "monthly" | "quarterly" | "semiannual",
+            priceCents: (activeSub.price_cents_paid as number) ?? 0,
+            currentPeriodEnd: activeSub.current_period_end as string,
+            startedAt: (activeSub.started_at as string) ?? null,
+            autoRenew: (activeSub.auto_renew as boolean) ?? true,
+          }
+        : null,
       promotion,
       postsCount: postsCount ?? 0,
       mediaCount: mediaCount ?? 0,
