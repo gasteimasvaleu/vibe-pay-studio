@@ -259,10 +259,14 @@ export const createPromotion = createServerFn({ method: "POST" })
     const monthly = Number(profile.price_monthly);
     const promo = +(monthly * (1 - data.discountPct / 100)).toFixed(2);
 
+    const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+
     const { data: row, error } = await supabase
       .from("promotions")
       .insert({
         creator_id: userId,
+        creator_profile_id: profileId,
         name: data.name.slice(0, 120),
         description: data.description?.slice(0, 500) ?? "",
         max_subscriptions: data.maxSubscriptions,
@@ -301,11 +305,15 @@ export const listCreatorPromotions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
+    const profileId = await getActiveProfileIdFor(supabase, userId);
+    let q = supabase
       .from("promotions")
       .select("*")
       .eq("creator_id", userId)
       .order("created_at", { ascending: false });
+    if (profileId) q = q.eq("creator_profile_id", profileId);
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     return data ?? [];
   });
