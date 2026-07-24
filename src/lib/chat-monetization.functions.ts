@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 import type { ChatCallInvite, ChatMessage, ChatPaidUploadMeta, ChatTipMeta, ChatWelcomeMedia } from "@/lib/chat.functions";
+
 
 const MIN_TIP_CENTS = 500;
 const MAX_TIP_CENTS = 200_000;
@@ -97,12 +99,14 @@ export const createCallInvite = createServerFn({ method: "POST" })
     }
 
     const expiresAt = new Date(Date.now() + INVITE_TTL_MIN * 60 * 1000).toISOString();
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
 
     const { data: call, error: cErr } = await supabase
       .from("video_calls")
       .insert({
         requester_id: partnerId,
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         price_cents: data.priceCents,
         duration_minutes: data.durationMinutes,
         status: "pending_payment",
@@ -190,10 +194,12 @@ export const sendTipMessage = createServerFn({ method: "POST" })
     const partnerId = await partnerIdOf(supabase, userId, data.threadId);
     if (partnerId === userId) throw new Error("Não pode enviar Mimo para si mesmo");
 
+    const creatorActiveProfileId = await getActiveProfileIdFor(supabase, partnerId);
     const { data: walletResult, error: rpcErr } = await supabase.rpc("pay_with_wallet", {
       _kind: "tip",
       _creator_id: partnerId,
       _amount_cents: data.amountCents,
+      _creator_profile_id: creatorActiveProfileId,
     });
     if (rpcErr) throw new Error(rpcErr.message);
     const tipId = (walletResult as { referenceId?: string } | null)?.referenceId;
@@ -244,12 +250,14 @@ export const createPaidDmRequest = createServerFn({ method: "POST" })
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const creatorActiveProfileId = await getActiveProfileIdFor(supabase, creatorId);
     const { data: req, error } = await supabase
       .from("chat_media_requests")
       .insert({
         thread_id: data.threadId,
         requester_id: userId,
         creator_id: creatorId,
+        creator_profile_id: creatorActiveProfileId,
         price_cents: data.priceCents,
         status: "pending_payment",
         expires_at: expiresAt,
@@ -467,10 +475,12 @@ export const sendBroadcast = createServerFn({ method: "POST" })
 
     const audienceValues = resolved.map((r) => r.audience);
     const primaryAudience = audienceValues[0];
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
     const { data: job, error: jErr } = await supabase
       .from("broadcast_jobs")
       .insert({
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         audience: primaryAudience,
         filters: { audiences: resolved } as unknown as never,
         message: data.message,
@@ -500,9 +510,27 @@ export const sendBroadcast = createServerFn({ method: "POST" })
           failed++;
           continue;
         }
+        // Stamp sender-side persona on the thread (best-effort).
+        if (activeProfileId) {
+          const { data: tRow } = await supabase
+            .from("chat_threads")
+            .select("user_a, user_a_profile_id, user_b_profile_id")
+            .eq("id", threadId as string)
+            .maybeSingle();
+          if (tRow) {
+            const patch: { user_a_profile_id?: string; user_b_profile_id?: string } = {};
+            if (tRow.user_a === userId && !tRow.user_a_profile_id) patch.user_a_profile_id = activeProfileId;
+            if (tRow.user_a !== userId && !tRow.user_b_profile_id) patch.user_b_profile_id = activeProfileId;
+            if (Object.keys(patch).length) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase.from("chat_threads") as any).update(patch).eq("id", threadId as string);
+            }
+          }
+        }
         const { error: mErr } = await supabase.from("chat_messages").insert({
           thread_id: threadId as string,
           sender_id: userId,
+          creator_profile_id: activeProfileId,
           content: data.message,
           price_cents: data.priceCents,
           metadata: data.media.length > 0 ? ({ media: data.media } as unknown as never) : ({} as unknown as never),
