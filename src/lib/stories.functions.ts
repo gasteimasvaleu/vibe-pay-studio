@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
+
 
 
 const SIGNED_URL_TTL = 60 * 60; // 1h
@@ -26,10 +28,15 @@ export const publishStory = createServerFn({ method: "POST" })
     if (!profile || !["creator", "free_creator"].includes(profile.account_type)) {
       throw new Error("apenas creators podem publicar stories");
     }
+    const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);
+    if (!activeProfileId) {
+      throw new Error("nenhum perfil de creator ativo");
+    }
     const { data: row, error } = await context.supabase
       .from("stories")
       .insert({
         creator_id: context.userId,
+        creator_profile_id: activeProfileId,
         media_path: data.mediaPath,
         media_type: data.mediaType,
         thumb_path: data.thumbPath ?? null,
@@ -50,11 +57,17 @@ export const deleteStory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row } = await context.supabase
       .from("stories")
-      .select("id, media_path, thumb_path, creator_id")
+      .select("id, media_path, thumb_path, creator_id, creator_profile_id")
       .eq("id", data.id)
       .maybeSingle();
     if (!row) throw new Error("story não encontrado");
     if (row.creator_id !== context.userId) throw new Error("não autorizado");
+    if (row.creator_profile_id) {
+      const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);
+      if (activeProfileId && activeProfileId !== row.creator_profile_id) {
+        throw new Error("troque para a persona que publicou este story");
+      }
+    }
     const paths = [row.media_path, row.thumb_path].filter(Boolean) as string[];
     if (paths.length) {
       await context.supabase.storage.from("stories").remove(paths);
@@ -80,19 +93,56 @@ export type StoryRingItem = {
 export const getFeedStoryRings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StoryRingItem[]> => {
-    const { data: follows } = await context.supabase
-      .from("follows")
-      .select("followee_id")
-      .eq("follower_id", context.userId);
-    const authorIds = Array.from(
-      new Set([context.userId, ...(follows ?? []).map((f) => f.followee_id)]),
+    const [{ data: follows }, ownActiveProfileId] = await Promise.all([
+      context.supabase
+        .from("follows")
+        .select("followee_id, creator_profile_id")
+        .eq("follower_id", context.userId),
+      getActiveProfileIdFor(context.supabase, context.userId),
+    ]);
+
+    // Personas that this user follows explicitly
+    const followedProfileIds = Array.from(
+      new Set(
+        (follows ?? [])
+          .map((f) => (f as { creator_profile_id: string | null }).creator_profile_id)
+          .filter((v): v is string => !!v),
+      ),
     );
-    if (authorIds.length === 0) return [];
+    // Legacy follows without persona: fall back to user-level match
+    const legacyFolloweeIds = Array.from(
+      new Set(
+        (follows ?? [])
+          .filter((f) => !(f as { creator_profile_id: string | null }).creator_profile_id)
+          .map((f) => f.followee_id),
+      ),
+    );
+
+    if (
+      followedProfileIds.length === 0 &&
+      legacyFolloweeIds.length === 0 &&
+      !ownActiveProfileId
+    ) {
+      return [];
+    }
+
+    // Build union: stories from followed personas + legacy followees + own active persona
+    const orClauses: string[] = [];
+    const personaIds = Array.from(
+      new Set([...(ownActiveProfileId ? [ownActiveProfileId] : []), ...followedProfileIds]),
+    );
+    if (personaIds.length) {
+      orClauses.push(`creator_profile_id.in.(${personaIds.join(",")})`);
+    }
+    if (legacyFolloweeIds.length) {
+      orClauses.push(`creator_id.in.(${legacyFolloweeIds.join(",")})`);
+    }
+    if (orClauses.length === 0) return [];
 
     const { data: stories, error } = await context.supabase
       .from("stories")
       .select("id, creator_id, creator_profile_id, published_at")
-      .in("creator_id", authorIds)
+      .or(orClauses.join(","))
       .gt("expires_at", new Date().toISOString())
       .order("published_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -125,6 +175,9 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
           creator_profile_id: cpId,
           user_id: s.creator_id,
         });
+        const isSelf =
+          s.creator_id === context.userId &&
+          (!cpId || !ownActiveProfileId || cpId === ownActiveProfileId);
         grouped.set(key, {
           creator_id: s.creator_id,
           creator_profile_id: cpId,
@@ -134,10 +187,11 @@ export const getFeedStoryRings = createServerFn({ method: "GET" })
           latest_at: s.published_at,
           count: 1,
           unseen: isUnseen ? 1 : 0,
-          is_self: s.creator_id === context.userId,
+          is_self: isSelf,
         });
       }
     }
+
 
 
     return Array.from(grouped.values()).sort((a, b) => {

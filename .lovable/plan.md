@@ -1,67 +1,40 @@
+## Problema
 
-# Isolar todos os dados do dashboard por perfil ativo (paid ↔ free vinculado)
+Stories não distinguem entre as personas do mesmo dono (creator pago vs creator free):
 
-Hoje várias telas somam paid + free porque leem tudo por `creator_id = auth.user.id`. As tabelas já têm a coluna `creator_profile_id` (preenchida por triggers em novos registros), então a maior parte do trabalho é: (a) atualizar as leituras/gravações para filtrar por `active_profile_id`, (b) adicionar essa coluna nas poucas tabelas onde falta, (c) backfill do histórico atribuindo ao perfil pago.
+1. **`publishStory`** (`src/lib/stories.functions.ts:17`) insere na tabela `stories` **sem** `creator_profile_id`. Todo story novo fica sem carimbo de persona.
+2. **`getFeedStoryRings`** agrupa stories por `creator_profile_id ?? creator_id`. Como o publish nunca carimba, tudo cai no fallback `creator_id` — as duas personas do mesmo dono aparecem como **um único anel**. Além disso, `follows` é filtrado por `followee_id` (usuário), então seguir só a persona paga já traz stories da persona free do mesmo dono.
+3. **`StoryViewer`** (`src/components/feed/StoryViewer.tsx:57`) chama `getCreatorStories` só com `creatorId`, sem `creatorProfileId`. Abrir o anel exibe stories das duas personas misturados.
+4. **`deleteStory`** autoriza só por `creator_id`. A persona free logada consegue apagar story publicado pela persona paga do mesmo dono.
 
-## O que muda por área
+## Plano
 
-### 1. Meu Banco (`/banco`)
-Cada persona passa a ter carteira, ganhos, saques e extrato próprios.
+### 1. Carimbar persona ao publicar (`src/lib/stories.functions.ts`)
+- Em `publishStory`, ler `profiles.active_profile_id` do `context.userId` e inserir em `stories.creator_profile_id`. Se `active_profile_id` estiver nulo, resolver o perfil pago padrão via helper existente (`getProfileAndActiveCreator` de `profile-active.server.ts`).
+- Validar que o perfil ativo pertence ao usuário e é do tipo `paid` ou `free_creator` antes de inserir — mensagem clara se não for.
 
-- Adicionar `creator_profile_id` em `creator_wallets` e `withdrawals` (não existe); tornar a chave lógica `(user_id, creator_profile_id)` em `creator_wallets`.
-- Atualizar triggers `transactions_apply_wallet_effects` e `release_matured_earnings` para creditar/debitar a carteira do `creator_profile_id` da transação (não mais 1 carteira por user).
-- `finance.functions.ts`: `getCreatorWallet`, `getCreatorBancoOverview`, `getCreatorEarningsSummary`, `listCreatorTransactions`, `listCreatorWithdrawals`, `requestWithdrawal` → resolver o `active_profile_id` via `getProfileAndActiveCreator` e filtrar por `creator_profile_id`.
-- `payout_accounts`: adicionar `creator_profile_id` (opcional; se null vale para todos) para permitir contas bancárias distintas depois.
+### 2. Autorizar delete por persona (`src/lib/stories.functions.ts`)
+- Em `deleteStory`, comparar `story.creator_profile_id` com o `active_profile_id` do chamador. Se o story tem persona carimbada e não bate com a ativa, rejeitar com "troque para a persona que publicou este story".
 
-### 2. Meu Monetisexy (`/my-monetisex-stats`)
-Todas as métricas passam a refletir só o persona ativo.
+### 3. Segregar rings do feed por persona (`src/lib/stories.functions.ts`)
+- Em `getFeedStoryRings`, seguir por persona: buscar `follows.followee_profile_id` (já usado em publicações) e filtrar `stories` por `.in("creator_profile_id", [...])` — não por `creator_id`. Incluir o próprio perfil ativo do chamador.
+- Manter a chave de agrupamento por `creator_profile_id` (sem o fallback `creator_id`); stories legados já foram backfillados na migração anterior, então não existe mais registro nulo.
 
-- `stats.functions.ts`: refatorar as ~15 funções (`getEarningsSeries`, `getEarningsByProduct`, `getPeriodTotals`, `getResumoStats`, `getRecordes`, `listExtrato`, `getAssinantesStats`, `getTopAssinantes`, `getAssinantesList`, `getTopPaises`, `getStreak`, `getAlcance`, `getEngajamentoPublicacoes`, `getEngajamentoLives`) para filtrar por `creator_profile_id = active.id` em `transactions`, `subscriptions`, `publications`, `publication_views`, `profile_views`, `live_sessions`, `creator_streak_days` etc.
+### 4. Segregar viewer por persona (`src/components/feed/StoryViewer.tsx` + `StoriesCarousel.tsx`)
+- Propagar `creator_profile_id` do ring aberto até o `StoryViewer` e passar em `getCreatorStories({ data: { creatorId, creatorProfileId } })`.
+- Incluir `creator_profile_id` no `queryKey` do `useQuery` para não colidir cache entre personas.
 
-### 3. Ofertas (`/promotions`)
-- `promotions.functions.ts` + duplicata em `payouts.functions.ts`: gravar e listar por `creator_profile_id` ativo.
-- Ajustar `pay_with_wallet` para casar a promoção pelo `creator_profile_id` da assinatura, não só pelo `creator_id`.
+### 5. Verificações finais
+- Consulta ao banco confirmando que todos os 2 stories existentes já têm `creator_profile_id` preenchido (backfill anterior).
+- `tsgo` para garantir tipos consistentes após adicionar `creatorProfileId` no fluxo do viewer.
 
-### 4. Acervo (`/vault`)
-- Adicionar `creator_profile_id` em `vault_uploads`, `vault_categories`, `vault_category_items` (via `vault_uploads.creator_profile_id`).
-- `vault.functions.ts`: gravar novos uploads/categorias com o profile ativo; listagens e contagens filtram por ele.
-- Publisher: ao anexar item do Vault, restringir a picker do perfil ativo.
+## Detalhes técnicos
 
-### 5. Agendados (`/publicacoes-agendadas`)
-- `publications.functions.ts`: `getScheduledPublications`, `reschedulePublication`, `publishScheduledNow`, `assertPublicationOwner` (para o caso agendado) → filtrar por `creator_profile_id = active.id` (mantendo `author_id = user` como guard extra).
+- Nenhuma migração SQL nova é necessária: coluna `creator_profile_id` já existe em `stories` e todos os registros estão carimbados.
+- O helper `resolveCreatorIdentities` / `pickIdentity` já resolve username/avatar corretos por persona — o pipeline visual não muda.
+- RLS de `stories` continua permissiva por `creator_id`; a autorização por persona é feita na camada da server function (consistente com `publications`).
 
-### 6. Chat, Paid DM e Videochamadas
-Separar identidade de chat por persona (assinantes verão inbox distintas quando conversam com paid vs free).
+## Fora de escopo
 
-- Adicionar `creator_profile_id`/`user_a_profile_id`/`user_b_profile_id` em `chat_threads` e propagar em `chat_messages` (mensagem herda do thread).
-- Substituir `get_or_create_thread(other_user)` por `get_or_create_thread(other_user, other_profile_id)`. A chave única passa a ser `(user_a, user_a_profile_id, user_b, user_b_profile_id)`.
-- Atualizar `chat.functions.ts` (`listThreads`, `getOrCreateThread`, `sendMessage`, contadores de não-lido), `chat-monetization.functions.ts` (Paid DM), `broadcasts.functions.ts` (audiência), `video-calls.server.ts` e `chat_media_requests` para carregar/gravar o `creator_profile_id` ativo do lado que envia.
-- Trigger `send_welcome_message_on_subscription` passa a criar thread já pareada ao `creator_profile_id` da subscription.
-- Ao trocar de persona no dashboard, o inbox recarrega para mostrar só os threads daquele persona.
-
-### 7. Backfill histórico
-Migração única, atribuindo todo histórico ao perfil `paid` (persona antiga):
-- `creator_wallets`, `withdrawals`, `promotions`, `vault_*`, `chat_threads`, `chat_messages`, `chat_media_requests`, `video_calls`, `broadcast_jobs`, `payout_accounts` → `creator_profile_id := default_paid_profile(creator_id)` quando nulo.
-- Após backfill, tornar `creator_profile_id` `NOT NULL` nas tabelas onde faz sentido (novos inserts já garantem via trigger).
-
-## Estratégia técnica
-
-- Um helper compartilhado `getActiveProfileIdFor(supabase, userId)` (em `profile-active.server.ts`) usado por todas as functions afetadas, para evitar reimplementar a resolução `active_profile_id → paid → primeiro`.
-- Migrações em duas etapas: (1) add colunas + triggers de preenchimento + backfill; (2) ajustar RLS e adicionar `NOT NULL` onde couber. Fica cirúrgico e reversível.
-- RLS de leitura das novas colunas continua baseada em `auth.uid() = user_id` do dono do `creator_profile`, mais checagens de audiência (assinante, comprador) que já existem.
-- Rota `/dashboard` já invalida queries via `router.invalidate()` na troca de perfil; adicionar `queryClient.invalidateQueries()` nas telas afetadas para garantir re-fetch imediato.
-
-## O que fica de fora
-
-- Feed, Colecoes, Assinaturas e Carteira do assinante permanecem user-level (compras/consumo do fã).
-- Em Alta continua mock até virar produção.
-- `payout_accounts` fica multi-profile-ready mas segue permitindo uma conta única compartilhada (decisão futura).
-
-## Ordem de implementação
-
-1. Migração 1: colunas + triggers de preenchimento em `creator_wallets`, `withdrawals`, `vault_*`, `chat_threads`, `chat_messages`, `payout_accounts`, `chat_media_requests`, `broadcast_jobs`.
-2. Migração 2: backfill de histórico → `default_paid_profile`.
-3. Migração 3: RPC `get_or_create_thread(other_user, other_profile_id)` + ajustes de `pay_with_wallet`/`send_welcome_message_on_subscription`.
-4. Refatoração das server functions listadas (finance, stats, promotions, vault, publications, chat, chat-monetization, video-calls, broadcasts).
-5. Ajustes de UI para invalidar queries e recarregar inbox ao trocar de perfil.
-6. Smoke test manual: logar como paid, publicar/venda/tip; alternar para free, publicar/venda/tip; verificar isolamento em Banco, Stats, Ofertas, Acervo, Agendados, Chat.
+- Renomear a coluna ou tornar `creator_profile_id` NOT NULL (pode ser feito depois com confiança, após validar em produção).
+- Alterar o layout do `StoriesCarousel` (o pedido é consistência de dados por persona).

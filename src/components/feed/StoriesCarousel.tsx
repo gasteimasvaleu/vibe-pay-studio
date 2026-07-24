@@ -20,7 +20,7 @@ export function StoriesCarousel({
   const qc = useQueryClient();
   const fetchRings = useServerFn(getFeedStoryRings);
   const [publishOpen, setPublishOpen] = useState(false);
-  const [viewerFor, setViewerFor] = useState<string | null>(null);
+  const [viewerFor, setViewerFor] = useState<{ creatorId: string; creatorProfileId: string | null } | null>(null);
 
   const ringsQuery = useQuery({
     queryKey: ["story-rings"],
@@ -46,20 +46,29 @@ export function StoriesCarousel({
             showPlus
             onPlusClick={() => setPublishOpen(true)}
             onClick={() => {
-              if (hasSelfStory) setViewerFor(currentUserId);
-              else setPublishOpen(true);
+              if (hasSelfStory) {
+                setViewerFor({
+                  creatorId: currentUserId,
+                  creatorProfileId: selfRing?.creator_profile_id ?? null,
+                });
+              } else setPublishOpen(true);
             }}
             hasStory={hasSelfStory}
           />
         )}
         {otherRings.map((r) => (
           <StoryTile
-            key={r.creator_id}
+            key={r.creator_profile_id ?? r.creator_id}
             avatarUrl={r.avatar_url}
             label={`@${r.username}`}
             username={r.username}
             unseen={r.unseen}
-            onClick={() => setViewerFor(r.creator_id)}
+            onClick={() =>
+              setViewerFor({
+                creatorId: r.creator_id,
+                creatorProfileId: r.creator_profile_id,
+              })
+            }
             hasStory
           />
         ))}
@@ -84,7 +93,8 @@ export function StoriesCarousel({
       />
 
       <StoryViewer
-        creatorId={viewerFor}
+        creatorId={viewerFor?.creatorId ?? null}
+        creatorProfileId={viewerFor?.creatorProfileId ?? null}
         open={!!viewerFor}
         onOpenChange={(v) => !v && setViewerFor(null)}
         onChanged={() => {
