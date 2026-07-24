@@ -18,6 +18,16 @@ import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 
