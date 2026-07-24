@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 import type { ChatCallInvite, ChatMessage, ChatPaidUploadMeta, ChatTipMeta, ChatWelcomeMedia } from "@/lib/chat.functions";
+
 
 const MIN_TIP_CENTS = 500;
 const MAX_TIP_CENTS = 200_000;
