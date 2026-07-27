@@ -101,17 +101,34 @@ async function markStatus(
   const mapped =
     table === "subscriptions" && status === "paid" ? "active" : status;
 
-  let q = supabaseAdmin.from(table).update({
+  const updatePayload: Record<string, unknown> = {
     [statusColumn]: mapped,
     provider_ref: providerRef,
-  }).eq("id", id);
+  };
+
+  // video_calls guarda o pagamento em payment_status; quando confirma,
+  // precisamos também virar o status geral para 'accepted' (a partir de
+  // 'pending_payment') para que a sala fique disponível para entrar.
+  if (table === "video_calls" && status === "paid") {
+    updatePayload.status = "accepted";
+  }
+
+  let q = supabaseAdmin.from(table).update(updatePayload).eq("id", id);
 
   // Não sobrescrever assinatura já ativa com um status intermediário tardio
   if (table === "subscriptions" && status !== "paid") {
     q = q.neq("status", "active");
   }
+
+  // Só promover para 'accepted' quando ainda está em pending_payment,
+  // evitando reativar chamadas canceladas/expiradas.
+  if (table === "video_calls" && status === "paid") {
+    q = q.eq("status", "pending_payment");
+  }
+
   await q;
 }
+
 
 
 

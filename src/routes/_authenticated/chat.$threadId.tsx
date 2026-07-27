@@ -90,11 +90,13 @@ function CallInviteCard({
   mine,
   onPay,
   onCancel,
+  onJoin,
 }: {
   invite: Required<NonNullable<ChatMessage["metadata"]>>["callInvite"];
   mine: boolean;
   onPay: () => void;
   onCancel: () => void;
+  onJoin: () => void;
 }) {
   const expired = isExpired(invite.expiresAt) || invite.status === "expired";
   const paid = invite.status === "paid";
@@ -115,8 +117,17 @@ function CallInviteCard({
       ) : cancelled ? (
         <div className="text-xs text-muted-foreground">Cancelado</div>
       ) : paid ? (
-        <div className="text-xs text-emerald-500 font-medium flex items-center gap-1">
-          <Phone className="h-3 w-3" /> Pago · aguardando início
+        <div className="space-y-1.5">
+          <div className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+            <Phone className="h-3 w-3" /> Pagamento confirmado
+          </div>
+          <Button
+            size="sm"
+            className="w-full h-8 bg-emerald-500 hover:bg-emerald-600 text-white"
+            onClick={onJoin}
+          >
+            <Video className="h-3.5 w-3.5 mr-1.5" /> Entrar na chamada
+          </Button>
         </div>
       ) : mine ? (
         <Button size="sm" variant="outline" className="w-full h-8" onClick={onCancel}>
@@ -130,6 +141,7 @@ function CallInviteCard({
     </div>
   );
 }
+
 
 function TipCard({
   tip,
@@ -728,6 +740,12 @@ function ChatThreadView() {
                       cancelCallInviteFn({ data: { callId: m.metadata!.callInvite!.callId } }).then(() => {
                         queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
                         toast.success("Convite cancelado");
+                      })
+                    }
+                    onJoin={() =>
+                      navigate({
+                        to: "/chat/call/$callId",
+                        params: { callId: m.metadata!.callInvite!.callId },
                       })
                     }
                   />
