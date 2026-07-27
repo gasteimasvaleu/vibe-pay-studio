@@ -13,7 +13,6 @@ export function TopNav() {
   const [initial, setInitial] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
-  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
     let mounted = true;
