@@ -74,7 +74,6 @@ import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authe
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
-import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
@@ -87,6 +86,7 @@ import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
+import { Route as AuthenticatedLiveLiveIdIndexRouteImport } from './routes/_authenticated/live.$liveId.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 import { Route as ApiPublicHooksDispatchBroadcastsRouteImport } from './routes/api/public/hooks/dispatch-broadcasts'
@@ -462,11 +462,6 @@ const AuthenticatedLiveNovaRoute = AuthenticatedLiveNovaRouteImport.update({
   path: '/live/nova',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
-  id: '/live/$liveId',
-  path: '/live/$liveId',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -536,6 +531,12 @@ const AuthenticatedSettingsDeviceManagementIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
   } as any)
+const AuthenticatedLiveLiveIdIndexRoute =
+  AuthenticatedLiveLiveIdIndexRouteImport.update({
+    id: '/live/$liveId/',
+    path: '/live/$liveId/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicWebhooksVeriffDecisionRoute =
   ApiPublicWebhooksVeriffDecisionRouteImport.update({
     id: '/api/public/webhooks/veriff-decision',
@@ -578,9 +579,9 @@ const AuthenticatedSettingsDeviceManagementRemovedRoute =
   } as any)
 const AuthenticatedLiveLiveIdTransmitirRoute =
   AuthenticatedLiveLiveIdTransmitirRouteImport.update({
-    id: '/transmitir',
-    path: '/transmitir',
-    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
+    id: '/live/$liveId/transmitir',
+    path: '/live/$liveId/transmitir',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
@@ -678,7 +679,6 @@ export interface FileRoutesByFullPath {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
-  '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -719,6 +719,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/live/$liveId/': typeof AuthenticatedLiveLiveIdIndexRoute
   '/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
@@ -770,7 +771,6 @@ export interface FileRoutesByTo {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
-  '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -808,6 +808,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/live/$liveId': typeof AuthenticatedLiveLiveIdIndexRoute
   '/settings/device-management': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
@@ -864,7 +865,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
-  '/_authenticated/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/_authenticated/live/nova': typeof AuthenticatedLiveNovaRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -905,6 +905,7 @@ export interface FileRoutesById {
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
+  '/_authenticated/live/$liveId/': typeof AuthenticatedLiveLiveIdIndexRoute
   '/_authenticated/settings/device-management/': typeof AuthenticatedSettingsDeviceManagementIndexRoute
   '/_authenticated/settings/two-factor/': typeof AuthenticatedSettingsTwoFactorIndexRoute
   '/_authenticated/creator/onboarding/documentos/aprovado': typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRoute
@@ -961,7 +962,6 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
-    | '/live/$liveId'
     | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
@@ -1002,6 +1002,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
+    | '/live/$liveId/'
     | '/settings/device-management/'
     | '/settings/two-factor/'
     | '/creator/onboarding/documentos/aprovado'
@@ -1053,7 +1054,6 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
-    | '/live/$liveId'
     | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
@@ -1091,6 +1091,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
+    | '/live/$liveId'
     | '/settings/device-management'
     | '/settings/two-factor'
     | '/creator/onboarding/documentos/aprovado'
@@ -1146,7 +1147,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
-    | '/_authenticated/live/$liveId'
     | '/_authenticated/live/nova'
     | '/_authenticated/mywallet/extrato'
     | '/_authenticated/mywallet/recarregar'
@@ -1187,6 +1187,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-broadcasts'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
+    | '/_authenticated/live/$liveId/'
     | '/_authenticated/settings/device-management/'
     | '/_authenticated/settings/two-factor/'
     | '/_authenticated/creator/onboarding/documentos/aprovado'
@@ -1672,13 +1673,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLiveNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/live/$liveId': {
-      id: '/_authenticated/live/$liveId'
-      path: '/live/$liveId'
-      fullPath: '/live/$liveId'
-      preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -1763,6 +1757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementIndexRouteImport
       parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
     }
+    '/_authenticated/live/$liveId/': {
+      id: '/_authenticated/live/$liveId/'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId/'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/webhooks/veriff-decision': {
       id: '/api/public/webhooks/veriff-decision'
       path: '/api/public/webhooks/veriff-decision'
@@ -1814,10 +1815,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/live/$liveId/transmitir': {
       id: '/_authenticated/live/$liveId/transmitir'
-      path: '/transmitir'
+      path: '/live/$liveId/transmitir'
       fullPath: '/live/$liveId/transmitir'
       preLoaderRoute: typeof AuthenticatedLiveLiveIdTransmitirRouteImport
-      parentRoute: typeof AuthenticatedLiveLiveIdRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator/onboarding/redes-sociais': {
       id: '/_authenticated/creator/onboarding/redes-sociais'
@@ -1948,21 +1949,6 @@ const AuthenticatedMywalletRouteWithChildren =
     AuthenticatedMywalletRouteChildren,
   )
 
-interface AuthenticatedLiveLiveIdRouteChildren {
-  AuthenticatedLiveLiveIdTransmitirRoute: typeof AuthenticatedLiveLiveIdTransmitirRoute
-}
-
-const AuthenticatedLiveLiveIdRouteChildren: AuthenticatedLiveLiveIdRouteChildren =
-  {
-    AuthenticatedLiveLiveIdTransmitirRoute:
-      AuthenticatedLiveLiveIdTransmitirRoute,
-  }
-
-const AuthenticatedLiveLiveIdRouteWithChildren =
-  AuthenticatedLiveLiveIdRoute._addFileChildren(
-    AuthenticatedLiveLiveIdRouteChildren,
-  )
-
 interface AuthenticatedSettingsDeviceManagementRouteChildren {
   AuthenticatedSettingsDeviceManagementRemovedRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   AuthenticatedSettingsDeviceManagementIndexRoute: typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -2051,7 +2037,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
-  AuthenticatedLiveLiveIdRoute: typeof AuthenticatedLiveLiveIdRouteWithChildren
   AuthenticatedLiveNovaRoute: typeof AuthenticatedLiveNovaRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
@@ -2078,6 +2063,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  AuthenticatedLiveLiveIdTransmitirRoute: typeof AuthenticatedLiveLiveIdTransmitirRoute
+  AuthenticatedLiveLiveIdIndexRoute: typeof AuthenticatedLiveLiveIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2106,7 +2093,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
-  AuthenticatedLiveLiveIdRoute: AuthenticatedLiveLiveIdRouteWithChildren,
   AuthenticatedLiveNovaRoute: AuthenticatedLiveNovaRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
@@ -2144,6 +2130,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedCreatorOnboardingDocumentosRouteWithChildren,
   AuthenticatedCreatorOnboardingRedesSociaisRoute:
     AuthenticatedCreatorOnboardingRedesSociaisRoute,
+  AuthenticatedLiveLiveIdTransmitirRoute:
+    AuthenticatedLiveLiveIdTransmitirRoute,
+  AuthenticatedLiveLiveIdIndexRoute: AuthenticatedLiveLiveIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

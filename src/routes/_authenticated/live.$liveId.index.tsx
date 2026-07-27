@@ -17,7 +17,7 @@ import { useLiveDragChat } from "@/components/live/useLiveDragChat";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useEffect } from "react";
 
-export const Route = createFileRoute("/_authenticated/live/$liveId")({
+export const Route = createFileRoute("/_authenticated/live/$liveId/")({
   head: () => ({
     meta: [{ title: "Live · Monetisexy" }, { name: "robots", content: "noindex" }],
   }),
