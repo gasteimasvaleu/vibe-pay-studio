@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Square, ArrowLeft } from "lucide-react";
+import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoOff } from "lucide-react";
 import { getLive, endLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")(
 type TransmissionState =
   | "idle"
   | "getting-media"
+  | "media-ready"
   | "creating-offer"
   | "waiting-ice"
   | "posting-whip"
@@ -31,6 +32,8 @@ type TransmissionState =
   | "live"
   | "permission-blocked"
   | "error";
+
+type Device = { deviceId: string; label: string };
 
 function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
   return new Promise<void>((resolve) => {
@@ -72,6 +75,17 @@ async function closePublisher(
   stream?.getTracks().forEach((track) => track.stop());
 }
 
+async function closePeerConnection(pc: RTCPeerConnection | null, resourceUrl: string | null) {
+  if (resourceUrl) {
+    try {
+      await fetch(resourceUrl, { method: "DELETE", keepalive: true });
+    } catch (e) {
+      console.warn("[whip] DELETE resource failed", e);
+    }
+  }
+  pc?.close();
+}
+
 function TransmitirPage() {
   const { liveId } = Route.useParams();
   const navigate = useNavigate();
@@ -86,13 +100,24 @@ function TransmitirPage() {
   const [connected, setConnected] = useState(false);
   const [transmissionState, setTransmissionState] = useState<TransmissionState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("Falha ao iniciar transmissão");
-  const [retryTick, setRetryTick] = useState(0);
+  const [mediaReady, setMediaReady] = useState(false);
+  const [videoDevices, setVideoDevices] = useState<Device[]>([]);
+  const [audioDevices, setAudioDevices] = useState<Device[]>([]);
+  const [videoId, setVideoId] = useState("");
+  const [audioId, setAudioId] = useState("");
+  const [autoStarted, setAutoStarted] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const drag = useLiveDragChat();
+  const resourceUrlRef = useRef<string | null>(null);
+
+  const inIframe = useMemo(
+    () => typeof window !== "undefined" && window.self !== window.top,
+    [],
+  );
 
   const { data: meta } = useQuery({
     queryKey: ["live-meta", liveId],
@@ -111,179 +136,247 @@ function TransmitirPage() {
     })();
   }, [liveId]);
 
-  const resourceUrlRef = useRef<string | null>(null);
+  const attachStream = useCallback((stream: MediaStream) => {
+    streamRef.current = stream;
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(() => {});
+    }
 
-  useEffect(() => {
-    if (!whipUrl) return;
-    let cancelled = false;
-    (async () => {
+    const videoTrack = stream.getVideoTracks()[0];
+    const audioTrack = stream.getAudioTracks()[0];
+    const nextVideoId = videoTrack?.getSettings().deviceId;
+    const nextAudioId = audioTrack?.getSettings().deviceId;
+    if (nextVideoId) setVideoId(nextVideoId);
+    if (nextAudioId) setAudioId(nextAudioId);
+
+    setMediaReady(true);
+    setTransmissionState("media-ready");
+    setErrorMessage("");
+  }, []);
+
+  const refreshDevices = useCallback(async () => {
+    try {
+      const list = await navigator.mediaDevices.enumerateDevices();
+      setVideoDevices(
+        list
+          .filter((device) => device.kind === "videoinput")
+          .map((device, index) => ({
+            deviceId: device.deviceId,
+            label: device.label || `Câmera ${index + 1}`,
+          })),
+      );
+      setAudioDevices(
+        list
+          .filter((device) => device.kind === "audioinput")
+          .map((device, index) => ({
+            deviceId: device.deviceId,
+            label: device.label || `Microfone ${index + 1}`,
+          })),
+      );
+    } catch {
+      /* device labels can stay empty until permission is granted */
+    }
+  }, []);
+
+  const acquireMedia = useCallback(async (videoDeviceId?: string, audioDeviceId?: string) => {
+    const isSecure = typeof window !== "undefined" && window.isSecureContext;
+    const hasMediaDevices = !!navigator.mediaDevices?.getUserMedia;
+
+    if (!hasMediaDevices || !isSecure) {
+      setErrorMessage("Este navegador não pode acessar câmera/microfone. Abra a transmissão em uma nova aba via HTTPS.");
+      setTransmissionState("permission-blocked");
+      return null;
+    }
+
+    setConnected(false);
+    setMediaReady(false);
+    setTransmissionState("getting-media");
+    setErrorMessage("");
+
+    try {
+      await closePeerConnection(pcRef.current, resourceUrlRef.current);
+      pcRef.current = null;
+      resourceUrlRef.current = null;
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: videoDeviceId
+          ? { deviceId: { exact: videoDeviceId }, width: 1280, height: 720 }
+          : { width: 1280, height: 720 },
+        audio: audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true,
+      });
+
+      attachStream(stream);
+      await refreshDevices();
+      return stream;
+    } catch (e: any) {
+      const name: string = e?.name ?? "";
+      let msg = e?.message ?? "Não foi possível acessar câmera/microfone.";
+      let nextState: TransmissionState = "error";
+
+      if (name === "NotAllowedError") {
+        msg = inIframe
+          ? "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
+          : "Permissão negada. Autorize a câmera e o microfone nas configurações do navegador.";
+        nextState = inIframe ? "permission-blocked" : "error";
+      } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+        msg = "Nenhuma câmera ou microfone disponível neste dispositivo.";
+      } else if (name === "NotReadableError") {
+        msg = "Câmera/microfone em uso por outro aplicativo. Feche-o e tente de novo.";
+      } else if (name === "SecurityError") {
+        msg = "Este preview não pode acessar câmera/microfone. Abra em uma nova aba para autorizar.";
+        nextState = "permission-blocked";
+      }
+
+      setMediaReady(false);
+      setErrorMessage(msg);
+      setTransmissionState(nextState);
+      if (nextState !== "permission-blocked") toast.error(msg);
+      return null;
+    }
+  }, [attachStream, inIframe, refreshDevices]);
+
+  const publishStream = useCallback(async (stream: MediaStream) => {
+    if (!whipUrl) {
+      setErrorMessage("A live ainda não recebeu a URL de transmissão da Cloudflare.");
+      setTransmissionState("error");
+      return;
+    }
+
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack || videoTrack.readyState !== "live") {
+      setErrorMessage("A câmera não está ativa. Autorize novamente antes de iniciar a live.");
+      setTransmissionState("error");
+      setMediaReady(false);
+      return;
+    }
+
+    try {
       const log = (step: string, extra?: unknown) =>
         console.info(`[whip] ${step}`, extra ?? "");
 
-      const inIframe = typeof window !== "undefined" && window.self !== window.top;
-      const isSecure = typeof window !== "undefined" && window.isSecureContext;
-      const hasMediaDevices = !!navigator.mediaDevices?.getUserMedia;
-      log("context", { inIframe, isSecure, hasMediaDevices });
+      setConnected(false);
+      setErrorMessage("");
+      await closePeerConnection(pcRef.current, resourceUrlRef.current);
+      pcRef.current = null;
+      resourceUrlRef.current = null;
 
-      if (!hasMediaDevices || !isSecure) {
-        setErrorMessage(
-          "Este navegador não pode acessar câmera/microfone (contexto não seguro). Abra em uma nova aba via HTTPS.",
-        );
-        setTransmissionState("permission-blocked");
-        return;
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }],
+        bundlePolicy: "max-bundle",
+      });
+      pcRef.current = pc;
+
+      const audioTrack = stream.getAudioTracks()[0];
+      const videoTx = pc.addTransceiver("video", { direction: "sendonly" });
+      await videoTx.sender.replaceTrack(videoTrack);
+      const audioTx = pc.addTransceiver("audio", { direction: "sendonly" });
+      if (audioTrack && audioTrack.readyState === "live") {
+        await audioTx.sender.replaceTrack(audioTrack);
       }
 
-      // Preview iframe do editor não vem com allow="camera; microphone".
-      // Detectamos e mostramos CTA para abrir em nova aba antes de disparar o prompt fantasma.
-      if (inIframe) {
+      const markLive = () => {
+        setConnected(true);
+        setTransmissionState("live");
+        queryClient.invalidateQueries({ queryKey: ["live-meta", liveId] });
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        log("iceConnectionState", pc.iceConnectionState);
+        if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+          markLive();
+        }
+        if (pc.iceConnectionState === "failed") {
+          setConnected(false);
+          setErrorMessage("A conexão de mídia falhou. Tente iniciar novamente.");
+          setTransmissionState("error");
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        log("connectionState", pc.connectionState);
+        if (pc.connectionState === "connected") markLive();
+        if (pc.connectionState === "failed") {
+          setConnected(false);
+          setErrorMessage("A conexão com a Cloudflare falhou. Tente iniciar novamente.");
+          setTransmissionState("error");
+        }
+      };
+
+      setTransmissionState("creating-offer");
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      log("localDescription:set");
+
+      setTransmissionState("waiting-ice");
+      await waitForIceGathering(pc, 8000);
+      log("iceGathering", pc.iceGatheringState);
+
+      setTransmissionState("posting-whip");
+      log("POST:start", whipUrl);
+      const res = await fetch(whipUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/sdp" },
+        body: pc.localDescription?.sdp ?? "",
+      });
+      log("POST:response", { status: res.status, location: res.headers.get("Location") });
+
+      if (!res.ok) {
+        const details = await res.text().catch(() => "");
+        console.error("[whip] error body", details);
+        throw new Error(`WHIP HTTP ${res.status}${details ? ` — ${details.slice(0, 200)}` : ""}`);
+      }
+
+      const location = res.headers.get("Location");
+      if (location) {
         try {
-          const cam = await navigator.permissions?.query?.({ name: "camera" as PermissionName });
-          const mic = await navigator.permissions?.query?.({ name: "microphone" as PermissionName });
-          log("permissions", { cam: cam?.state, mic: mic?.state });
-          if (cam?.state === "denied" || mic?.state === "denied") {
-            setErrorMessage(
-              "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar.",
-            );
-            setTransmissionState("permission-blocked");
-            return;
-          }
+          resourceUrlRef.current = new URL(location, whipUrl).toString();
         } catch {
-          // Permissions API pode não suportar 'camera'/'microphone' em alguns browsers — seguimos.
+          resourceUrlRef.current = location;
         }
       }
 
+      const answer = await res.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answer });
+      log("remoteDescription:set");
+      setTransmissionState("waiting-ice-connect");
+    } catch (e: any) {
+      console.error("[whip] fatal", e);
+      const msg = e?.message ?? "Falha ao enviar sinal para a Cloudflare.";
+      setConnected(false);
+      setErrorMessage(msg);
+      setTransmissionState("error");
+      toast.error(msg);
+    }
+  }, [liveId, queryClient, whipUrl]);
+
+  useEffect(() => {
+    if (!whipUrl || autoStarted) return;
+    (async () => {
       try {
-        setTransmissionState("getting-media");
-
-        // Se veio da tela de configuração, reaproveita o MediaStream já autorizado.
-        let stream: MediaStream | null = null;
-        try {
-          const { takeLiveMedia } = await import("@/lib/live-media-handoff");
-          const handoff = takeLiveMedia(liveId);
-          if (handoff) {
-            log("handoff:reused");
-            stream = handoff.stream;
-          }
-        } catch { /* ignore */ }
-
-        if (!stream) {
-          log("getUserMedia:start");
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 720 },
-            audio: true,
-          });
-          log("getUserMedia:ok", {
-            video: stream.getVideoTracks().length,
-            audio: stream.getAudioTracks().length,
-          });
-        }
-
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
+        const { takeLiveMedia } = await import("@/lib/live-media-handoff");
+        const handoff = takeLiveMedia(liveId);
+        if (!handoff) {
+          setAutoStarted(true);
+          await refreshDevices();
           return;
         }
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-
-        const pc = new RTCPeerConnection({
-          iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }],
-          bundlePolicy: "max-bundle",
-        });
-        pcRef.current = pc;
-
-        const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-        const videoTx = pc.addTransceiver("video", { direction: "sendonly" });
-        const audioTx = pc.addTransceiver("audio", { direction: "sendonly" });
-        if (videoTrack) await videoTx.sender.replaceTrack(videoTrack);
-        if (audioTrack) await audioTx.sender.replaceTrack(audioTrack);
-
-        pc.oniceconnectionstatechange = () => {
-          log("iceConnectionState", pc.iceConnectionState);
-          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
-            setConnected(true);
-            setTransmissionState("live");
-            queryClient.invalidateQueries({ queryKey: ["live-meta", liveId] });
-          }
-          if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
-            setConnected(false);
-            setErrorMessage("A conexão de mídia caiu");
-            setTransmissionState("error");
-          }
-        };
-        pc.onconnectionstatechange = () => log("connectionState", pc.connectionState);
-
-        setTransmissionState("creating-offer");
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        log("localDescription:set");
-
-        setTransmissionState("waiting-ice");
-        await waitForIceGathering(pc, 8000);
-        log("iceGathering", pc.iceGatheringState);
-
-        setTransmissionState("posting-whip");
-        log("POST:start", whipUrl);
-        const res = await fetch(whipUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/sdp" },
-          body: pc.localDescription?.sdp ?? "",
-        });
-        log("POST:response", { status: res.status, location: res.headers.get("Location") });
-
-        if (!res.ok) {
-          const details = await res.text().catch(() => "");
-          console.error("[whip] error body", details);
-          throw new Error(
-            `WHIP HTTP ${res.status}${details ? ` — ${details.slice(0, 200)}` : ""}`,
-          );
-        }
-
-        const location = res.headers.get("Location");
-        if (location) {
-          try {
-            resourceUrlRef.current = new URL(location, whipUrl).toString();
-          } catch {
-            resourceUrlRef.current = location;
-          }
-        }
-
-        const answer = await res.text();
-        await pc.setRemoteDescription({ type: "answer", sdp: answer });
-        log("remoteDescription:set");
-        setTransmissionState("waiting-ice-connect");
+        setAutoStarted(true);
+        attachStream(handoff.stream);
+        setVideoId(handoff.videoDeviceId ?? "");
+        setAudioId(handoff.audioDeviceId ?? "");
+        await refreshDevices();
+        await publishStream(handoff.stream);
       } catch (e: any) {
-        console.error("[whip] fatal", e);
-        setConnected(false);
-
-        const name: string = e?.name ?? "";
-        let msg = e?.message ?? "Falha ao iniciar transmissão";
-        let nextState: TransmissionState = "error";
-
-        if (name === "NotAllowedError") {
-          msg = inIframe
-            ? "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
-            : "Permissão negada. Autorize a câmera e o microfone nas configurações do navegador.";
-          nextState = inIframe ? "permission-blocked" : "error";
-        } else if (name === "NotFoundError" || name === "OverconstrainedError") {
-          msg = "Nenhuma câmera ou microfone disponível neste dispositivo.";
-        } else if (name === "NotReadableError") {
-          msg = "Câmera/microfone em uso por outro aplicativo. Feche-o e tente de novo.";
-        } else if (name === "SecurityError") {
-          msg = "Este preview não pode acessar câmera/microfone. Abra em uma nova aba para autorizar.";
-          nextState = "permission-blocked";
-        }
-
-        setErrorMessage(msg);
-        setTransmissionState(nextState);
-        if (nextState !== "permission-blocked") toast.error(msg);
+        setAutoStarted(true);
+        setErrorMessage(e?.message ?? "Falha ao recuperar a câmera autorizada.");
+        setTransmissionState("error");
       }
     })();
+  }, [attachStream, autoStarted, liveId, publishStream, refreshDevices, whipUrl]);
+
+  useEffect(() => {
     return () => {
-      cancelled = true;
       const pc = pcRef.current;
       const stream = streamRef.current;
       const resource = resourceUrlRef.current;
@@ -293,7 +386,7 @@ function TransmitirPage() {
       setConnected(false);
       void closePublisher(pc, stream, resource);
     };
-  }, [whipUrl, liveId, queryClient, retryTick]);
+  }, []);
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
@@ -332,41 +425,135 @@ function TransmitirPage() {
     }
   };
 
+  const handleVideoChange = (id: string) => {
+    setVideoId(id);
+    acquireMedia(id, audioId || undefined);
+  };
+
+  const handleAudioChange = (id: string) => {
+    setAudioId(id);
+    acquireMedia(videoId || undefined, id);
+  };
+
+  const handleStartPublishing = async () => {
+    const stream = streamRef.current ?? await acquireMedia(videoId || undefined, audioId || undefined);
+    if (!stream) return;
+    await publishStream(stream);
+  };
+
+  const isPublishing = ["creating-offer", "waiting-ice", "posting-whip", "waiting-ice-connect"].includes(transmissionState);
+  const needsSetup = !connected && !isPublishing;
+
+  const setupOverlay = (
+    <div className="absolute inset-0 z-[8] grid place-items-center bg-black/70 px-4 text-white backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-neutral-950/90 p-5 shadow-2xl">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-fuchsia-500/20 text-fuchsia-300">
+            {transmissionState === "error" || transmissionState === "permission-blocked" ? <VideoOff className="h-5 w-5" /> : <Radio className="h-5 w-5" />}
+          </div>
+          <div>
+            <p className="text-sm font-bold">Preparar transmissão</p>
+            <p className="text-xs text-white/60">O público só verá a live depois que o sinal for enviado.</p>
+          </div>
+        </div>
+
+        {errorMessage && (
+          <div className="mb-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-100">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <label className="block text-xs font-semibold text-white/70">
+            <span className="mb-1.5 flex items-center gap-2"><Camera className="h-3.5 w-3.5" /> Câmera</span>
+            <select
+              value={videoId}
+              onChange={(event) => handleVideoChange(event.target.value)}
+              disabled={isPublishing || videoDevices.length === 0}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none disabled:opacity-50"
+            >
+              {videoDevices.length === 0 && <option value="">Autorize para detectar câmera</option>}
+              {videoDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId} className="bg-neutral-950">
+                  {device.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block text-xs font-semibold text-white/70">
+            <span className="mb-1.5 flex items-center gap-2"><Mic className="h-3.5 w-3.5" /> Microfone</span>
+            <select
+              value={audioId}
+              onChange={(event) => handleAudioChange(event.target.value)}
+              disabled={isPublishing || audioDevices.length === 0}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none disabled:opacity-50"
+            >
+              {audioDevices.length === 0 && <option value="">Autorize para detectar microfone</option>}
+              {audioDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId} className="bg-neutral-950">
+                  {device.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-2">
+          {transmissionState === "permission-blocked" && inIframe ? (
+            <button
+              type="button"
+              onClick={openInNewTab}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white text-sm font-bold text-black hover:bg-white/90"
+            >
+              <ExternalLink className="h-4 w-4" /> Abrir em nova aba
+            </button>
+          ) : mediaReady ? (
+            <button
+              type="button"
+              onClick={handleStartPublishing}
+              disabled={isPublishing || !whipUrl}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-fuchsia-600 text-sm font-bold text-white hover:bg-fuchsia-500 disabled:opacity-60"
+            >
+              <Radio className="h-4 w-4" /> Iniciar transmissão
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => acquireMedia(videoId || undefined, audioId || undefined)}
+              disabled={transmissionState === "getting-media"}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white text-sm font-bold text-black hover:bg-white/90 disabled:opacity-60"
+            >
+              <Camera className="h-4 w-4" />
+              {transmissionState === "getting-media" ? "Solicitando permissão…" : "Autorizar câmera e microfone"}
+            </button>
+          )}
+
+          {(mediaReady || transmissionState === "error") && (
+            <button
+              type="button"
+              onClick={() => acquireMedia(videoId || undefined, audioId || undefined)}
+              disabled={transmissionState === "getting-media" || isPublishing}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-white/10 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-60"
+            >
+              <RefreshCcw className="h-3.5 w-3.5" /> Trocar/reativar câmera
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const videoEl = (fit: "cover" | "contain") => (
     <>
       <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
-      {transmissionState === "permission-blocked" && (
-        <div className="absolute inset-0 z-[7] grid place-items-center bg-black/80 px-6 text-center text-white">
-          <div className="max-w-sm space-y-4">
-            <p className="text-sm text-white/90">{errorMessage}</p>
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={openInNewTab}
-                className="h-10 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90"
-              >
-                Abrir em nova aba
-              </button>
-              <button
-                type="button"
-                onClick={() => setRetryTick((n) => n + 1)}
-                className="h-9 rounded-full bg-white/10 text-white text-xs font-medium hover:bg-white/20"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {!connected && transmissionState !== "permission-blocked" && (
+      {needsSetup && setupOverlay}
+      {!connected && isPublishing && (
         <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
-          {transmissionState === "getting-media" && "Conectando câmera…"}
           {transmissionState === "creating-offer" && "Preparando WebRTC…"}
           {transmissionState === "waiting-ice" && "Coletando rotas de rede…"}
           {transmissionState === "posting-whip" && "Enviando sinal para Cloudflare…"}
           {transmissionState === "waiting-ice-connect" && "Aguardando conexão de mídia…"}
-          {transmissionState === "error" && (errorMessage || "Falha ao iniciar transmissão")}
-          {(transmissionState === "idle" || transmissionState === "live") && "Preparando transmissão…"}
         </div>
       )}
     </>
