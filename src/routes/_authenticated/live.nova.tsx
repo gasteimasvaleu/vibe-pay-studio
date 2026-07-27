@@ -43,11 +43,19 @@ function NovaLivePage() {
 
   return (
     <div className="min-h-[calc(100vh-56px)] bg-background text-foreground">
-      <header className="h-16 border-b border-border bg-card px-4 flex items-center gap-3">
-        <button onClick={() => navigate({ to: "/dashboard" })} className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-base font-semibold">Nova live</h1>
+      <header className="relative z-10 border-b border-border bg-card">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/dashboard" })}
+            className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold text-foreground truncate">Nova live</h1>
+          <span className="w-9" />
+        </div>
       </header>
 
       <div className="max-w-lg mx-auto p-6 space-y-5">
