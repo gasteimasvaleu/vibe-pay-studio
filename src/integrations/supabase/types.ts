@@ -1238,6 +1238,7 @@ export type Database = {
           creator_profile_id: string | null
           description: string | null
           ended_at: string | null
+          followers_only: boolean
           gross_cents: number
           id: string
           likes_count: number
@@ -1261,6 +1262,7 @@ export type Database = {
           creator_profile_id?: string | null
           description?: string | null
           ended_at?: string | null
+          followers_only?: boolean
           gross_cents?: number
           id?: string
           likes_count?: number
@@ -1284,6 +1286,7 @@ export type Database = {
           creator_profile_id?: string | null
           description?: string | null
           ended_at?: string | null
+          followers_only?: boolean
           gross_cents?: number
           id?: string
           likes_count?: number

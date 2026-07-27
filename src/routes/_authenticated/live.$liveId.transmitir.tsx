@@ -154,15 +154,30 @@ function TransmitirPage() {
 
       try {
         setTransmissionState("getting-media");
-        log("getUserMedia:start");
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1280, height: 720 },
-          audio: true,
-        });
-        log("getUserMedia:ok", {
-          video: stream.getVideoTracks().length,
-          audio: stream.getAudioTracks().length,
-        });
+
+        // Se veio da tela de configuração, reaproveita o MediaStream já autorizado.
+        let stream: MediaStream | null = null;
+        try {
+          const { takeLiveMedia } = await import("@/lib/live-media-handoff");
+          const handoff = takeLiveMedia(liveId);
+          if (handoff) {
+            log("handoff:reused");
+            stream = handoff.stream;
+          }
+        } catch { /* ignore */ }
+
+        if (!stream) {
+          log("getUserMedia:start");
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: true,
+          });
+          log("getUserMedia:ok", {
+            video: stream.getVideoTracks().length,
+            audio: stream.getAudioTracks().length,
+          });
+        }
+
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
