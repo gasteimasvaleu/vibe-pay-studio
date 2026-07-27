@@ -43,6 +43,11 @@ export function LiveOverlayTop({ username, displayName, avatarUrl, viewers, stat
             <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> AO VIVO
           </span>
         )}
+        {status === "starting" && (
+          <span className="inline-flex items-center gap-1.5 px-2 h-6 rounded-full bg-white/15 text-white font-bold text-[11px] backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/70 animate-pulse" /> INICIANDO
+          </span>
+        )}
         <span className="inline-flex items-center gap-1 text-white text-xs bg-black/45 backdrop-blur px-2 h-6 rounded-full">
           <Users className="h-3.5 w-3.5" /> {viewers}
         </span>
