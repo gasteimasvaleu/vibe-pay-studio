@@ -41,8 +41,17 @@ function LiveViewerPage() {
   const { data: live, refetch } = useQuery({
     queryKey: ["live", liveId],
     queryFn: () => getLiveFn({ data: { liveId } }),
-    refetchInterval: 15_000,
+    refetchInterval: (query) => {
+      const l: any = query.state.data;
+      if (!l) return 5_000;
+      if (l.status === "ended") return false;
+      // Enquanto a live está no ar mas o whepUrl ainda não foi resolvido
+      // (o vídeo do publisher ainda não apareceu na CF), sondagem rápida.
+      if (l.status === "live" && l.canWatch && !l.whepUrl) return 3_000;
+      return 15_000;
+    },
   });
+
 
   // Dono nunca fica na tela de espectador — vai direto para a transmissão.
   useEffect(() => {
