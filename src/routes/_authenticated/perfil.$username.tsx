@@ -374,6 +374,9 @@ function PerfilPage() {
     enabled: !isOwner,
   });
   const isFriendState = !!friendQuery.data?.isFriend;
+  const activeLiveQuery = useCreatorActiveLive(profile.userId);
+  const activeLiveId = activeLiveQuery.data?.id ?? null;
+
   const [friendBusy, setFriendBusy] = useState(false);
 
   const mutedQueryKey = ["mutes", "is", viewerId, profile.userId] as const;
