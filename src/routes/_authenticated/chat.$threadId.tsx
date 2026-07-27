@@ -439,7 +439,14 @@ function ChatThreadView() {
       queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
       toast.success("Convite de videochamada enviado");
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      const msg = err?.message ?? "";
+      if (msg.includes("ZodError") || msg.includes("priceCents")) {
+        toast.error("Valor inválido. O mínimo é R$ 39,90 e o máximo R$ 5.000,00.");
+      } else {
+        toast.error(msg || "Não foi possível enviar o convite.");
+      }
+    },
   });
 
   const paidDmMutation = useMutation({
