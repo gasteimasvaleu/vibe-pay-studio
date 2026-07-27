@@ -225,6 +225,16 @@ function LiveViewerPage() {
           <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
         </div>
       </div>
+
+      <LiveTicketDialog
+        open={ticketOpen}
+        onOpenChange={setTicketOpen}
+        liveId={liveId}
+        creatorName={live.creator.displayName ?? live.creator.username}
+        priceCents={live.priceCents}
+        onPaid={() => refetch()}
+      />
     </div>
   );
+
 }
