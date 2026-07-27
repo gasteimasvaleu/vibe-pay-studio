@@ -21,7 +21,15 @@ export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")(
   component: TransmitirPage,
 });
 
-type TransmissionState = "idle" | "camera" | "publishing" | "live" | "error";
+type TransmissionState =
+  | "idle"
+  | "getting-media"
+  | "creating-offer"
+  | "waiting-ice"
+  | "posting-whip"
+  | "waiting-ice-connect"
+  | "live"
+  | "error";
 
 function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
   return new Promise<void>((resolve) => {
@@ -46,7 +54,18 @@ function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
   });
 }
 
-function closePublisher(pc: RTCPeerConnection | null, stream: MediaStream | null) {
+async function closePublisher(
+  pc: RTCPeerConnection | null,
+  stream: MediaStream | null,
+  resourceUrl: string | null,
+) {
+  if (resourceUrl) {
+    try {
+      await fetch(resourceUrl, { method: "DELETE", keepalive: true });
+    } catch (e) {
+      console.warn("[whip] DELETE resource failed", e);
+    }
+  }
   pc?.getSenders().forEach((sender) => sender.track?.stop());
   pc?.close();
   stream?.getTracks().forEach((track) => track.stop());
