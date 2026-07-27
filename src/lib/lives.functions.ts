@@ -278,6 +278,21 @@ export const getLive = createServerFn({ method: "GET" })
     ]);
     const src = prof.data ?? legacy.data ?? {};
 
+    // Resolve o whepUrl real (UID do vídeo ao vivo, não do Live Input).
+    // Só faz sentido quando o viewer pode assistir E a live está no ar.
+    let whepUrl: string | null = null;
+    if (canWatch && live.status === "live" && (live as any).cf_live_input_id) {
+      try {
+        const { resolveActiveWhepUrl } = await import("@/lib/cloudflare-stream.server");
+        whepUrl = await resolveActiveWhepUrl(
+          (live as any).cf_live_input_id as string,
+          ((live as any).cf_webrtc_play_url as string | null) ?? ((live as any).cf_webrtc_url as string | null) ?? null,
+        );
+      } catch (e) {
+        console.warn("[lives] resolveActiveWhepUrl failed", e);
+      }
+    }
+
     return {
       id: live.id as string,
       creatorId: live.creator_id as string,
@@ -296,8 +311,9 @@ export const getLive = createServerFn({ method: "GET" })
       viewersPeak: (live.viewers_peak as number) ?? 0,
       totalViews: (live.total_views as number) ?? 0,
       likesCount: (live.likes_count as number) ?? 0,
-      whepUrl: canWatch ? ((live.cf_webrtc_play_url as string | null) ?? null) : null,
+      whepUrl,
       hlsUrl: canWatch ? ((live.cf_playback_hls as string | null) ?? null) : null,
+
       creator: {
         username: (src as any).username ?? "",
         displayName: (src as any).display_name ?? (src as any).username ?? "",
