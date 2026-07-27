@@ -14,6 +14,7 @@ export function TopNav() {
   const [initial, setInitial] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -35,9 +36,16 @@ export function TopNav() {
       const [{ data: prof }, { data: cps }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("avatar_url, free_avatar_url, active_view, active_profile_id")
+          .select("avatar_url, free_avatar_url, active_view, active_profile_id, account_type")
           .eq("user_id", userId)
           .maybeSingle(),
+        supabase
+          .from("creator_profiles")
+          .select("id, kind, avatar_url")
+          .eq("user_id", userId),
+      ]);
+      if (!mounted) return;
+      setIsCreator(isCreatorLike((prof?.account_type ?? "subscriber") as any));
         supabase
           .from("creator_profiles")
           .select("id, kind, avatar_url")
@@ -102,6 +110,15 @@ export function TopNav() {
           >
             <Search className="h-5 w-5" />
           </Link>
+          {isCreator && (
+            <Link
+              to="/creator-hub"
+              aria-label="Creator Hub"
+              className="h-9 w-9 grid place-items-center rounded-full text-primary hover:bg-accent transition-colors"
+            >
+              <Sparkles className="h-5 w-5" />
+            </Link>
+          )}
           {isAdmin && (
             <Link
               to="/admin"
