@@ -5,6 +5,7 @@ import DailyIframe, { type DailyCall } from "@daily-co/daily-js";
 import { PhoneOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { joinVideoCall, endVideoCall } from "@/lib/communication.functions";
+import { Button } from "@/components/ui/button";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -28,15 +29,31 @@ function VideoCallRoom() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
-  const [status, setStatus] = useState<"joining" | "in-call" | "ended">("joining");
+  const credentialsRef = useRef<{
+    callId: string;
+    promise: Promise<{ roomUrl: string; token: string; isCreator: boolean }>;
+  } | null>(null);
+  const [status, setStatus] = useState<"joining" | "ready" | "in-call" | "ended" | "error">("joining");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    let cleaningUp = false;
     let frame: DailyCall | null = null;
+    let readyTimeout: ReturnType<typeof setTimeout> | null = null;
 
     (async () => {
       try {
-        const { roomUrl, token } = await joinFn({ data: { callId } });
+        if (credentialsRef.current?.callId !== callId) {
+          credentialsRef.current = {
+            callId,
+            promise: joinFn({ data: { callId } }),
+          };
+        }
+
+        const credentialsRequest = credentialsRef.current;
+        if (!credentialsRequest) throw new Error("Não foi possível preparar a chamada");
+        const credentials = await credentialsRequest.promise;
         if (cancelled || !containerRef.current) return;
 
         frame = DailyIframe.createFrame(containerRef.current, {
@@ -51,28 +68,44 @@ function VideoCallRoom() {
           showFullscreenButton: true,
         });
         callRef.current = frame;
+        setStatus("ready");
 
         frame.on("left-meeting", async () => {
+          if (cleaningUp) return;
           try {
             await endFn({ data: { callId } });
           } catch {}
           setStatus("ended");
         });
+        frame.on("joined-meeting", () => {
+          if (!cancelled) setStatus("in-call");
+        });
         frame.on("error", (e) => {
-          toast.error(`Erro na chamada: ${e?.errorMsg ?? "desconhecido"}`);
+          const message = e?.errorMsg ?? "Não foi possível iniciar a chamada";
+          setErrorMessage(message);
+          setStatus("error");
+          toast.error(`Erro na chamada: ${message}`);
         });
 
-        await frame.join({ url: roomUrl, token });
+        readyTimeout = setTimeout(() => {
+          if (!cancelled) setStatus((current) => (current === "joining" ? "ready" : current));
+        }, 2500);
+
+        await frame.join({ url: credentials.roomUrl, token: credentials.token });
         if (!cancelled) setStatus("in-call");
       } catch (err: any) {
         if (cancelled) return;
-        toast.error(err?.message ?? "Não foi possível entrar na chamada");
-        navigate({ to: "/chat" });
+        const message = err?.message ?? "Não foi possível entrar na chamada";
+        setErrorMessage(message);
+        setStatus("error");
+        toast.error(message);
       }
     })();
 
     return () => {
       cancelled = true;
+      cleaningUp = true;
+      if (readyTimeout) clearTimeout(readyTimeout);
       const f = callRef.current ?? frame;
       if (f) {
         try {
@@ -84,7 +117,7 @@ function VideoCallRoom() {
       }
       callRef.current = null;
     };
-  }, [callId, joinFn, endFn, navigate]);
+  }, [callId, joinFn, endFn]);
 
   const hangup = async () => {
     try {
@@ -100,7 +133,7 @@ function VideoCallRoom() {
     <div className="fixed inset-0 z-50 bg-black text-white">
       <div ref={containerRef} className="absolute inset-0" />
       {status === "joining" && (
-        <div className="absolute inset-0 grid place-items-center bg-black/80">
+        <div className="absolute inset-0 grid place-items-center bg-black/80 pointer-events-none">
           <div className="flex items-center gap-3 text-lg">
             <Loader2 className="h-6 w-6 animate-spin" />
             Entrando na chamada…
@@ -111,17 +144,32 @@ function VideoCallRoom() {
         <div className="absolute inset-0 grid place-items-center bg-black/90 text-center px-6">
           <div className="space-y-4">
             <div className="text-2xl font-semibold">Chamada encerrada</div>
-            <button
+            <Button
               type="button"
               onClick={() => navigate({ to: "/chat" })}
               className="h-10 px-6 rounded-full bg-white text-black font-medium"
             >
               Voltar ao chat
-            </button>
+            </Button>
           </div>
         </div>
       )}
-      {status === "in-call" && (
+      {status === "error" && (
+        <div className="absolute inset-0 grid place-items-center bg-black/90 text-center px-6">
+          <div className="max-w-sm space-y-4">
+            <div className="text-2xl font-semibold">Não foi possível entrar</div>
+            <p className="text-sm text-white/70">{errorMessage}</p>
+            <Button
+              type="button"
+              onClick={() => navigate({ to: "/chat" })}
+              className="h-10 px-6 rounded-full bg-white text-black font-medium"
+            >
+              Voltar ao chat
+            </Button>
+          </div>
+        </div>
+      )}
+      {(status === "ready" || status === "in-call") && (
         <button
           type="button"
           onClick={hangup}
