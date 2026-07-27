@@ -48,6 +48,10 @@ import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.f
 import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
 import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
+import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
+import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
+import { Radio } from "lucide-react";
+
 
 
 
