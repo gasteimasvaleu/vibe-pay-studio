@@ -206,12 +206,13 @@ function LiveViewerPage() {
 
   // ------- DESKTOP -------
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container max-w-7xl mx-auto px-4 py-4">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
+        <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
-        <div className="inline-flex items-center gap-1 text-white/70 text-xs">
+        <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
           <UsersIcon className="h-3.5 w-3.5" /> {viewersDisplay}
         </div>
       </div>
