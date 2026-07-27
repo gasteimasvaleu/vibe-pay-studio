@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { requireAdminAccess } from "@/lib/admin-dashboard.functions";
 
-import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning, Bug, Mail, RefreshCcw, ScrollText } from "lucide-react";
+import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning, Bug, Mail, RefreshCcw, ScrollText, Radio, Film, Send, Video, CreditCard, Tag, Trophy, LineChart, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -23,14 +23,23 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { to: "/admin/transactions", label: "Transações", icon: Receipt, exact: false },
+  { to: "/admin/finance", label: "Finance", icon: LineChart, exact: false },
   { to: "/admin/users", label: "Usuários", icon: Users, exact: false },
+  { to: "/admin/subscriptions", label: "Assinaturas", icon: CreditCard, exact: false },
+  { to: "/admin/promotions", label: "Promoções", icon: Tag, exact: false },
   { to: "/admin/withdrawals", label: "Saques", icon: Banknote, exact: false },
   { to: "/admin/refunds", label: "Reembolsos", icon: RefreshCcw, exact: false },
   { to: "/admin/moderation", label: "Moderação", icon: ShieldAlert, exact: false },
+  { to: "/admin/lives", label: "Lives", icon: Radio, exact: false },
+  { to: "/admin/stories", label: "Stories", icon: Film, exact: false },
+  { to: "/admin/broadcasts", label: "Broadcasts", icon: Send, exact: false },
+  { to: "/admin/videocalls", label: "Videocalls", icon: Video, exact: false },
+  { to: "/admin/trophies", label: "Troféus", icon: Trophy, exact: false },
   { to: "/admin/leaks", label: "Vazamentos", icon: FileWarning, exact: false },
   { to: "/admin/bugs", label: "Bugs", icon: Bug, exact: false },
   { to: "/admin/emails", label: "E-mails", icon: Mail, exact: false },
   { to: "/admin/audit", label: "Auditoria", icon: ScrollText, exact: false },
+  { to: "/admin/settings", label: "Ajustes", icon: Settings, exact: false },
 ] as const;
 
 function AdminLayout() {
