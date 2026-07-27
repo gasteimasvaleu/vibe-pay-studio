@@ -31,11 +31,20 @@ const TX_SALE_KINDS = [
   "challenge_contribution",
 ] as const;
 
+type TxKind =
+  | "subscription"
+  | "publication_unlock"
+  | "chat_unlock"
+  | "video_call"
+  | "live_ticket"
+  | "challenge_contribution"
+  | "tip";
+
 async function loadActorMap(
   supabase: any,
-  userIds: string[],
+  userIds: Array<string | null | undefined>,
 ): Promise<Map<string, { username: string | null; avatar_url: string | null }>> {
-  const uniq = Array.from(new Set(userIds.filter(Boolean)));
+  const uniq = Array.from(new Set(userIds.filter((v): v is string => !!v)));
   if (!uniq.length) return new Map();
   const { data } = await supabase
     .from("profiles")
@@ -51,159 +60,6 @@ async function loadActorMap(
   return map;
 }
 
-export const getCreatorHubNotifications = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { filter: CreatorHubFilter }) =>
-    z.object({ filter: z.enum(["all", "sales", "tips", "comments", "feed"]) }).parse(data),
-  )
-  .handler(async ({ data, context }): Promise<CreatorHubNotification[]> => {
-    const { supabase, userId } = context;
-    const profileId = await getActiveProfileIdFor(supabase, userId);
-    if (!profileId) return [];
-
-    const filter = data.filter;
-    const limit = 50;
-    const out: CreatorHubNotification[] = [];
-    const actorIds: string[] = [];
-
-    // ---- Vendas + Mimos (transactions) ----
-    if (filter === "all" || filter === "sales" || filter === "tips") {
-      const kinds =
-        filter === "tips" ? ["tip"] : filter === "sales" ? [...TX_SALE_KINDS] : ["tip", ...TX_SALE_KINDS];
-      const { data: txs } = await supabase
-        .from("transactions")
-        .select("id, kind, buyer_id, amount_cents_gross, created_at, reference_table, reference_id")
-        .eq("creator_profile_id", profileId)
-        .eq("status", "paid")
-        .in("kind", kinds)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      for (const t of (txs ?? []) as any[]) {
-        actorIds.push(t.buyer_id);
-        const isTip = t.kind === "tip";
-        out.push({
-          id: `tx-${t.id}`,
-          kind: isTip ? "tip" : "sale",
-          title: isTip
-            ? "Você recebeu um mimo"
-            : t.kind === "subscription"
-              ? "Nova assinatura"
-              : t.kind === "publication_unlock"
-                ? "Nova venda de post"
-                : t.kind === "chat_unlock"
-                  ? "Nova venda no chat"
-                  : t.kind === "video_call"
-                    ? "Nova chamada de vídeo"
-                    : t.kind === "live_ticket"
-                      ? "Novo ticket de live"
-                      : "Nova venda",
-          subtitle: null,
-          amountCents: Number(t.amount_cents_gross ?? 0),
-          actorUsername: null,
-          actorAvatarUrl: null,
-          createdAt: t.created_at,
-          href: null,
-        });
-      }
-    }
-
-    // ---- Comentários ----
-    if (filter === "all" || filter === "comments") {
-      // Posts do perfil ativo
-      const { data: pubs } = await supabase
-        .from("publications")
-        .select("id")
-        .eq("creator_profile_id", profileId)
-        .limit(500);
-      const pubIds = ((pubs ?? []) as any[]).map((p) => p.id);
-      if (pubIds.length) {
-        const { data: cs } = await supabase
-          .from("publication_comments")
-          .select("id, publication_id, user_id, body, created_at")
-          .in("publication_id", pubIds)
-          .neq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        for (const c of (cs ?? []) as any[]) {
-          actorIds.push(c.user_id);
-          out.push({
-            id: `cmt-${c.id}`,
-            kind: "comment",
-            title: "Novo comentário",
-            subtitle: (c.body ?? "").slice(0, 120),
-            amountCents: null,
-            actorUsername: null,
-            actorAvatarUrl: null,
-            createdAt: c.created_at,
-            href: null,
-          });
-        }
-      }
-    }
-
-    // ---- Feed: likes ----
-    if (filter === "all" || filter === "feed") {
-      const { data: pubs } = await supabase
-        .from("publications")
-        .select("id")
-        .eq("creator_profile_id", profileId)
-        .limit(500);
-      const pubIds = ((pubs ?? []) as any[]).map((p) => p.id);
-      if (pubIds.length) {
-        const { data: ls } = await supabase
-          .from("publication_likes")
-          .select("publication_id, user_id, created_at")
-          .in("publication_id", pubIds)
-          .neq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        for (const l of (ls ?? []) as any[]) {
-          actorIds.push(l.user_id);
-          out.push({
-            id: `like-${l.publication_id}-${l.user_id}`,
-            kind: "like",
-            title: "Curtiu seu post",
-            subtitle: null,
-            amountCents: null,
-            actorUsername: null,
-            actorAvatarUrl: null,
-            createdAt: l.created_at,
-            href: null,
-          });
-        }
-      }
-    }
-
-    // Hidratação de actor
-    const actorMap = await loadActorMap(supabase, actorIds);
-    for (const n of out) {
-      const rawId =
-        n.id.startsWith("tx-")
-          ? null
-          : n.id.startsWith("cmt-") || n.id.startsWith("like-")
-            ? null
-            : null;
-      if (!rawId && actorIds.length) {
-        // recupera user_id do payload original — trickery: encode above didn't keep. Simpler: look up by side arrays.
-      }
-    }
-    // Refaz com nomes: como perdemos o mapping por id acima, reprocessamos rapidamente as três origens
-    // usando os mesmos ids.
-    // Estratégia simples: buscar novamente actorIds dedup e injetar no primeiro match sem actor.
-    // (mantém performance aceitável porque só re-usa o mapa)
-
-    // Ordena por data desc e corta em 100
-    out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    const limited = out.slice(0, 100);
-
-    // Popula actor: precisamos rebuscar as fontes mantendo id → user_id.
-    // Simplificação: refaz um único join com o próprio Map criado
-    // Aqui reconciliamos varrendo cada categoria uma vez para associar user_id ao item.
-    return limited.map((n) => ({ ...n }));
-  });
-
-// Segunda versão simplificada com actor real, substituindo a acima quando chamada.
-// (Mantemos apenas a nova para não vazar itens sem actor.)
 export const getCreatorHubNotificationsV2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { filter: CreatorHubFilter }) =>
@@ -220,8 +76,12 @@ export const getCreatorHubNotificationsV2 = createServerFn({ method: "POST" })
     const filter = data.filter;
 
     if (filter === "all" || filter === "sales" || filter === "tips") {
-      const kinds =
-        filter === "tips" ? ["tip"] : filter === "sales" ? [...TX_SALE_KINDS] : ["tip", ...TX_SALE_KINDS];
+      const kinds: TxKind[] =
+        filter === "tips"
+          ? ["tip"]
+          : filter === "sales"
+            ? [...TX_SALE_KINDS]
+            : ["tip", ...TX_SALE_KINDS];
       const { data: txs } = await supabase
         .from("transactions")
         .select("id, kind, buyer_id, amount_cents_gross, created_at")
@@ -324,7 +184,7 @@ export const getCreatorHubNotificationsV2 = createServerFn({ method: "POST" })
 
     const actorMap = await loadActorMap(
       supabase,
-      rows.map((r) => r.userId).filter((v): v is string => !!v),
+      rows.map((r) => r.userId),
     );
 
     rows.sort((a, b) => (a.item.createdAt < b.item.createdAt ? 1 : -1));
@@ -420,26 +280,24 @@ export const getCreatorHubHighlights = createServerFn({ method: "GET" })
         .in("moderation_status", ["hidden", "removed", "pending"])
         .order("created_at", { ascending: false })
         .limit(10),
-      supabase
+      (supabase as any)
         .from("trophy_requests")
         .select("milestone_cents")
         .eq("user_id", userId),
     ]);
 
-    const revenue7d =
-      (tx7d.data ?? []).reduce(
-        (acc: number, r: any) => acc + Number(r.amount_cents_gross ?? 0),
-        0,
-      );
-    const totalEarned =
-      (totalTx.data ?? []).reduce(
-        (acc: number, r: any) => acc + Number(r.net_cents ?? 0),
-        0,
-      );
+    const revenue7d = ((tx7d.data ?? []) as any[]).reduce(
+      (acc: number, r: any) => acc + Number(r.amount_cents_gross ?? 0),
+      0,
+    );
+    const totalEarned = ((totalTx.data ?? []) as any[]).reduce(
+      (acc: number, r: any) => acc + Number(r.net_cents ?? 0),
+      0,
+    );
 
-    // Top mídia (título = caption do publication)
+    // Top mídia
     const salesByPub = new Map<string, number>();
-    for (const t of (topMedia.data ?? []) as any[]) {
+    for (const t of ((topMedia.data ?? []) as any[])) {
       if (!t.reference_id) continue;
       salesByPub.set(t.reference_id, (salesByPub.get(t.reference_id) ?? 0) + 1);
     }
@@ -458,17 +316,17 @@ export const getCreatorHubHighlights = createServerFn({ method: "GET" })
         .select("caption")
         .eq("id", topPubId)
         .maybeSingle();
-      topMediaTitle = p?.caption ?? "Post sem legenda";
+      topMediaTitle = (p as any)?.caption ?? "Post sem legenda";
     }
 
     const requestedSet = new Set<number>(
-      ((trophies.data ?? []) as any[]).map((r) => Number(r.milestone_cents)),
+      (((trophies as any).data ?? []) as any[]).map((r) => Number(r.milestone_cents)),
     );
 
     return {
       sales: {
         revenue7dCents: revenue7d,
-        newSubscribers7d: newSubs.count ?? 0,
+        newSubscribers7d: (newSubs as any).count ?? 0,
         topMediaTitle,
         topMediaSalesCount: topCount,
       },
@@ -481,7 +339,7 @@ export const getCreatorHubHighlights = createServerFn({ method: "GET" })
         })),
       },
       moderation: {
-        count: (moderation.data ?? []).length,
+        count: ((moderation.data ?? []) as any[]).length,
         items: ((moderation.data ?? []) as any[]).map((m) => ({
           id: m.id,
           caption: m.caption,
@@ -500,7 +358,7 @@ export const requestTrophy = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const profileId = await getActiveProfileIdFor(supabase, userId);
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("trophy_requests")
       .insert({
         user_id: userId,
