@@ -1,0 +1,1 @@
+ALTER TABLE public.live_sessions ADD COLUMN IF NOT EXISTS followers_only boolean NOT NULL DEFAULT false;
