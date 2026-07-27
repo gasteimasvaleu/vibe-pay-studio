@@ -927,11 +927,24 @@ function ChatThreadView() {
                 value={(callPrice / 100).toFixed(2)}
                 onChange={(e) => setCallPrice(Math.round(Number(e.target.value) * 100))}
               />
+              <p className="text-xs text-muted-foreground">
+                Mínimo R$ 39,90 · máximo R$ 5.000,00
+              </p>
             </div>
             <Button
               className="w-full bg-gradient-primary"
-              disabled={callInviteMutation.isPending}
-              onClick={() => callInviteMutation.mutate({ priceCents: callPrice, durationMinutes: callDuration })}
+              disabled={
+                callInviteMutation.isPending ||
+                callPrice < 3990 ||
+                callPrice > 500000
+              }
+              onClick={() => {
+                if (callPrice < 3990) {
+                  toast.error("Valor mínimo da chamada é R$ 39,90");
+                  return;
+                }
+                callInviteMutation.mutate({ priceCents: callPrice, durationMinutes: callDuration });
+              }}
             >
               Enviar convite · válido por 10 min
             </Button>
