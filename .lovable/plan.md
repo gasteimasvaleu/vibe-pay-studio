@@ -1,38 +1,20 @@
 ## Objetivo
 
-Substituir o player nativo `<audio controls>` das mensagens de áudio no chat por um player customizado que exibe:
-- Ícone de áudio (mic/play) à esquerda
-- Barra de progresso (waveform estilizada com barrinhas) no centro
-- Duração / tempo atual à direita
-
-Isso vale tanto para o receptor quanto para o remetente, mantendo o esquema de cores (bolha roxa do usuário / bolha branca do outro).
+Melhorar contraste do `CallInviteCard` quando exibido em bolha "mine" (fundo roxo). Atualmente todos os textos usam `text-primary` / `text-muted-foreground`, ficando quase invisíveis sobre o gradiente roxo.
 
 ## Escopo
 
-Arquivos afetados:
-- `src/routes/_authenticated/chat.$threadId.tsx` (linha ~791) — troca `<audio controls>` por `<AudioBubble />`
-- Novo componente: `src/components/chat/AudioBubble.tsx`
+`src/routes/_authenticated/chat.$threadId.tsx` — `CallInviteCard` (linhas 89–144).
 
-Nada de backend, schema ou lógica de envio muda.
+## Mudança
 
-## Implementação
+Aplicar variantes condicionais por `mine`:
 
-**`AudioBubble.tsx`** — componente client-only:
-- Recebe `src: string` e `variant: 'mine' | 'theirs'`
-- Usa `<audio>` interno oculto (ref) para controlar playback
-- Estados: `playing`, `currentTime`, `duration`
-- Escuta `loadedmetadata`, `timeupdate`, `ended`
-- Layout horizontal (`flex items-center gap-2 px-2 py-1.5 min-w-[220px]`):
-  - Botão circular com ícone `Play`/`Pause` (lucide) — cor adapta ao variant
-  - Barra de "waveform": 28 divs de altura pseudo-aleatória (seed por src) renderizadas em flex; as barras à esquerda do progresso ficam preenchidas (cor primária/branca), as demais em opacidade baixa. Clique na barra faz seek proporcional.
-  - Texto `mm:ss` do tempo atual / duração
+- Container: `mine` usa `border-white/40 bg-white/15 backdrop-blur-sm`; `!mine` mantém `border-primary/30 bg-primary/5`.
+- Header "VIDEOCHAMADA" + ícone: `mine` → `text-white`; `!mine` → `text-primary`.
+- Linha "15 min · R$ ...": `mine` → `text-white font-medium`; `!mine` mantém.
+- Estado "Expirado" / "Cancelado": `mine` → `text-white/80`; `!mine` mantém `text-muted-foreground`.
+- Estado "Pagamento confirmado": `mine` → `text-emerald-200`; `!mine` mantém `text-emerald-600`.
+- Botão "Cancelar convite" (só aparece em `mine`): trocar `variant="outline"` por classes explícitas `border-white/50 bg-white/10 text-white hover:bg-white/20`.
 
-**Integração no chat:**
-- Substituir a linha 791 por: `return <AudioBubble key={idx} src={mm.url} variant={isMine ? 'mine' : 'theirs'} />;`
-- Remover `col-span-2` de dentro; envolver com `<div className="col-span-2">` quando necessário para manter grid.
-
-## Detalhes visuais
-
-- Bolha "mine" (roxa): ícone e barras em `text-white`, barras não-tocadas em `bg-white/30`, tocadas em `bg-white`
-- Bolha "theirs" (branca): ícone em `text-primary`, barras não-tocadas em `bg-muted-foreground/30`, tocadas em `bg-primary`
-- Altura das barras varia entre 6px–20px, largura 2px, gap 2px
+Sem mudanças de lógica ou backend.
