@@ -86,6 +86,7 @@ import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
 import { Route as AuthenticatedLiveLiveIdIndexRouteImport } from './routes/_authenticated/live.$liveId.index'
@@ -101,6 +102,7 @@ import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from '
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
 import { Route as AuthenticatedChatCallCallIdRouteImport } from './routes/_authenticated/chat.call.$callId'
+import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 import { Route as AuthenticatedCreatorOnboardingDocumentosIndexRouteImport } from './routes/_authenticated/creator.onboarding.documentos.index'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
 import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
@@ -531,6 +533,11 @@ const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
   path: '/bugs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedSettingsTwoFactorIndexRoute =
   AuthenticatedSettingsTwoFactorIndexRouteImport.update({
     id: '/',
@@ -619,6 +626,12 @@ const AuthenticatedChatCallCallIdRoute =
     path: '/call/$callId',
     getParentRoute: () => AuthenticatedChatRoute,
   } as any)
+const AuthenticatedAdminUsersUserIdRoute =
+  AuthenticatedAdminUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedAdminUsersRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingDocumentosIndexRoute =
   AuthenticatedCreatorOnboardingDocumentosIndexRouteImport.update({
     id: '/',
@@ -682,13 +695,14 @@ export interface FileRoutesByFullPath {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -721,6 +735,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
+  '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
@@ -776,13 +791,14 @@ export interface FileRoutesByTo {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro': typeof CadastroIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -812,6 +828,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
+  '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -871,13 +888,14 @@ export interface FileRoutesById {
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
+  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/refunds': typeof AuthenticatedAdminRefundsRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
-  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -910,6 +928,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
+  '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/_authenticated/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
@@ -970,6 +989,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro/'
+    | '/admin/audit'
     | '/admin/bugs'
     | '/admin/emails'
     | '/admin/leaks'
@@ -1009,6 +1029,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/chat/'
     | '/mywallet/'
+    | '/admin/users/$userId'
     | '/chat/call/$callId'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
@@ -1064,6 +1085,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro'
+    | '/admin/audit'
     | '/admin/bugs'
     | '/admin/emails'
     | '/admin/leaks'
@@ -1100,6 +1122,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/mywallet'
+    | '/admin/users/$userId'
     | '/chat/call/$callId'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
@@ -1158,6 +1181,7 @@ export interface FileRouteTypes {
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro/'
+    | '/_authenticated/admin/audit'
     | '/_authenticated/admin/bugs'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/leaks'
@@ -1197,6 +1221,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/chat/'
     | '/_authenticated/mywallet/'
+    | '/_authenticated/admin/users/$userId'
     | '/_authenticated/chat/call/$callId'
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
@@ -1779,6 +1804,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBugsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/settings/two-factor/': {
       id: '/_authenticated/settings/two-factor/'
       path: '/'
@@ -1884,6 +1916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatCallCallIdRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/admin/users/$userId': {
+      id: '/_authenticated/admin/users/$userId'
+      path: '/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminUsersRoute
+    }
     '/_authenticated/creator/onboarding/documentos/': {
       id: '/_authenticated/creator/onboarding/documentos/'
       path: '/'
@@ -1915,26 +1954,42 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminUsersRouteChildren {
+  AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
+}
+
+const AuthenticatedAdminUsersRouteChildren: AuthenticatedAdminUsersRouteChildren =
+  {
+    AuthenticatedAdminUsersUserIdRoute: AuthenticatedAdminUsersUserIdRoute,
+  }
+
+const AuthenticatedAdminUsersRouteWithChildren =
+  AuthenticatedAdminUsersRoute._addFileChildren(
+    AuthenticatedAdminUsersRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBugsRoute: typeof AuthenticatedAdminBugsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminRefundsRoute: typeof AuthenticatedAdminRefundsRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRouteWithChildren
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminBugsRoute: AuthenticatedAdminBugsRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminRefundsRoute: AuthenticatedAdminRefundsRoute,
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
-  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRouteWithChildren,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }

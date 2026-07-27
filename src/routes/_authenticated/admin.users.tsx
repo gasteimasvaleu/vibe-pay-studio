@@ -177,8 +177,8 @@ function AdminUsers() {
                         )}
                         <div>
                           <Link
-                            to="/$username"
-                            params={{ username: u.username }}
+                            to="/admin/users/$userId"
+                            params={{ userId: u.user_id }}
                             className="font-medium hover:underline"
                           >
                             @{u.username}
