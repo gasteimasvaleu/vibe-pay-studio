@@ -168,6 +168,12 @@ export function CreatorDashboard({
             to="/chat"
           />
           <ActionCard
+            icon={<Radio className="h-5 w-5" />}
+            title="Iniciar Live"
+            description="Transmita ao vivo e monetize agora"
+            to="/live/nova"
+          />
+          <ActionCard
             icon={<Landmark className="h-5 w-5" />}
             title="Meu Banco"
             description="Gerencie saques e saldo disponível"
