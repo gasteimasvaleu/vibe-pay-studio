@@ -1,0 +1,1 @@
+ALTER TABLE public.live_comments ADD COLUMN IF NOT EXISTS username text, ADD COLUMN IF NOT EXISTS avatar_url text;
