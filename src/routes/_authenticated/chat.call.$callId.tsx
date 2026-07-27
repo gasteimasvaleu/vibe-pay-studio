@@ -51,7 +51,9 @@ function VideoCallRoom() {
           };
         }
 
-        const credentials = await credentialsRef.current.promise;
+        const credentialsRequest = credentialsRef.current;
+        if (!credentialsRequest) throw new Error("Não foi possível preparar a chamada");
+        const credentials = await credentialsRequest.promise;
         if (cancelled || !containerRef.current) return;
 
         frame = DailyIframe.createFrame(containerRef.current, {
