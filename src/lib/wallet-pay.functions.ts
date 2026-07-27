@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type WalletPayInput = {
-  kind: "publication_unlock" | "chat_unlock" | "subscription" | "tip" | "story_unlock" | "video_call" | "paid_dm";
+  kind: "publication_unlock" | "chat_unlock" | "subscription" | "tip" | "story_unlock" | "video_call" | "paid_dm" | "live_ticket";
   publicationId?: string;
   messageId?: string;
   storyId?: string;
@@ -12,7 +12,9 @@ export type WalletPayInput = {
   message?: string;
   callId?: string;
   requestId?: string;
+  liveId?: string;
 };
+
 
 export type WalletPayResult = {
   ok: true;
@@ -34,13 +36,13 @@ export const payWithWallet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: WalletPayInput) => {
     if (!input || typeof input !== "object") throw new Error("invalid_input");
-    const kinds = ["publication_unlock", "chat_unlock", "subscription", "tip", "story_unlock", "video_call", "paid_dm"];
+    const kinds = ["publication_unlock", "chat_unlock", "subscription", "tip", "story_unlock", "video_call", "paid_dm", "live_ticket"];
     if (!kinds.includes(input.kind)) throw new Error("invalid_kind");
     return input;
   })
   .handler(async ({ data, context }): Promise<WalletPayResult> => {
     const { supabase } = context;
-    const { data: result, error } = await supabase.rpc("pay_with_wallet", {
+    const { data: result, error } = await (supabase.rpc as any)("pay_with_wallet", {
       _kind: data.kind,
       _publication_id: data.publicationId ?? undefined,
       _message_id: data.messageId ?? undefined,
@@ -51,7 +53,9 @@ export const payWithWallet = createServerFn({ method: "POST" })
       _story_id: data.storyId ?? undefined,
       _call_id: data.callId ?? undefined,
       _request_id: data.requestId ?? undefined,
+      _live_id: data.liveId ?? undefined,
     });
+
 
     if (error) {
       const raw = error.message ?? "wallet_payment_failed";
