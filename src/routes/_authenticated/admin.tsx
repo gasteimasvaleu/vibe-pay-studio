@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { requireAdminAccess } from "@/lib/admin-dashboard.functions";
 
-import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning, Bug, Mail, RefreshCcw, ScrollText, Radio, Film, Send, Video, CreditCard, Tag, Trophy, LineChart, Settings } from "lucide-react";
+import { LayoutDashboard, Receipt, Users, ShieldAlert, Banknote, FileWarning, Bug, Mail, RefreshCcw, ScrollText, Radio, Film, Send, Video, CreditCard, Tag, Trophy, LineChart, Settings, MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -38,6 +38,7 @@ const NAV = [
   { to: "/admin/leaks", label: "Vazamentos", icon: FileWarning, exact: false },
   { to: "/admin/bugs", label: "Bugs", icon: Bug, exact: false },
   { to: "/admin/emails", label: "E-mails", icon: Mail, exact: false },
+  { to: "/admin/contacts", label: "Contatos", icon: MessageSquare, exact: false },
   { to: "/admin/audit", label: "Auditoria", icon: ScrollText, exact: false },
   { to: "/admin/settings", label: "Ajustes", icon: Settings, exact: false },
 ] as const;

@@ -596,6 +596,51 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          admin_reply: string | null
+          answered_at: string | null
+          answered_by: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          reason: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_reply?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          reason: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_reply?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_leak_reports: {
         Row: {
           admin_notes: string | null
