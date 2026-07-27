@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Lock, Users as UsersIcon } from "lucide-react";
 import { getLive, registerLiveView } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { LiveTicketDialog } from "@/components/live/LiveTicketDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDarkSurface } from "@/hooks/useDarkSurface";
 import { WhepPlayer } from "@/components/live/WhepPlayer";
