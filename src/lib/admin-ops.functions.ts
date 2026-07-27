@@ -398,7 +398,7 @@ export const updatePlatformSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const patch = {
+    const patch: Record<string, any> = {
       ...data,
       updated_by: userId,
       updated_at: new Date().toISOString(),
