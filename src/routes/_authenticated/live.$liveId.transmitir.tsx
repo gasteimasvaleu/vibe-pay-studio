@@ -119,6 +119,39 @@ function TransmitirPage() {
     (async () => {
       const log = (step: string, extra?: unknown) =>
         console.info(`[whip] ${step}`, extra ?? "");
+
+      const inIframe = typeof window !== "undefined" && window.self !== window.top;
+      const isSecure = typeof window !== "undefined" && window.isSecureContext;
+      const hasMediaDevices = !!navigator.mediaDevices?.getUserMedia;
+      log("context", { inIframe, isSecure, hasMediaDevices });
+
+      if (!hasMediaDevices || !isSecure) {
+        setErrorMessage(
+          "Este navegador não pode acessar câmera/microfone (contexto não seguro). Abra em uma nova aba via HTTPS.",
+        );
+        setTransmissionState("permission-blocked");
+        return;
+      }
+
+      // Preview iframe do editor não vem com allow="camera; microphone".
+      // Detectamos e mostramos CTA para abrir em nova aba antes de disparar o prompt fantasma.
+      if (inIframe) {
+        try {
+          const cam = await navigator.permissions?.query?.({ name: "camera" as PermissionName });
+          const mic = await navigator.permissions?.query?.({ name: "microphone" as PermissionName });
+          log("permissions", { cam: cam?.state, mic: mic?.state });
+          if (cam?.state === "denied" || mic?.state === "denied") {
+            setErrorMessage(
+              "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar.",
+            );
+            setTransmissionState("permission-blocked");
+            return;
+          }
+        } catch {
+          // Permissions API pode não suportar 'camera'/'microphone' em alguns browsers — seguimos.
+        }
+      }
+
       try {
         setTransmissionState("getting-media");
         log("getUserMedia:start");
@@ -146,7 +179,6 @@ function TransmitirPage() {
         });
         pcRef.current = pc;
 
-        // Cloudflare WHIP expects sendonly transceivers, not addTrack's default sendrecv.
         const videoTrack = stream.getVideoTracks()[0];
         const audioTrack = stream.getAudioTracks()[0];
         const videoTx = pc.addTransceiver("video", { direction: "sendonly" });
@@ -163,6 +195,7 @@ function TransmitirPage() {
           }
           if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
             setConnected(false);
+            setErrorMessage("A conexão de mídia caiu");
             setTransmissionState("error");
           }
         };
@@ -194,7 +227,6 @@ function TransmitirPage() {
           );
         }
 
-        // Cloudflare returns 201 + Location = resource URL used to DELETE the session.
         const location = res.headers.get("Location");
         if (location) {
           try {
@@ -211,8 +243,28 @@ function TransmitirPage() {
       } catch (e: any) {
         console.error("[whip] fatal", e);
         setConnected(false);
-        setTransmissionState("error");
-        toast.error(e?.message ?? "Falha ao iniciar transmissão");
+
+        const name: string = e?.name ?? "";
+        let msg = e?.message ?? "Falha ao iniciar transmissão";
+        let nextState: TransmissionState = "error";
+
+        if (name === "NotAllowedError") {
+          msg = inIframe
+            ? "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
+            : "Permissão negada. Autorize a câmera e o microfone nas configurações do navegador.";
+          nextState = inIframe ? "permission-blocked" : "error";
+        } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+          msg = "Nenhuma câmera ou microfone disponível neste dispositivo.";
+        } else if (name === "NotReadableError") {
+          msg = "Câmera/microfone em uso por outro aplicativo. Feche-o e tente de novo.";
+        } else if (name === "SecurityError") {
+          msg = "Este preview não pode acessar câmera/microfone. Abra em uma nova aba para autorizar.";
+          nextState = "permission-blocked";
+        }
+
+        setErrorMessage(msg);
+        setTransmissionState(nextState);
+        if (nextState !== "permission-blocked") toast.error(msg);
       }
     })();
     return () => {
@@ -226,7 +278,7 @@ function TransmitirPage() {
       setConnected(false);
       void closePublisher(pc, stream, resource);
     };
-  }, [whipUrl, liveId, queryClient]);
+  }, [whipUrl, liveId, queryClient, retryTick]);
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
