@@ -181,9 +181,8 @@ function ContatoPage() {
               .
             </p>
           </div>
-        </div>
-      </div>
-    </SiteLayout>
+        </article>
+      </SiteLayout>
   );
 }
 
