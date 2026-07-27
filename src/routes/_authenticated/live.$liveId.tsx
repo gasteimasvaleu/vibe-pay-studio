@@ -36,6 +36,7 @@ function LiveViewerPage() {
   const payFn = useServerFn(payWithWallet);
   const [buying, setBuying] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
+  const [playbackState, setPlaybackState] = useState<"idle" | "connecting" | "waiting" | "playing" | "error">("idle");
 
   const { data: live, refetch } = useQuery({
     queryKey: ["live", liveId],
@@ -97,7 +98,7 @@ function LiveViewerPage() {
       displayName={live.creator.displayName}
       avatarUrl={live.creator.avatarUrl}
       viewers={viewersDisplay}
-      status={live.status}
+      status={live.status === "live" && live.canWatch ? (playbackState === "playing" ? "live" : "starting") : live.status}
     />
   );
 
@@ -106,7 +107,15 @@ function LiveViewerPage() {
       return <div className="w-full h-full grid place-items-center text-white/70 text-sm">Esta live foi encerrada.</div>;
     }
     if (live.canWatch) {
-      return <WhepPlayer whepUrl={live.whepUrl} objectFit={fit} className="w-full h-full" />;
+      return (
+        <WhepPlayer
+          whepUrl={live.whepUrl}
+          hlsUrl={live.hlsUrl}
+          objectFit={fit}
+          className="w-full h-full"
+          onPlaybackStateChange={setPlaybackState}
+        />
+      );
     }
     return (
       <div className="w-full h-full grid place-items-center p-6">
