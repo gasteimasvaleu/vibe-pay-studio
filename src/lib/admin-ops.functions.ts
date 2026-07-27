@@ -165,7 +165,7 @@ export const listAdminVideoCalls = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status) q = q.eq("status", data.status);
+    if (data.status) q = q.eq("status", data.status as any);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     const profs = await hydrateProfiles(
@@ -210,7 +210,7 @@ export const listAdminSubscriptions = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status) q = q.eq("status", data.status);
+    if (data.status) q = q.eq("status", data.status as any);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     const profs = await hydrateProfiles(
@@ -268,7 +268,7 @@ export const listAdminPromotions = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status) q = q.eq("status", data.status);
+    if (data.status) q = q.eq("status", data.status as any);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     const profs = await hydrateProfiles(supabase, (rows ?? []).map((r: any) => r.creator_id));
