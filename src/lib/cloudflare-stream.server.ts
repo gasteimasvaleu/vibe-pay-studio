@@ -6,7 +6,7 @@ const CF_API = "https://api.cloudflare.com/client/v4";
 function creds() {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const rawToken = process.env.CLOUDFLARE_STREAM_API_TOKEN;
-  if (!accountId || !token) {
+  if (!accountId || !rawToken) {
     throw new Error("Cloudflare Stream não configurado (CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_STREAM_API_TOKEN).");
   }
   const token = rawToken.replace(/^Bearer\s+/i, "").trim();
