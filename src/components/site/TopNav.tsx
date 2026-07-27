@@ -103,15 +103,6 @@ export function TopNav() {
           >
             <Search className="h-5 w-5" />
           </Link>
-          {isCreator && (
-            <Link
-              to="/creator-hub"
-              aria-label="Creator Hub"
-              className="h-9 w-9 grid place-items-center rounded-full text-primary hover:bg-accent transition-colors"
-            >
-              <Sparkles className="h-5 w-5" />
-            </Link>
-          )}
           {isAdmin && (
             <Link
               to="/admin"
