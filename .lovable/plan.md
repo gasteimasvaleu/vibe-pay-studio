@@ -1,66 +1,47 @@
 
-## Diagnóstico do painel atual
+## Objetivo
+Criar formulário público `/contato` inspirado no screenshot (Privacy) e um módulo admin para triagem/resposta das mensagens recebidas.
 
-Hoje `/admin` tem 9 abas: **Visão geral, Transações, Usuários (ban/unban + refresh KYC), Saques, Reembolsos, Moderação (denúncias), Vazamentos, Bugs, E-mails**.
+## Banco de dados
+Nova migração criando `public.contact_messages`:
+- Campos: `name`, `email`, `reason` (enum), `message`, `status` (`open` | `in_progress` | `answered` | `closed`), `admin_reply`, `answered_by`, `answered_at`, `user_id` (nullable — preenchido se logado).
+- RLS:
+  - INSERT liberado para `anon` e `authenticated` (com validação de tamanho).
+  - SELECT/UPDATE/DELETE apenas admins (via `has_role`).
+- GRANTs: `INSERT` para `anon` + `authenticated`; `ALL` para `service_role`; `SELECT/UPDATE` para `authenticated` (RLS restringe a admins).
+- Índices por `status` e `created_at`.
+- Trigger `update_updated_at`.
+- Registro em `audit_logs` fica por conta da server function admin.
 
-Existem server functions já prontas **mas sem UI**:
-- `grantRole` / `revokeRole` (promover admin/moderador)
-- `setKycStatus` (override manual de KYC)
-- `moderatePublication` (esconder/remover post específico)
-- `listAuditLogs` (trilha de auditoria)
+## Server functions (`src/lib/contact.functions.ts`)
+- `submitContact` (público, sem middleware): valida com Zod (nome ≤100, email válido, reason ∈ lista, mensagem 10–2000), captura `user_id` se sessão existir, insere via client publishable.
+- `listContactMessages` (admin): filtros por status/motivo/busca, paginação.
+- `replyContactMessage` (admin): grava `admin_reply`, marca `answered`, dispara e-mail via Resend (`from` padrão do projeto) ao remetente, loga em `audit_logs`.
+- `updateContactStatus` (admin): alterar status manualmente (ex. fechar sem resposta).
 
-E há áreas do app **sem qualquer controle administrativo**: Lives, Stories, Broadcasts, Videochamadas, Blog, Central de Ajuda, Troféus, Assinaturas, Promoções, Reconciliação Asaas, Sessões ativas, Conteúdo do banido e Configurações globais.
+## Frontend público — `src/routes/contato.tsx`
+Rota pública (fora de `_authenticated`), usando `SiteLayout` para manter identidade Monetisexy (não copiar cor bege/laranja do Privacy — adaptar aos tokens do app, roxo/rosa).
+- Header com título "Fale com a Monetisexy" e subtítulo do screenshot.
+- Card centralizado (max-w-2xl) com inputs arredondados (`rounded-full` nos inputs simples, `rounded-3xl` no textarea) imitando a estrutura visual:
+  - NOME (ícone user)
+  - EMAIL (ícone @)
+  - MOTIVO (Select shadcn com opções: Cadastros, Acesso ao Perfil, Pagamentos com Cartão de Crédito, Pagamentos, Cancelar Minha Solicitação de Pagamento, Perguntas Técnicas, Reportar Conteúdo Roubado, Aplicação da Lei / Assunto Jurídico, Relatar Material ou Comportamento Ilegal, Marketing e Parcerias, Problemas com Autenticação 2 Fatores, Outro)
+  - MENSAGEM (textarea)
+- Botão "Enviar" full-width, desabilitado enquanto inválido.
+- Rodapé com endereço institucional da Monetisexy + link para "Guia de aplicação da lei" apontando para `/centro-e-seguranca`.
+- Head SEO: title/description/og próprios.
+- Toast de sucesso e reset após envio.
+- Link no Footer global adicionado em `src/components/site/Footer.tsx`.
 
-## Plano — novos módulos do painel
-
-### 1. Detalhe do usuário `/admin/users/$userId`
-Drill-down ao clicar no `@username` da tabela: perfis vinculados, roles (com botões **Promover admin/moderador / Revogar**), KYC (override para `verified/rejected/processing`), carteiras (subscriber + creator), últimas 50 transações, assinaturas ativas, sessões ativas com **Revogar sessão** e **Revogar todas**, publicações/stories/lives e botão **Excluir todo conteúdo** (usado em conjunto com o ban).
-
-### 2. `/admin/lives` e `/admin/stories`
-Lista com filtros (ao vivo, agendadas, encerradas / ativas, expiradas). Ações: **Ver player**, **Encerrar live** (força `ended_at` + fecha input Cloudflare), **Ocultar/Remover story ou live** com registro em `audit_logs` e motivo.
-
-### 3. `/admin/broadcasts` e `/admin/videocalls`
-- Broadcasts: status de cada job (`broadcast_jobs`), destinatários, receita, botão **Cancelar** enquanto `queued`.
-- Videochamadas: fila (`video_calls`), sala Daily, status de pagamento, botão **Encerrar** e **Reembolsar** (chama fluxo existente).
-
-### 4. `/admin/subscriptions` e `/admin/promotions`
-Listar assinaturas ativas com filtros por criador/assinante, botões **Cancelar renovação** e **Encerrar imediatamente** (aciona Asaas). Listar promoções ativas com opção de **Pausar/Encerrar** override.
-
-### 5. `/admin/reports` — expansão do módulo Moderação
-Manter a aba Moderação atual, mas quando o alvo for `publication`/`profile`/`chat_message` mostrar o conteúdo em preview e **botões contextuais**: **Ocultar publicação**, **Remover publicação**, **Silenciar autor**, **Banir autor**, **Apagar mensagem**. Chama `moderatePublication` já existente e novas fns pequenas para chat/profile.
-
-### 6. `/admin/trophies`
-UI para `trophy_requests`: aprovar/rejeitar/marcar como enviado com notas admin. Fluxo já existe no lado creator, falta a contraparte admin.
-
-### 7. `/admin/finance`
-Sub-abas:
-- **Reconciliação Asaas**: inspecionar `asaas_events` e `payment_intents`, reprocessar evento (rechamar webhook handler), marcar transação manual como paga/refunded.
-- **Auditoria**: viewer de `audit_logs` (já tem fn `listAuditLogs`) com filtros por actor/action/target.
-
-### 8. `/admin/content` (Blog + Central de Ajuda)
-CRUD para `blog_posts`, `blog_categories`, `help_categories`, `help_sections`, `help_articles` (editor markdown/HTML simples). Hoje só existem via SQL.
-
-### 9. `/admin/settings`
-Painel global: taxas (comissão nacional/internacional, gateway), limites de saque, valor mínimo de PPV/DM/videochamada, toggles de features (lives, broadcasts). Persistidos numa nova tabela `platform_settings` (single row) lida pelas server fns existentes.
-
-### 10. Navbar do admin
-Reorganizar em grupos (Financeiro / Usuários / Conteúdo / Suporte / Sistema) para caber os novos itens sem overflow horizontal.
+## Admin — `/admin/contacts`
+- Nova rota `src/routes/_authenticated/admin.contacts.tsx` seguindo padrão `AdminTablePage`.
+- Filtros: status (Abertas / Em andamento / Respondidas / Fechadas / Todas) e motivo.
+- Tabela: data, remetente (nome + email), motivo, preview da mensagem, status (badge), ações.
+- Dialog de detalhe: exibe mensagem completa + campo de resposta (textarea) + botões "Enviar resposta" (dispara email) e "Marcar como fechada".
+- Registrar todas ações em `audit_logs`.
+- Adicionar entry no `ADMIN_NAV` em `src/routes/_authenticated/admin.tsx` (grupo Comunicação/Suporte).
 
 ## Detalhes técnicos
-
-- **Backend**: novas server fns em `src/lib/admin-*.functions.ts` cobrindo listagens/ações; todas gateadas por `requireAdminAccess` + gravam `audit_logs`. Ações destrutivas exigem motivo (≥3 chars) igual ao fluxo de ban.
-- **SQL**: 
-  - nova tabela `platform_settings` (jsonb) com RLS **admin-only** + seed default;
-  - índices `audit_logs(actor_id, created_at)`, `broadcast_jobs(status)`, `video_calls(status, created_at)`, `live_sessions(status)` para as listagens.
-- **RLS**: novas policies `admin can select` (via `has_role(auth.uid(),'admin')`) em `asaas_events`, `payment_intents`, `broadcast_jobs`, `video_calls`, `live_sessions`, `trophy_requests` — hoje algumas dessas negam SELECT geral.
-- **Frontend**: cada nova rota segue o padrão `_authenticated/admin.*.tsx` já usado (Card + tabela + filtros pill + `useQuery`), reusando `AlertDialog` para confirmações destrutivas.
-- **Auditoria**: toda ação admin (ban, override KYC, moderar post, encerrar live, cancelar assinatura, reprocessar webhook, editar settings) chama helper `logAudit(action, target_table, target_id, metadata)`.
-
-## Ordem de entrega sugerida
-
-1. Detalhe do usuário + gestão de roles + KYC override + audit viewer (destranca operação diária).
-2. Moderação expandida (ações contextuais em denúncias) + Lives/Stories.
-3. Reembolsos↔Reconciliação Asaas + Assinaturas/Promoções + Videochamadas/Broadcasts.
-4. Troféus + Blog/Central de Ajuda + Settings globais + reorganização da nav.
-
-Cada etapa é um PR independente que já deixa o painel utilizável antes da próxima.
+- E-mail de resposta: usa integração Resend já existente no projeto (mesma usada em cobranças PIX). Se faltar util, criar wrapper em `src/lib/emails.server.ts` reaproveitando client existente. Template simples HTML com resposta + assinatura Monetisexy.
+- Validação Zod compartilhada entre client e server (`src/lib/contact.schema.ts`).
+- Toda cor/estilo via tokens do design system — sem hex hardcoded.
