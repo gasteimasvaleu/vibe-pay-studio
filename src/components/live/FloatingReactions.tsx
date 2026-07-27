@@ -1,30 +1,38 @@
 import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export interface FloatingReactionsHandle {
   push: (emoji: string) => void;
 }
 
-type Item = { id: number; emoji: string; left: number; drift: number; duration: number };
-
-let _seq = 1;
+type Reaction = {
+  id: string;
+  emoji: string;
+  offsetX: number;
+  startX: number;
+  rotate: number;
+  scale: number;
+};
 
 export const FloatingReactions = forwardRef<FloatingReactionsHandle>(function FloatingReactions(_p, ref) {
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Reaction[]>([]);
   const timeouts = useRef<number[]>([]);
 
   useImperativeHandle(ref, () => ({
     push: (emoji: string) => {
-      const item: Item = {
-        id: _seq++,
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const reaction: Reaction = {
+        id,
         emoji,
-        left: 20 + Math.random() * 60,
-        drift: (Math.random() - 0.5) * 40,
-        duration: 2400 + Math.random() * 900,
+        offsetX: (Math.random() - 0.5) * 80,
+        startX: Math.random() * 40,
+        rotate: (Math.random() - 0.5) * 30,
+        scale: 0.9 + Math.random() * 0.4,
       };
-      setItems((cur) => [...cur, item]);
+      setItems((prev) => [...prev, reaction]);
       const t = window.setTimeout(() => {
-        setItems((cur) => cur.filter((i) => i.id !== item.id));
-      }, item.duration + 100);
+        setItems((prev) => prev.filter((r) => r.id !== id));
+      }, 2400);
       timeouts.current.push(t);
     },
   }));
@@ -32,28 +40,34 @@ export const FloatingReactions = forwardRef<FloatingReactionsHandle>(function Fl
   useEffect(() => () => { timeouts.current.forEach(clearTimeout); }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {items.map((i) => (
-        <span
-          key={i.id}
-          className="floating-reaction absolute bottom-2 text-2xl select-none"
-          style={{
-            left: `${i.left}%`,
-            // @ts-ignore custom prop
-            "--drift": `${i.drift}px`,
-            animation: `floatUp ${i.duration}ms ease-out forwards`,
-          }}
-        >
-          {i.emoji}
-        </span>
-      ))}
-      <style>{`
-        @keyframes floatUp {
-          0%   { transform: translate(0, 0) scale(0.6); opacity: 0; }
-          15%  { opacity: 1; transform: translate(0, -10px) scale(1); }
-          100% { transform: translate(var(--drift, 0px), -220px) scale(1.1); opacity: 0; }
-        }
-      `}</style>
+    <div
+      className="pointer-events-none absolute bottom-0 right-0 h-full w-32 overflow-hidden z-20"
+      aria-hidden
+    >
+      <AnimatePresence>
+        {items.map((r) => (
+          <motion.div
+            key={r.id}
+            initial={{ y: 0, x: r.startX, opacity: 0, scale: 0.4 }}
+            animate={{
+              y: -360,
+              x: r.startX + r.offsetX,
+              opacity: [0, 1, 1, 0],
+              scale: r.scale,
+              rotate: r.rotate,
+            }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: 2.2,
+              ease: "easeOut",
+              opacity: { times: [0, 0.15, 0.7, 1], duration: 2.2 },
+            }}
+            className="absolute bottom-2 right-4 text-4xl select-none drop-shadow-sm"
+          >
+            {r.emoji}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 });
