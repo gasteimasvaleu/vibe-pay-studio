@@ -1520,6 +1520,57 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          commission_pct_international: number
+          commission_pct_national: number
+          feature_broadcasts_enabled: boolean
+          feature_lives_enabled: boolean
+          feature_stories_enabled: boolean
+          feature_videocalls_enabled: boolean
+          gateway_fee_pct: number
+          id: boolean
+          min_dm_cents: number
+          min_ppv_cents: number
+          min_videocall_cents: number
+          min_withdrawal_cents: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          commission_pct_international?: number
+          commission_pct_national?: number
+          feature_broadcasts_enabled?: boolean
+          feature_lives_enabled?: boolean
+          feature_stories_enabled?: boolean
+          feature_videocalls_enabled?: boolean
+          gateway_fee_pct?: number
+          id?: boolean
+          min_dm_cents?: number
+          min_ppv_cents?: number
+          min_videocall_cents?: number
+          min_withdrawal_cents?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          commission_pct_international?: number
+          commission_pct_national?: number
+          feature_broadcasts_enabled?: boolean
+          feature_lives_enabled?: boolean
+          feature_stories_enabled?: boolean
+          feature_videocalls_enabled?: boolean
+          gateway_fee_pct?: number
+          id?: boolean
+          min_dm_cents?: number
+          min_ppv_cents?: number
+          min_videocall_cents?: number
+          min_withdrawal_cents?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profile_views: {
         Row: {
           country: string | null

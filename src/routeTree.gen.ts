@@ -79,13 +79,22 @@ import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
+import { Route as AuthenticatedAdminVideocallsRouteImport } from './routes/_authenticated/admin.videocalls'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminTrophiesRouteImport } from './routes/_authenticated/admin.trophies'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
+import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
+import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin.stories'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRefundsRouteImport } from './routes/_authenticated/admin.refunds'
+import { Route as AuthenticatedAdminPromotionsRouteImport } from './routes/_authenticated/admin.promotions'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as AuthenticatedAdminLivesRouteImport } from './routes/_authenticated/admin.lives'
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
+import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
+import { Route as AuthenticatedAdminBroadcastsRouteImport } from './routes/_authenticated/admin.broadcasts'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
 import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
@@ -494,15 +503,45 @@ const AuthenticatedAdminWithdrawalsRoute =
     path: '/withdrawals',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminVideocallsRoute =
+  AuthenticatedAdminVideocallsRouteImport.update({
+    id: '/videocalls',
+    path: '/videocalls',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTrophiesRoute =
+  AuthenticatedAdminTrophiesRouteImport.update({
+    id: '/trophies',
+    path: '/trophies',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminTransactionsRoute =
   AuthenticatedAdminTransactionsRouteImport.update({
     id: '/transactions',
     path: '/transactions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSubscriptionsRoute =
+  AuthenticatedAdminSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminStoriesRoute =
+  AuthenticatedAdminStoriesRouteImport.update({
+    id: '/stories',
+    path: '/stories',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminRefundsRoute =
@@ -511,17 +550,34 @@ const AuthenticatedAdminRefundsRoute =
     path: '/refunds',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPromotionsRoute =
+  AuthenticatedAdminPromotionsRouteImport.update({
+    id: '/promotions',
+    path: '/promotions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminModerationRoute =
   AuthenticatedAdminModerationRouteImport.update({
     id: '/moderation',
     path: '/moderation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLivesRoute = AuthenticatedAdminLivesRouteImport.update({
+  id: '/lives',
+  path: '/lives',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminLeaksRoute = AuthenticatedAdminLeaksRouteImport.update({
   id: '/leaks',
   path: '/leaks',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminFinanceRoute =
+  AuthenticatedAdminFinanceRouteImport.update({
+    id: '/finance',
+    path: '/finance',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminEmailsRoute =
   AuthenticatedAdminEmailsRouteImport.update({
     id: '/emails',
@@ -533,6 +589,12 @@ const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
   path: '/bugs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminBroadcastsRoute =
+  AuthenticatedAdminBroadcastsRouteImport.update({
+    id: '/broadcasts',
+    path: '/broadcasts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -696,13 +758,22 @@ export interface FileRoutesByFullPath {
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
+  '/admin/lives': typeof AuthenticatedAdminLivesRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/promotions': typeof AuthenticatedAdminPromotionsRoute
   '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -792,13 +863,22 @@ export interface FileRoutesByTo {
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro': typeof CadastroIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
+  '/admin/lives': typeof AuthenticatedAdminLivesRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/promotions': typeof AuthenticatedAdminPromotionsRoute
   '/admin/refunds': typeof AuthenticatedAdminRefundsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -889,13 +969,22 @@ export interface FileRoutesById {
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/_authenticated/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
+  '/_authenticated/admin/lives': typeof AuthenticatedAdminLivesRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/_authenticated/admin/promotions': typeof AuthenticatedAdminPromotionsRoute
   '/_authenticated/admin/refunds': typeof AuthenticatedAdminRefundsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/_authenticated/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/_authenticated/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
@@ -990,13 +1079,22 @@ export interface FileRouteTypes {
     | '/cadastro/confirme-email'
     | '/cadastro/'
     | '/admin/audit'
+    | '/admin/broadcasts'
     | '/admin/bugs'
     | '/admin/emails'
+    | '/admin/finance'
     | '/admin/leaks'
+    | '/admin/lives'
     | '/admin/moderation'
+    | '/admin/promotions'
     | '/admin/refunds'
+    | '/admin/settings'
+    | '/admin/stories'
+    | '/admin/subscriptions'
     | '/admin/transactions'
+    | '/admin/trophies'
     | '/admin/users'
+    | '/admin/videocalls'
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
@@ -1086,13 +1184,22 @@ export interface FileRouteTypes {
     | '/cadastro/confirme-email'
     | '/cadastro'
     | '/admin/audit'
+    | '/admin/broadcasts'
     | '/admin/bugs'
     | '/admin/emails'
+    | '/admin/finance'
     | '/admin/leaks'
+    | '/admin/lives'
     | '/admin/moderation'
+    | '/admin/promotions'
     | '/admin/refunds'
+    | '/admin/settings'
+    | '/admin/stories'
+    | '/admin/subscriptions'
     | '/admin/transactions'
+    | '/admin/trophies'
     | '/admin/users'
+    | '/admin/videocalls'
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
@@ -1182,13 +1289,22 @@ export interface FileRouteTypes {
     | '/cadastro/confirme-email'
     | '/cadastro/'
     | '/_authenticated/admin/audit'
+    | '/_authenticated/admin/broadcasts'
     | '/_authenticated/admin/bugs'
     | '/_authenticated/admin/emails'
+    | '/_authenticated/admin/finance'
     | '/_authenticated/admin/leaks'
+    | '/_authenticated/admin/lives'
     | '/_authenticated/admin/moderation'
+    | '/_authenticated/admin/promotions'
     | '/_authenticated/admin/refunds'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/stories'
+    | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/transactions'
+    | '/_authenticated/admin/trophies'
     | '/_authenticated/admin/users'
+    | '/_authenticated/admin/videocalls'
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
@@ -1755,11 +1871,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/videocalls': {
+      id: '/_authenticated/admin/videocalls'
+      path: '/videocalls'
+      fullPath: '/admin/videocalls'
+      preLoaderRoute: typeof AuthenticatedAdminVideocallsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/trophies': {
+      id: '/_authenticated/admin/trophies'
+      path: '/trophies'
+      fullPath: '/admin/trophies'
+      preLoaderRoute: typeof AuthenticatedAdminTrophiesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/transactions': {
@@ -1769,11 +1899,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/subscriptions': {
+      id: '/_authenticated/admin/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AuthenticatedAdminSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/stories': {
+      id: '/_authenticated/admin/stories'
+      path: '/stories'
+      fullPath: '/admin/stories'
+      preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/refunds': {
       id: '/_authenticated/admin/refunds'
       path: '/refunds'
       fullPath: '/admin/refunds'
       preLoaderRoute: typeof AuthenticatedAdminRefundsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/promotions': {
+      id: '/_authenticated/admin/promotions'
+      path: '/promotions'
+      fullPath: '/admin/promotions'
+      preLoaderRoute: typeof AuthenticatedAdminPromotionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/moderation': {
@@ -1783,11 +1941,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/lives': {
+      id: '/_authenticated/admin/lives'
+      path: '/lives'
+      fullPath: '/admin/lives'
+      preLoaderRoute: typeof AuthenticatedAdminLivesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/leaks': {
       id: '/_authenticated/admin/leaks'
       path: '/leaks'
       fullPath: '/admin/leaks'
       preLoaderRoute: typeof AuthenticatedAdminLeaksRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/finance': {
+      id: '/_authenticated/admin/finance'
+      path: '/finance'
+      fullPath: '/admin/finance'
+      preLoaderRoute: typeof AuthenticatedAdminFinanceRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/emails': {
@@ -1802,6 +1974,13 @@ declare module '@tanstack/react-router' {
       path: '/bugs'
       fullPath: '/admin/bugs'
       preLoaderRoute: typeof AuthenticatedAdminBugsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/broadcasts': {
+      id: '/_authenticated/admin/broadcasts'
+      path: '/broadcasts'
+      fullPath: '/admin/broadcasts'
+      preLoaderRoute: typeof AuthenticatedAdminBroadcastsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/audit': {
@@ -1970,26 +2149,44 @@ const AuthenticatedAdminUsersRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
+  AuthenticatedAdminBroadcastsRoute: typeof AuthenticatedAdminBroadcastsRoute
   AuthenticatedAdminBugsRoute: typeof AuthenticatedAdminBugsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
+  AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
+  AuthenticatedAdminLivesRoute: typeof AuthenticatedAdminLivesRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
+  AuthenticatedAdminPromotionsRoute: typeof AuthenticatedAdminPromotionsRoute
   AuthenticatedAdminRefundsRoute: typeof AuthenticatedAdminRefundsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminStoriesRoute: typeof AuthenticatedAdminStoriesRoute
+  AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
+  AuthenticatedAdminTrophiesRoute: typeof AuthenticatedAdminTrophiesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRouteWithChildren
+  AuthenticatedAdminVideocallsRoute: typeof AuthenticatedAdminVideocallsRoute
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
+  AuthenticatedAdminBroadcastsRoute: AuthenticatedAdminBroadcastsRoute,
   AuthenticatedAdminBugsRoute: AuthenticatedAdminBugsRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
+  AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
+  AuthenticatedAdminLivesRoute: AuthenticatedAdminLivesRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
+  AuthenticatedAdminPromotionsRoute: AuthenticatedAdminPromotionsRoute,
   AuthenticatedAdminRefundsRoute: AuthenticatedAdminRefundsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminStoriesRoute: AuthenticatedAdminStoriesRoute,
+  AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
+  AuthenticatedAdminTrophiesRoute: AuthenticatedAdminTrophiesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRouteWithChildren,
+  AuthenticatedAdminVideocallsRoute: AuthenticatedAdminVideocallsRoute,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
