@@ -235,6 +235,7 @@ function LiveViewerPage() {
         priceCents={live.priceCents}
         onPaid={() => refetch()}
       />
+      </div>
     </div>
   );
 
