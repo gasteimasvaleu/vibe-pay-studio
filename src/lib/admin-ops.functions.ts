@@ -406,7 +406,7 @@ export const updatePlatformSettings = createServerFn({ method: "POST" })
     delete patch.id;
     const { error } = await supabase
       .from("platform_settings")
-      .update(patch)
+      .update(patch as any)
       .eq("id", true);
     if (error) throw new Error(error.message);
     await logAudit(supabase, userId, "platform_settings.updated", "platform_settings", null, patch);
