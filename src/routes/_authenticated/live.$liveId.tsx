@@ -44,6 +44,13 @@ function LiveViewerPage() {
     refetchInterval: 15_000,
   });
 
+  // Dono nunca fica na tela de espectador — vai direto para a transmissão.
+  useEffect(() => {
+    if (live?.isOwner) {
+      navigate({ to: "/live/$liveId/transmitir", params: { liveId }, replace: true });
+    }
+  }, [live?.isOwner, liveId, navigate]);
+
   useEffect(() => {
     if (live?.canWatch) registerViewFn({ data: { liveId } }).catch(() => {});
   }, [live?.canWatch, liveId, registerViewFn]);
