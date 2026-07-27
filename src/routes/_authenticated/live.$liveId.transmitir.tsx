@@ -29,6 +29,7 @@ type TransmissionState =
   | "posting-whip"
   | "waiting-ice-connect"
   | "live"
+  | "permission-blocked"
   | "error";
 
 function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
