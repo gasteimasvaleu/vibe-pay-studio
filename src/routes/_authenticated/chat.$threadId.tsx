@@ -26,6 +26,7 @@ import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
 import { MessageActionsMenu } from "@/components/chat/MessageActionsMenu";
+import { AudioBubble } from "@/components/chat/AudioBubble";
 
 import { FloatingEmojiLayer, type FloatingEmoji } from "@/components/chat/FloatingEmojiLayer";
 import { BroadcastDialog } from "@/components/chat/BroadcastDialog";
