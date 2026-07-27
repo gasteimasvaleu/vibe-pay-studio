@@ -1,97 +1,43 @@
+## Alinhamento com a spec: `sendLiveMessage` + `FloatingReactions`
 
-# Refinamento WhepPlayer + useLiveChat
+Comparei o código atual com a spec enviada. A base já cobre o essencial (middleware de auth, Zod, rate-limit, RLS na inserção). Faltam dois refinamentos: **denormalizar identidade nas mensagens** e **reescrever as reações com Framer Motion + `AnimatePresence`**.
 
-Aplicar os dois padrões detalhados sem mudar o modelo de dados (`live_comments` continua sendo a fonte persistida). Componentes ficam isolados por canal — vídeo e chat não se conhecem.
+### 1. Denormalização de identidade em `live_comments`
 
-## 1) WhepPlayer com estado e overlay
+Hoje `live_comments` guarda só `user_id` e `getLiveMessages` faz JOIN com `profiles` a cada leitura. A spec pede snapshot do username/avatar no momento do envio (histórico "fotografado", sem JOIN).
 
-Arquivo: `src/components/live/WhepPlayer.tsx` (reescrever)
+- Migração: adicionar `username text` e `avatar_url text` em `public.live_comments` (nullable, sem default).
+- `sendLiveMessage`: buscar `profiles(username, display_name, avatar_url)` do `context.userId` e inserir junto o snapshot; retornar a mensagem já com esses campos (sem 2ª query).
+- `getLiveMessages`: usar `username`/`avatar_url` da própria linha e só fazer fallback ao JOIN em `profiles` para linhas antigas onde os campos ficaram null.
+- Rate-limit: manter o Map em memória (política do projeto proíbe rate-limit persistido por padrão — sinalizar isso ao usuário caso queira upgrade).
 
-Mudanças:
-- `new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }] })`
-- Criar `MediaStream` vazio e já anexar em `<video srcObject>`; no listener `track`, `event.streams[0].getTracks().forEach(t => remoteStream.addTrack(t))` (em vez de trocar `srcObject`)
-- Estado `status: "connecting" | "playing" | "error"` — `setStatus("playing")` no primeiro `track`; `setStatus("error")` no catch
-- Espera `iceGatheringState === "complete"` com timeout 2s (já feito, mas manter cleanup listener corretamente)
-- Cleanup: `pc.getSenders().forEach(s => s.track?.stop())` + `pc.close()` + `video.srcObject = null`
-- Wrapper `relative` com `<video muted autoPlay playsInline>` e overlay absoluto quando `status !== "playing"`:
-  - `"connecting"`: spinner + "Conectando…"
-  - `"error"`: "Não foi possível conectar" + botão "Tentar novamente" (bump numa key/version que reexecuta o effect)
-- Manter props existentes (`whepUrl`, `objectFit`, `className`, `muted`) para não quebrar callers
+### 2. Reescrever `FloatingReactions.tsx` com Framer Motion
 
-## 2) Server functions para chat persistido
+Substituir a implementação atual (CSS keyframes + `<style>` inline) pela versão da spec:
 
-Arquivo novo: `src/lib/live-chat.functions.ts`
+- Handle imperativo `push(emoji)` mantido (já está assim).
+- Estado `Reaction[]` com `id`, `emoji`, `offsetX` (±40), `startX` (0–40), `rotate` (±15°), `scale` (0.9–1.3).
+- Container: `pointer-events-none absolute bottom-0 right-0 h-full w-32 overflow-hidden z-20 aria-hidden`.
+- Cada emoji vira `motion.div` dentro de `<AnimatePresence>`:
+  - `initial={{ y:0, x:startX, opacity:0, scale:0.4 }}`
+  - `animate={{ y:-360, x:startX+offsetX, opacity:[0,1,1,0], scale, rotate }}`
+  - `exit={{ opacity:0 }}`
+  - `transition={{ duration:2.2, ease:"easeOut", opacity:{ times:[0,0.15,0.7,1], duration:2.2 } }}`
+- Classes: `absolute bottom-2 right-4 text-4xl select-none drop-shadow-sm`.
+- Auto-cleanup: `setTimeout(2400)` remove o item; timers guardados em `useRef` e limpos no unmount (já existe, manter).
+- `framer-motion` já é dependência do projeto (usado em outros componentes) — sem instalação nova.
 
-- `getLiveMessages` — `createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])`
-  - Input: `{ streamId: string, limit?: number }` (default 100, max 200)
-  - Retorna `{ messages: LiveChatMessage[] }` já projetadas em `{ id, userId, username, displayName, avatarUrl, text, ts }` (join com `profiles`)
-  - Ordem ascendente por `created_at`
-- `sendLiveMessage` — `createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])`
-  - Input: `{ streamId: string, text: string }` (trim, 1..500 chars via Zod)
-  - Rate limit simples em memória por `userId` (min 500ms entre envios); se violado, retorna `{ status: "rate_limited" }`
-  - Insere em `public.live_comments` e retorna `{ message: LiveChatMessage }` com `id` real e timestamp do banco
-  - (Sem alterações de schema; RLS existente já cobre insert do próprio usuário)
+Impacto visual: reações passam a subir do canto inferior direito, com pop-in/rotação/drift orgânicos, em vez de subirem retas pelo meio.
 
-Tipo compartilhado exportado do módulo:
-```ts
-export type LiveChatMessage = { id: string; userId: string; username: string | null; displayName: string | null; avatarUrl: string | null; text: string; ts: number };
-```
+### Fora de escopo
 
-## 3) Hook `useLiveChat`
+- Não mexer em `LiveChat.tsx`, `useLiveChat.ts` nem `WhepPlayer.tsx` — a spec descreve o loop que já está funcionando.
+- Não adicionar validação de "usuário pode enviar nessa live" no handler (é responsabilidade do RLS, que já está no lugar).
+- Não migrar rate-limit para tabela/Redis (proibido por política sem confirmação explícita).
 
-Arquivo novo: `src/components/live/useLiveChat.ts`
+### Detalhes técnicos
 
-Estrutura conforme spec:
-- Args: `{ streamId, sender?: { userId, username, displayName, avatarUrl } | null, onReaction?: (emoji: string) => void }`
-- Estado: `messages: LiveChatMessage[]`, `viewers: number`, `sending: boolean`
-- Refs: `subscribedRef`, `channelRef`, `onReactionRef` (sincronizado com prop)
-- Chave anônima estável via `useRef(\`anon-\${crypto.randomUUID?.() ?? Math.random()}\`)`
-- Carrega histórico: chama `getLiveMessages` server fn e faz merge com dedup por `id`, cap 200
-- Topic estável `livecam:${streamId}`; antes de criar, itera `supabase.getChannels()` e remove qualquer canal existente com esse topic (anti-fantasma HMR)
-- `supabase.channel(topic, { config: { broadcast: { self: true }, presence: { key: presenceKey } } })`
-- Listeners:
-  - `broadcast msg` → `appendDedup(payload)`
-  - `broadcast reaction` → `onReactionRef.current?.(payload.emoji)`
-  - `presence sync` → `setViewers(Object.keys(channel.presenceState()).length)`
-- `.subscribe(async status => { if (status === "SUBSCRIBED") { subscribedRef.current = true; await channel.track({ joined_at: Date.now() }) } })`
-- `appendDedup`: `useCallback`, cap 200
-- `sendMessage(text)`:
-  1. otimista com `optimisticId = local-...` → `appendDedup`
-  2. `await sendLiveMessage({ data: { streamId, text } })` → substitui id no state
-  3. espera `subscribedRef` até 1500ms em polling 50ms
-  4. `channel.send({ type: "broadcast", event: "msg", payload: persisted ?? optimistic })`
-- `sendReaction(emoji)`: espera subscribed até 1500ms; `channel.send({ type: "broadcast", event: "reaction", payload: { emoji } })`
-- Cleanup: `untrack()` → `removeChannel()` → resetar refs e estados
-- Deps do effect: `[streamId, presenceKey]` (não `onReaction`)
-
-Retorno: `{ messages, viewers, sending, sendMessage, sendReaction }`
-
-## 4) Refatorar `LiveChat.tsx` para usar o hook
-
-- Remover fetch/insert direto no componente e uso de `useQuery`
-- Obter sender via `supabase.auth.getUser()` uma vez (state local) — passar para o hook
-- Renderizar mensagens do hook (agora com `username/displayName/avatarUrl` disponíveis: mostrar avatar pequeno + nome à esquerda do texto)
-- Handler do form → `sendMessage(text)`
-- Popover de reações → `sendReaction(emoji)` + `reactionsRef.current.push(emoji)` (mantém push local imediato; o broadcast com `self:true` também dispara `onReaction`, resultando em animação dupla — aceito conforme spec)
-- Expor `viewers` do hook para o overlay superior via callback opcional `onViewersChange?: (n: number) => void` (viewer/broadcaster page usam para atualizar contador ao vivo em vez de depender só do polling)
-
-## 5) Wire nos consumers
-
-- `live.$liveId.tsx` e `live.$liveId.transmitir.tsx`:
-  - Passam `onViewersChange={n => setLiveViewers(n)}` e usam esse valor no `LiveOverlayTop` (fallback para `viewersPeak` da server fn)
-
-## Fora de escopo
-
-- Rate limit distribuído (Redis/edge) — mantém memória local por worker; suficiente
-- Moderação/ban
-- Persistir reações
-- Reply/quote/menções
-
-## Passos
-
-1. Criar `src/lib/live-chat.functions.ts` (getLiveMessages, sendLiveMessage)
-2. Criar `src/components/live/useLiveChat.ts`
-3. Reescrever `src/components/live/WhepPlayer.tsx` com status + overlay + STUN + MediaStream pré-anexado
-4. Refatorar `src/components/live/LiveChat.tsx` para consumir `useLiveChat`
-5. Ajustar `live.$liveId.tsx` e `live.$liveId.transmitir.tsx` para propagar `viewers` do hook ao overlay
-6. Rodar tsgo e testar preview em desktop + mobile
+Arquivos afetados:
+- `supabase/migrations/*` (nova migração): `ALTER TABLE public.live_comments ADD COLUMN username text, ADD COLUMN avatar_url text;`
+- `src/lib/live-chat.functions.ts`: reescrever `sendLiveMessage` (single-insert com snapshot) e `getLiveMessages` (usar coluna + fallback JOIN só para nulls).
+- `src/components/live/FloatingReactions.tsx`: reescrever inteiro com `motion` + `AnimatePresence` do `framer-motion`.
