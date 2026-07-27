@@ -1,44 +1,41 @@
 ## Diagnóstico
 
-O Live Input existe (a live aparece no painel do Cloudflare e `cf_webrtc_url` está salvo), o WHEP do viewer também está OK — ele fica em "Aguardando sinal" porque a Cloudflare nunca recebeu mídia. Ou seja, o WHIP do transmissor está montando a PeerConnection e fazendo o POST, mas a Cloudflare não aceita o handshake ou o navegador não consegue completar o ICE. As causas mais prováveis, com base na doc oficial de WebRTC do Cloudflare Stream e nos clientes de referência (`@eyevinn/whip-web-client`, `WHIPClient.js`):
+O prompt de permissão de câmera/microfone do navegador não aparece porque o preview do Lovable roda dentro de um `<iframe>` que **não** declara `allow="camera; microphone"`. Sem esse atributo, `navigator.mediaDevices.getUserMedia()` é rejeitado imediatamente com `NotAllowedError` (Permissions Policy) e o navegador não chega a exibir o pop-up de permissão.
 
-1. **Direção dos transceivers errada.** Usamos `pc.addTrack(...)` sem forçar `sendonly`. Cloudflare valida o SDP como ingest e clientes reais chamam `pc.addTransceiver('video', { direction: 'sendonly' })` e depois `sender.replaceTrack(track)`. Com `sendrecv` (default do addTrack) o handshake da Cloudflare pode falhar silenciosamente sem trocar mídia.
-2. **Falta de resposta ao redirecionamento WHIP.** A Cloudflare responde `201 Created` com um header `Location` que aponta para a "resource URL" da sessão. Se essa URL não for guardada e o navegador entrar em `iceconnectionstate = failed`, a sessão morre. Hoje ignoramos o `Location`.
-3. **ICE gathering bloqueando por 3.5 s.** Alguns navegadores (Safari em especial) demoram >5 s para reunir todos candidatos; o POST vai com SDP incompleto e o Cloudflare não consegue conectar. O padrão recomendado é trickle ICE (POST cedo, PATCH candidatos) — mas como primeiro corte basta subir o timeout e aceitar `iceGatheringState !== 'complete'`.
-4. **Sem telemetria.** Não temos como saber, hoje, em que passo específico está travando (getUserMedia OK? offer criado? WHIP retornou 2xx? ICE chegou a `checking`?). Isso precisa aparecer na UI e no console para não ficarmos no chute.
+Sinais que confirmam a hipótese:
+- Nenhum log `[whip] getUserMedia:start` foi capturado no console (a chamada nem chega a resolver/rejeitar visivelmente).
+- O toast "Autorize câmera e microfone" que você viu é apenas o `toast.success` de `live.nova.tsx` após criar a live — não é um erro real de permissão.
+- Em produção (`monetisexy.com`, aba própria), a chamada roda em top-level frame com origem segura e o prompt aparece normalmente.
+
+Não podemos adicionar `allow=` no iframe do preview (o host é do Lovable). A solução é detectar o cenário e oferecer uma saída imediata, além de melhorar a mensageria de erro em qualquer caso de falha do `getUserMedia`.
 
 ## O que vou fazer
 
-### 1. Reescrever o handshake WHIP em `src/routes/_authenticated/live.$liveId.transmitir.tsx`
+Edições apenas em `src/routes/_authenticated/live.$liveId.transmitir.tsx`:
 
-- Substituir `addTrack` por dois `addTransceiver` explícitos:
-  ```ts
-  const videoTx = pc.addTransceiver('video', { direction: 'sendonly' });
-  const audioTx = pc.addTransceiver('audio', { direction: 'sendonly' });
-  await videoTx.sender.replaceTrack(stream.getVideoTracks()[0]);
-  await audioTx.sender.replaceTrack(stream.getAudioTracks()[0]);
-  ```
-- Trocar `waitForIceGathering(pc, 3500)` por espera de **até 8 s** OU primeiro candidato relay/host, o que vier antes.
-- Fazer o POST com `Content-Type: application/sdp` (já OK) e ler `res.headers.get('Location')` para guardar a `resourceUrl` — usada no `DELETE` de encerramento (fecha a sessão do lado do Cloudflare, em vez de deixar zumbi).
-- Ampliar o log de erro: incluir `res.status`, primeiros 300 chars do body, e o `sdp` local truncado no `console.error` (não no toast).
+1. **Detecção precoce de bloqueio por Permissions Policy**
+   - Antes de chamar `getUserMedia`, checar se estamos em iframe (`window.self !== window.top`) e se `document.featurePolicy`/`navigator.permissions` reportam `camera`/`microphone` como negados.
+   - Se estiver bloqueado, pular a chamada e ir direto ao estado de erro `permission-blocked`, sem toast enganoso.
 
-### 2. Instrumentação visível
+2. **Novo estado `permission-blocked` com UI acionável**
+   - Overlay explicando: "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
+   - Botão primário **"Abrir em nova aba"** que faz `window.open(location.href, '_blank')` (ou navega o `window.top` para o URL de preview em nova aba).
+   - Botão secundário **"Tentar novamente"** que reexecuta o fluxo.
 
-- Adicionar estados granulares (`getting-media`, `creating-offer`, `waiting-ice`, `posting-whip`, `waiting-ice-connect`, `live`, `error:<motivo>`) e mostrar o estado atual no chip inferior do vídeo enquanto `!connected`.
-- `console.info('[whip] <passo>', payload)` em cada transição para o usuário conseguir colar o log se der ruim.
-- Se o POST retornar erro, mostrar o status HTTP e o começo do body no toast (hoje só mostramos a mensagem genérica).
+3. **Mensagens específicas por erro de `getUserMedia`**
+   - `NotAllowedError` → "Permissão negada. Autorize a câmera/microfone nas configurações do navegador."
+   - `NotFoundError` / `OverconstrainedError` → "Nenhuma câmera/microfone disponível."
+   - `NotReadableError` → "Câmera/microfone em uso por outro aplicativo."
+   - `SecurityError` → mesma mensagem do `permission-blocked` (com botão nova aba).
+   - Outros → mensagem genérica atual.
 
-### 3. Encerramento limpo
+4. **Logs de diagnóstico**
+   - `console.info('[whip] context', { inIframe, isSecure, hasMediaDevices })` no início do efeito para confirmar o cenário em futuras investigações.
 
-- No cleanup do `useEffect` e no `handleEnd`, se `resourceUrl` existir, fazer `fetch(resourceUrl, { method: 'DELETE' })` antes de fechar o PC. Isso evita o Live Input ficar preso do lado do Cloudflare (o que pode causar 409 nos próximos WHIP/WHEP até expirar).
+Nenhuma mudança em backend, banco, `WhepPlayer` ou lógica WHIP em si — o handshake WebRTC atual já está correto; o bloqueio é somente na captura de mídia local dentro do iframe.
 
-### 4. Não mudo agora (mas fica registrado)
+## Como testar depois
 
-- Migrar para `@eyevinn/whip-web-client` (cliente de referência testado pelo Cloudflare) é uma alternativa mais robusta que a nossa implementação manual. Se depois desta rodada ainda houver falha, esse é o próximo passo — mas prefiro consertar o nosso primeiro porque já temos o restante do ciclo (encerrar, viewer count, chat) integrado.
-
-## Verificação
-
-- Abrir `/live/<id>/transmitir` em uma aba, `/live/<id>` em outra.
-- Confirmar no console `[whip]` avançando até `live`.
-- Confirmar que o chip do viewer sai de "INICIANDO" para "AO VIVO" em <10 s.
-- Se falhar, o toast passa a informar exatamente onde parou (status HTTP ou estado ICE) para a próxima iteração.
+1. No preview do editor: abrir `/live/<id>/transmitir` → deve mostrar o novo overlay com "Abrir em nova aba".
+2. Clicar em "Abrir em nova aba" → nova aba carrega a mesma rota em top-level, o prompt do navegador aparece, e após autorizar a transmissão sobe (viewer sai de "Aguardando sinal").
+3. Em `monetisexy.com` (produção) direto: fluxo normal, sem overlay de bloqueio.

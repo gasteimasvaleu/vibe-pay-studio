@@ -29,6 +29,7 @@ type TransmissionState =
   | "posting-whip"
   | "waiting-ice-connect"
   | "live"
+  | "permission-blocked"
   | "error";
 
 function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
@@ -84,6 +85,8 @@ function TransmitirPage() {
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [transmissionState, setTransmissionState] = useState<TransmissionState>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("Falha ao iniciar transmissão");
+  const [retryTick, setRetryTick] = useState(0);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -116,6 +119,39 @@ function TransmitirPage() {
     (async () => {
       const log = (step: string, extra?: unknown) =>
         console.info(`[whip] ${step}`, extra ?? "");
+
+      const inIframe = typeof window !== "undefined" && window.self !== window.top;
+      const isSecure = typeof window !== "undefined" && window.isSecureContext;
+      const hasMediaDevices = !!navigator.mediaDevices?.getUserMedia;
+      log("context", { inIframe, isSecure, hasMediaDevices });
+
+      if (!hasMediaDevices || !isSecure) {
+        setErrorMessage(
+          "Este navegador não pode acessar câmera/microfone (contexto não seguro). Abra em uma nova aba via HTTPS.",
+        );
+        setTransmissionState("permission-blocked");
+        return;
+      }
+
+      // Preview iframe do editor não vem com allow="camera; microphone".
+      // Detectamos e mostramos CTA para abrir em nova aba antes de disparar o prompt fantasma.
+      if (inIframe) {
+        try {
+          const cam = await navigator.permissions?.query?.({ name: "camera" as PermissionName });
+          const mic = await navigator.permissions?.query?.({ name: "microphone" as PermissionName });
+          log("permissions", { cam: cam?.state, mic: mic?.state });
+          if (cam?.state === "denied" || mic?.state === "denied") {
+            setErrorMessage(
+              "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar.",
+            );
+            setTransmissionState("permission-blocked");
+            return;
+          }
+        } catch {
+          // Permissions API pode não suportar 'camera'/'microphone' em alguns browsers — seguimos.
+        }
+      }
+
       try {
         setTransmissionState("getting-media");
         log("getUserMedia:start");
@@ -143,7 +179,6 @@ function TransmitirPage() {
         });
         pcRef.current = pc;
 
-        // Cloudflare WHIP expects sendonly transceivers, not addTrack's default sendrecv.
         const videoTrack = stream.getVideoTracks()[0];
         const audioTrack = stream.getAudioTracks()[0];
         const videoTx = pc.addTransceiver("video", { direction: "sendonly" });
@@ -160,6 +195,7 @@ function TransmitirPage() {
           }
           if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
             setConnected(false);
+            setErrorMessage("A conexão de mídia caiu");
             setTransmissionState("error");
           }
         };
@@ -191,7 +227,6 @@ function TransmitirPage() {
           );
         }
 
-        // Cloudflare returns 201 + Location = resource URL used to DELETE the session.
         const location = res.headers.get("Location");
         if (location) {
           try {
@@ -208,8 +243,28 @@ function TransmitirPage() {
       } catch (e: any) {
         console.error("[whip] fatal", e);
         setConnected(false);
-        setTransmissionState("error");
-        toast.error(e?.message ?? "Falha ao iniciar transmissão");
+
+        const name: string = e?.name ?? "";
+        let msg = e?.message ?? "Falha ao iniciar transmissão";
+        let nextState: TransmissionState = "error";
+
+        if (name === "NotAllowedError") {
+          msg = inIframe
+            ? "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
+            : "Permissão negada. Autorize a câmera e o microfone nas configurações do navegador.";
+          nextState = inIframe ? "permission-blocked" : "error";
+        } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+          msg = "Nenhuma câmera ou microfone disponível neste dispositivo.";
+        } else if (name === "NotReadableError") {
+          msg = "Câmera/microfone em uso por outro aplicativo. Feche-o e tente de novo.";
+        } else if (name === "SecurityError") {
+          msg = "Este preview não pode acessar câmera/microfone. Abra em uma nova aba para autorizar.";
+          nextState = "permission-blocked";
+        }
+
+        setErrorMessage(msg);
+        setTransmissionState(nextState);
+        if (nextState !== "permission-blocked") toast.error(msg);
       }
     })();
     return () => {
@@ -223,7 +278,7 @@ function TransmitirPage() {
       setConnected(false);
       void closePublisher(pc, stream, resource);
     };
-  }, [whipUrl, liveId, queryClient]);
+  }, [whipUrl, liveId, queryClient, retryTick]);
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
@@ -254,17 +309,48 @@ function TransmitirPage() {
     />
   );
 
+  const openInNewTab = () => {
+    try {
+      window.open(window.location.href, "_blank", "noopener");
+    } catch {
+      /* ignore */
+    }
+  };
+
   const videoEl = (fit: "cover" | "contain") => (
     <>
       <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
-      {!connected && (
+      {transmissionState === "permission-blocked" && (
+        <div className="absolute inset-0 z-[7] grid place-items-center bg-black/80 px-6 text-center text-white">
+          <div className="max-w-sm space-y-4">
+            <p className="text-sm text-white/90">{errorMessage}</p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={openInNewTab}
+                className="h-10 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90"
+              >
+                Abrir em nova aba
+              </button>
+              <button
+                type="button"
+                onClick={() => setRetryTick((n) => n + 1)}
+                className="h-9 rounded-full bg-white/10 text-white text-xs font-medium hover:bg-white/20"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!connected && transmissionState !== "permission-blocked" && (
         <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
           {transmissionState === "getting-media" && "Conectando câmera…"}
           {transmissionState === "creating-offer" && "Preparando WebRTC…"}
           {transmissionState === "waiting-ice" && "Coletando rotas de rede…"}
           {transmissionState === "posting-whip" && "Enviando sinal para Cloudflare…"}
           {transmissionState === "waiting-ice-connect" && "Aguardando conexão de mídia…"}
-          {transmissionState === "error" && "Falha ao iniciar transmissão"}
+          {transmissionState === "error" && (errorMessage || "Falha ao iniciar transmissão")}
           {(transmissionState === "idle" || transmissionState === "live") && "Preparando transmissão…"}
         </div>
       )}
