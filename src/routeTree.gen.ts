@@ -37,6 +37,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedEmAltaRouteImport } from './routes/_authenticated/em-alta'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCriarPerfilGratuitoRouteImport } from './routes/_authenticated/criar-perfil-gratuito'
+import { Route as AuthenticatedCreatorHubRouteImport } from './routes/_authenticated/creator-hub'
 import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
 import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
@@ -249,6 +250,11 @@ const AuthenticatedCriarPerfilGratuitoRoute =
     path: '/criar-perfil-gratuito',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCreatorHubRoute = AuthenticatedCreatorHubRouteImport.update({
+  id: '/creator-hub',
+  path: '/creator-hub',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContentLeakReportRoute =
   AuthenticatedContentLeakReportRouteImport.update({
     id: '/content-leak-report',
@@ -657,6 +663,7 @@ export interface FileRoutesByFullPath {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/em-alta': typeof AuthenticatedEmAltaRoute
@@ -751,6 +758,7 @@ export interface FileRoutesByTo {
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
   '/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/em-alta': typeof AuthenticatedEmAltaRoute
@@ -844,6 +852,7 @@ export interface FileRoutesById {
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/_authenticated/colecoes': typeof AuthenticatedColecoesRoute
   '/_authenticated/content-leak-report': typeof AuthenticatedContentLeakReportRoute
+  '/_authenticated/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/_authenticated/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/em-alta': typeof AuthenticatedEmAltaRoute
@@ -942,6 +951,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/colecoes'
     | '/content-leak-report'
+    | '/creator-hub'
     | '/criar-perfil-gratuito'
     | '/dashboard'
     | '/em-alta'
@@ -1036,6 +1046,7 @@ export interface FileRouteTypes {
     | '/chat-configuracoes'
     | '/colecoes'
     | '/content-leak-report'
+    | '/creator-hub'
     | '/criar-perfil-gratuito'
     | '/dashboard'
     | '/em-alta'
@@ -1128,6 +1139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat-configuracoes'
     | '/_authenticated/colecoes'
     | '/_authenticated/content-leak-report'
+    | '/_authenticated/creator-hub'
     | '/_authenticated/criar-perfil-gratuito'
     | '/_authenticated/dashboard'
     | '/_authenticated/em-alta'
@@ -1422,6 +1434,13 @@ declare module '@tanstack/react-router' {
       path: '/criar-perfil-gratuito'
       fullPath: '/criar-perfil-gratuito'
       preLoaderRoute: typeof AuthenticatedCriarPerfilGratuitoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/creator-hub': {
+      id: '/_authenticated/creator-hub'
+      path: '/creator-hub'
+      fullPath: '/creator-hub'
+      preLoaderRoute: typeof AuthenticatedCreatorHubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/content-leak-report': {
@@ -2056,6 +2075,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
   AuthenticatedColecoesRoute: typeof AuthenticatedColecoesRoute
   AuthenticatedContentLeakReportRoute: typeof AuthenticatedContentLeakReportRoute
+  AuthenticatedCreatorHubRoute: typeof AuthenticatedCreatorHubRoute
   AuthenticatedCriarPerfilGratuitoRoute: typeof AuthenticatedCriarPerfilGratuitoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmAltaRoute: typeof AuthenticatedEmAltaRoute
@@ -2110,6 +2130,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
   AuthenticatedColecoesRoute: AuthenticatedColecoesRoute,
   AuthenticatedContentLeakReportRoute: AuthenticatedContentLeakReportRoute,
+  AuthenticatedCreatorHubRoute: AuthenticatedCreatorHubRoute,
   AuthenticatedCriarPerfilGratuitoRoute: AuthenticatedCriarPerfilGratuitoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmAltaRoute: AuthenticatedEmAltaRoute,
@@ -2191,13 +2212,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

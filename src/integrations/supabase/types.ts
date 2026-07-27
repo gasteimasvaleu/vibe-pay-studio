@@ -2930,6 +2930,42 @@ export type Database = {
           },
         ]
       }
+      trophy_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          creator_profile_id: string | null
+          id: string
+          milestone_cents: number
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          creator_profile_id?: string | null
+          id?: string
+          milestone_cents: number
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          creator_profile_id?: string | null
+          id?: string
+          milestone_cents?: number
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
