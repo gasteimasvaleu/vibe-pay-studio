@@ -21,7 +21,15 @@ export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")(
   component: TransmitirPage,
 });
 
-type TransmissionState = "idle" | "camera" | "publishing" | "live" | "error";
+type TransmissionState =
+  | "idle"
+  | "getting-media"
+  | "creating-offer"
+  | "waiting-ice"
+  | "posting-whip"
+  | "waiting-ice-connect"
+  | "live"
+  | "error";
 
 function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
   return new Promise<void>((resolve) => {
@@ -46,7 +54,18 @@ function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
   });
 }
 
-function closePublisher(pc: RTCPeerConnection | null, stream: MediaStream | null) {
+async function closePublisher(
+  pc: RTCPeerConnection | null,
+  stream: MediaStream | null,
+  resourceUrl: string | null,
+) {
+  if (resourceUrl) {
+    try {
+      await fetch(resourceUrl, { method: "DELETE", keepalive: true });
+    } catch (e) {
+      console.warn("[whip] DELETE resource failed", e);
+    }
+  }
   pc?.getSenders().forEach((sender) => sender.track?.stop());
   pc?.close();
   stream?.getTracks().forEach((track) => track.stop());
@@ -89,29 +108,51 @@ function TransmitirPage() {
     })();
   }, [liveId]);
 
+  const resourceUrlRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!whipUrl) return;
     let cancelled = false;
     (async () => {
+      const log = (step: string, extra?: unknown) =>
+        console.info(`[whip] ${step}`, extra ?? "");
       try {
-        setTransmissionState("camera");
+        setTransmissionState("getting-media");
+        log("getUserMedia:start");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 1280, height: 720 },
           audio: true,
         });
-        if (cancelled) return;
+        log("getUserMedia:ok", {
+          video: stream.getVideoTracks().length,
+          audio: stream.getAudioTracks().length,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.play().catch(() => {});
         }
-        setTransmissionState("publishing");
+
         const pc = new RTCPeerConnection({
           iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }],
+          bundlePolicy: "max-bundle",
         });
         pcRef.current = pc;
-        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+        // Cloudflare WHIP expects sendonly transceivers, not addTrack's default sendrecv.
+        const videoTrack = stream.getVideoTracks()[0];
+        const audioTrack = stream.getAudioTracks()[0];
+        const videoTx = pc.addTransceiver("video", { direction: "sendonly" });
+        const audioTx = pc.addTransceiver("audio", { direction: "sendonly" });
+        if (videoTrack) await videoTx.sender.replaceTrack(videoTrack);
+        if (audioTrack) await audioTx.sender.replaceTrack(audioTrack);
+
         pc.oniceconnectionstatechange = () => {
+          log("iceConnectionState", pc.iceConnectionState);
           if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
             setConnected(true);
             setTransmissionState("live");
@@ -122,22 +163,50 @@ function TransmitirPage() {
             setTransmissionState("error");
           }
         };
+        pc.onconnectionstatechange = () => log("connectionState", pc.connectionState);
+
+        setTransmissionState("creating-offer");
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await waitForIceGathering(pc, 3500);
+        log("localDescription:set");
+
+        setTransmissionState("waiting-ice");
+        await waitForIceGathering(pc, 8000);
+        log("iceGathering", pc.iceGatheringState);
+
+        setTransmissionState("posting-whip");
+        log("POST:start", whipUrl);
         const res = await fetch(whipUrl, {
           method: "POST",
           headers: { "Content-Type": "application/sdp" },
           body: pc.localDescription?.sdp ?? "",
         });
+        log("POST:response", { status: res.status, location: res.headers.get("Location") });
+
         if (!res.ok) {
           const details = await res.text().catch(() => "");
-          throw new Error(`WHIP HTTP ${res.status}${details ? ` — ${details.slice(0, 140)}` : ""}`);
+          console.error("[whip] error body", details);
+          throw new Error(
+            `WHIP HTTP ${res.status}${details ? ` — ${details.slice(0, 200)}` : ""}`,
+          );
         }
+
+        // Cloudflare returns 201 + Location = resource URL used to DELETE the session.
+        const location = res.headers.get("Location");
+        if (location) {
+          try {
+            resourceUrlRef.current = new URL(location, whipUrl).toString();
+          } catch {
+            resourceUrlRef.current = location;
+          }
+        }
+
         const answer = await res.text();
         await pc.setRemoteDescription({ type: "answer", sdp: answer });
+        log("remoteDescription:set");
+        setTransmissionState("waiting-ice-connect");
       } catch (e: any) {
-        console.error(e);
+        console.error("[whip] fatal", e);
         setConnected(false);
         setTransmissionState("error");
         toast.error(e?.message ?? "Falha ao iniciar transmissão");
@@ -145,10 +214,14 @@ function TransmitirPage() {
     })();
     return () => {
       cancelled = true;
-      closePublisher(pcRef.current, streamRef.current);
+      const pc = pcRef.current;
+      const stream = streamRef.current;
+      const resource = resourceUrlRef.current;
       pcRef.current = null;
       streamRef.current = null;
+      resourceUrlRef.current = null;
       setConnected(false);
+      void closePublisher(pc, stream, resource);
     };
   }, [whipUrl, liveId, queryClient]);
 
@@ -186,10 +259,13 @@ function TransmitirPage() {
       <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
       {!connected && (
         <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
-          {transmissionState === "camera" && "Conectando câmera…"}
-          {transmissionState === "publishing" && "Enviando sinal da transmissão…"}
+          {transmissionState === "getting-media" && "Conectando câmera…"}
+          {transmissionState === "creating-offer" && "Preparando WebRTC…"}
+          {transmissionState === "waiting-ice" && "Coletando rotas de rede…"}
+          {transmissionState === "posting-whip" && "Enviando sinal para Cloudflare…"}
+          {transmissionState === "waiting-ice-connect" && "Aguardando conexão de mídia…"}
           {transmissionState === "error" && "Falha ao iniciar transmissão"}
-          {(transmissionState === "idle" || !transmissionState) && "Preparando transmissão…"}
+          {(transmissionState === "idle" || transmissionState === "live") && "Preparando transmissão…"}
         </div>
       )}
     </>
