@@ -5,11 +5,28 @@ const CF_API = "https://api.cloudflare.com/client/v4";
 
 function creds() {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const token = process.env.CLOUDFLARE_STREAM_API_TOKEN;
+  const rawToken = process.env.CLOUDFLARE_STREAM_API_TOKEN;
   if (!accountId || !token) {
     throw new Error("Cloudflare Stream não configurado (CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_STREAM_API_TOKEN).");
   }
-  return { accountId, token };
+  const token = rawToken.replace(/^Bearer\s+/i, "").trim();
+  return { accountId: accountId.trim(), token };
+}
+
+function cloudflareErrorMessage(status: number, body: any) {
+  const firstError = body?.errors?.[0];
+  const code = firstError?.code ? ` código ${firstError.code}` : "";
+  const message = firstError?.message ?? `HTTP ${status}`;
+
+  if (status === 401 || /authentication/i.test(message)) {
+    return `Cloudflare não autenticou a criação da live${code}. Atualize o token do Stream com permissão Stream:Edit para a conta configurada.`;
+  }
+
+  if (status === 403 || /permission|not authorized|forbidden/i.test(message)) {
+    return `Cloudflare recusou permissão para criar a live${code}. O token precisa ter acesso de edição ao Cloudflare Stream nessa conta.`;
+  }
+
+  return `Cloudflare Stream falhou${code}: ${message}`;
 }
 
 async function cf<T = any>(path: string, init?: RequestInit): Promise<T> {
@@ -25,8 +42,14 @@ async function cf<T = any>(path: string, init?: RequestInit): Promise<T> {
   });
   const body = await res.json().catch(() => ({} as any));
   if (!res.ok || (body as any)?.success === false) {
-    const err = (body as any)?.errors?.[0]?.message ?? `HTTP ${res.status}`;
-    throw new Error(`[cloudflare-stream] ${err}`);
+    const err = cloudflareErrorMessage(res.status, body);
+    console.warn("[cloudflare-stream] request failed", {
+      status: res.status,
+      code: (body as any)?.errors?.[0]?.code ?? null,
+      message: (body as any)?.errors?.[0]?.message ?? null,
+      path,
+    });
+    throw new Error(err);
   }
   return (body as any).result as T;
 }
