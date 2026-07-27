@@ -309,17 +309,48 @@ function TransmitirPage() {
     />
   );
 
+  const openInNewTab = () => {
+    try {
+      window.open(window.location.href, "_blank", "noopener");
+    } catch {
+      /* ignore */
+    }
+  };
+
   const videoEl = (fit: "cover" | "contain") => (
     <>
       <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
-      {!connected && (
+      {transmissionState === "permission-blocked" && (
+        <div className="absolute inset-0 z-[7] grid place-items-center bg-black/80 px-6 text-center text-white">
+          <div className="max-w-sm space-y-4">
+            <p className="text-sm text-white/90">{errorMessage}</p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={openInNewTab}
+                className="h-10 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90"
+              >
+                Abrir em nova aba
+              </button>
+              <button
+                type="button"
+                onClick={() => setRetryTick((n) => n + 1)}
+                className="h-9 rounded-full bg-white/10 text-white text-xs font-medium hover:bg-white/20"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!connected && transmissionState !== "permission-blocked" && (
         <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
           {transmissionState === "getting-media" && "Conectando câmera…"}
           {transmissionState === "creating-offer" && "Preparando WebRTC…"}
           {transmissionState === "waiting-ice" && "Coletando rotas de rede…"}
           {transmissionState === "posting-whip" && "Enviando sinal para Cloudflare…"}
           {transmissionState === "waiting-ice-connect" && "Aguardando conexão de mídia…"}
-          {transmissionState === "error" && "Falha ao iniciar transmissão"}
+          {transmissionState === "error" && (errorMessage || "Falha ao iniciar transmissão")}
           {(transmissionState === "idle" || transmissionState === "live") && "Preparando transmissão…"}
         </div>
       )}
