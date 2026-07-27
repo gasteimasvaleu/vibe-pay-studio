@@ -35,13 +35,14 @@ async function loadAdmin() {
 /* ---------- Iniciar live ---------- */
 export const startLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { title?: string; description?: string; priceCents: number; coverUrl?: string | null }) => {
+  .inputValidator((data: { title?: string; description?: string; priceCents: number; coverUrl?: string | null; followersOnly?: boolean }) => {
     const price = Math.max(0, Math.floor(Number(data?.priceCents ?? 0)));
     return {
       title: (data?.title ?? "").trim().slice(0, 120) || null,
       description: (data?.description ?? "").trim().slice(0, 400) || null,
       priceCents: price,
       coverUrl: data?.coverUrl ?? null,
+      followersOnly: !!data?.followersOnly,
     };
   })
   .handler(async ({ data, context }) => {
@@ -79,6 +80,7 @@ export const startLive = createServerFn({ method: "POST" })
         cf_webrtc_url: webrtcIngest,
         cf_webrtc_play_url: webrtcPlay,
         cf_playback_hls: hls,
+        followers_only: data.followersOnly,
       })
       .select("id")
       .single();
@@ -227,13 +229,14 @@ export const getLive = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: live, error } = await supabase
       .from("live_sessions")
-      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_webrtc_play_url, cf_playback_hls")
+      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_webrtc_play_url, cf_playback_hls, followers_only")
       .eq("id", data.liveId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!live) throw new Error("live não encontrada");
 
     const isOwner = live.creator_id === userId;
+    const followersOnly = !!(live as any).followers_only;
 
     // Checa ticket
     let hasTicket = false;
@@ -248,7 +251,21 @@ export const getLive = createServerFn({ method: "GET" })
       hasTicket = !!ticket;
     }
 
-    const canWatch = isOwner || hasTicket || Number(live.price_cents ?? 0) === 0;
+    // Checa se segue o criador (obrigatório quando followers_only)
+    let isFollower = false;
+    if (!isOwner) {
+      const { data: fol } = await supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("follower_id", userId)
+        .eq("followee_id", live.creator_id)
+        .limit(1);
+      isFollower = !!(fol && fol.length > 0);
+    }
+
+    const priceOk = Number(live.price_cents ?? 0) === 0 || hasTicket;
+    const followerOk = !followersOnly || isFollower;
+    const canWatch = isOwner || (priceOk && followerOk);
 
     // Info do criador
     const admin = await loadAdmin();
@@ -265,6 +282,8 @@ export const getLive = createServerFn({ method: "GET" })
       creatorId: live.creator_id as string,
       isOwner,
       hasTicket,
+      isFollower,
+      followersOnly,
       canWatch,
       title: live.title as string | null,
       description: live.description as string | null,
