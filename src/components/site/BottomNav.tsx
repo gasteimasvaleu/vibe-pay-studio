@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, Plus, Search, Smartphone, TrendingUp, Wallet } from "lucide-react";
+import { MessageCircle, Plus, Search, Smartphone, Sparkles, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
