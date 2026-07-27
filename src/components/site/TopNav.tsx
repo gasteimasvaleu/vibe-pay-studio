@@ -43,7 +43,7 @@ export function TopNav() {
           .eq("user_id", userId),
       ]);
       if (!mounted) return;
-      setIsCreator(isCreatorLike((prof?.account_type ?? "subscriber") as any));
+      
       const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
       const active =
         rows.find((r) => r.id === prof?.active_profile_id) ??
