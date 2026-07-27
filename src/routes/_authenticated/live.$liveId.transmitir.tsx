@@ -259,10 +259,13 @@ function TransmitirPage() {
       <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
       {!connected && (
         <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
-          {transmissionState === "camera" && "Conectando câmera…"}
-          {transmissionState === "publishing" && "Enviando sinal da transmissão…"}
+          {transmissionState === "getting-media" && "Conectando câmera…"}
+          {transmissionState === "creating-offer" && "Preparando WebRTC…"}
+          {transmissionState === "waiting-ice" && "Coletando rotas de rede…"}
+          {transmissionState === "posting-whip" && "Enviando sinal para Cloudflare…"}
+          {transmissionState === "waiting-ice-connect" && "Aguardando conexão de mídia…"}
           {transmissionState === "error" && "Falha ao iniciar transmissão"}
-          {(transmissionState === "idle" || !transmissionState) && "Preparando transmissão…"}
+          {(transmissionState === "idle" || transmissionState === "live") && "Preparando transmissão…"}
         </div>
       )}
     </>
