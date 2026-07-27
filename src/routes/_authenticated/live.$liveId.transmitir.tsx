@@ -3,9 +3,16 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Square, Users, ArrowLeft } from "lucide-react";
+import { Square, ArrowLeft } from "lucide-react";
 import { getLive, endLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useDarkSurface } from "@/hooks/useDarkSurface";
+import { LiveChat } from "@/components/live/LiveChat";
+import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
+import { LiveOverlayTop } from "@/components/live/LiveOverlayTop";
+import { useLiveDragChat } from "@/components/live/useLiveDragChat";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")({
   head: () => ({
@@ -14,41 +21,42 @@ export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")(
   component: TransmitirPage,
 });
 
-/**
- * Broadcaster do lado do criador.
- * Usa WHIP (WebRTC-HTTP Ingest Protocol) da Cloudflare Stream para publicar
- * a câmera direto do navegador.
- */
 function TransmitirPage() {
   const { liveId } = Route.useParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  useDarkSurface();
+
   const getLiveFn = useServerFn(getLive);
   const endFn = useServerFn(endLive);
 
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
-  const [viewers, setViewers] = useState(0);
+  const [donorsOpen, setDonorsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const drag = useLiveDragChat();
 
-  // Busca a URL WHIP direto do banco (só o dono pode ler cf_webrtc_url via RLS UPDATE gate, então usamos servidor).
+  const { data: meta } = useQuery({
+    queryKey: ["live-meta", liveId],
+    queryFn: () => getLiveFn({ data: { liveId } }),
+    refetchInterval: 5000,
+  });
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("live_sessions")
-        .select("cf_webrtc_url, total_views")
+        .select("cf_webrtc_url")
         .eq("id", liveId)
         .maybeSingle();
       setWhipUrl((data as any)?.cf_webrtc_url ?? null);
-      setViewers((data as any)?.total_views ?? 0);
     })();
   }, [liveId]);
 
-  // Inicia captura + WHIP handshake
   useEffect(() => {
     if (!whipUrl) return;
     let cancelled = false;
-
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -64,20 +72,16 @@ function TransmitirPage() {
         pcRef.current = pc;
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
         pc.oniceconnectionstatechange = () => {
-          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
-            setConnected(true);
-          }
+          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") setConnected(true);
         };
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        // Aguarda ICE completar (Cloudflare aceita non-trickle)
-        await new Promise<void>((resolve) => {
-          if (pc.iceGatheringState === "complete") return resolve();
-          const check = () => { if (pc.iceGatheringState === "complete") { pc.removeEventListener("icegatheringstatechange", check); resolve(); } };
-          pc.addEventListener("icegatheringstatechange", check);
-          setTimeout(resolve, 2500);
+        await new Promise<void>((r) => {
+          if (pc.iceGatheringState === "complete") return r();
+          const c = () => { if (pc.iceGatheringState === "complete") { pc.removeEventListener("icegatheringstatechange", c); r(); } };
+          pc.addEventListener("icegatheringstatechange", c);
+          setTimeout(r, 2500);
         });
-
         const res = await fetch(whipUrl, {
           method: "POST",
           headers: { "Content-Type": "application/sdp" },
@@ -91,7 +95,6 @@ function TransmitirPage() {
         toast.error(e?.message ?? "Falha ao iniciar transmissão");
       }
     })();
-
     return () => {
       cancelled = true;
       const pc = pcRef.current;
@@ -101,13 +104,6 @@ function TransmitirPage() {
       }
     };
   }, [whipUrl]);
-
-  // Poll para viewers/likes
-  const { data: meta } = useQuery({
-    queryKey: ["live-meta", liveId],
-    queryFn: () => getLiveFn({ data: { liveId } }),
-    refetchInterval: 5000,
-  });
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
@@ -120,31 +116,96 @@ function TransmitirPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
-      <header className="h-16 flex items-center justify-between px-4 border-b border-white/10">
-        <button onClick={() => navigate({ to: "/dashboard" })} className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10">
-          <ArrowLeft className="h-5 w-5" />
+  const status: "live" | "scheduled" = connected ? "live" : "scheduled";
+  const topOverlay = meta && (
+    <LiveOverlayTop
+      mobile={isMobile}
+      username={meta.creator.username}
+      displayName={meta.creator.displayName}
+      avatarUrl={meta.creator.avatarUrl}
+      viewers={meta.viewersPeak}
+      status={status}
+      right={
+        <button onClick={handleEnd} className="pointer-events-auto h-6 px-2 rounded-full bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold inline-flex items-center gap-1">
+          <Square className="h-3 w-3" /> Encerrar
         </button>
-        <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full text-[11px] font-bold ${connected ? "bg-emerald-500 text-white" : "bg-white/20"}`}>
-            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-            {connected ? "AO VIVO" : "Conectando…"}
-          </span>
-          <span className="text-xs text-white/70 inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {meta?.viewersPeak ?? viewers}</span>
+      }
+    />
+  );
+
+  const videoEl = (fit: "cover" | "contain") => (
+    <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
+  );
+
+  // MOBILE
+  if (isMobile) {
+    return (
+      <div ref={drag.containerRef} className="relative h-dvh bg-black overflow-hidden">
+        <div className="absolute inset-0">{videoEl("cover")}</div>
+
+        <button
+          type="button"
+          aria-label="Ver top apoiadores"
+          className="absolute inset-x-0 top-0 z-[5]"
+          style={{ bottom: `${drag.chatRatio * 100}%` }}
+          onClick={() => setDonorsOpen(true)}
+        />
+
+        {topOverlay}
+
+        <button
+          onClick={() => navigate({ to: "/dashboard" })}
+          className="absolute z-20 h-9 w-9 grid place-items-center rounded-full bg-black/45 backdrop-blur text-white hover:bg-black/60"
+          style={{ top: "calc(env(safe-area-inset-top) + 3.5rem)", left: "0.75rem" }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+
+        <div className="absolute inset-x-0 bottom-0 z-10" style={{ height: `${drag.chatRatio * 100}%` }}>
+          <LiveChat
+            liveId={liveId}
+            broadcasterId={meta?.creator ? undefined : undefined}
+            variant="overlay"
+            className="h-full rounded-t-2xl"
+            headerSlot={
+              <div {...drag.dragHandlers} className="touch-none cursor-row-resize flex items-center justify-center py-2 border-b border-white/15">
+                <div className="h-1 w-10 rounded-full bg-white/40" />
+              </div>
+            }
+          />
         </div>
-        <button onClick={handleEnd} className="h-9 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold inline-flex items-center gap-1.5">
-          <Square className="h-3.5 w-3.5" /> Encerrar
-        </button>
-      </header>
 
-      <div className="flex-1 grid place-items-center bg-black">
-        <video ref={videoRef} playsInline muted autoPlay className="w-full max-w-3xl aspect-video object-cover rounded-xl border border-white/10" />
+        <Sheet open={donorsOpen} onOpenChange={setDonorsOpen}>
+          <SheetContent side="bottom" className="bg-neutral-950 text-white border-white/10 max-h-[70dvh]">
+            <SheetHeader><SheetTitle className="text-white">Top apoiadores</SheetTitle></SheetHeader>
+            <LiveDonorsPanel liveId={liveId} variant="sheet" className="text-foreground bg-card mt-3 rounded-lg" />
+          </SheetContent>
+        </Sheet>
       </div>
+    );
+  }
 
-      <footer className="p-4 border-t border-white/10 text-center text-xs text-white/60">
-        <p><Radio className="inline h-3.5 w-3.5 mr-1" /> Transmissão via Cloudflare Stream · WebRTC baixa latência</p>
-      </footer>
+  // DESKTOP
+  return (
+    <div className="container max-w-7xl mx-auto px-4 py-4">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
+        <button onClick={handleEnd} className="h-9 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold inline-flex items-center gap-1.5">
+          <Square className="h-3.5 w-3.5" /> Encerrar transmissão
+        </button>
+      </div>
+      <div className="flex gap-4 h-[calc(100vh-9rem)]">
+        <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
+          {videoEl("contain")}
+          {topOverlay}
+        </div>
+        <div className="w-[340px] h-full flex flex-col gap-3">
+          <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
+          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" />
+        </div>
+      </div>
     </div>
   );
 }
