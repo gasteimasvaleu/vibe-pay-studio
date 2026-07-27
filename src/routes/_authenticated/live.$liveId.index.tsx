@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Lock, Users as UsersIcon } from "lucide-react";
 import { getLive, registerLiveView } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { payWithWallet } from "@/lib/wallet-pay.functions";
+import { LiveTicketDialog } from "@/components/live/LiveTicketDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDarkSurface } from "@/hooks/useDarkSurface";
 import { WhepPlayer } from "@/components/live/WhepPlayer";
@@ -33,10 +33,10 @@ function LiveViewerPage() {
 
   const getLiveFn = useServerFn(getLive);
   const registerViewFn = useServerFn(registerLiveView);
-  const payFn = useServerFn(payWithWallet);
-  const [buying, setBuying] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [playbackState, setPlaybackState] = useState<"idle" | "connecting" | "waiting" | "playing" | "error">("idle");
+
 
   const { data: live, refetch } = useQuery({
     queryKey: ["live", liveId],
@@ -77,28 +77,7 @@ function LiveViewerPage() {
     return () => { supabase.removeChannel(ch); };
   }, [liveId, qc]);
 
-  async function handleBuyTicket() {
-    if (!live) return;
-    setBuying(true);
-    try {
-      const res: any = await payFn({ data: { kind: "live_ticket", liveId, amountCents: live.priceCents } });
-      if (res?.status === "paid" || res?.status === "already") {
-        toast.success("Acesso liberado!");
-        await refetch();
-      } else if (res?.status === "insufficient") {
-        toast.error("Saldo insuficiente. Recarregue sua carteira.");
-      } else {
-        toast.error("Não foi possível pagar com saldo.");
-      }
-    } catch (e: any) {
-      const msg = e?.message ?? "";
-      if (msg.includes("insufficient_balance")) toast.error("Saldo insuficiente");
-      else if (msg.includes("cannot_buy_own_live")) toast.error("Você é o dono desta live");
-      else toast.error(msg || "Falha ao comprar acesso");
-    } finally {
-      setBuying(false);
-    }
-  }
+
 
   const drag = useLiveDragChat();
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
@@ -143,12 +122,12 @@ function LiveViewerPage() {
           {live.description && <p className="text-sm text-white/70 mt-1">{live.description}</p>}
           <p className="text-2xl font-bold mt-4">R$ {(live.priceCents / 100).toFixed(2).replace(".", ",")}</p>
           <button
-            onClick={handleBuyTicket}
-            disabled={buying}
-            className="mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold shadow-lg shadow-fuchsia-500/30 disabled:opacity-60"
+            onClick={() => setTicketOpen(true)}
+            className="mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold shadow-lg shadow-fuchsia-500/30"
           >
-            {buying ? "Processando…" : "Comprar acesso (saldo)"}
+            Comprar acesso
           </button>
+
           <p className="text-[11px] text-white/50 mt-2">Ticket único vale enquanto a live estiver no ar.</p>
         </div>
       </div>
@@ -211,9 +190,19 @@ function LiveViewerPage() {
             <LiveDonorsPanel liveId={liveId} variant="sheet" className="text-foreground bg-card mt-3 rounded-lg" />
           </SheetContent>
         </Sheet>
+
+        <LiveTicketDialog
+          open={ticketOpen}
+          onOpenChange={setTicketOpen}
+          liveId={liveId}
+          creatorName={live.creator.displayName ?? live.creator.username}
+          priceCents={live.priceCents}
+          onPaid={() => refetch()}
+        />
       </div>
     );
   }
+
 
   // ------- DESKTOP -------
   return (
@@ -236,6 +225,16 @@ function LiveViewerPage() {
           <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
         </div>
       </div>
+
+      <LiveTicketDialog
+        open={ticketOpen}
+        onOpenChange={setTicketOpen}
+        liveId={liveId}
+        creatorName={live.creator.displayName ?? live.creator.username}
+        priceCents={live.priceCents}
+        onPaid={() => refetch()}
+      />
     </div>
   );
+
 }

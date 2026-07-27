@@ -22,7 +22,9 @@ type ReferenceTable =
   | "video_calls"
   | "chat_media_requests"
   | "story_unlocks"
+  | "live_tickets"
   | "wallet_topups";
+
 
 
 async function markStatusPaid(
