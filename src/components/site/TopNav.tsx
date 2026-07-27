@@ -46,12 +46,6 @@ export function TopNav() {
       ]);
       if (!mounted) return;
       setIsCreator(isCreatorLike((prof?.account_type ?? "subscriber") as any));
-        supabase
-          .from("creator_profiles")
-          .select("id, kind, avatar_url")
-          .eq("user_id", userId),
-      ]);
-      if (!mounted) return;
       const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
       const active =
         rows.find((r) => r.id === prof?.active_profile_id) ??
