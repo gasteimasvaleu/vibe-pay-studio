@@ -995,7 +995,104 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
     };
   });
 
-// ---------------- Wallet top-up (no split) ----------------
+// ---------------- Live ticket ----------------
+
+export const createLiveTicketPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { liveId: string; method: Method; card?: CardInput }) => data)
+  .handler(async ({ data, context }): Promise<CheckoutResult> => {
+    const { supabase, userId } = context;
+    const { data: live, error } = await supabase
+      .from("live_sessions")
+      .select("id, creator_id, creator_profile_id, price_cents, status")
+      .eq("id", data.liveId)
+      .single();
+    if (error || !live) throw new Error("live não encontrada");
+    if (live.creator_id === userId) throw new Error("você é o dono desta live");
+    if (live.status === "ended") throw new Error("live encerrada");
+    if (!live.price_cents || live.price_cents <= 0) throw new Error("live sem preço");
+
+    // Idempotência: se já pagou, não recria intent.
+    const { data: paidExisting } = await supabase
+      .from("live_tickets")
+      .select("id")
+      .eq("live_id", live.id)
+      .eq("buyer_id", userId)
+      .eq("status", "paid")
+      .maybeSingle();
+    if (paidExisting) throw new Error("acesso_ja_liberado");
+
+    // Reutiliza um ticket pending existente, ou cria um novo.
+    const { data: pending } = await supabase
+      .from("live_tickets")
+      .select("id")
+      .eq("live_id", live.id)
+      .eq("buyer_id", userId)
+      .maybeSingle();
+
+    let ticketId: string;
+    if (pending?.id) {
+      ticketId = pending.id as string;
+    } else {
+      const { data: inserted, error: insErr } = await supabase
+        .from("live_tickets")
+        .insert({
+          live_id: live.id,
+          buyer_id: userId,
+          creator_id: live.creator_id,
+          creator_profile_id: live.creator_profile_id ?? null,
+          amount_cents: live.price_cents,
+          provider: "asaas",
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (insErr || !inserted) throw new Error(insErr?.message ?? "falha ao criar ticket");
+      ticketId = inserted.id as string;
+    }
+
+    const walletId = await getCreatorWallet(supabase, live.creator_id);
+    const customerId = await ensureCustomerId(supabase, userId);
+
+    const asaas = await loadAsaas();
+    const { netCreatorCents } = asaas.computeCreatorNetCents(live.price_cents, data.method);
+    const providerTag = providerForMethod(data.method);
+
+    const payment = await asaas.createPayment({
+      customerId,
+      billingType: asaasBillingTypeForMethod(data.method),
+      amountCents: live.price_cents,
+      description: `Compra MTX`,
+      externalReference: `live_tickets:${ticketId}`,
+      creatorWalletId: walletId,
+      netCreatorCents,
+      ...buildCardArgs(data.card),
+    });
+    await supabase
+      .from("live_tickets")
+      .update({ provider: providerTag, provider_ref: payment.id })
+      .eq("id", ticketId);
+
+    const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
+    const intentId = await recordIntent(supabase, {
+      asaasPayment: payment,
+      method: data.method,
+      referenceTable: "live_tickets",
+      referenceId: ticketId,
+      pixQr,
+    });
+    return {
+      paymentIntentId: intentId,
+      asaasPaymentId: payment.id,
+      status: payment.status,
+      method: data.method,
+      invoiceUrl: payment.invoiceUrl ?? null,
+      pixQrCode: pixQr?.encodedImage ?? null,
+      pixCopyPaste: pixQr?.payload ?? null,
+    };
+  });
+
+
 
 export const createWalletTopupPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
