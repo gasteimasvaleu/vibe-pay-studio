@@ -34,7 +34,7 @@ export function Footer() {
                 links={[
                   ["Sobre", "/sobre"],
                   ["Imprensa", "#"],
-                  ["Contato", "#"],
+                  ["Contato", "/contato"],
                   ["Uso da Marca", "#"],
                   ["Ajuda & FAQ", "#"],
                 ]}
