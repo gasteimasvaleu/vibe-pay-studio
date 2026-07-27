@@ -33,10 +33,10 @@ function LiveViewerPage() {
 
   const getLiveFn = useServerFn(getLive);
   const registerViewFn = useServerFn(registerLiveView);
-  const payFn = useServerFn(payWithWallet);
-  const [buying, setBuying] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [playbackState, setPlaybackState] = useState<"idle" | "connecting" | "waiting" | "playing" | "error">("idle");
+
 
   const { data: live, refetch } = useQuery({
     queryKey: ["live", liveId],
