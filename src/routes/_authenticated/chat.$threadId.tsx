@@ -103,23 +103,30 @@ function CallInviteCard({
   const paid = invite.status === "paid";
   const cancelled = invite.status === "cancelled";
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2 min-w-[220px]">
-      <div className="flex items-center gap-2 text-primary">
+    <div
+      className={cn(
+        "rounded-xl border p-3 space-y-2 min-w-[220px]",
+        mine
+          ? "border-white/40 bg-white/15 backdrop-blur-sm"
+          : "border-primary/30 bg-primary/5",
+      )}
+    >
+      <div className={cn("flex items-center gap-2", mine ? "text-white" : "text-primary")}>
         <Video className="h-4 w-4" />
         <span className="text-xs font-semibold uppercase tracking-wide">Videochamada</span>
       </div>
-      <div className="text-sm">
+      <div className={cn("text-sm", mine && "text-white font-medium")}>
         {invite.durationMin} min · {formatBRL(invite.priceCents)}
       </div>
       {expired ? (
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <div className={cn("text-xs flex items-center gap-1", mine ? "text-white/80" : "text-muted-foreground")}>
           <Timer className="h-3 w-3" /> Expirado
         </div>
       ) : cancelled ? (
-        <div className="text-xs text-muted-foreground">Cancelado</div>
+        <div className={cn("text-xs", mine ? "text-white/80" : "text-muted-foreground")}>Cancelado</div>
       ) : paid ? (
         <div className="space-y-1.5">
-          <div className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+          <div className={cn("text-xs font-medium flex items-center gap-1", mine ? "text-emerald-200" : "text-emerald-600")}>
             <Phone className="h-3 w-3" /> Pagamento confirmado
           </div>
           <Button
@@ -131,7 +138,12 @@ function CallInviteCard({
           </Button>
         </div>
       ) : mine ? (
-        <Button size="sm" variant="outline" className="w-full h-8" onClick={onCancel}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full h-8 border-white/50 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          onClick={onCancel}
+        >
           Cancelar convite
         </Button>
       ) : (
