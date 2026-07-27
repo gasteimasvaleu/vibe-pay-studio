@@ -229,11 +229,12 @@ export const getLive = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: live, error } = await supabase
       .from("live_sessions")
-      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_webrtc_play_url, cf_playback_hls, followers_only")
+      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_live_input_id, cf_webrtc_url, cf_webrtc_play_url, cf_playback_hls, followers_only")
       .eq("id", data.liveId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!live) throw new Error("live não encontrada");
+
 
     const isOwner = live.creator_id === userId;
     const followersOnly = !!(live as any).followers_only;
