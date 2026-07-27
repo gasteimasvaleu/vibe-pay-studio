@@ -1,41 +1,55 @@
-## Diagnóstico
+## Plano
 
-O prompt de permissão de câmera/microfone do navegador não aparece porque o preview do Lovable roda dentro de um `<iframe>` que **não** declara `allow="camera; microphone"`. Sem esse atributo, `navigator.mediaDevices.getUserMedia()` é rejeitado imediatamente com `NotAllowedError` (Permissions Policy) e o navegador não chega a exibir o pop-up de permissão.
+Adaptar o fluxo de live para ter uma **tela de configuração de vídeo** antes de iniciar a transmissão (como no screenshot enviado), e corrigir o problema anterior de dono caindo na tela de espectador.
 
-Sinais que confirmam a hipótese:
-- Nenhum log `[whip] getUserMedia:start` foi capturado no console (a chamada nem chega a resolver/rejeitar visivelmente).
-- O toast "Autorize câmera e microfone" que você viu é apenas o `toast.success` de `live.nova.tsx` após criar a live — não é um erro real de permissão.
-- Em produção (`monetisexy.com`, aba própria), a chamada roda em top-level frame com origem segura e o prompt aparece normalmente.
+### 1. Nova tela `/live/nova` = Configurações de vídeo (pré-live)
 
-Não podemos adicionar `allow=` no iframe do preview (o host é do Lovable). A solução é detectar o cenário e oferecer uma saída imediata, além de melhorar a mensageria de erro em qualquer caso de falha do `getUserMedia`.
+Substitui a tela atual de "Nova live" por um layout de duas colunas:
 
-## O que vou fazer
+**Coluna esquerda — Preview da câmera**
+- Vídeo ao vivo (muted) mostrando a câmera selecionada em tempo real.
+- Texto “Toque nas configurações para alterar” abaixo.
 
-Edições apenas em `src/routes/_authenticated/live.$liveId.transmitir.tsx`:
+**Coluna direita — Configurações**
+- Select **Câmera utilizada** (lista `enumerateDevices` → `videoinput`).
+- Select **Microfone utilizado** (lista `enumerateDevices` → `audioinput`).
+- Toggle **Live só para seguidores** (Apenas quem segue você poderá assistir).
+- Campo **Título da live**.
+- Campo **Valor do ticket (R$)** (mantido; opcional, padrão 0,00 = gratuita).
+- Botão roxo grande **Iniciar transmissão** (com ícone de sinal).
 
-1. **Detecção precoce de bloqueio por Permissions Policy**
-   - Antes de chamar `getUserMedia`, checar se estamos em iframe (`window.self !== window.top`) e se `document.featurePolicy`/`navigator.permissions` reportam `camera`/`microphone` como negados.
-   - Se estiver bloqueado, pular a chamada e ir direto ao estado de erro `permission-blocked`, sem toast enganoso.
+**Comportamento**
+- Ao abrir, pede permissão de câmera/mic uma única vez e mostra o preview.
+- Trocar câmera/mic no select recria o `MediaStream` e atualiza o preview.
+- Se estiver rodando dentro do iframe do editor (sem `allow=camera; microphone`), mostra CTA “Abrir em nova aba” no lugar do preview.
+- Ao clicar “Iniciar transmissão”: chama `startLive` com `{ title, priceCents, followersOnly }`, passa o `MediaStream` já pronto para a próxima tela via ref/singleton, e navega para `/live/$liveId/transmitir`.
 
-2. **Novo estado `permission-blocked` com UI acionável**
-   - Overlay explicando: "Este preview não pode acessar câmera/microfone. Abra a transmissão em uma nova aba para autorizar."
-   - Botão primário **"Abrir em nova aba"** que faz `window.open(location.href, '_blank')` (ou navega o `window.top` para o URL de preview em nova aba).
-   - Botão secundário **"Tentar novamente"** que reexecuta o fluxo.
+### 2. Tela `/live/$liveId/transmitir` (transmissor)
 
-3. **Mensagens específicas por erro de `getUserMedia`**
-   - `NotAllowedError` → "Permissão negada. Autorize a câmera/microfone nas configurações do navegador."
-   - `NotFoundError` / `OverconstrainedError` → "Nenhuma câmera/microfone disponível."
-   - `NotReadableError` → "Câmera/microfone em uso por outro aplicativo."
-   - `SecurityError` → mesma mensagem do `permission-blocked` (com botão nova aba).
-   - Outros → mensagem genérica atual.
+- Recebe o `MediaStream` já autorizado (sem re-pedir permissão) e faz apenas o handshake WHIP.
+- Se chegar sem stream (recarregou a página), pede a mídia novamente e reaproveita o fluxo atual.
+- Mantém logs `[whip]` e overlay de estado (câmera → oferta → ICE → POST → conexão → AO VIVO).
+- Continua com o `DELETE` no `Location` ao sair, `sendonly` transceivers e STUN Cloudflare.
 
-4. **Logs de diagnóstico**
-   - `console.info('[whip] context', { inIframe, isSecure, hasMediaDevices })` no início do efeito para confirmar o cenário em futuras investigações.
+### 3. Dono nunca cai na tela de espectador
 
-Nenhuma mudança em backend, banco, `WhepPlayer` ou lógica WHIP em si — o handshake WebRTC atual já está correto; o bloqueio é somente na captura de mídia local dentro do iframe.
+- `/live/$liveId`: se `getLive` retornar `isOwner: true`, redireciona automaticamente para `/live/$liveId/transmitir`.
+- No perfil do próprio creator, o botão de live ativa passa a ser **CONTINUAR TRANSMISSÃO** (vai para `/transmitir`); para os demais usuários continua **ASSISTIR LIVE**.
 
-## Como testar depois
+### 4. Backend
 
-1. No preview do editor: abrir `/live/<id>/transmitir` → deve mostrar o novo overlay com "Abrir em nova aba".
-2. Clicar em "Abrir em nova aba" → nova aba carrega a mesma rota em top-level, o prompt do navegador aparece, e após autorizar a transmissão sobe (viewer sai de "Aguardando sinal").
-3. Em `monetisexy.com` (produção) direto: fluxo normal, sem overlay de bloqueio.
+- `live_sessions`: adicionar coluna `followers_only boolean not null default false`.
+- `startLive` aceita `followersOnly` e grava na coluna.
+- `getLive`: se `followers_only = true` e o espectador não segue o criador nem é dono, `canWatch = false` e o paywall mostra “Live exclusiva para seguidores”.
+
+### 5. Validação
+
+- Abrir `/live/nova`, ver preview da câmera, alternar dispositivos, marcar “Só seguidores”, iniciar.
+- Confirmar que o transmissor entra direto em “AO VIVO” sem prompt duplicado de permissão.
+- Confirmar que outro usuário assiste normalmente (ou é bloqueado quando "Só seguidores" está ativo e ele não segue).
+
+### Detalhes técnicos
+
+- `MediaStream` é passado entre rotas via um módulo simples (`src/lib/live-media-handoff.ts`) que guarda o stream em memória por `liveId`, com fallback para `getUserMedia` na tela de transmissão.
+- `enumerateDevices` só retorna labels após o primeiro `getUserMedia` com sucesso — o preview roda antes dos selects para popular os nomes corretamente.
+- Migração adiciona somente `followers_only` (a checagem de seguidor usa a tabela `follows` existente).
