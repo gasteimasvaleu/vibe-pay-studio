@@ -1124,6 +1124,7 @@ export type Database = {
       }
       live_comments: {
         Row: {
+          avatar_url: string | null
           content: string
           created_at: string
           creator_profile_id: string | null
@@ -1131,8 +1132,10 @@ export type Database = {
           live_id: string
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
+          avatar_url?: string | null
           content: string
           created_at?: string
           creator_profile_id?: string | null
@@ -1140,8 +1143,10 @@ export type Database = {
           live_id: string
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
+          avatar_url?: string | null
           content?: string
           created_at?: string
           creator_profile_id?: string | null
@@ -1149,6 +1154,7 @@ export type Database = {
           live_id?: string
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: [
           {
