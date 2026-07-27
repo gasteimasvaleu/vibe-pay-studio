@@ -82,7 +82,7 @@ function LiveViewerPage() {
   const drag = useLiveDragChat();
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
 
-  if (!live) return <div className="min-h-screen bg-black grid place-items-center text-white/60 text-sm">Carregando…</div>;
+  if (!live) return <div className="min-h-screen bg-background grid place-items-center text-muted-foreground text-sm">Carregando…</div>;
 
   const viewersDisplay = liveViewers ?? live.viewersPeak;
 
