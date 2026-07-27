@@ -74,6 +74,7 @@ import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authe
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
+import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
@@ -462,6 +463,11 @@ const AuthenticatedLiveNovaRoute = AuthenticatedLiveNovaRouteImport.update({
   path: '/live/nova',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
+  id: '/live/$liveId',
+  path: '/live/$liveId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -533,9 +539,9 @@ const AuthenticatedSettingsDeviceManagementIndexRoute =
   } as any)
 const AuthenticatedLiveLiveIdIndexRoute =
   AuthenticatedLiveLiveIdIndexRouteImport.update({
-    id: '/live/$liveId/',
-    path: '/live/$liveId/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
   } as any)
 const ApiPublicWebhooksVeriffDecisionRoute =
   ApiPublicWebhooksVeriffDecisionRouteImport.update({
@@ -579,9 +585,9 @@ const AuthenticatedSettingsDeviceManagementRemovedRoute =
   } as any)
 const AuthenticatedLiveLiveIdTransmitirRoute =
   AuthenticatedLiveLiveIdTransmitirRouteImport.update({
-    id: '/live/$liveId/transmitir',
-    path: '/live/$liveId/transmitir',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/transmitir',
+    path: '/transmitir',
+    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
   } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
@@ -679,6 +685,7 @@ export interface FileRoutesByFullPath {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -865,6 +872,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/_authenticated/live/nova': typeof AuthenticatedLiveNovaRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -962,6 +970,7 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/live/$liveId'
     | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
@@ -1147,6 +1156,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/live/$liveId'
     | '/_authenticated/live/nova'
     | '/_authenticated/mywallet/extrato'
     | '/_authenticated/mywallet/recarregar'
@@ -1673,6 +1683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLiveNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/live/$liveId': {
+      id: '/_authenticated/live/$liveId'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -1759,10 +1776,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/live/$liveId/': {
       id: '/_authenticated/live/$liveId/'
-      path: '/live/$liveId'
+      path: '/'
       fullPath: '/live/$liveId/'
       preLoaderRoute: typeof AuthenticatedLiveLiveIdIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedLiveLiveIdRoute
     }
     '/api/public/webhooks/veriff-decision': {
       id: '/api/public/webhooks/veriff-decision'
@@ -1815,10 +1832,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/live/$liveId/transmitir': {
       id: '/_authenticated/live/$liveId/transmitir'
-      path: '/live/$liveId/transmitir'
+      path: '/transmitir'
       fullPath: '/live/$liveId/transmitir'
       preLoaderRoute: typeof AuthenticatedLiveLiveIdTransmitirRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedLiveLiveIdRoute
     }
     '/_authenticated/creator/onboarding/redes-sociais': {
       id: '/_authenticated/creator/onboarding/redes-sociais'
@@ -1949,6 +1966,23 @@ const AuthenticatedMywalletRouteWithChildren =
     AuthenticatedMywalletRouteChildren,
   )
 
+interface AuthenticatedLiveLiveIdRouteChildren {
+  AuthenticatedLiveLiveIdTransmitirRoute: typeof AuthenticatedLiveLiveIdTransmitirRoute
+  AuthenticatedLiveLiveIdIndexRoute: typeof AuthenticatedLiveLiveIdIndexRoute
+}
+
+const AuthenticatedLiveLiveIdRouteChildren: AuthenticatedLiveLiveIdRouteChildren =
+  {
+    AuthenticatedLiveLiveIdTransmitirRoute:
+      AuthenticatedLiveLiveIdTransmitirRoute,
+    AuthenticatedLiveLiveIdIndexRoute: AuthenticatedLiveLiveIdIndexRoute,
+  }
+
+const AuthenticatedLiveLiveIdRouteWithChildren =
+  AuthenticatedLiveLiveIdRoute._addFileChildren(
+    AuthenticatedLiveLiveIdRouteChildren,
+  )
+
 interface AuthenticatedSettingsDeviceManagementRouteChildren {
   AuthenticatedSettingsDeviceManagementRemovedRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   AuthenticatedSettingsDeviceManagementIndexRoute: typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -2037,6 +2071,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
+  AuthenticatedLiveLiveIdRoute: typeof AuthenticatedLiveLiveIdRouteWithChildren
   AuthenticatedLiveNovaRoute: typeof AuthenticatedLiveNovaRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
@@ -2063,8 +2098,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
-  AuthenticatedLiveLiveIdTransmitirRoute: typeof AuthenticatedLiveLiveIdTransmitirRoute
-  AuthenticatedLiveLiveIdIndexRoute: typeof AuthenticatedLiveLiveIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2093,6 +2126,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
+  AuthenticatedLiveLiveIdRoute: AuthenticatedLiveLiveIdRouteWithChildren,
   AuthenticatedLiveNovaRoute: AuthenticatedLiveNovaRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
@@ -2130,9 +2164,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedCreatorOnboardingDocumentosRouteWithChildren,
   AuthenticatedCreatorOnboardingRedesSociaisRoute:
     AuthenticatedCreatorOnboardingRedesSociaisRoute,
-  AuthenticatedLiveLiveIdTransmitirRoute:
-    AuthenticatedLiveLiveIdTransmitirRoute,
-  AuthenticatedLiveLiveIdIndexRoute: AuthenticatedLiveLiveIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -2160,3 +2191,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
