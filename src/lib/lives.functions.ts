@@ -229,11 +229,12 @@ export const getLive = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: live, error } = await supabase
       .from("live_sessions")
-      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_webrtc_play_url, cf_playback_hls, followers_only")
+      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_live_input_id, cf_webrtc_url, cf_webrtc_play_url, cf_playback_hls, followers_only")
       .eq("id", data.liveId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!live) throw new Error("live não encontrada");
+
 
     const isOwner = live.creator_id === userId;
     const followersOnly = !!(live as any).followers_only;
@@ -277,6 +278,21 @@ export const getLive = createServerFn({ method: "GET" })
     ]);
     const src = prof.data ?? legacy.data ?? {};
 
+    // Resolve o whepUrl real (UID do vídeo ao vivo, não do Live Input).
+    // Só faz sentido quando o viewer pode assistir E a live está no ar.
+    let whepUrl: string | null = null;
+    if (canWatch && live.status === "live" && (live as any).cf_live_input_id) {
+      try {
+        const { resolveActiveWhepUrl } = await import("@/lib/cloudflare-stream.server");
+        whepUrl = await resolveActiveWhepUrl(
+          (live as any).cf_live_input_id as string,
+          ((live as any).cf_webrtc_play_url as string | null) ?? ((live as any).cf_webrtc_url as string | null) ?? null,
+        );
+      } catch (e) {
+        console.warn("[lives] resolveActiveWhepUrl failed", e);
+      }
+    }
+
     return {
       id: live.id as string,
       creatorId: live.creator_id as string,
@@ -295,8 +311,9 @@ export const getLive = createServerFn({ method: "GET" })
       viewersPeak: (live.viewers_peak as number) ?? 0,
       totalViews: (live.total_views as number) ?? 0,
       likesCount: (live.likes_count as number) ?? 0,
-      whepUrl: canWatch ? ((live.cf_webrtc_play_url as string | null) ?? null) : null,
+      whepUrl,
       hlsUrl: canWatch ? ((live.cf_playback_hls as string | null) ?? null) : null,
+
       creator: {
         username: (src as any).username ?? "",
         displayName: (src as any).display_name ?? (src as any).username ?? "",
