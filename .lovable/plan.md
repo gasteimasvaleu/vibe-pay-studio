@@ -1,29 +1,18 @@
-## Diagnóstico
+Plano para corrigir o erro ao iniciar live:
 
-O toast `[cloudflare-stream] Authentication error` vem direto da API da Cloudflare (`/accounts/{id}/stream/live_inputs`). O código em `src/lib/cloudflare-stream.server.ts` está correto — ele envia `Authorization: Bearer <CLOUDFLARE_STREAM_API_TOKEN>` para a conta `CLOUDFLARE_ACCOUNT_ID`. Ambos os secrets existem no projeto, então a Cloudflare está rejeitando as credenciais em si.
+1. Diagnosticar a resposta da Cloudflare sem expor segredo
+   - Ajustar temporariamente a camada `cloudflare-stream.server.ts` para registrar status HTTP, código e mensagem retornados pela Cloudflare, sem logar token nem headers sensíveis.
+   - Diferenciar claramente erro de token inválido, Account ID incorreto e permissão insuficiente.
 
-Causas possíveis (em ordem de probabilidade):
-1. **Token sem permissão `Stream:Edit`** — o token foi criado só com leitura ou para outro produto (Workers, R2, etc.).
-2. **Account ID errado** — o `CLOUDFLARE_ACCOUNT_ID` não pertence à conta onde o token foi emitido.
-3. **Token expirado, revogado ou com IP allowlist restritivo**.
+2. Corrigir a integração do Cloudflare Stream
+   - Manter o token lido apenas no backend via `process.env.CLOUDFLARE_STREAM_API_TOKEN`.
+   - Validar se o endpoint usado para criar Live Input está correto para Stream.
+   - Melhorar o tratamento de erro para retornar uma mensagem útil no toast, em vez de apenas `[cloudflare-stream] Authentication error`.
 
-Não há bug de código a corrigir; a correção é regenerar/atualizar o secret com um token válido para Stream.
+3. Garantir que o token tenha as permissões certas
+   - Se o erro confirmar permissão/token, vou abrir o formulário seguro para atualizar `CLOUDFLARE_STREAM_API_TOKEN`.
+   - O token precisa ser um Cloudflare API Token com permissão de edição do produto Stream na conta correspondente ao `CLOUDFLARE_ACCOUNT_ID`.
 
-## Plano
-
-1. **Você gera um novo API Token na Cloudflare** em https://dash.cloudflare.com/profile/api-tokens → *Create Token* → *Custom token* com:
-   - Permission: **Account → Stream → Edit**
-   - Account Resources: **Include → sua conta específica** (a mesma cujo ID está em `CLOUDFLARE_ACCOUNT_ID`)
-   - Sem TTL curto, sem IP filter (ou libere o IP dos Workers)
-2. **Confirmar o Account ID**: no dashboard da Cloudflare, painel direito da home da conta, copiar "Account ID" e comparar com o secret `CLOUDFLARE_ACCOUNT_ID` atual (se divergir, também atualizar).
-3. Eu abro os formulários seguros de secret para você colar:
-   - `update_secret` em `CLOUDFLARE_STREAM_API_TOKEN` (novo token)
-   - `update_secret` em `CLOUDFLARE_ACCOUNT_ID` (só se estiver diferente)
-4. Você tenta "Ir ao vivo agora" novamente. Se ainda falhar, eu leio os logs do server-fn `createLive` para pegar a mensagem exata da Cloudflare (às vezes vem "Unknown X-Auth-Key or X-Auth-Email" vs "Invalid API Token" — cada um aponta para uma causa diferente) e ajustamos.
-
-## Detalhes técnicos
-
-- Endpoint chamado: `POST https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/stream/live_inputs`
-- Header: `Authorization: Bearer {CLOUDFLARE_STREAM_API_TOKEN}`
-- Resposta atual: `success: false` com `errors[0].message` ≈ "Authentication error" → 100% credencial, 0% payload.
-- Nenhuma alteração de código, schema ou UI é necessária neste plano.
+4. Validar a criação da live
+   - Testar novamente o fluxo de `/live/nova` até criar o registro em `live_sessions` e navegar para `/live/$liveId/transmitir`.
+   - Confirmar que a live recebe `whipUrl`, `whepUrl` e `cf_live_input_id` antes de finalizar.
