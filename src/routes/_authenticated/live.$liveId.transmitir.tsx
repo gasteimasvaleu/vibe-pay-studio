@@ -33,6 +33,7 @@ function TransmitirPage() {
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
+  const [liveViewers, setLiveViewers] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const drag = useLiveDragChat();
