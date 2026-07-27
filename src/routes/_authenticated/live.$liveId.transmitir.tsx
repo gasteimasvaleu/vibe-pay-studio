@@ -85,6 +85,8 @@ function TransmitirPage() {
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [transmissionState, setTransmissionState] = useState<TransmissionState>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("Falha ao iniciar transmissão");
+  const [retryTick, setRetryTick] = useState(0);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
