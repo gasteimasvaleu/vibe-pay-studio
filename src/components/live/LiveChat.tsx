@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Heart, Send, Smile } from "lucide-react";
 import { FloatingReactions, type FloatingReactionsHandle } from "./FloatingReactions";
+import { useLiveChat } from "./useLiveChat";
 
 const REACTIONS = ["❤️", "🔥", "😂", "😍", "👏", "🙌", "💜"];
 
@@ -18,67 +18,71 @@ export interface LiveChatProps {
   headerSlot?: ReactNode;
   canTip?: boolean;
   onTip?: () => void;
+  onViewersChange?: (n: number) => void;
 }
 
-interface Comment { id: string; user_id: string; content: string; created_at: string; }
+interface Sender { userId: string; username: string | null; displayName: string | null; avatarUrl: string | null }
 
-export function LiveChat({ liveId, broadcasterId, variant = "card", className, headerSlot, canTip = false, onTip }: LiveChatProps) {
+export function LiveChat({
+  liveId,
+  broadcasterId,
+  variant = "card",
+  className,
+  headerSlot,
+  canTip = false,
+  onTip,
+  onViewersChange,
+}: LiveChatProps) {
   const isOverlay = variant === "overlay";
-  const qc = useQueryClient();
   const [text, setText] = useState("");
+  const [sender, setSender] = useState<Sender | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const reactionsRef = useRef<FloatingReactionsHandle>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const { data: comments } = useQuery({
-    queryKey: ["live-comments", liveId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("live_comments")
-        .select("id, user_id, content, created_at")
-        .eq("live_id", liveId)
-        .order("created_at", { ascending: true })
-        .limit(120);
-      return (data ?? []) as Comment[];
-    },
-    refetchInterval: 15_000,
-  });
-
-  // Realtime — novos comentários + broadcast de reações
   useEffect(() => {
-    const ch = supabase
-      .channel(`live-${liveId}-chat`)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "live_comments", filter: `live_id=eq.${liveId}` },
-        () => qc.invalidateQueries({ queryKey: ["live-comments", liveId] }))
-      .on("broadcast", { event: "reaction" }, (p: any) => {
-        const e = p?.payload?.emoji;
-        if (typeof e === "string") reactionsRef.current?.push(e);
-      })
-      .subscribe();
-    channelRef.current = ch;
-    return () => { supabase.removeChannel(ch); channelRef.current = null; };
-  }, [liveId, qc]);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const u = data.user;
+      if (!u || cancelled) return;
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("username, display_name, avatar_url")
+        .eq("id", u.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setSender({
+        userId: u.id,
+        username: (p as any)?.username ?? null,
+        displayName: (p as any)?.display_name ?? null,
+        avatarUrl: (p as any)?.avatar_url ?? null,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const { messages, sendMessage, sendReaction } = useLiveChat({
+    streamId: liveId,
+    sender,
+    onReaction: (e) => reactionsRef.current?.push(e),
+    onViewersChange,
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [comments?.length]);
+  }, [messages.length]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const c = text.trim();
-    if (!c) return;
+    const t = text.trim();
+    if (!t) return;
     setText("");
-    const u = (await supabase.auth.getUser()).data.user;
-    if (!u) return;
-    await supabase.from("live_comments").insert({ live_id: liveId, user_id: u.id, content: c });
+    await sendMessage(t);
   }
 
-  async function sendReaction(emoji: string) {
+  async function pickReaction(emoji: string) {
     reactionsRef.current?.push(emoji);
-    channelRef.current?.send({ type: "broadcast", event: "reaction", payload: { emoji } });
-    const u = (await supabase.auth.getUser()).data.user;
-    if (u) supabase.from("live_likes").insert({ live_id: liveId, user_id: u.id }).then(() => {});
+    await sendReaction(emoji);
   }
 
   return (
@@ -98,25 +102,36 @@ export function LiveChat({ liveId, broadcasterId, variant = "card", className, h
 
       <div className="relative flex-1 min-h-0">
         <div className="absolute inset-0 overflow-y-auto p-3 space-y-2">
-          {(comments ?? []).length === 0 && (
+          {messages.length === 0 && (
             <p className={cn("text-xs text-center py-6", isOverlay ? "text-white/50" : "text-muted-foreground")}>
               Seja o primeiro a comentar
             </p>
           )}
-          {(comments ?? []).map((c) => {
-            const mine = broadcasterId && c.user_id === broadcasterId;
+          {messages.map((m) => {
+            const mine = broadcasterId && m.userId === broadcasterId;
+            const name = m.displayName || (m.username ? `@${m.username}` : "Anônimo");
             return (
-              <div key={c.id} className="text-sm leading-snug">
-                <span
-                  className={cn(
-                    "inline-block px-2 py-1 rounded-md break-words",
-                    mine
-                      ? isOverlay ? "bg-white/15" : "bg-primary/15"
-                      : isOverlay ? "text-white/90" : "text-foreground",
-                  )}
-                >
-                  {c.content}
-                </span>
+              <div key={m.id} className="text-sm leading-snug flex gap-2 items-start">
+                {m.avatarUrl ? (
+                  <img src={m.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className={cn("h-6 w-6 rounded-full flex-shrink-0", isOverlay ? "bg-white/15" : "bg-muted")} />
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className={cn("text-[11px] font-semibold mr-1", isOverlay ? "text-white/80" : "text-foreground/80", mine && "text-amber-400")}>
+                    {name}
+                  </span>
+                  <span
+                    className={cn(
+                      "break-words",
+                      mine
+                        ? isOverlay ? "bg-white/15 rounded px-1.5 py-0.5" : "bg-primary/15 rounded px-1.5 py-0.5"
+                        : isOverlay ? "text-white/90" : "text-foreground",
+                    )}
+                  >
+                    {m.text}
+                  </span>
+                </div>
               </div>
             );
           })}
@@ -129,7 +144,8 @@ export function LiveChat({ liveId, broadcasterId, variant = "card", className, h
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Comentar…"
+          placeholder={sender ? "Comentar…" : "Faça login para comentar"}
+          disabled={!sender}
           className={cn(
             "h-9 flex-1",
             isOverlay && "bg-white/10 border-white/20 text-white placeholder:text-white/60",
@@ -144,7 +160,7 @@ export function LiveChat({ liveId, broadcasterId, variant = "card", className, h
           <PopoverContent align="end" className="w-auto p-2">
             <div className="flex gap-1">
               {REACTIONS.map((r) => (
-                <button key={r} type="button" onClick={() => sendReaction(r)} className="h-9 w-9 grid place-items-center rounded-md hover:bg-muted text-xl">
+                <button key={r} type="button" onClick={() => pickReaction(r)} className="h-9 w-9 grid place-items-center rounded-md hover:bg-muted text-xl">
                   {r}
                 </button>
               ))}
@@ -156,7 +172,7 @@ export function LiveChat({ liveId, broadcasterId, variant = "card", className, h
             <Heart className="h-4 w-4" />
           </Button>
         )}
-        <Button type="submit" size="icon" className="h-9 w-9 bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:opacity-90 text-white">
+        <Button type="submit" size="icon" disabled={!sender || !text.trim()} className="h-9 w-9 bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:opacity-90 text-white disabled:opacity-50">
           <Send className="h-4 w-4" />
         </Button>
       </form>

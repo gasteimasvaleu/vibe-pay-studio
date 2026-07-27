@@ -33,6 +33,7 @@ function TransmitirPage() {
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
+  const [liveViewers, setLiveViewers] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const drag = useLiveDragChat();
@@ -117,13 +118,14 @@ function TransmitirPage() {
   }
 
   const status: "live" | "scheduled" = connected ? "live" : "scheduled";
+  const viewersDisplay = liveViewers ?? meta?.viewersPeak ?? 0;
   const topOverlay = meta && (
     <LiveOverlayTop
       mobile={isMobile}
       username={meta.creator.username}
       displayName={meta.creator.displayName}
       avatarUrl={meta.creator.avatarUrl}
-      viewers={meta.viewersPeak}
+      viewers={viewersDisplay}
       status={status}
       right={
         <button onClick={handleEnd} className="pointer-events-auto h-6 px-2 rounded-full bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold inline-flex items-center gap-1">
@@ -167,6 +169,7 @@ function TransmitirPage() {
             broadcasterId={meta?.creator ? undefined : undefined}
             variant="overlay"
             className="h-full rounded-t-2xl"
+            onViewersChange={setLiveViewers}
             headerSlot={
               <div {...drag.dragHandlers} className="touch-none cursor-row-resize flex items-center justify-center py-2 border-b border-white/15">
                 <div className="h-1 w-10 rounded-full bg-white/40" />
@@ -203,7 +206,7 @@ function TransmitirPage() {
         </div>
         <div className="w-[340px] h-full flex flex-col gap-3">
           <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
-          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" />
+          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
         </div>
       </div>
     </div>

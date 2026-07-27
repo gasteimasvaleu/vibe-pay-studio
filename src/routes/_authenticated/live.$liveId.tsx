@@ -84,8 +84,11 @@ function LiveViewerPage() {
   }
 
   const drag = useLiveDragChat();
+  const [liveViewers, setLiveViewers] = useState<number | null>(null);
 
   if (!live) return <div className="min-h-screen bg-black grid place-items-center text-white/60 text-sm">Carregando…</div>;
+
+  const viewersDisplay = liveViewers ?? live.viewersPeak;
 
   const topOverlay = (
     <LiveOverlayTop
@@ -93,7 +96,7 @@ function LiveViewerPage() {
       username={live.creator.username}
       displayName={live.creator.displayName}
       avatarUrl={live.creator.avatarUrl}
-      viewers={live.viewersPeak}
+      viewers={viewersDisplay}
       status={live.status}
     />
   );
@@ -163,6 +166,7 @@ function LiveViewerPage() {
             broadcasterId={undefined}
             variant="overlay"
             className="h-full rounded-t-2xl"
+            onViewersChange={setLiveViewers}
             headerSlot={
               <div
                 {...drag.dragHandlers}
@@ -194,7 +198,7 @@ function LiveViewerPage() {
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
         <div className="inline-flex items-center gap-1 text-white/70 text-xs">
-          <UsersIcon className="h-3.5 w-3.5" /> {live.viewersPeak}
+          <UsersIcon className="h-3.5 w-3.5" /> {viewersDisplay}
         </div>
       </div>
       <div className="flex gap-4 h-[calc(100vh-9rem)]">
@@ -204,7 +208,7 @@ function LiveViewerPage() {
         </div>
         <div className="w-[340px] h-full flex flex-col gap-3">
           <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
-          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" />
+          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
         </div>
       </div>
     </div>
