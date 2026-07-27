@@ -829,6 +829,21 @@ function PerfilPage() {
 
           <FriendsStrip userId={profile.userId} isOwner={isOwner} />
 
+          {activeLiveId && (
+            <div className="pr-4 md:pr-6 pt-1">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/live/$liveId", params: { liveId: activeLiveId } })}
+                className="w-full h-9 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold shadow-lg shadow-emerald-500/30 inline-flex items-center justify-center gap-2 hover:opacity-95 transition"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                <Radio className="h-4 w-4" />
+                ASSISTIR LIVE
+              </button>
+            </div>
+          )}
+
+
 
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
