@@ -73,6 +73,8 @@ import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_auth
 import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
 import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
+import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
+import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
@@ -92,6 +94,7 @@ import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/
 import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
 import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
 import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
+import { Route as AuthenticatedLiveLiveIdTransmitirRouteImport } from './routes/_authenticated/live.$liveId.transmitir'
 import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
 import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
 import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
@@ -454,6 +457,16 @@ const AuthenticatedMywalletExtratoRoute =
     path: '/extrato',
     getParentRoute: () => AuthenticatedMywalletRoute,
   } as any)
+const AuthenticatedLiveNovaRoute = AuthenticatedLiveNovaRouteImport.update({
+  id: '/live/nova',
+  path: '/live/nova',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
+  id: '/live/$liveId',
+  path: '/live/$liveId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -563,6 +576,12 @@ const AuthenticatedSettingsDeviceManagementRemovedRoute =
     path: '/removed',
     getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
   } as any)
+const AuthenticatedLiveLiveIdTransmitirRoute =
+  AuthenticatedLiveLiveIdTransmitirRouteImport.update({
+    id: '/transmitir',
+    path: '/transmitir',
+    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
+  } as any)
 const AuthenticatedCreatorOnboardingRedesSociaisRoute =
   AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
     id: '/creator/onboarding/redes-sociais',
@@ -659,6 +678,8 @@ export interface FileRoutesByFullPath {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
+  '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -690,6 +711,7 @@ export interface FileRoutesByFullPath {
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/live/$liveId/transmitir': typeof AuthenticatedLiveLiveIdTransmitirRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
@@ -748,6 +770,8 @@ export interface FileRoutesByTo {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
+  '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -776,6 +800,7 @@ export interface FileRoutesByTo {
   '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
   '/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/live/$liveId/transmitir': typeof AuthenticatedLiveLiveIdTransmitirRoute
   '/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
@@ -839,6 +864,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
+  '/_authenticated/live/nova': typeof AuthenticatedLiveNovaRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/_authenticated/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
   '/_authenticated/perfil/$username': typeof AuthenticatedPerfilUsernameRoute
@@ -870,6 +897,7 @@ export interface FileRoutesById {
   '/_authenticated/creator/onboarding/assinatura': typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   '/_authenticated/creator/onboarding/documentos': typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   '/_authenticated/creator/onboarding/redes-sociais': typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
+  '/_authenticated/live/$liveId/transmitir': typeof AuthenticatedLiveLiveIdTransmitirRoute
   '/_authenticated/settings/device-management/removed': typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   '/_authenticated/settings/two-factor/setup': typeof AuthenticatedSettingsTwoFactorSetupRoute
   '/_authenticated/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
@@ -933,6 +961,8 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/live/$liveId'
+    | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
     | '/perfil/$username'
@@ -964,6 +994,7 @@ export interface FileRouteTypes {
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/documentos'
     | '/creator/onboarding/redes-sociais'
+    | '/live/$liveId/transmitir'
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
@@ -1022,6 +1053,8 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/live/$liveId'
+    | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
     | '/perfil/$username'
@@ -1050,6 +1083,7 @@ export interface FileRouteTypes {
     | '/chat/call/$callId'
     | '/creator/onboarding/assinatura'
     | '/creator/onboarding/redes-sociais'
+    | '/live/$liveId/transmitir'
     | '/settings/device-management/removed'
     | '/settings/two-factor/setup'
     | '/settings/two-factor/verify'
@@ -1112,6 +1146,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/live/$liveId'
+    | '/_authenticated/live/nova'
     | '/_authenticated/mywallet/extrato'
     | '/_authenticated/mywallet/recarregar'
     | '/_authenticated/perfil/$username'
@@ -1143,6 +1179,7 @@ export interface FileRouteTypes {
     | '/_authenticated/creator/onboarding/assinatura'
     | '/_authenticated/creator/onboarding/documentos'
     | '/_authenticated/creator/onboarding/redes-sociais'
+    | '/_authenticated/live/$liveId/transmitir'
     | '/_authenticated/settings/device-management/removed'
     | '/_authenticated/settings/two-factor/setup'
     | '/_authenticated/settings/two-factor/verify'
@@ -1628,6 +1665,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMywalletExtratoRouteImport
       parentRoute: typeof AuthenticatedMywalletRoute
     }
+    '/_authenticated/live/nova': {
+      id: '/_authenticated/live/nova'
+      path: '/live/nova'
+      fullPath: '/live/nova'
+      preLoaderRoute: typeof AuthenticatedLiveNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/live/$liveId': {
+      id: '/_authenticated/live/$liveId'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -1761,6 +1812,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRouteImport
       parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
     }
+    '/_authenticated/live/$liveId/transmitir': {
+      id: '/_authenticated/live/$liveId/transmitir'
+      path: '/transmitir'
+      fullPath: '/live/$liveId/transmitir'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdTransmitirRouteImport
+      parentRoute: typeof AuthenticatedLiveLiveIdRoute
+    }
     '/_authenticated/creator/onboarding/redes-sociais': {
       id: '/_authenticated/creator/onboarding/redes-sociais'
       path: '/creator/onboarding/redes-sociais'
@@ -1890,6 +1948,21 @@ const AuthenticatedMywalletRouteWithChildren =
     AuthenticatedMywalletRouteChildren,
   )
 
+interface AuthenticatedLiveLiveIdRouteChildren {
+  AuthenticatedLiveLiveIdTransmitirRoute: typeof AuthenticatedLiveLiveIdTransmitirRoute
+}
+
+const AuthenticatedLiveLiveIdRouteChildren: AuthenticatedLiveLiveIdRouteChildren =
+  {
+    AuthenticatedLiveLiveIdTransmitirRoute:
+      AuthenticatedLiveLiveIdTransmitirRoute,
+  }
+
+const AuthenticatedLiveLiveIdRouteWithChildren =
+  AuthenticatedLiveLiveIdRoute._addFileChildren(
+    AuthenticatedLiveLiveIdRouteChildren,
+  )
+
 interface AuthenticatedSettingsDeviceManagementRouteChildren {
   AuthenticatedSettingsDeviceManagementRemovedRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRoute
   AuthenticatedSettingsDeviceManagementIndexRoute: typeof AuthenticatedSettingsDeviceManagementIndexRoute
@@ -1978,6 +2051,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
+  AuthenticatedLiveLiveIdRoute: typeof AuthenticatedLiveLiveIdRouteWithChildren
+  AuthenticatedLiveNovaRoute: typeof AuthenticatedLiveNovaRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedSettingsChangePasswordRoute: typeof AuthenticatedSettingsChangePasswordRoute
@@ -2031,6 +2106,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
+  AuthenticatedLiveLiveIdRoute: AuthenticatedLiveLiveIdRouteWithChildren,
+  AuthenticatedLiveNovaRoute: AuthenticatedLiveNovaRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedSettingsChangePasswordRoute:

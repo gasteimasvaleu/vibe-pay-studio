@@ -48,6 +48,10 @@ import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.f
 import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
 import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
+import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
+import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
+import { Radio } from "lucide-react";
+
 
 
 
@@ -370,6 +374,9 @@ function PerfilPage() {
     enabled: !isOwner,
   });
   const isFriendState = !!friendQuery.data?.isFriend;
+  const activeLiveQuery = useCreatorActiveLive(profile.userId);
+  const activeLiveId = activeLiveQuery.data?.id ?? null;
+
   const [friendBusy, setFriendBusy] = useState(false);
 
   const mutedQueryKey = ["mutes", "is", viewerId, profile.userId] as const;
@@ -734,18 +741,21 @@ function PerfilPage() {
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
-              {profile.avatarUrl ? (
-                <img
-                  src={profile.avatarUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                profile.username.slice(0, 1).toUpperCase()
-              )}
-            </div>
+            <LiveAvatarBadge creatorId={profile.userId}>
+              <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
+                {profile.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  profile.username.slice(0, 1).toUpperCase()
+                )}
+              </div>
+            </LiveAvatarBadge>
           </div>
+
 
           {/* Stats */}
           <div className="absolute right-4 md:right-6 bottom-4 hidden sm:flex items-center gap-4 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-4 py-2 text-xs">
@@ -818,6 +828,21 @@ function PerfilPage() {
           </div>
 
           <FriendsStrip userId={profile.userId} isOwner={isOwner} />
+
+          {activeLiveId && (
+            <div className="pr-4 md:pr-6 pt-1">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/live/$liveId", params: { liveId: activeLiveId } })}
+                className="w-full h-9 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold shadow-lg shadow-emerald-500/30 inline-flex items-center justify-center gap-2 hover:opacity-95 transition"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                <Radio className="h-4 w-4" />
+                ASSISTIR LIVE
+              </button>
+            </div>
+          )}
+
 
 
           {!isOwner && (

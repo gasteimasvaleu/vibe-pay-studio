@@ -1222,14 +1222,22 @@ export type Database = {
       }
       live_sessions: {
         Row: {
+          cf_live_input_id: string | null
+          cf_playback_hls: string | null
+          cf_webrtc_play_url: string | null
+          cf_webrtc_url: string | null
           cover_url: string | null
           created_at: string
           creator_id: string
           creator_profile_id: string | null
+          description: string | null
           ended_at: string | null
           gross_cents: number
           id: string
+          likes_count: number
+          price_cents: number
           started_at: string
+          status: string
           tips_cents: number
           title: string | null
           total_views: number
@@ -1237,14 +1245,22 @@ export type Database = {
           viewers_peak: number
         }
         Insert: {
+          cf_live_input_id?: string | null
+          cf_playback_hls?: string | null
+          cf_webrtc_play_url?: string | null
+          cf_webrtc_url?: string | null
           cover_url?: string | null
           created_at?: string
           creator_id: string
           creator_profile_id?: string | null
+          description?: string | null
           ended_at?: string | null
           gross_cents?: number
           id?: string
+          likes_count?: number
+          price_cents?: number
           started_at?: string
+          status?: string
           tips_cents?: number
           title?: string | null
           total_views?: number
@@ -1252,14 +1268,22 @@ export type Database = {
           viewers_peak?: number
         }
         Update: {
+          cf_live_input_id?: string | null
+          cf_playback_hls?: string | null
+          cf_webrtc_play_url?: string | null
+          cf_webrtc_url?: string | null
           cover_url?: string | null
           created_at?: string
           creator_id?: string
           creator_profile_id?: string | null
+          description?: string | null
           ended_at?: string | null
           gross_cents?: number
           id?: string
+          likes_count?: number
+          price_cents?: number
           started_at?: string
+          status?: string
           tips_cents?: number
           title?: string | null
           total_views?: number
@@ -1279,6 +1303,73 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_tickets: {
+        Row: {
+          amount_cents: number
+          buyer_id: string
+          created_at: string
+          creator_id: string
+          creator_profile_id: string | null
+          id: string
+          live_id: string
+          provider: string
+          provider_ref: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_id: string
+          created_at?: string
+          creator_id: string
+          creator_profile_id?: string | null
+          id?: string
+          live_id: string
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_id?: string
+          created_at?: string
+          creator_id?: string
+          creator_profile_id?: string | null
+          id?: string
+          live_id?: string
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_tickets_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_tickets_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_tickets_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -3299,6 +3390,10 @@ export type Database = {
         Returns: undefined
       }
       get_or_create_thread: { Args: { other_user: string }; Returns: string }
+      has_live_access: {
+        Args: { _live_id: string; _user: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3398,6 +3493,23 @@ export type Database = {
               _creator_id?: string
               _creator_profile_id?: string
               _kind: string
+              _message?: string
+              _message_id?: string
+              _plan?: string
+              _publication_id?: string
+              _request_id?: string
+              _story_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount_cents?: number
+              _call_id?: string
+              _creator_id?: string
+              _creator_profile_id?: string
+              _kind: string
+              _live_id?: string
               _message?: string
               _message_id?: string
               _plan?: string
