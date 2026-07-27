@@ -3,14 +3,18 @@
 
 const CF_API = "https://api.cloudflare.com/client/v4";
 
+function cleanEnv(value: string) {
+  return value.trim().replace(/^['"]|['"]$/g, "");
+}
+
 function creds() {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const rawToken = process.env.CLOUDFLARE_STREAM_API_TOKEN;
   if (!accountId || !rawToken) {
     throw new Error("Cloudflare Stream não configurado (CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_STREAM_API_TOKEN).");
   }
-  const token = rawToken.replace(/^Bearer\s+/i, "").trim();
-  return { accountId: accountId.trim(), token };
+  const token = cleanEnv(rawToken).replace(/^Bearer\s+/i, "").trim();
+  return { accountId: cleanEnv(accountId), token };
 }
 
 function cloudflareErrorMessage(status: number, body: any) {
