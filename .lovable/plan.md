@@ -1,17 +1,33 @@
-## Causa
+## Diagnóstico
 
-A tabela `public.video_calls` só possui uma policy de INSERT: `auth.uid() = requester_id`. O fluxo de "Convite de videochamada" (criador convidando assinante) faz o oposto — o criador é o `creator_id` e o assinante é o `requester_id` — então a RLS bloqueia com `new row violates row-level security policy for table "video_calls"`.
+O convite de videochamada é criado com `status='pending_payment'` e `payment_status='pending'`. Após o pagamento, nada abre a sala porque três pontos estão quebrados:
 
-## Correção (migração RLS apenas)
+1. **Webhook Asaas** (`src/routes/api/public/webhooks/asaas.ts`, `markStatus`): quando o pagamento é confirmado, só atualiza `payment_status='paid'` para `video_calls`. O `status` permanece `pending_payment`, então a chamada nunca vira "ativa".
+2. **`listActiveCallsWith`** (`src/lib/communication.functions.ts`): filtra `status IN ['requested','accepted']`. Como o status nunca muda, o `VideoCallHeaderButton` não mostra o ponto verde de "entrar" e o assinante não tem como abrir a sala.
+3. **`CallInviteCard`** (em `src/routes/_authenticated/chat.$threadId.tsx`): quando pago, mostra apenas "Pago · aguardando início", sem CTA para entrar na chamada.
+4. **`pay_with_wallet` (SQL)** grava `status='scheduled'` no ramo `video_call`, mas esse valor **não existe** no enum `video_call_status` — pagamento com carteira falha silenciosamente/erro de enum e a linha não avança.
 
-Adicionar uma segunda policy de INSERT em `public.video_calls` que permita ao criador criar o convite:
+## Mudanças
 
-```sql
-CREATE POLICY "creator creates video call invite"
-ON public.video_calls
-FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = creator_id);
-```
+### 1. Migração SQL
+- Corrigir `pay_with_wallet` para usar `status='accepted'` (valor válido do enum) em vez de `'scheduled'` no ramo `video_call`.
+- Ajustar webhook Asaas: quando `video_calls` recebe `paid`, além de `payment_status='paid'` também setar `status='accepted'` (apenas se o status atual for `pending_payment`, para não sobrescrever `cancelled/expired`).
 
-Mantém a policy existente para o fluxo em que o assinante inicia (`startPaidVideoCall`), e libera o novo fluxo do `createCallInvite` sem alterar backend/frontend.
+### 2. Webhook (`src/routes/api/public/webhooks/asaas.ts`)
+Na função `markStatus`, tratar `video_calls` como caso especial: quando `status='paid'`, atualizar em uma passada `payment_status='paid'` + `status='accepted'` (com `WHERE status='pending_payment'`).
+
+### 3. UI do convite (`src/routes/_authenticated/chat.$threadId.tsx`)
+No `CallInviteCard`, quando `paid`:
+- Substituir o texto estático por um botão **"Entrar na chamada"** (verde) que navega para `/chat/call/$callId` — visível para ambos os lados (criador e assinante).
+- Manter o rótulo "Pago" como badge acima do botão.
+
+### 4. Verificação
+Após aplicar, refazer o fluxo (criar convite → pagar via PIX → confirmar webhook) e conferir que:
+- O card no chat exibe "Entrar na chamada".
+- O ícone de vídeo no header ganha o ponto verde.
+- Clicar abre `/chat/call/$callId` e provisiona a sala Daily via `joinVideoCall`.
+
+## Detalhes técnicos
+
+- `joinVideoCall` já aceita entrar quando `status != completed/cancelled/declined` e `payment_status='paid'`, então basta destravar a UI.
+- Nova migração idempotente (`CREATE OR REPLACE FUNCTION pay_with_wallet(...)`) para o fix do enum, sem alterar assinatura.
