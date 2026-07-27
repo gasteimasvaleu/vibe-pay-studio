@@ -15,6 +15,7 @@ import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as DmcaRouteImport } from './routes/dmca'
+import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -93,6 +94,7 @@ import { Route as AuthenticatedAdminLivesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
 import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
+import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
 import { Route as AuthenticatedAdminBroadcastsRouteImport } from './routes/_authenticated/admin.broadcasts'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
@@ -145,6 +147,11 @@ const EntrarRoute = EntrarRouteImport.update({
 const DmcaRoute = DmcaRouteImport.update({
   id: '/dmca',
   path: '/dmca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
@@ -584,6 +591,12 @@ const AuthenticatedAdminEmailsRoute =
     path: '/emails',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminContactsRoute =
+  AuthenticatedAdminContactsRouteImport.update({
+    id: '/contacts',
+    path: '/contacts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
   id: '/bugs',
   path: '/bugs',
@@ -723,6 +736,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
@@ -760,6 +774,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -831,6 +846,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
@@ -865,6 +881,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -934,6 +951,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
@@ -971,6 +989,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
+  '/_authenticated/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -1044,6 +1063,7 @@ export interface FileRouteTypes {
     | '/'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/contato'
     | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
@@ -1081,6 +1101,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/broadcasts'
     | '/admin/bugs'
+    | '/admin/contacts'
     | '/admin/emails'
     | '/admin/finance'
     | '/admin/leaks'
@@ -1152,6 +1173,7 @@ export interface FileRouteTypes {
     | '/'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/contato'
     | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
@@ -1186,6 +1208,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/broadcasts'
     | '/admin/bugs'
+    | '/admin/contacts'
     | '/admin/emails'
     | '/admin/finance'
     | '/admin/leaks'
@@ -1254,6 +1277,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/centro-e-seguranca'
     | '/como-funciona'
+    | '/contato'
     | '/dmca'
     | '/entrar'
     | '/politicadereclamacoes'
@@ -1291,6 +1315,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/broadcasts'
     | '/_authenticated/admin/bugs'
+    | '/_authenticated/admin/contacts'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/finance'
     | '/_authenticated/admin/leaks'
@@ -1364,6 +1389,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
+  ContatoRoute: typeof ContatoRoute
   DmcaRoute: typeof DmcaRoute
   EntrarRoute: typeof EntrarRoute
   PoliticadereclamacoesRoute: typeof PoliticadereclamacoesRoute
@@ -1421,6 +1447,13 @@ declare module '@tanstack/react-router' {
       path: '/dmca'
       fullPath: '/dmca'
       preLoaderRoute: typeof DmcaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/como-funciona': {
@@ -1969,6 +2002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/contacts': {
+      id: '/_authenticated/admin/contacts'
+      path: '/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/bugs': {
       id: '/_authenticated/admin/bugs'
       path: '/bugs'
@@ -2151,6 +2191,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBroadcastsRoute: typeof AuthenticatedAdminBroadcastsRoute
   AuthenticatedAdminBugsRoute: typeof AuthenticatedAdminBugsRoute
+  AuthenticatedAdminContactsRoute: typeof AuthenticatedAdminContactsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
@@ -2173,6 +2214,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminBroadcastsRoute: AuthenticatedAdminBroadcastsRoute,
   AuthenticatedAdminBugsRoute: AuthenticatedAdminBugsRoute,
+  AuthenticatedAdminContactsRoute: AuthenticatedAdminContactsRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
@@ -2447,6 +2489,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
+  ContatoRoute: ContatoRoute,
   DmcaRoute: DmcaRoute,
   EntrarRoute: EntrarRoute,
   PoliticadereclamacoesRoute: PoliticadereclamacoesRoute,
