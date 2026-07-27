@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, ShieldCheck, Sparkles } from "lucide-react";
-import { isCreatorLike } from "@/lib/auth";
+import { Search, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +13,6 @@ export function TopNav() {
   const [initial, setInitial] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
-  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -45,7 +43,7 @@ export function TopNav() {
           .eq("user_id", userId),
       ]);
       if (!mounted) return;
-      setIsCreator(isCreatorLike((prof?.account_type ?? "subscriber") as any));
+      
       const rows = (cps ?? []) as Array<{ id: string; kind: string; avatar_url: string | null }>;
       const active =
         rows.find((r) => r.id === prof?.active_profile_id) ??
@@ -104,15 +102,6 @@ export function TopNav() {
           >
             <Search className="h-5 w-5" />
           </Link>
-          {isCreator && (
-            <Link
-              to="/creator-hub"
-              aria-label="Creator Hub"
-              className="h-9 w-9 grid place-items-center rounded-full text-primary hover:bg-accent transition-colors"
-            >
-              <Sparkles className="h-5 w-5" />
-            </Link>
-          )}
           {isAdmin && (
             <Link
               to="/admin"

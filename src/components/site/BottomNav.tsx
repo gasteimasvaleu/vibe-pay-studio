@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, Plus, Search, Smartphone, TrendingUp, Wallet } from "lucide-react";
+import { MessageCircle, Plus, Search, Smartphone, Sparkles, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -73,8 +73,10 @@ export function BottomNav() {
           />
         ) : (
           <NavItem
-            icon={<Wallet className="h-5 w-5" />}
-            label="Minha carteira"
+            to="/creator-hub"
+            active={pathname.startsWith("/creator-hub")}
+            icon={<Sparkles className="h-5 w-5" />}
+            label="Fadinha"
           />
         )}
       </div>
