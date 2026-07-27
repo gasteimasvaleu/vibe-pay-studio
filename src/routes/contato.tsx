@@ -76,28 +76,24 @@ function ContatoPage() {
 
   return (
     <SiteLayout>
-      <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-16">
-          <div className="flex items-center justify-between mb-8">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Link>
-            <span className="text-2xl font-black tracking-tight">
-              <span className="text-foreground">moneti</span>
-              <span className="text-gradient-primary">sexy.</span>
-            </span>
-            <span className="w-16" />
-          </div>
-
-          <h1 className="text-2xl md:text-3xl font-semibold text-center text-muted-foreground max-w-xl mx-auto leading-snug">
-            Se você tiver alguma dúvida, preencha o formulário abaixo para entrar em contato conosco.
+      <article className="max-w-3xl mx-auto px-4 md:px-6 py-12 text-foreground">
+        <header className="mb-10 pb-10 border-b border-border">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">
+            Entre em contato
           </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Preencha o formulário abaixo. Responderemos em até 48h úteis.
+          </p>
+        </header>
 
-          <form onSubmit={onSubmit} className="mt-10 space-y-5">
+        <form onSubmit={onSubmit} className="space-y-5">
             <FieldShell label="NOME">
               <User className="h-5 w-5 text-muted-foreground shrink-0" />
               <input
