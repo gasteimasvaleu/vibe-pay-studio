@@ -122,12 +122,12 @@ function LiveViewerPage() {
           {live.description && <p className="text-sm text-white/70 mt-1">{live.description}</p>}
           <p className="text-2xl font-bold mt-4">R$ {(live.priceCents / 100).toFixed(2).replace(".", ",")}</p>
           <button
-            onClick={handleBuyTicket}
-            disabled={buying}
-            className="mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold shadow-lg shadow-fuchsia-500/30 disabled:opacity-60"
+            onClick={() => setTicketOpen(true)}
+            className="mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold shadow-lg shadow-fuchsia-500/30"
           >
-            {buying ? "Processando…" : "Comprar acesso (saldo)"}
+            Comprar acesso
           </button>
+
           <p className="text-[11px] text-white/50 mt-2">Ticket único vale enquanto a live estiver no ar.</p>
         </div>
       </div>
