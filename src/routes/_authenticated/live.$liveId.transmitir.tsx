@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Square, ArrowLeft } from "lucide-react";
 import { getLive, endLive } from "@/lib/lives.functions";
@@ -21,9 +21,41 @@ export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")(
   component: TransmitirPage,
 });
 
+type TransmissionState = "idle" | "camera" | "publishing" | "live" | "error";
+
+function waitForIceGathering(pc: RTCPeerConnection, timeoutMs: number) {
+  return new Promise<void>((resolve) => {
+    if (pc.iceGatheringState === "complete") {
+      resolve();
+      return;
+    }
+
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      pc.removeEventListener("icegatheringstatechange", check);
+      resolve();
+    };
+    const check = () => {
+      if (pc.iceGatheringState === "complete") done();
+    };
+
+    pc.addEventListener("icegatheringstatechange", check);
+    window.setTimeout(done, timeoutMs);
+  });
+}
+
+function closePublisher(pc: RTCPeerConnection | null, stream: MediaStream | null) {
+  pc?.getSenders().forEach((sender) => sender.track?.stop());
+  pc?.close();
+  stream?.getTracks().forEach((track) => track.stop());
+}
+
 function TransmitirPage() {
   const { liveId } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   useDarkSurface();
 
@@ -32,8 +64,10 @@ function TransmitirPage() {
 
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [transmissionState, setTransmissionState] = useState<TransmissionState>("idle");
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const drag = useLiveDragChat();
@@ -60,51 +94,63 @@ function TransmitirPage() {
     let cancelled = false;
     (async () => {
       try {
+        setTransmissionState("camera");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 1280, height: 720 },
           audio: true,
         });
         if (cancelled) return;
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.play().catch(() => {});
         }
-        const pc = new RTCPeerConnection();
+        setTransmissionState("publishing");
+        const pc = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.cloudflare.com:3478" }],
+        });
         pcRef.current = pc;
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
         pc.oniceconnectionstatechange = () => {
-          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") setConnected(true);
+          if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+            setConnected(true);
+            setTransmissionState("live");
+            queryClient.invalidateQueries({ queryKey: ["live-meta", liveId] });
+          }
+          if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
+            setConnected(false);
+            setTransmissionState("error");
+          }
         };
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await new Promise<void>((r) => {
-          if (pc.iceGatheringState === "complete") return r();
-          const c = () => { if (pc.iceGatheringState === "complete") { pc.removeEventListener("icegatheringstatechange", c); r(); } };
-          pc.addEventListener("icegatheringstatechange", c);
-          setTimeout(r, 2500);
-        });
+        await waitForIceGathering(pc, 3500);
         const res = await fetch(whipUrl, {
           method: "POST",
           headers: { "Content-Type": "application/sdp" },
           body: pc.localDescription?.sdp ?? "",
         });
-        if (!res.ok) throw new Error(`WHIP HTTP ${res.status}`);
+        if (!res.ok) {
+          const details = await res.text().catch(() => "");
+          throw new Error(`WHIP HTTP ${res.status}${details ? ` — ${details.slice(0, 140)}` : ""}`);
+        }
         const answer = await res.text();
         await pc.setRemoteDescription({ type: "answer", sdp: answer });
       } catch (e: any) {
         console.error(e);
+        setConnected(false);
+        setTransmissionState("error");
         toast.error(e?.message ?? "Falha ao iniciar transmissão");
       }
     })();
     return () => {
       cancelled = true;
-      const pc = pcRef.current;
-      if (pc) {
-        pc.getSenders().forEach((s) => s.track?.stop());
-        pc.close();
-      }
+      closePublisher(pcRef.current, streamRef.current);
+      pcRef.current = null;
+      streamRef.current = null;
+      setConnected(false);
     };
-  }, [whipUrl]);
+  }, [whipUrl, liveId, queryClient]);
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
@@ -117,7 +163,7 @@ function TransmitirPage() {
     }
   }
 
-  const status: "live" | "scheduled" = connected ? "live" : "scheduled";
+  const status: "live" | "starting" = connected ? "live" : "starting";
   const viewersDisplay = liveViewers ?? meta?.viewersPeak ?? 0;
   const topOverlay = meta && (
     <LiveOverlayTop
@@ -136,7 +182,17 @@ function TransmitirPage() {
   );
 
   const videoEl = (fit: "cover" | "contain") => (
-    <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
+    <>
+      <video ref={videoRef} playsInline autoPlay muted className={`w-full h-full bg-black ${fit === "cover" ? "object-cover" : "object-contain"}`} />
+      {!connected && (
+        <div className="absolute inset-x-4 bottom-5 z-[6] rounded-full bg-black/50 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
+          {transmissionState === "camera" && "Conectando câmera…"}
+          {transmissionState === "publishing" && "Enviando sinal da transmissão…"}
+          {transmissionState === "error" && "Falha ao iniciar transmissão"}
+          {(transmissionState === "idle" || !transmissionState) && "Preparando transmissão…"}
+        </div>
+      )}
+    </>
   );
 
   // MOBILE
