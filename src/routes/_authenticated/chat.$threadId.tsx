@@ -789,7 +789,11 @@ function ChatThreadView() {
                       if (mm.kind === "video") {
                         return <video key={idx} src={mm.url} controls className={commonClass} />;
                       }
-                      return <audio key={idx} src={mm.url} controls className="w-full col-span-2" />;
+                      return (
+                        <div key={idx} className="col-span-2">
+                          <AudioBubble src={mm.url} variant={mine ? "mine" : "theirs"} />
+                        </div>
+                      );
                     })}
                     {mediaOnly && (
                       <div className="absolute bottom-1 right-1 inline-flex items-center gap-1 rounded-full bg-black/55 text-white px-2 py-0.5 text-[10px] font-medium backdrop-blur">
