@@ -1,33 +1,30 @@
-## Diagnóstico
+## Plano
 
-O convite de videochamada é criado com `status='pending_payment'` e `payment_status='pending'`. Após o pagamento, nada abre a sala porque três pontos estão quebrados:
+1. **Corrigir o overlay de entrada**
+   - Atualizar `/chat/call/$callId` para não depender apenas da promessa de `frame.join()` para remover o texto “Entrando na chamada…”.
+   - Escutar eventos reais do Daily (`joined-meeting`, erro e saída) e liberar a interface assim que a pessoa entra na sala.
 
-1. **Webhook Asaas** (`src/routes/api/public/webhooks/asaas.ts`, `markStatus`): quando o pagamento é confirmado, só atualiza `payment_status='paid'` para `video_calls`. O `status` permanece `pending_payment`, então a chamada nunca vira "ativa".
-2. **`listActiveCallsWith`** (`src/lib/communication.functions.ts`): filtra `status IN ['requested','accepted']`. Como o status nunca muda, o `VideoCallHeaderButton` não mostra o ponto verde de "entrar" e o assinante não tem como abrir a sala.
-3. **`CallInviteCard`** (em `src/routes/_authenticated/chat.$threadId.tsx`): quando pago, mostra apenas "Pago · aguardando início", sem CTA para entrar na chamada.
-4. **`pay_with_wallet` (SQL)** grava `status='scheduled'` no ramo `video_call`, mas esse valor **não existe** no enum `video_call_status` — pagamento com carteira falha silenciosamente/erro de enum e a linha não avança.
+2. **Adicionar proteção contra travamento**
+   - Criar um timeout curto: se o iframe do Daily já carregou/foi criado, mas o evento de entrada demora demais, mostrar a chamada e trocar o texto para um estado acionável em vez de deixar a tela bloqueada indefinidamente.
+   - Exibir erro claro com opção de voltar ao chat quando a entrada falhar.
 
-## Mudanças
+3. **Evitar joins duplicados**
+   - Impedir que o efeito da rota execute `joinVideoCall` duas vezes no mesmo carregamento, porque os requests mostram chamadas duplicadas para o mesmo `callId`.
+   - Preservar a limpeza correta ao sair da página para destruir o frame Daily.
 
-### 1. Migração SQL
-- Corrigir `pay_with_wallet` para usar `status='accepted'` (valor válido do enum) em vez de `'scheduled'` no ramo `video_call`.
-- Ajustar webhook Asaas: quando `video_calls` recebe `paid`, além de `payment_status='paid'` também setar `status='accepted'` (apenas se o status atual for `pending_payment`, para não sobrescrever `cancelled/expired`).
-
-### 2. Webhook (`src/routes/api/public/webhooks/asaas.ts`)
-Na função `markStatus`, tratar `video_calls` como caso especial: quando `status='paid'`, atualizar em uma passada `payment_status='paid'` + `status='accepted'` (com `WHERE status='pending_payment'`).
-
-### 3. UI do convite (`src/routes/_authenticated/chat.$threadId.tsx`)
-No `CallInviteCard`, quando `paid`:
-- Substituir o texto estático por um botão **"Entrar na chamada"** (verde) que navega para `/chat/call/$callId` — visível para ambos os lados (criador e assinante).
-- Manter o rótulo "Pago" como badge acima do botão.
-
-### 4. Verificação
-Após aplicar, refazer o fluxo (criar convite → pagar via PIX → confirmar webhook) e conferir que:
-- O card no chat exibe "Entrar na chamada".
-- O ícone de vídeo no header ganha o ponto verde.
-- Clicar abre `/chat/call/$callId` e provisiona a sala Daily via `joinVideoCall`.
+4. **Melhorar controles da sala**
+   - Manter o botão de encerrar chamada próprio do app.
+   - Ajustar o estado visual para que o iframe Daily fique utilizável quando a sala estiver pronta.
 
 ## Detalhes técnicos
 
-- `joinVideoCall` já aceita entrar quando `status != completed/cancelled/declined` e `payment_status='paid'`, então basta destravar a UI.
-- Nova migração idempotente (`CREATE OR REPLACE FUNCTION pay_with_wallet(...)`) para o fix do enum, sem alterar assinatura.
+- O backend já está retornando `roomUrl` e `token` corretamente para o `callId` atual.
+- A sala Daily também já foi criada e persistida em `video_calls.room_url`.
+- O problema está no frontend da rota `src/routes/_authenticated/chat.call.$callId.tsx`: o overlay continua por cima do iframe enquanto o estado permanece `joining`.
+
+## Validação
+
+- Abrir `/chat/call/628cba61-a486-453a-b124-6f12e4e7a29f`.
+- Confirmar que o texto “Entrando na chamada…” desaparece quando a sala Daily fica pronta.
+- Confirmar que não há duas chamadas consecutivas para `joinVideoCall` no carregamento.
+- Confirmar que o botão de encerrar volta para o chat e finaliza a chamada.
