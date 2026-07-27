@@ -190,9 +190,19 @@ function LiveViewerPage() {
             <LiveDonorsPanel liveId={liveId} variant="sheet" className="text-foreground bg-card mt-3 rounded-lg" />
           </SheetContent>
         </Sheet>
+
+        <LiveTicketDialog
+          open={ticketOpen}
+          onOpenChange={setTicketOpen}
+          liveId={liveId}
+          creatorName={live.creator.displayName ?? live.creator.username}
+          priceCents={live.priceCents}
+          onPaid={() => refetch()}
+        />
       </div>
     );
   }
+
 
   // ------- DESKTOP -------
   return (
