@@ -742,6 +742,12 @@ function ChatThreadView() {
                         toast.success("Convite cancelado");
                       })
                     }
+                    onJoin={() =>
+                      navigate({
+                        to: "/chat/call/$callId",
+                        params: { callId: m.metadata!.callInvite!.callId },
+                      })
+                    }
                   />
                 )}
                 {m.metadata?.tip && <TipCard tip={m.metadata.tip} mine={mine} />}
