@@ -77,28 +77,7 @@ function LiveViewerPage() {
     return () => { supabase.removeChannel(ch); };
   }, [liveId, qc]);
 
-  async function handleBuyTicket() {
-    if (!live) return;
-    setBuying(true);
-    try {
-      const res: any = await payFn({ data: { kind: "live_ticket", liveId, amountCents: live.priceCents } });
-      if (res?.status === "paid" || res?.status === "already") {
-        toast.success("Acesso liberado!");
-        await refetch();
-      } else if (res?.status === "insufficient") {
-        toast.error("Saldo insuficiente. Recarregue sua carteira.");
-      } else {
-        toast.error("Não foi possível pagar com saldo.");
-      }
-    } catch (e: any) {
-      const msg = e?.message ?? "";
-      if (msg.includes("insufficient_balance")) toast.error("Saldo insuficiente");
-      else if (msg.includes("cannot_buy_own_live")) toast.error("Você é o dono desta live");
-      else toast.error(msg || "Falha ao comprar acesso");
-    } finally {
-      setBuying(false);
-    }
-  }
+
 
   const drag = useLiveDragChat();
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
