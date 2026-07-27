@@ -610,23 +610,25 @@ function TransmitirPage() {
 
   // DESKTOP
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-4">
-      <div className="flex items-center justify-between mb-3">
-        <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </button>
-        <button onClick={handleEnd} className="h-9 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold inline-flex items-center gap-1.5">
-          <Square className="h-3.5 w-3.5" /> Encerrar transmissão
-        </button>
-      </div>
-      <div className="flex gap-4 h-[calc(100vh-9rem)]">
-        <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
-          {videoEl("contain")}
-          {topOverlay}
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container max-w-7xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => navigate({ to: "/dashboard" })} className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </button>
+          <button onClick={handleEnd} className="h-9 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold inline-flex items-center gap-1.5">
+            <Square className="h-3.5 w-3.5" /> Encerrar transmissão
+          </button>
         </div>
-        <div className="w-[340px] h-full flex flex-col gap-3">
-          <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
-          <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
+        <div className="flex gap-4 h-[calc(100vh-9rem)]">
+          <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
+            {videoEl("contain")}
+            {topOverlay}
+          </div>
+          <div className="w-[340px] h-full flex flex-col gap-3">
+            <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
+            <LiveChat liveId={liveId} variant="card" className="flex-1 min-h-0" onViewersChange={setLiveViewers} />
+          </div>
         </div>
       </div>
     </div>
