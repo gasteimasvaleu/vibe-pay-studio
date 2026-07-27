@@ -73,8 +73,10 @@ export function BottomNav() {
           />
         ) : (
           <NavItem
-            icon={<Wallet className="h-5 w-5" />}
-            label="Minha carteira"
+            to="/creator-hub"
+            active={pathname.startsWith("/creator-hub")}
+            icon={<Sparkles className="h-5 w-5" />}
+            label="Fadinha"
           />
         )}
       </div>
