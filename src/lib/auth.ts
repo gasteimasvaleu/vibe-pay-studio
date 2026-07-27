@@ -184,7 +184,7 @@ export async function ensureCurrentUserProfile(preferred?: {
     metadata.name ??
     "usuario";
 
-  const username = makeUsername(fallbackName, user.id);
+  const username = await resolveAvailableUsername(fallbackName, user.id);
   const accountType = preferred?.accountType ?? metadata.account_type ?? "subscriber";
 
   const { error } = await supabase.from("profiles").insert({
@@ -193,12 +193,26 @@ export async function ensureCurrentUserProfile(preferred?: {
     username,
   });
 
-  if (error && !error.message.toLowerCase().includes("duplicate")) {
-    throw error;
+  if (error) {
+    const msg = error.message.toLowerCase();
+    const isDuplicate = msg.includes("duplicate") || msg.includes("unique");
+    if (!isDuplicate) throw error;
+    // Corrida em `username`: recalcula e tenta uma vez mais.
+    if (msg.includes("username")) {
+      const retryUsername = await resolveAvailableUsername(fallbackName, user.id);
+      const { error: retryError } = await supabase.from("profiles").insert({
+        account_type: accountType,
+        user_id: user.id,
+        username: retryUsername,
+      });
+      if (retryError && !retryError.message.toLowerCase().includes("duplicate")) {
+        throw retryError;
+      }
+    }
   }
 }
 
-function makeUsername(value: string, userId: string) {
+function normalizeBase(value: string): string {
   const base = value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -206,8 +220,41 @@ function makeUsername(value: string, userId: string) {
     .replace(/[^a-z0-9_]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "")
-    .slice(0, 21);
+    .slice(0, 20);
+  return base.length >= 3 ? base : "usuario";
+}
 
-  const safeBase = base.length >= 3 ? base : "usuario";
-  return `${safeBase}_${userId.slice(0, 8)}`.slice(0, 30);
+async function isUsernameTaken(username: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+  if (error) {
+    // Em caso de erro na checagem, assume ocupado para forçar sufixo — mais seguro.
+    return true;
+  }
+  return !!data;
+}
+
+async function resolveAvailableUsername(value: string, userId: string): Promise<string> {
+  const base = normalizeBase(value);
+
+  if (!(await isUsernameTaken(base))) {
+    return base;
+  }
+
+  for (let i = 2; i <= 9; i++) {
+    const suffix = `_${i}`;
+    const truncated = base.slice(0, 30 - suffix.length);
+    const candidate = `${truncated}${suffix}`;
+    if (!(await isUsernameTaken(candidate))) {
+      return candidate;
+    }
+  }
+
+  // Último recurso: sufixo com pedaço do userId, garante unicidade quase certa.
+  const idSuffix = `_${userId.slice(0, 8)}`;
+  const truncated = base.slice(0, 30 - idSuffix.length);
+  return `${truncated}${idSuffix}`;
 }
