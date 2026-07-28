@@ -44,13 +44,15 @@ export function sanitizeHandle(value: string) {
 
 export function validateUsername(
   raw: string,
+  opts?: { bypassReserved?: boolean },
 ): { ok: true; value: string } | { ok: false; reason: "invalid_format" | "reserved" } {
   const value = raw.trim().toLowerCase();
   if (!USERNAME_RE.test(value)) return { ok: false, reason: "invalid_format" };
   if (value.startsWith("_")) return { ok: false, reason: "invalid_format" };
-  if (RESERVED_USERNAMES.has(value)) return { ok: false, reason: "reserved" };
+  if (!opts?.bypassReserved && RESERVED_USERNAMES.has(value)) return { ok: false, reason: "reserved" };
   return { ok: true, value };
 }
+
 
 export function validateDisplayName(raw: string): { ok: true; value: string } | { ok: false } {
   const value = raw.replace(/\s+/g, " ").trim();
