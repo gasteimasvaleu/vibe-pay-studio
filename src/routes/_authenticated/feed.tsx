@@ -266,6 +266,8 @@ function FeedPage() {
         publicationAuthorId={commentsFor?.author_id}
         commentsDisabled={commentsFor?.comments_disabled}
         currentUserName={username}
+        currentUserAvatarUrl={avatarUrl}
+
         open={!!commentsFor}
         onOpenChange={(v) => !v && setCommentsFor(null)}
         onCountChange={(delta) => {
