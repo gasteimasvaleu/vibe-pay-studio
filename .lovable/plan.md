@@ -1,15 +1,5 @@
-# Corrigir dialog nativo ao apagar oferta
+## Centralizar RangeSelector no mobile
 
-## Problema
-Em `src/routes/_authenticated/promotions.tsx` (linha 145), a exclusão de oferta usa `window.confirm(...)`, que exibe o dialog nativo do navegador com o domínio `lovableproject.com`.
+Em `src/routes/_authenticated/my-monetisex-stats.tsx` linha 290, o container do seletor de período usa `flex flex-wrap items-center gap-3` e fica alinhado à esquerda no mobile.
 
-## Solução
-Substituir pelo `AlertDialog` do shadcn, seguindo o mesmo padrão já aplicado em `StoryViewer.tsx`.
-
-### Alterações em `src/routes/_authenticated/promotions.tsx`
-1. Importar `AlertDialog`, `AlertDialogAction`, `AlertDialogCancel`, `AlertDialogContent`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogHeader`, `AlertDialogTitle` de `@/components/ui/alert-dialog`.
-2. Adicionar estado local `confirmDeleteId: string | null` em `PromotionsListPage`.
-3. Trocar o `window.confirm` no `onDelete` do `PromotionCard` por `setConfirmDeleteId(p.id)`.
-4. Renderizar um `<AlertDialog>` controlado com título "Apagar oferta?", descrição "Esta ação não pode ser desfeita.", botões Cancelar e Apagar (destructive). O Apagar chama `deleteMutation.mutate(confirmDeleteId)` e fecha o dialog.
-
-Nenhuma outra mudança de comportamento — apenas UX do confirm.
+**Alteração:** trocar por `flex flex-wrap items-center justify-center gap-3 sm:justify-start` — centraliza "Período" e o botão de datas no mobile e mantém o alinhamento à esquerda em telas ≥ sm.
