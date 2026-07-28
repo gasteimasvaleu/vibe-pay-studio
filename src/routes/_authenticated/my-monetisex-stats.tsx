@@ -2215,10 +2215,8 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
           { label: "Exibir estatísticas", onSelect: () => setStatsOpen(true), disabled: !top },
         ]} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_LIVE_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_LIVE_TABS} active={tab} onChange={setTab} />
       </div>
       {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
         !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma live no período.</p> : (
