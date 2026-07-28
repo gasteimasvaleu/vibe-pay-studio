@@ -10,6 +10,8 @@ const EARNING_KINDS = [
   "subscription",
   "tip",
   "video_call",
+  "live_ticket",
+  "challenge_contribution",
 ] as const;
 
 const rangeValidator = (data: { from: string; to: string }): Range => {
@@ -30,18 +32,25 @@ function dayKey(iso: string): string {
  */
 export const getEarningsSeries = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(rangeValidator)
+  .inputValidator((data: { from: string; to: string; kind?: string | null }) => {
+    const base = rangeValidator({ from: data.from, to: data.to });
+    const kind = data.kind && (EARNING_KINDS as readonly string[]).includes(data.kind) ? data.kind : null;
+    return { ...base, kind };
+  })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
-    const { data: rows, error } = await supabase
+    let q = supabase
       .from("transactions")
       .select("created_at, amount_cents_gross, net_cents, kind")
       .eq("creator_profile_id", profileId)
       .eq("status", "paid")
-      .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from)
       .lte("created_at", data.to);
+    q = data.kind
+      ? q.eq("kind", data.kind as any)
+      : q.in("kind", EARNING_KINDS as unknown as never[]);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
     const bucket = new Map<string, { day: string; gross: number; net: number; count: number }>();

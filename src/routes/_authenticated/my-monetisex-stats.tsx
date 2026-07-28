@@ -410,11 +410,11 @@ function SubTabsRow<T extends string>({ tabs, active, onChange }: { tabs: readon
 
 /* ============================== Query helpers ============================== */
 
-function useSeries(range: { from: string; to: string }) {
+function useSeries(range: { from: string; to: string }, kind: string | null = null) {
   const fn = useServerFn(getEarningsSeries);
   return useQuery({
-    queryKey: ["stats", "series", range.from, range.to],
-    queryFn: () => fn({ data: range }),
+    queryKey: ["stats", "series", range.from, range.to, kind],
+    queryFn: () => fn({ data: { ...range, kind } }),
     staleTime: 30_000,
   });
 }
@@ -931,7 +931,7 @@ function GanhosPorProdutoTable({ range }: { range: { from: string; to: string } 
 }
 
 function ExtratoChartCard({ title, range, kind }: { title: string; range: { from: string; to: string }; kind: string | null }) {
-  const series = useSeries(range);
+  const series = useSeries(range, kind);
   const byProduct = useByProduct(range);
   const filtered = kind
     ? (byProduct.data?.items.filter(i => i.kind === kind) ?? [])
