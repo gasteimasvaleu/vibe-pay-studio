@@ -1,9 +1,19 @@
-## Exibir avatar real do usuário nos comentários
+## Objetivo
 
-**`src/lib/publications.functions.ts`**
-1. Adicionar `author_avatar_url: string | null` ao tipo `PublicationComment`.
-2. Em `listComments` — selecionar `avatar_url` junto de `username` na consulta a `profiles` e devolver no map final.
-3. Em `addComment` — selecionar `avatar_url` no lookup do perfil e incluir no retorno.
+Mostrar o avatar real do usuário logado no campo "Adicione um comentário..." do `CommentsSheet`, em vez do círculo com a inicial.
 
-**`src/components/feed/CommentsSheet.tsx`**
-- Em `CommentRow` (linha 49), renderizar `<img src={c.author_avatar_url}>` quando presente; manter o fallback com a inicial em círculo quando não houver avatar. Trocar `rounded-md` por `rounded-full` para alinhar com padrão de avatares do app.
+## Mudanças
+
+1. **`src/components/feed/CommentsSheet.tsx`**
+   - Adicionar prop opcional `currentUserAvatarUrl?: string | null`.
+   - No bloco do input (linha 433), renderizar `<img>` quando a URL existir, com `object-cover` e `rounded-full`; manter o círculo com a inicial como fallback (inclusive em `onError`).
+
+2. **`src/routes/_authenticated/feed.tsx`**
+   - Passar `currentUserAvatarUrl={avatarUrl}` para `<CommentsSheet />` (o `avatarUrl` já está disponível em `Route.useRouteContext()`).
+
+Nenhuma mudança de backend/schema é necessária — `profiles.avatar_url` já é carregado no `beforeLoad` da rota.
+
+## Verificação
+
+- Typecheck.
+- Abrir uma publicação no `/feed`, abrir os comentários e conferir que o avatar do usuário logado aparece ao lado do input.
