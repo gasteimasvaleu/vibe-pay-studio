@@ -201,7 +201,9 @@ export function CircularSteps({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="text-center md:text-left"
             >
+
               <p
                 className="uppercase tracking-widest"
                 style={{ color: colorSubtitle, fontSize: fontSizeSubtitle }}
