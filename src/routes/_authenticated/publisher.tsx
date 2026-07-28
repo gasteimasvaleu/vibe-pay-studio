@@ -345,8 +345,13 @@ function PublisherPage() {
   };
   const triggerMediaCamera = () => {
     flushSync(() => setPickerOpen(false));
-    mediaCameraInputRef.current?.click();
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+      setCameraOpen({ target: "media" });
+    } else {
+      mediaCameraInputRef.current?.click();
+    }
   };
+
 
   const onFiles = async (files: FileList | null) => {
     if (!files) return;
