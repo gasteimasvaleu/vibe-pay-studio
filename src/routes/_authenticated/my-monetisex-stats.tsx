@@ -2270,10 +2270,8 @@ function TopAssinantesCard({ range }: { range: { from: string; to: string } }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top assinantes</h3></div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_ASSIN_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_ASSIN_TABS} active={tab} onChange={setTab} />
       </div>
       {q.isLoading ? <Skeleton className="mt-4 h-32 w-full" /> :
         items.length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados no período.</p> : (
