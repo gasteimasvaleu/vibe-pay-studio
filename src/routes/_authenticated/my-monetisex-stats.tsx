@@ -376,18 +376,48 @@ function CardMenu({ items }: { items: { label: string; onSelect?: () => void; di
 
 function TabsRow<T extends string>({ tabs, active, onChange }: { tabs: readonly T[]; active: T; onChange: (t: T) => void }) {
   return (
-    <div className="rounded-md border border-border bg-card p-1 flex overflow-x-auto">
-      {tabs.map(t => (
-        <button
-          key={t}
-          type="button"
-          onClick={() => onChange(t)}
-          className={`flex-1 min-w-fit whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            t === active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >{t}</button>
-      ))}
-    </div>
+    <>
+      {/* Mobile: dropdown */}
+      <div className="sm:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-primary"
+            >
+              <span>{active}</span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[calc(100vw-2rem)] rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
+            {tabs.map(t => (
+              <DropdownMenuItem
+                key={t}
+                onSelect={() => onChange(t)}
+                className={`py-3 px-3 text-base cursor-pointer rounded-xl ${
+                  t === active ? "bg-primary/15 text-primary" : ""
+                }`}
+              >
+                {t}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {/* Desktop: tabs lado a lado */}
+      <div className="hidden sm:flex rounded-md border border-border bg-card p-1">
+        {tabs.map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onChange(t)}
+            className={`flex-1 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              t === active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >{t}</button>
+        ))}
+      </div>
+    </>
   );
 }
 
