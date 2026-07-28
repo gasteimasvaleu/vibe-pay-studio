@@ -1,28 +1,13 @@
 ## Problema
 
-As abas "Postagens" e "Mídias" no header do perfil (`/profile/$username`) mostram um número que **não bate com o que a lista realmente renderiza abaixo**.
-
-Confirmei consultando o banco para `monetisex` (perfil pago):
-- Contagem exibida hoje: **3 Postagens / 3 Mídias**
-- Publicações realmente visíveis (published_at ≤ agora, approved, não arquivadas): **1**
-- A contagem atual conta rascunhos, agendadas futuras, arquivadas e itens pendentes/removidos pela moderação.
-
-Causa: em `loadProfile` (`src/routes/_authenticated/profile.$username.tsx`, linhas 94–108), o `count` filtra apenas por `author_id` + `creator_profile_id`, sem os filtros de visibilidade que `fetchUserPubs`/`fetchMedias` aplicam ao listar.
+"monetisex" e "monetisexy" estão na lista `RESERVED_USERNAMES` (`src/lib/profile-active.server.ts`), então qualquer usuário — inclusive o dono do app — recebe "Este identificador é reservado" ao tentar salvar.
 
 ## Correção
 
-Alinhar os contadores exatamente com o critério das listas exibidas (o mesmo usado por `fetchUserPubs` / `fetchMedias`):
+Permitir que administradores contornem a checagem de reservados, mantendo o bloqueio para todos os demais usuários (e a checagem de formato/duplicidade para todos, inclusive admin).
 
-- `published_at IS NOT NULL` e `published_at <= now()`
-- `archived_at IS NULL`
-- `moderation_status = 'approved'`
-- Manter o filtro por `creator_profile_id` quando houver (isolamento paid vs free)
-- Para mídias, aplicar os mesmos filtros via `publications!inner(...)`
+1. Adicionar parâmetro opcional `bypassReserved` em `validateUsername` (`src/lib/profile-active.server.ts`).
+2. Nas server functions que chamam `validateUsername` para trocar o `username` (procurar por `validateUsername(` em `src/lib/*.functions.ts` — provavelmente `profile.functions.ts`), consultar `public.has_role(userId, 'admin')` e passar `bypassReserved: true` quando for admin.
+3. Nenhuma mudança de UI ou schema. A checagem de unicidade no banco (índice único) continua garantindo que ninguém colida.
 
-Além disso, quando o viewer é o próprio dono do perfil, considerar se agendadas/arquivadas devem ou não entrar. Proposta: **manter apenas o que aparece na listagem pública** para que o número sempre bata com o que o usuário vê rolando — agendadas/arquivadas continuam acessíveis nas telas próprias (`/publicacoes-agendadas`, coleções).
-
-## Arquivos
-
-- `src/routes/_authenticated/profile.$username.tsx` — atualizar `pubsQuery` e `mediasQuery` dentro de `loadProfile` com os mesmos filtros de visibilidade das listas.
-
-Sem mudanças de schema, RLS ou UI — apenas ajuste das queries de contagem.
+Efeito: `caiorobbb@gmail.com` (admin) poderá salvar `monetisexy`; assinantes/criadores comuns continuam bloqueados.
