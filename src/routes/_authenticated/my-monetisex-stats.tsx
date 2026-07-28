@@ -468,6 +468,46 @@ function SubTabsRow<T extends string>({ tabs, active, onChange }: { tabs: readon
   );
 }
 
+function CardTabsRow<T extends string>({ tabs, active, onChange, className }: { tabs: readonly T[]; active: T; onChange: (t: T) => void; className?: string }) {
+  return (
+    <>
+      {/* Mobile: dropdown */}
+      <div className={`sm:hidden ${className ?? ""}`}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between rounded-md border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+            >
+              <span className="truncate">{active}</span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[calc(100vw-2rem)] rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
+            {tabs.map(t => (
+              <DropdownMenuItem
+                key={t}
+                onSelect={() => onChange(t)}
+                className={`py-3 px-3 text-base cursor-pointer rounded-xl ${t === active ? "bg-primary/15 text-primary" : ""}`}
+              >
+                {t}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {/* Desktop: chips lado a lado */}
+      <div className={`hidden sm:flex flex-wrap gap-2 ${className ?? ""}`}>
+        {tabs.map(t => (
+          <Chip key={t} label={t} active={t === active} onClick={() => onChange(t)} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+
+
 /* ============================== Query helpers ============================== */
 
 function useSeries(range: { from: string; to: string }, kind: string | null = null) {
