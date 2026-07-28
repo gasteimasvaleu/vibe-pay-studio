@@ -191,10 +191,12 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const nameCheck = validateDisplayName(data.displayName);
     if (!nameCheck.ok) return { ok: false, reason: "invalid_display_name" } as const;
-    const userCheck = validateUsername(data.username);
-    if (!userCheck.ok) return { ok: false, reason: userCheck.reason } as const;
     const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const userCheck = validateUsername(data.username, { bypassReserved: !!isAdmin });
+    if (!userCheck.ok) return { ok: false, reason: userCheck.reason } as const;
     const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+
 
     const [existingProfileRes, existingCreatorRes] = await Promise.all([
       supabase.from("profiles").select("user_id").eq("username", userCheck.value).maybeSingle(),
