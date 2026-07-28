@@ -495,8 +495,13 @@ function PublisherPage() {
   };
   const triggerPreviewCamera = () => {
     flushSync(() => setPreviewSheetOpen(false));
-    previewCameraInputRef.current?.click();
+    if (typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getUserMedia === "function") {
+      setCameraOpen({ target: "preview" });
+    } else {
+      previewCameraInputRef.current?.click();
+    }
   };
+
 
   const openVaultPicker = (target: "media" | "preview") => {
     flushSync(() => {
