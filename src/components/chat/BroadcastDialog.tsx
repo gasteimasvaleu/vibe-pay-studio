@@ -69,7 +69,7 @@ export function BroadcastDialog({
 
   const { data: preview, isLoading: previewLoading } = useQuery({
     queryKey: ["broadcast-preview", audience, topN],
-    queryFn: () => previewFn({ data: { audience, creatorId, topN } }),
+    queryFn: () => previewFn({ data: { filters: [audience], creatorId } }),
     enabled: open,
   });
 
