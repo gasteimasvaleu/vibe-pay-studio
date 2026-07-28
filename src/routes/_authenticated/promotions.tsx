@@ -5,6 +5,16 @@ import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { deletePromotion, endPromotion, listMyPromotions } from "@/lib/promotions.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const promotionsQueryOptions = queryOptions({
   queryKey: ["my-promotions"],
@@ -56,6 +66,7 @@ function PromotionsListPage() {
 
   const hasActive = promotions.some((p) => p.is_active);
   const [tab, setTab] = useState<Tab>(hasActive ? "active" : "inactive");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = promotions.filter((p) => (tab === "active" ? p.is_active : !p.is_active));
 
@@ -141,11 +152,7 @@ function PromotionsListPage() {
                 promotion={p}
                 onEnd={() => endMutation.mutate(p.id)}
                 ending={endMutation.isPending && endMutation.variables === p.id}
-                onDelete={() => {
-                  if (window.confirm("Apagar esta oferta? Esta ação não pode ser desfeita.")) {
-                    deleteMutation.mutate(p.id);
-                  }
-                }}
+                onDelete={() => setConfirmDeleteId(p.id)}
                 deleting={deleteMutation.isPending && deleteMutation.variables === p.id}
               />
             ))}
@@ -160,6 +167,27 @@ function PromotionsListPage() {
           </div>
         )}
       </main>
+
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar oferta?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteId) deleteMutation.mutate(confirmDeleteId);
+                setConfirmDeleteId(null);
+              }}
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
