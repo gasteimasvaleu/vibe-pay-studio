@@ -66,6 +66,7 @@ function PromotionsListPage() {
 
   const hasActive = promotions.some((p) => p.is_active);
   const [tab, setTab] = useState<Tab>(hasActive ? "active" : "inactive");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = promotions.filter((p) => (tab === "active" ? p.is_active : !p.is_active));
 
