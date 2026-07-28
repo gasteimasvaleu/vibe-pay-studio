@@ -900,8 +900,8 @@ function GanhosPorProdutoTable({ range }: { range: { from: string; to: string } 
   const items = data?.items ?? [];
   const total = data?.totalGross ?? 0;
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-10 text-sm text-muted-foreground pb-3 border-b border-border">
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]">
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 sm:gap-x-10 text-xs sm:text-sm text-muted-foreground pb-3 border-b border-border">
         <span>Produto</span>
         <span className="text-right">%</span>
         <span className="text-right">Valor</span>
@@ -910,17 +910,17 @@ function GanhosPorProdutoTable({ range }: { range: { from: string; to: string } 
       {isLoading ? <div className="p-3"><Skeleton className="h-5 w-full" /></div> :
         items.length === 0 ? <p className="py-6 text-sm text-center text-muted-foreground">Sem vendas no período.</p> :
         items.map(it => (
-          <div key={it.kind} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-10 py-3 items-center text-sm border-b border-border/60">
-            <span className="inline-flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
-              {KIND_LABEL[it.kind] ?? it.kind}
+          <div key={it.kind} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 sm:gap-x-10 py-3 items-center text-xs sm:text-sm border-b border-border/60">
+            <span className="inline-flex items-center gap-2 min-w-0">
+              <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
+              <span className="truncate">{KIND_LABEL[it.kind] ?? it.kind}</span>
             </span>
             <span className="text-right">{total > 0 ? Math.round(it.gross / total * 100) : 0}%</span>
             <span className="text-right">{formatBRL(it.gross)}</span>
             <span className="text-right text-primary">{formatBRL(it.net)}</span>
           </div>
         ))}
-      <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] gap-x-10 items-center text-sm">
+      <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] gap-x-3 sm:gap-x-10 items-center text-xs sm:text-sm">
         <span className="font-bold">Total</span>
         <span />
         <span className="text-right font-bold">{formatBRL(total)}</span>
