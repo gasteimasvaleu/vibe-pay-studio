@@ -250,69 +250,17 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
         }
 
         // ---- Fluxo de Assinaturas ----
+        // Auto-renovação está DESATIVADA (tokenização Asaas ainda não liberada).
+        // O app não cria mais registros em /v3/subscriptions; qualquer evento
+        // SUBSCRIPTION_* que chegue aqui é de dado antigo — apenas logamos e
+        // marcamos como processado, sem alterar estado.
         const subscriptionId = payload.subscription?.id;
         if (subscriptionId && eventType.startsWith("SUBSCRIPTION_")) {
-          try {
-            if (SUBSCRIPTION_SPLIT_EVENTS.has(eventType)) {
-              console.warn("[asaas webhook] subscription split event", {
-                eventType,
-                subscriptionId,
-                externalRef,
-              });
-            } else if (
-              eventType === "SUBSCRIPTION_INACTIVATED" ||
-              eventType === "SUBSCRIPTION_DELETED"
-            ) {
-              const target =
-                eventType === "SUBSCRIPTION_DELETED" ? "cancelled" : "expired";
-
-              // localiza por provider_ref → externalReference (=subscriptions.id)
-              let { data: sub } = await supabaseAdmin
-                .from("subscriptions")
-                .select("id, status")
-                .eq("provider_ref", subscriptionId)
-                .maybeSingle();
-
-              if (!sub && externalRef) {
-                const res = await supabaseAdmin
-                  .from("subscriptions")
-                  .select("id, status")
-                  .eq("id", externalRef)
-                  .maybeSingle();
-                sub = res.data;
-              }
-
-              if (sub) {
-                let q = supabaseAdmin
-                  .from("subscriptions")
-                  .update({ status: target, provider_ref: subscriptionId })
-                  .eq("id", sub.id);
-                // Não sobrescrever estado final já divergente
-                if (target === "expired") {
-                  q = q.neq("status", "cancelled");
-                } else {
-                  q = q.neq("status", "expired");
-                }
-                await q;
-              } else {
-                console.warn(
-                  "[asaas webhook] subscription sem registro correspondente",
-                  { eventType, subscriptionId, externalRef },
-                );
-              }
-            } else {
-              // SUBSCRIPTION_CREATED / SUBSCRIPTION_UPDATED → só registra
-              console.log("[asaas webhook] subscription event", {
-                eventType,
-                subscriptionId,
-                externalRef,
-              });
-            }
-          } catch (e) {
-            console.error("[asaas webhook] subscription processing error", e);
-            return new Response("error", { status: 500 });
-          }
-
+          console.log("[asaas webhook] subscription event ignored (auto-renew disabled)", {
+            eventType,
+            subscriptionId,
+            externalRef,
+          });
           await supabaseAdmin
             .from("asaas_events")
             .update({ processed_at: new Date().toISOString() })
