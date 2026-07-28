@@ -300,6 +300,8 @@ function PublisherPage() {
   const [preview, setPreview] = useState<PreviewMedia | null>(null);
   const [vaultPickerOpen, setVaultPickerOpen] = useState(false);
   const [vaultPickerTarget, setVaultPickerTarget] = useState<"media" | "preview">("media");
+  const [cameraOpen, setCameraOpen] = useState<null | { target: "media" | "preview" }>(null);
+
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
