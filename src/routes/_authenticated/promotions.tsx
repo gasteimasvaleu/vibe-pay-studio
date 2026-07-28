@@ -5,6 +5,16 @@ import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { deletePromotion, endPromotion, listMyPromotions } from "@/lib/promotions.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const promotionsQueryOptions = queryOptions({
   queryKey: ["my-promotions"],
