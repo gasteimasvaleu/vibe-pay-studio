@@ -145,6 +145,7 @@ export function CommentsSheet({
   onCountChange,
   commentsDisabled,
   currentUserName,
+  currentUserAvatarUrl,
 }: {
   publicationId: string | null;
   publicationAuthorId?: string;
@@ -153,7 +154,9 @@ export function CommentsSheet({
   onCountChange?: (delta: number) => void;
   commentsDisabled?: boolean;
   currentUserName?: string;
+  currentUserAvatarUrl?: string | null;
 }) {
+
   const queryClient = useQueryClient();
   const list = useServerFn(listComments);
   const create = useServerFn(addComment);
