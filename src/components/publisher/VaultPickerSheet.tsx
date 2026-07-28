@@ -171,7 +171,7 @@ export function VaultPickerSheet({
 
         {/* Abas */}
         <div className="border-b">
-          <div className="flex flex-wrap gap-x-1 gap-y-0 px-2">
+          <div className="flex flex-wrap justify-center sm:justify-start gap-x-1 gap-y-0 px-2">
 
             {FIXED_TABS.map((t) => {
               const isActive = activeTab.kind === "fixed" && activeTab.key === t.key;
@@ -213,7 +213,7 @@ export function VaultPickerSheet({
         </div>
 
         {/* Filtros de tipo */}
-        <div className="px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar border-b">
+        <div className="px-4 pt-1 pb-2 flex gap-2 justify-center sm:justify-start overflow-x-auto no-scrollbar border-b">
           {MEDIA_FILTERS.map((f) => (
             <button
               key={f}
