@@ -152,17 +152,10 @@ export function VaultPickerSheet({
         side="bottom"
         className="p-0 rounded-t-2xl sm:max-w-[520px] sm:mx-auto sm:left-0 sm:right-0 h-[92vh] max-h-[92vh] flex flex-col"
       >
-        <SheetHeader className="px-4 pt-4 pb-2 flex-row items-center justify-between space-y-0">
+        <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-base">Acervo no Monetisexy</SheetTitle>
-          <button
-            type="button"
-            onClick={() => handleOpenChange(false)}
-            className="p-1 rounded-md hover:bg-muted"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </SheetHeader>
+
 
         <div className="px-4 pb-3">
           <div className="relative">
