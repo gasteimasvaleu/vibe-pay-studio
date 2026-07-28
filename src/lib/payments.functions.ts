@@ -711,6 +711,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
         provider: providerTag,
         status: "pending",
         promotion_id: promotionId,
+        auto_renew: false,
       })
       .select("id")
       .single();
@@ -727,45 +728,15 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       ...buildCardArgs(data.card),
     });
 
-    // Cria a assinatura recorrente no Asaas para gerar as próximas cobranças
-    // automaticamente. Se falhar, seguimos com o 1º pagamento avulso — a UI
-    // ainda mostra a assinatura ativa; o job só não terá cobrança auto.
-    let asaasSubId: string | null = null;
-    let nextDueDate: string | null = null;
-    try {
-      const cycle =
-        data.plan === "quarterly"
-          ? "QUARTERLY"
-          : data.plan === "semiannual"
-            ? "SEMIANNUALLY"
-            : "MONTHLY";
-      // Próxima cobrança 1 ciclo após a atual (renovação)
-      const next = new Date(Date.now() + months * 30 * 86400_000);
-      nextDueDate = next.toISOString().slice(0, 10);
-      const asub = await asaas.createAsaasSubscription({
-        customerId,
-        billingType: asaasBillingTypeForMethod(data.method),
-        amountCents,
-        cycle,
-        nextDueDate,
-        description: `Assinatura MTX`,
-        externalReference: `subscription:${sub.id}`,
-        creatorWalletId: creator.asaas_wallet_id,
-        netCreatorCents,
-        ...buildCardArgs(data.card),
-      });
-      asaasSubId = asub.id;
-    } catch (err) {
-      console.warn("[subscription] falha ao criar assinatura recorrente no Asaas", err);
-    }
-
+    // Renovação automática desativada: cobramos apenas o 1º ciclo. O assinante
+    // recebe lembrete por e-mail 7 dias antes do vencimento e renova manualmente
+    // pelo perfil do criador. Reativar quando a chave Asaas tiver tokenização
+    // de cartão liberada (endpoint /v3/subscriptions com creditCardToken).
     await supabase
       .from("subscriptions")
       .update({
         provider_ref: payment.id,
         last_payment_id: payment.id,
-        asaas_subscription_id: asaasSubId,
-        next_charge_at: nextDueDate ? `${nextDueDate}T12:00:00Z` : null,
       } as any)
       .eq("id", sub.id);
 

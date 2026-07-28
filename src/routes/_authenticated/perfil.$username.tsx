@@ -1192,8 +1192,8 @@ function ActiveSubscriptionCard({
   plan,
   priceCents,
   currentPeriodEnd,
-  autoRenew,
-  onCancel,
+  autoRenew: _autoRenew,
+  onCancel: _onCancel,
   onManage,
   format,
 }: {
@@ -1208,6 +1208,7 @@ function ActiveSubscriptionCard({
   const planLabel = plan === "monthly" ? "1 mês" : plan === "quarterly" ? "3 meses" : "6 meses";
   const endDate = new Date(currentPeriodEnd);
   const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / 86_400_000));
+  const nearExpiry = daysLeft <= 7;
   return (
     <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
       <div className="flex items-center justify-between mb-2">
@@ -1224,30 +1225,24 @@ function ActiveSubscriptionCard({
         Válida até <strong>{endDate.toLocaleDateString("pt-BR")}</strong>
         <span className="text-muted-foreground"> · {daysLeft} dia{daysLeft === 1 ? "" : "s"} restante{daysLeft === 1 ? "" : "s"}</span>
       </div>
-      <div className="text-xs text-muted-foreground mt-1">
-        {autoRenew ? "Renovação automática ativada" : "Renovação automática cancelada"}
+      <div className={`text-xs mt-1 ${nearExpiry ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+        {nearExpiry
+          ? "⚠ Expira em breve — renove manualmente para não perder o acesso."
+          : "Renovação manual — lembrete por e-mail 7 dias antes de expirar."}
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3">
         <button
           type="button"
           onClick={onManage}
-          className="flex-1 h-9 rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+          className="w-full h-9 rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-muted transition-colors"
         >
-          Gerenciar
+          Gerenciar assinatura
         </button>
-        {autoRenew && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 h-9 rounded-md border border-destructive/30 bg-transparent text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            Cancelar renovação
-          </button>
-        )}
       </div>
     </div>
   );
 }
+
 
 function PlanPill({
   label,

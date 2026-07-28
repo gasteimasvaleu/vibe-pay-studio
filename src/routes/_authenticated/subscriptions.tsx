@@ -499,17 +499,22 @@ function SubscriptionsPage() {
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5" />
-                            {cancelled
-                              ? `Acesso até ${formatDate(sub.currentPeriodEnd)}`
-                              : expired
-                                ? `Expirou em ${formatDate(sub.currentPeriodEnd)}`
-                                : `Renova em ${formatDate(sub.currentPeriodEnd)}`}
+                            {expired
+                              ? `Expirou em ${formatDate(sub.currentPeriodEnd)}`
+                              : `Expira em ${formatDate(sub.currentPeriodEnd)}`}
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <Crown className="h-3.5 w-3.5" />
                             {PLAN_LABELS[sub.plan] ?? sub.plan}
                           </span>
                         </div>
+
+                        {!expired && paid && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Renovação manual — você receberá um lembrete por e-mail
+                            7 dias antes da expiração.
+                          </p>
+                        )}
 
                         <div className="mt-3 flex items-center gap-2">
                           <Button
@@ -526,46 +531,10 @@ function SubscriptionsPage() {
                             }
                           >
                             <ExternalLink className="h-4 w-4" />
-                            Ir ao perfil
+                            {expired ? "Renovar agora" : "Ir ao perfil"}
                           </Button>
-
-                          {!expired && !cancelled && paid && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-9 gap-1 rounded-lg"
-                                  disabled={cancelMutation.isPending}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                  Cancelar renovação
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Cancelar renovação automática?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Sua assinatura continuará ativa até{" "}
-                                    <strong>{formatDate(sub.currentPeriodEnd)}</strong>,
-                                    mas não será cobrada novamente. Você pode
-                                    reassinar a qualquer momento.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Manter renovação</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => cancelMutation.mutate(sub.id)}
-                                  >
-                                    Sim, cancelar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
                         </div>
+
                       </div>
                     </div>
                   </li>

@@ -103,6 +103,7 @@ import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from '
 import { Route as AuthenticatedLiveLiveIdIndexRouteImport } from './routes/_authenticated/live.$liveId.index'
 import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
+import { Route as ApiPublicHooksSubscriptionRemindersRouteImport } from './routes/api/public/hooks/subscription-reminders'
 import { Route as ApiPublicHooksDispatchBroadcastsRouteImport } from './routes/api/public/hooks/dispatch-broadcasts'
 import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth/email-hook'
 import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
@@ -642,6 +643,12 @@ const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   path: '/api/public/webhooks/asaas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSubscriptionRemindersRoute =
+  ApiPublicHooksSubscriptionRemindersRouteImport.update({
+    id: '/api/public/hooks/subscription-reminders',
+    path: '/api/public/hooks/subscription-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDispatchBroadcastsRoute =
   ApiPublicHooksDispatchBroadcastsRouteImport.update({
     id: '/api/public/hooks/dispatch-broadcasts',
@@ -832,6 +839,7 @@ export interface FileRoutesByFullPath {
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
+  '/api/public/hooks/subscription-reminders': typeof ApiPublicHooksSubscriptionRemindersRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/live/$liveId/': typeof AuthenticatedLiveLiveIdIndexRoute
@@ -935,6 +943,7 @@ export interface FileRoutesByTo {
   '/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
+  '/api/public/hooks/subscription-reminders': typeof ApiPublicHooksSubscriptionRemindersRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/live/$liveId': typeof AuthenticatedLiveLiveIdIndexRoute
@@ -1047,6 +1056,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/two-factor/verify': typeof AuthenticatedSettingsTwoFactorVerifyRoute
   '/api/public/auth/email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/hooks/dispatch-broadcasts': typeof ApiPublicHooksDispatchBroadcastsRoute
+  '/api/public/hooks/subscription-reminders': typeof ApiPublicHooksSubscriptionRemindersRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
   '/api/public/webhooks/veriff-decision': typeof ApiPublicWebhooksVeriffDecisionRoute
   '/_authenticated/live/$liveId/': typeof AuthenticatedLiveLiveIdIndexRoute
@@ -1159,6 +1169,7 @@ export interface FileRouteTypes {
     | '/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
     | '/api/public/hooks/dispatch-broadcasts'
+    | '/api/public/hooks/subscription-reminders'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/live/$liveId/'
@@ -1262,6 +1273,7 @@ export interface FileRouteTypes {
     | '/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
     | '/api/public/hooks/dispatch-broadcasts'
+    | '/api/public/hooks/subscription-reminders'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/live/$liveId'
@@ -1373,6 +1385,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/two-factor/verify'
     | '/api/public/auth/email-hook'
     | '/api/public/hooks/dispatch-broadcasts'
+    | '/api/public/hooks/subscription-reminders'
     | '/api/public/webhooks/asaas'
     | '/api/public/webhooks/veriff-decision'
     | '/_authenticated/live/$liveId/'
@@ -1401,6 +1414,7 @@ export interface RootRouteChildren {
   CadastroIndexRoute: typeof CadastroIndexRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicHooksDispatchBroadcastsRoute: typeof ApiPublicHooksDispatchBroadcastsRoute
+  ApiPublicHooksSubscriptionRemindersRoute: typeof ApiPublicHooksSubscriptionRemindersRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
   ApiPublicWebhooksVeriffDecisionRoute: typeof ApiPublicWebhooksVeriffDecisionRoute
 }
@@ -2065,6 +2079,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/subscription-reminders': {
+      id: '/api/public/hooks/subscription-reminders'
+      path: '/api/public/hooks/subscription-reminders'
+      fullPath: '/api/public/hooks/subscription-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSubscriptionRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-broadcasts': {
       id: '/api/public/hooks/dispatch-broadcasts'
       path: '/api/public/hooks/dispatch-broadcasts'
@@ -2501,6 +2522,8 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroIndexRoute: CadastroIndexRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicHooksDispatchBroadcastsRoute: ApiPublicHooksDispatchBroadcastsRoute,
+  ApiPublicHooksSubscriptionRemindersRoute:
+    ApiPublicHooksSubscriptionRemindersRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
   ApiPublicWebhooksVeriffDecisionRoute: ApiPublicWebhooksVeriffDecisionRoute,
 }

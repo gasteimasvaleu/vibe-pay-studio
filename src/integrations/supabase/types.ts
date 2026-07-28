@@ -2785,6 +2785,7 @@ export type Database = {
           promotion_id: string | null
           provider: string
           provider_ref: string | null
+          reminder_sent_at: string | null
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
           subscriber_id: string
@@ -2806,6 +2807,7 @@ export type Database = {
           promotion_id?: string | null
           provider?: string
           provider_ref?: string | null
+          reminder_sent_at?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           subscriber_id: string
@@ -2827,6 +2829,7 @@ export type Database = {
           promotion_id?: string | null
           provider?: string
           provider_ref?: string | null
+          reminder_sent_at?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           subscriber_id?: string

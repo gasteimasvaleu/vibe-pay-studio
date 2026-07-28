@@ -230,6 +230,14 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
                   <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} />
                 </div>
 
+                <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">Renovação manual.</strong>{" "}
+                  Esta assinatura cobre apenas 1 ciclo — não há cobrança recorrente
+                  automática. Enviamos um e-mail 7 dias antes do vencimento para você
+                  renovar quando quiser.
+                </div>
+
+
                 <Button
                   onClick={submit}
                   disabled={loading || totals[plan].cents <= 0}
