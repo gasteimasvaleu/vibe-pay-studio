@@ -1944,12 +1944,8 @@ function AssinantesListInline({ range }: { range: { from: string; to: string } }
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
         <h3 className="text-sm font-bold">Filtrar por</h3>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {ASSINANTES_LIST_CHIPS.map(c => (
-            <div key={c} className="shrink-0">
-              <Chip label={c} active={c === filter} onClick={() => setFilter(c)} />
-            </div>
-          ))}
+        <div className="mt-3">
+          <CardTabsRow tabs={ASSINANTES_LIST_CHIPS} active={filter} onChange={setFilter} />
         </div>
       </div>
 
