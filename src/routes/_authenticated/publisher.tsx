@@ -71,6 +71,8 @@ import {
   deleteDraftMedia,
 } from "@/lib/publications.functions";
 import { VaultPickerSheet } from "@/components/publisher/VaultPickerSheet";
+import { CameraCaptureDialog } from "@/components/publisher/CameraCaptureDialog";
+
 import type { VaultMediaItem } from "@/lib/vault.functions";
 
 export const Route = createFileRoute("/_authenticated/publisher")({
