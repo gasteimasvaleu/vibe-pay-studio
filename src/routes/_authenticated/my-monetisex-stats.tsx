@@ -1792,10 +1792,8 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-base font-bold">Top assinantes</h3></div>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-        {TOP_ASSINANTES_CHIPS.map(c => (
-          <div key={c} className="shrink-0"><Chip label={c} active={c === filtro} onClick={() => onFiltro(c)} /></div>
-        ))}
+      <div className="mt-3">
+        <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
       </div>
       {loading ? <Skeleton className="mt-4 h-32 w-full" /> :
         top.length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados para este filtro.</p> :
