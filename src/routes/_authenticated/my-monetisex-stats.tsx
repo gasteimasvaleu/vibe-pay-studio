@@ -410,11 +410,11 @@ function SubTabsRow<T extends string>({ tabs, active, onChange }: { tabs: readon
 
 /* ============================== Query helpers ============================== */
 
-function useSeries(range: { from: string; to: string }) {
+function useSeries(range: { from: string; to: string }, kind: string | null = null) {
   const fn = useServerFn(getEarningsSeries);
   return useQuery({
-    queryKey: ["stats", "series", range.from, range.to],
-    queryFn: () => fn({ data: range }),
+    queryKey: ["stats", "series", range.from, range.to, kind],
+    queryFn: () => fn({ data: { ...range, kind } }),
     staleTime: 30_000,
   });
 }
