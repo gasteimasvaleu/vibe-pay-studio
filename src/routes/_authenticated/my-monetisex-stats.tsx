@@ -1827,10 +1827,8 @@ function TopAssinantesGastoTotal({ top, loading, filtro, onFiltro }: {
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
         <h3 className="text-sm font-bold">Filtrar por</h3>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {TOP_ASSINANTES_CHIPS.map(c => (
-            <div key={c} className="shrink-0"><Chip label={c} active={c === filtro} onClick={() => onFiltro(c)} /></div>
-          ))}
+        <div className="mt-3">
+          <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
         </div>
       </div>
       <div className="rounded-xl border border-border overflow-hidden">
