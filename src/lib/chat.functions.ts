@@ -252,9 +252,27 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_id, username, avatar_url")
+        .select("user_id, username, avatar_url, active_profile_id")
         .eq("user_id", partnerId)
         .maybeSingle();
+
+      let partnerAvatar: string | null =
+        (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null;
+      let partnerUsername = profile?.username ?? "usuário";
+      const activeProfileId = (profile as { active_profile_id?: string | null } | null)
+        ?.active_profile_id;
+      if (activeProfileId) {
+        const { data: cp } = await supabase
+          .from("creator_profiles")
+          .select("username, avatar_url")
+          .eq("id", activeProfileId)
+          .maybeSingle();
+        if (cp) {
+          partnerAvatar =
+            (cp as { avatar_url?: string | null }).avatar_url ?? partnerAvatar;
+          partnerUsername = (cp as { username?: string | null }).username ?? partnerUsername;
+        }
+      }
 
 
       const { data: threadRow } = await supabase
@@ -393,8 +411,8 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
       return {
         partner: {
           userId: partnerId,
-          username: profile?.username ?? "usuário",
-          avatarUrl: (profile as { avatar_url?: string | null } | undefined)?.avatar_url ?? null,
+          username: partnerUsername,
+          avatarUrl: partnerAvatar,
         },
         messages: msgs.map((m: any) => {
           const price = m.price_cents ?? 0;
