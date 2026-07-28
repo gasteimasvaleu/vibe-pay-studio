@@ -1,26 +1,21 @@
 ## Problema
 
-Na página `/my-monetisex-stats`, aba **Extratos → Faturamento**, o seletor de produto (Live, Desafio, Chat, Postagem, Videochamada, Mimo, Assinatura) não reflete os ganhos do produto escolhido. Dois bugs se combinam:
+No mobile, `TabsRow` (linha 377) exibe 6 abas (`Visão geral`, `Extratos`, `Engajamento`, `Alcance`, `Assinantes`, `Superfãs`) num container `overflow-x-auto`, forçando scroll horizontal e escondendo a aba ativa.
 
-1. `ExtratoChartCard` (`src/routes/_authenticated/my-monetisex-stats.tsx`, ~L933) monta o gráfico com `useSeries(range)`, que agrega **todos** os kinds. O `kind` selecionado só é usado para calcular o totalizador acima do gráfico; a curva permanece igual em qualquer produto.
-2. `getEarningsSeries` e `getEarningsByProduct` em `src/lib/stats.functions.ts` usam a constante `EARNING_KINDS` sem `live_ticket` e `challenge_contribution`. Selecionar Live ou Desafio devolve zero mesmo quando existem transações — inclusive nos cards de "Ganhos por produto".
+## Solução: dropdown no mobile, tabs no desktop
 
-## Correção
+Em telas `< sm`, trocar a fileira de botões por um único **trigger** que mostra a aba ativa e abre um `DropdownMenu` (shadcn, já usado no arquivo) com todas as opções. Em `sm+`, manter o layout atual de abas lado a lado — sem scroll, pois cabem confortavelmente.
 
-### 1. Backend — incluir Live/Desafio e aceitar filtro por kind
+Padrão visual do trigger mobile:
+- Mesmo container `rounded-md border bg-card p-1`.
+- Botão full-width com label da aba ativa à esquerda e `ChevronDown` à direita.
+- Cada item do dropdown destaca a aba ativa com `bg-primary/15 text-primary`.
 
-`src/lib/stats.functions.ts`:
-- Ampliar `EARNING_KINDS` adicionando `"live_ticket"` e `"challenge_contribution"`, para que ambas as funções (`getEarningsSeries`, `getEarningsByProduct`, e demais consumidores) considerem essas receitas.
-- Em `getEarningsSeries`, aceitar um `kind` opcional no input validator. Quando informado, aplicar `.eq("kind", kind)` na query; caso contrário, manter o `.in("kind", EARNING_KINDS)` atual. Retorno permanece igual.
+### Por que não acordeão
+Acordeão consome altura vertical e exige dois cliques para trocar de aba. Dropdown mantém uma linha só, é mais rápido e é o padrão já usado em outros seletores do arquivo (`RangeSelector`).
 
-### 2. Frontend — propagar o kind para a série
+## Escopo
 
-`src/routes/_authenticated/my-monetisex-stats.tsx`:
-- Estender `useSeries` para aceitar `kind: string | null` opcional, incluindo o kind na `queryKey` e no payload.
-- Em `ExtratoChartCard`, chamar `useSeries(range, kind)` para que a curva reflita apenas o produto selecionado. Nos demais chamadores (ex.: `EarningsChartCard`, `GanhosPorProdutoChartCard`), continuar sem `kind` — comportamento agregado inalterado.
-
-### Escopo fora
-
-- Não mudar UI/labels/cores do gráfico ou dos cards.
-- Não alterar `ExtratoTable` (já filtra por kind no cliente) nem os cards da coluna lateral.
-- Sem migrações.
+- Editar apenas `TabsRow` em `src/routes/_authenticated/my-monetisex-stats.tsx` (L377–392).
+- `SubTabsRow` já usa `flex-wrap` e não precisa mudar.
+- Sem alterações de comportamento, dados ou tipografia.
