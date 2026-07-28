@@ -1,35 +1,28 @@
 ## Problema
 
-Os botões do `DialogFooter` (ex.: "Cancelar" / "Enviar denúncia" no `ThreadActionsMenu`) ficam colados verticalmente no mobile e sem folga adequada no desktop. A causa está na classe compartilhada dos componentes base:
+As abas "Postagens" e "Mídias" no header do perfil (`/profile/$username`) mostram um número que **não bate com o que a lista realmente renderiza abaixo**.
 
-- `src/components/ui/dialog.tsx` (linha 63) — `DialogFooter`
-- `src/components/ui/alert-dialog.tsx` (linha 53) — `AlertDialogFooter`
+Confirmei consultando o banco para `monetisex` (perfil pago):
+- Contagem exibida hoje: **3 Postagens / 3 Mídias**
+- Publicações realmente visíveis (published_at ≤ agora, approved, não arquivadas): **1**
+- A contagem atual conta rascunhos, agendadas futuras, arquivadas e itens pendentes/removidos pela moderação.
 
-Ambos usam `flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2`, que:
-- **Mobile**: empilha em coluna invertida sem `gap`, resultando em bordas coladas.
-- **Desktop**: usa `space-x-2` (não cobre casos em que os botões quebram linha).
+Causa: em `loadProfile` (`src/routes/_authenticated/profile.$username.tsx`, linhas 94–108), o `count` filtra apenas por `author_id` + `creator_profile_id`, sem os filtros de visibilidade que `fetchUserPubs`/`fetchMedias` aplicam ao listar.
 
-Como todos os diálogos e alertas do app usam esses dois componentes, a correção é global — resolve o botão de denúncia e qualquer outro modal com múltiplos botões no footer.
+## Correção
 
-## Mudança
+Alinhar os contadores exatamente com o critério das listas exibidas (o mesmo usado por `fetchUserPubs` / `fetchMedias`):
 
-Trocar a classe dos dois footers para incluir `gap-2` (funciona em coluna e linha) mantendo o `sm:space-x-2` opcionalmente ou substituindo-o:
+- `published_at IS NOT NULL` e `published_at <= now()`
+- `archived_at IS NULL`
+- `moderation_status = 'approved'`
+- Manter o filtro por `creator_profile_id` quando houver (isolamento paid vs free)
+- Para mídias, aplicar os mesmos filtros via `publications!inner(...)`
 
-```ts
-// dialog.tsx e alert-dialog.tsx
-"flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2 sm:space-x-0"
-```
+Além disso, quando o viewer é o próprio dono do perfil, considerar se agendadas/arquivadas devem ou não entrar. Proposta: **manter apenas o que aparece na listagem pública** para que o número sempre bata com o que o usuário vê rolando — agendadas/arquivadas continuam acessíveis nas telas próprias (`/publicacoes-agendadas`, coleções).
 
-Isso garante:
-- Espaçamento vertical entre botões empilhados no mobile.
-- Espaçamento horizontal consistente no desktop.
-- Nenhum efeito colateral em footers com um único botão.
+## Arquivos
 
-## Arquivos alterados
+- `src/routes/_authenticated/profile.$username.tsx` — atualizar `pubsQuery` e `mediasQuery` dentro de `loadProfile` com os mesmos filtros de visibilidade das listas.
 
-1. `src/components/ui/dialog.tsx` — atualizar `DialogFooter`.
-2. `src/components/ui/alert-dialog.tsx` — atualizar `AlertDialogFooter`.
-
-## Validação
-
-Após a mudança, verificar visualmente o diálogo de denúncia em `/chat/:threadId` e um `AlertDialog` (ex.: confirmação de apagar conversa) em mobile (393px) e desktop.
+Sem mudanças de schema, RLS ou UI — apenas ajuste das queries de contagem.
