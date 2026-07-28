@@ -71,6 +71,8 @@ import {
   deleteDraftMedia,
 } from "@/lib/publications.functions";
 import { VaultPickerSheet } from "@/components/publisher/VaultPickerSheet";
+import { CameraCaptureDialog } from "@/components/publisher/CameraCaptureDialog";
+
 import type { VaultMediaItem } from "@/lib/vault.functions";
 
 export const Route = createFileRoute("/_authenticated/publisher")({
@@ -298,6 +300,8 @@ function PublisherPage() {
   const [preview, setPreview] = useState<PreviewMedia | null>(null);
   const [vaultPickerOpen, setVaultPickerOpen] = useState(false);
   const [vaultPickerTarget, setVaultPickerTarget] = useState<"media" | "preview">("media");
+  const [cameraOpen, setCameraOpen] = useState<null | { target: "media" | "preview" }>(null);
+
 
   const createFn = useServerFn(createPublication);
   const deleteDraft = useServerFn(deleteDraftMedia);
@@ -341,8 +345,13 @@ function PublisherPage() {
   };
   const triggerMediaCamera = () => {
     flushSync(() => setPickerOpen(false));
-    mediaCameraInputRef.current?.click();
+    if (typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getUserMedia === "function") {
+      setCameraOpen({ target: "media" });
+    } else {
+      mediaCameraInputRef.current?.click();
+    }
   };
+
 
   const onFiles = async (files: FileList | null) => {
     if (!files) return;
@@ -486,8 +495,13 @@ function PublisherPage() {
   };
   const triggerPreviewCamera = () => {
     flushSync(() => setPreviewSheetOpen(false));
-    previewCameraInputRef.current?.click();
+    if (typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getUserMedia === "function") {
+      setCameraOpen({ target: "preview" });
+    } else {
+      previewCameraInputRef.current?.click();
+    }
   };
+
 
   const openVaultPicker = (target: "media" | "preview") => {
     flushSync(() => {
@@ -1056,6 +1070,28 @@ function PublisherPage() {
         maxSelectable={Math.max(1, MAX_MEDIA - media.length)}
         onConfirm={handleVaultPick}
       />
+
+      <CameraCaptureDialog
+        open={cameraOpen !== null}
+        onOpenChange={(v) => {
+          if (!v) setCameraOpen(null);
+        }}
+        accept="both"
+        multi={cameraOpen?.target === "media"}
+        onCapture={(files) => {
+          if (!cameraOpen) return;
+          if (cameraOpen.target === "media") {
+            const dt = new DataTransfer();
+            files.forEach((f) => dt.items.add(f));
+            void onFiles(dt.files);
+          } else {
+            void onPreviewFile(files[0]);
+          }
+          setCameraOpen(null);
+        }}
+      />
+
+
 
 
 
