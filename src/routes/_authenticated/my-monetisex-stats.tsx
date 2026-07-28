@@ -287,7 +287,8 @@ function RangeSelector({ range, onChange }: { range: { from: string; to: string 
   const [openCal, setOpenCal] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+
       <div className="flex items-center gap-2 text-foreground">
         <CalendarIcon className="h-5 w-5 text-muted-foreground" />
         <Popover open={openPreset} onOpenChange={setOpenPreset}>
