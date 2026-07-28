@@ -1,13 +1,20 @@
-## Alterações em `src/components/publisher/VaultPickerSheet.tsx`
+## Ajuste global: dialogs não devem colar nas bordas no mobile
 
-**1. Centralizar abas (linha 174)** — no mobile centralizar; a partir de `sm` mantém alinhamento à esquerda:
+Alterar as classes base de `DialogContent` e `AlertDialogContent` para adicionar margem lateral no mobile e arredondamento consistente em qualquer viewport.
+
+### Arquivos
+
+**`src/components/ui/dialog.tsx`** (linha 41)
+Trocar `w-full max-w-lg ... sm:rounded-lg` por:
 ```
-flex flex-wrap justify-center sm:justify-start gap-x-1 gap-y-0 px-2
+w-[calc(100%-2rem)] max-w-lg rounded-lg
 ```
 
-**2. Centralizar filtros de tipo (linha 216)** — mesma abordagem:
-```
-px-4 py-2 flex gap-2 justify-center sm:justify-start overflow-x-auto no-scrollbar border-b
-```
+**`src/components/ui/alert-dialog.tsx`** (linha 37)
+Mesma troca: `w-[calc(100%-2rem)] max-w-lg ... rounded-lg` (removendo `sm:rounded-lg`).
 
-**3. Corrigir padding vertical da linha de filtros** — atualmente `py-2` já é simétrico, mas o espaço percebido "maior em cima" vem da margem entre a barra de abas (que tem `py-2` nos botões, sem padding no container) e o `py-2` do wrapper dos filtros somados. Ajustar para `pt-1 pb-2` no wrapper dos filtros equaliza o respiro visual entre as duas barras em desktop e mobile.
+### Efeito
+
+- Mobile: dialog ocupa `calc(100% - 2rem)` — 16px de folga em cada lado — com cantos arredondados.
+- Desktop: continua limitado a `max-w-lg` (ou ao `max-w-*` que cada uso já sobrescreve via `className`).
+- Nenhum dialog individual precisa ser tocado; consumidores que passam `max-w-xl`, `max-w-2xl`, etc. continuam funcionando via merge do `cn`.
