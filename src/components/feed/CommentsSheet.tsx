@@ -46,14 +46,23 @@ function CommentRow({
   const avatarSize = isReply ? "h-8 w-8" : "h-9 w-9";
   return (
     <div className="flex items-start gap-3">
-      <div
-        className={cn(
-          "shrink-0 rounded-md bg-primary grid place-items-center text-sm font-bold text-white",
-          avatarSize,
-        )}
-      >
-        {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
-      </div>
+      {c.author_avatar_url ? (
+        <img
+          src={c.author_avatar_url}
+          alt={c.author_username ?? "usuario"}
+          className={cn("shrink-0 rounded-full object-cover", avatarSize)}
+        />
+      ) : (
+        <div
+          className={cn(
+            "shrink-0 rounded-full bg-primary grid place-items-center text-sm font-bold text-white",
+            avatarSize,
+          )}
+        >
+          {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
+        </div>
+      )}
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground">

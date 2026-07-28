@@ -842,10 +842,12 @@ export type PublicationComment = {
   created_at: string;
   user_id: string;
   author_username: string | null;
+  author_avatar_url: string | null;
   parent_id: string | null;
   like_count: number;
   viewer_liked: boolean;
 };
+
 
 export const listComments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -863,14 +865,20 @@ export const listComments = createServerFn({ method: "POST" })
     const userIds = Array.from(new Set(list.map((r) => r.user_id)));
     const commentIds = list.map((r) => r.id);
 
-    let profileMap = new Map<string, string | null>();
+    let profileMap = new Map<string, { username: string | null; avatar_url: string | null }>();
     if (userIds.length) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, username")
+        .select("user_id, username, avatar_url")
         .in("user_id", userIds);
       profileMap = new Map(
-        (profiles ?? []).map((p) => [p.user_id, p.username]),
+        (profiles ?? []).map((p) => [
+          p.user_id,
+          {
+            username: p.username,
+            avatar_url: (p as { avatar_url?: string | null }).avatar_url ?? null,
+          },
+        ]),
       );
     }
 
@@ -892,12 +900,14 @@ export const listComments = createServerFn({ method: "POST" })
       body: r.body,
       created_at: r.created_at,
       user_id: r.user_id,
-      author_username: profileMap.get(r.user_id) ?? null,
+      author_username: profileMap.get(r.user_id)?.username ?? null,
+      author_avatar_url: profileMap.get(r.user_id)?.avatar_url ?? null,
       parent_id: r.parent_id ?? null,
       like_count: likeCount.get(r.id) ?? 0,
       viewer_liked: likedByMe.has(r.id),
     }));
   });
+
 
 const addCommentSchema = z.object({
   publicationId: z.string().uuid(),
@@ -924,7 +934,7 @@ export const addComment = createServerFn({ method: "POST" })
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, avatar_url")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -934,10 +944,13 @@ export const addComment = createServerFn({ method: "POST" })
       created_at: row.created_at,
       user_id: row.user_id,
       author_username: profile?.username ?? null,
+      author_avatar_url:
+        (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null,
       parent_id: row.parent_id ?? null,
       like_count: 0,
       viewer_liked: false,
     };
+
   });
 
 const commentIdSchema = z.object({ commentId: z.string().uuid() });

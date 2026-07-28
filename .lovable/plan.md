@@ -1,20 +1,9 @@
-## Ajuste global: dialogs não devem colar nas bordas no mobile
+## Exibir avatar real do usuário nos comentários
 
-Alterar as classes base de `DialogContent` e `AlertDialogContent` para adicionar margem lateral no mobile e arredondamento consistente em qualquer viewport.
+**`src/lib/publications.functions.ts`**
+1. Adicionar `author_avatar_url: string | null` ao tipo `PublicationComment`.
+2. Em `listComments` — selecionar `avatar_url` junto de `username` na consulta a `profiles` e devolver no map final.
+3. Em `addComment` — selecionar `avatar_url` no lookup do perfil e incluir no retorno.
 
-### Arquivos
-
-**`src/components/ui/dialog.tsx`** (linha 41)
-Trocar `w-full max-w-lg ... sm:rounded-lg` por:
-```
-w-[calc(100%-2rem)] max-w-lg rounded-lg
-```
-
-**`src/components/ui/alert-dialog.tsx`** (linha 37)
-Mesma troca: `w-[calc(100%-2rem)] max-w-lg ... rounded-lg` (removendo `sm:rounded-lg`).
-
-### Efeito
-
-- Mobile: dialog ocupa `calc(100% - 2rem)` — 16px de folga em cada lado — com cantos arredondados.
-- Desktop: continua limitado a `max-w-lg` (ou ao `max-w-*` que cada uso já sobrescreve via `className`).
-- Nenhum dialog individual precisa ser tocado; consumidores que passam `max-w-xl`, `max-w-2xl`, etc. continuam funcionando via merge do `cn`.
+**`src/components/feed/CommentsSheet.tsx`**
+- Em `CommentRow` (linha 49), renderizar `<img src={c.author_avatar_url}>` quando presente; manter o fallback com a inicial em círculo quando não houver avatar. Trocar `rounded-md` por `rounded-full` para alinhar com padrão de avatares do app.
