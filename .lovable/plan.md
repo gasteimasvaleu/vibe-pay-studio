@@ -1,19 +1,41 @@
-## Mudança
+## Escopo
 
-No `ExtratosPanel` (`src/routes/_authenticated/my-monetisex-stats.tsx` L869–894), a linha de controles tem 2 chips (`Faturamento`, `Ganhos por produto`) + dropdown de produto. No mobile isso quebra em duas linhas apertadas.
+Aplicar o padrão "dropdown no mobile + chips no desktop" a todas as tiras de sub-abas restantes de `src/routes/_authenticated/my-monetisex-stats.tsx`. Estas são as principais sub-abas dentro dos painéis (`Faturamento` / `Ganhos por produto` já foi feito).
 
-Aplicar o mesmo padrão dos outros SubTabsRow:
+### 1. Substituir por `<SubTabsRow>` (aproveita a variante mobile pronta)
 
-- **Mobile (`< sm`)**: renderizar `SubTabsRow` (que já é dropdown no mobile) para `EXTRATO_TABS`, empilhado acima do dropdown de produto (também full-width). Empilhamento vertical com `gap-2`.
-- **Desktop (`sm+`)**: manter o layout atual — chips + dropdown lado a lado com `flex-wrap`.
+Trocar o bloco `<div className="flex flex-wrap items-center gap-2">{TABS.map(button)}</div>` por `<SubTabsRow tabs={...} active={...} onChange={...} />` em:
 
-Não altero `EXTRATO_TABS`, `PRODUTO_OPTIONS` ou o dropdown de produto em si; só o wrapper e a renderização dos chips de aba. Substituo o `.map(EXTRATO_TABS)` inline pelo `<SubTabsRow>` já existente, aproveitando a variante mobile pronta.
+- **L1165** – `ENGAJAMENTO_TABS` no `EngajamentoPanel` (Publicações / Lives).
+- **L1567** – `ASSINANTES_TABS` no painel de assinantes (Assinaturas / …).
 
-Layout resultante:
-```
-mobile:              desktop:
-[▼ Faturamento    ]  [Faturamento] [Ganhos por produto] [▼ Todos os produtos]
-[▼ Todos os produtos]
-```
+### 2. Cartões "Top" com Chips (`TOP_POST_TABS`, `TOP_LIVE_TABS`, `TOP_ASSIN_TABS`)
 
-O dropdown de produto no mobile ganha `w-full`; no desktop volta a `w-auto` via `sm:w-auto`.
+Cada `<div className="mt-4 flex flex-wrap gap-2">{TABS.map(Chip)}</div>` vira:
+
+- Mobile: dropdown full-width (mesmo estilo de trigger dos `SubTabsRow`).
+- Desktop (`sm+`): chips lado a lado, comportamento atual.
+
+Locais: L2065 (`TopPostagemCard`), L2178 (`TopLiveCard`), L2233 (`TopAssinantesCard`).
+
+Como são 3 pontos idênticos, criar um helper local `<CardTabsRow tabs active onChange />` (mesma assinatura de `SubTabsRow`, visual "Chip") e reusar nos três cards. Fica no mesmo arquivo, ao lado de `SubTabsRow`.
+
+### 3. Filtros com `overflow-x-auto`
+
+Substituir o `flex gap-2 overflow-x-auto` por dropdown full-width no mobile / chips no desktop em:
+
+- **L1755** – `TOP_ASSINANTES_CHIPS` no card compacto de Top assinantes.
+- **L1790** – `TOP_ASSINANTES_CHIPS` no card completo "Filtrar por".
+- **L1907** – `ASSINANTES_LIST_CHIPS` no card "Filtrar por" da lista.
+
+Usar o mesmo `<CardTabsRow>` criado no passo 2 (a estética é Chip, então serve).
+
+### 4. `ExtratoFiltrosRow` (L1026)
+
+`Filtrar por` + chips inline. No mobile empilhar (label acima, dropdown full-width abaixo); no desktop manter label + chips na mesma linha. Reusa `<CardTabsRow>`.
+
+## Fora de escopo
+
+- Não mexer nos `flex-wrap` de rótulos/badges/valores (linhas 924, 996, 1416, 1581, etc.) — não são navegação por abas.
+- Sem mudanças de dados, ordenação ou lógica de negócio.
+- Sem tocar em `TabsRow` e no `ExtratosPanel` já ajustados.

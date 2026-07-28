@@ -468,6 +468,46 @@ function SubTabsRow<T extends string>({ tabs, active, onChange }: { tabs: readon
   );
 }
 
+function CardTabsRow<T extends string>({ tabs, active, onChange, className }: { tabs: readonly T[]; active: T; onChange: (t: T) => void; className?: string }) {
+  return (
+    <>
+      {/* Mobile: dropdown */}
+      <div className={`sm:hidden ${className ?? ""}`}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between rounded-md border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+            >
+              <span className="truncate">{active}</span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[calc(100vw-2rem)] rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
+            {tabs.map(t => (
+              <DropdownMenuItem
+                key={t}
+                onSelect={() => onChange(t)}
+                className={`py-3 px-3 text-base cursor-pointer rounded-xl ${t === active ? "bg-primary/15 text-primary" : ""}`}
+              >
+                {t}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {/* Desktop: chips lado a lado */}
+      <div className={`hidden sm:flex flex-wrap gap-2 ${className ?? ""}`}>
+        {tabs.map(t => (
+          <Chip key={t} label={t} active={t === active} onClick={() => onChange(t)} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+
+
 /* ============================== Query helpers ============================== */
 
 function useSeries(range: { from: string; to: string }, kind: string | null = null) {
@@ -1023,10 +1063,10 @@ function ExtratoFiltrosRow({ active, onChange }: {
   active: (typeof EXTRATO_FILTROS)[number]; onChange: (f: (typeof EXTRATO_FILTROS)[number]) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
       <span className="text-sm font-semibold text-foreground">Filtrar por</span>
-      <div className="flex flex-wrap items-center gap-2">
-        {EXTRATO_FILTROS.map(f => <Chip key={f} label={f} active={f === active} onClick={() => onChange(f)} />)}
+      <div className="sm:flex-1">
+        <CardTabsRow tabs={EXTRATO_FILTROS} active={active} onChange={onChange} />
       </div>
     </div>
   );
@@ -1162,14 +1202,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {ENGAJAMENTO_TABS.map(t => (
-          <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-              t === tab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
-            }`}>{t}</button>
-        ))}
-      </div>
+      <SubTabsRow tabs={ENGAJAMENTO_TABS} active={tab} onChange={setTab} />
 
       <div className="space-y-3 border-t border-border pt-5">
         <p className="text-sm font-bold text-foreground">Ordenar por</p>
@@ -1564,14 +1597,7 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {ASSINANTES_TABS.map(t => (
-          <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-              t === tab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
-            }`}>{t}</button>
-        ))}
-      </div>
+      <SubTabsRow tabs={ASSINANTES_TABS} active={tab} onChange={setTab} />
 
       <div className="border-t border-border pt-5">
         {tab === "Assinaturas" ? (
@@ -1752,10 +1778,8 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-base font-bold">Top assinantes</h3></div>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-        {TOP_ASSINANTES_CHIPS.map(c => (
-          <div key={c} className="shrink-0"><Chip label={c} active={c === filtro} onClick={() => onFiltro(c)} /></div>
-        ))}
+      <div className="mt-3">
+        <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
       </div>
       {loading ? <Skeleton className="mt-4 h-32 w-full" /> :
         top.length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados para este filtro.</p> :
@@ -1787,10 +1811,8 @@ function TopAssinantesGastoTotal({ top, loading, filtro, onFiltro }: {
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
         <h3 className="text-sm font-bold">Filtrar por</h3>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {TOP_ASSINANTES_CHIPS.map(c => (
-            <div key={c} className="shrink-0"><Chip label={c} active={c === filtro} onClick={() => onFiltro(c)} /></div>
-          ))}
+        <div className="mt-3">
+          <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
         </div>
       </div>
       <div className="rounded-xl border border-border overflow-hidden">
@@ -1904,12 +1926,8 @@ function AssinantesListInline({ range }: { range: { from: string; to: string } }
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
         <h3 className="text-sm font-bold">Filtrar por</h3>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {ASSINANTES_LIST_CHIPS.map(c => (
-            <div key={c} className="shrink-0">
-              <Chip label={c} active={c === filter} onClick={() => setFilter(c)} />
-            </div>
-          ))}
+        <div className="mt-3">
+          <CardTabsRow tabs={ASSINANTES_LIST_CHIPS} active={filter} onChange={setFilter} />
         </div>
       </div>
 
@@ -2062,10 +2080,8 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
           { label: "Arquivar post", onSelect: () => chooseAction("archive") },
         ]} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_POST_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_POST_TABS} active={tab} onChange={setTab} />
       </div>
       {action && (
         <div className="mt-4 flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2 text-sm">
@@ -2175,10 +2191,8 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
           { label: "Exibir estatísticas", onSelect: () => setStatsOpen(true), disabled: !top },
         ]} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_LIVE_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_LIVE_TABS} active={tab} onChange={setTab} />
       </div>
       {q.isLoading ? <Skeleton className="mt-4 h-16 w-full" /> :
         !top ? <p className="mt-6 text-center text-sm text-muted-foreground">Nenhuma live no período.</p> : (
@@ -2230,10 +2244,8 @@ function TopAssinantesCard({ range }: { range: { from: string; to: string } }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top assinantes</h3></div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_ASSIN_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_ASSIN_TABS} active={tab} onChange={setTab} />
       </div>
       {q.isLoading ? <Skeleton className="mt-4 h-32 w-full" /> :
         items.length === 0 ? <p className="mt-6 text-center text-sm text-muted-foreground">Sem dados no período.</p> : (
