@@ -868,24 +868,17 @@ function ExtratosPanel({ range }: { range: { from: string; to: string } }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {EXTRATO_TABS.map(t => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setExtratoTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-              t === extratoTab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
-            }`}
-          >{t}</button>
-        ))}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="sm:contents">
+          <SubTabsRow tabs={EXTRATO_TABS} active={extratoTab} onChange={setExtratoTab} />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-card text-foreground border border-border hover:bg-accent transition-colors">
+            <button className="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 px-4 py-2 rounded-md text-sm font-medium bg-card text-foreground border border-border hover:bg-accent transition-colors">
               {produtoFilter}<ChevronDown className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
+          <DropdownMenuContent align="start" className="w-[calc(100vw-2rem)] sm:w-auto sm:min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
             {PRODUTO_OPTIONS.map(opt => (
               <DropdownMenuItem key={opt} onSelect={() => setProdutoFilter(opt)} className="py-3 px-3 text-base cursor-pointer rounded-xl">{opt}</DropdownMenuItem>
             ))}
