@@ -1063,10 +1063,10 @@ function ExtratoFiltrosRow({ active, onChange }: {
   active: (typeof EXTRATO_FILTROS)[number]; onChange: (f: (typeof EXTRATO_FILTROS)[number]) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
       <span className="text-sm font-semibold text-foreground">Filtrar por</span>
-      <div className="flex flex-wrap items-center gap-2">
-        {EXTRATO_FILTROS.map(f => <Chip key={f} label={f} active={f === active} onClick={() => onChange(f)} />)}
+      <div className="sm:flex-1">
+        <CardTabsRow tabs={EXTRATO_FILTROS} active={active} onChange={onChange} />
       </div>
     </div>
   );
