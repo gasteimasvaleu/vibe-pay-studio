@@ -9,14 +9,15 @@ export const Route = createFileRoute("/api/public/hooks/subscription-reminders")
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token =
-          request.headers.get("x-reminders-token") ??
-          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+        const apikey = request.headers.get("apikey") ?? "";
+        const expected =
+          process.env.SUPABASE_PUBLISHABLE_KEY ??
+          process.env.SUPABASE_ANON_KEY ??
           "";
-        const expected = process.env.REMINDERS_TOKEN;
-        if (!expected || token !== expected) {
+        if (!expected || apikey !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
+
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendTransactionalEmail, resolveUserEmail } = await import(
