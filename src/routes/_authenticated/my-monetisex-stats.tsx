@@ -931,7 +931,7 @@ function GanhosPorProdutoTable({ range }: { range: { from: string; to: string } 
 }
 
 function ExtratoChartCard({ title, range, kind }: { title: string; range: { from: string; to: string }; kind: string | null }) {
-  const series = useSeries(range);
+  const series = useSeries(range, kind);
   const byProduct = useByProduct(range);
   const filtered = kind
     ? (byProduct.data?.items.filter(i => i.kind === kind) ?? [])
