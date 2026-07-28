@@ -1071,6 +1071,28 @@ function PublisherPage() {
         onConfirm={handleVaultPick}
       />
 
+      <CameraCaptureDialog
+        open={cameraOpen !== null}
+        onOpenChange={(v) => {
+          if (!v) setCameraOpen(null);
+        }}
+        accept="both"
+        multi={cameraOpen?.target === "media"}
+        onCapture={(files) => {
+          if (!cameraOpen) return;
+          if (cameraOpen.target === "media") {
+            const dt = new DataTransfer();
+            files.forEach((f) => dt.items.add(f));
+            void onFiles(dt.files);
+          } else {
+            void onPreviewFile(files[0]);
+          }
+          setCameraOpen(null);
+        }}
+      />
+
+
+
 
 
       <PriceDialog
