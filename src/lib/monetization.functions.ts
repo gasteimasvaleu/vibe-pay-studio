@@ -118,28 +118,8 @@ export const cancelSubscription = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Carrega para pegar o asaas_subscription_id antes de atualizar.
-    const { data: row } = await (supabase as any)
-      .from("subscriptions")
-      .select("id, asaas_subscription_id, subscriber_id")
-      .eq("id", data.subscriptionId)
-      .eq("subscriber_id", userId)
-      .maybeSingle();
-    if (!row) throw new Error("Assinatura não encontrada.");
-
-    // Cancela a recorrência no Asaas (para de gerar novas cobranças).
-    // Best-effort: se falhar, ainda marcamos auto_renew=false localmente para
-    // que a UI reflita a intenção do usuário; o webhook eventualmente sincroniza.
-    const asaasSubId = row.asaas_subscription_id as string | null;
-    if (asaasSubId) {
-      try {
-        const asaas = await import("@/lib/asaas.server");
-        await asaas.deleteAsaasSubscription(asaasSubId);
-      } catch (err) {
-        console.warn("[cancelSubscription] falha ao deletar no Asaas", err);
-      }
-    }
-
+    // Auto-renovação está desativada — cancelar é apenas registrar a intenção
+    // no banco. O assinante mantém acesso até `current_period_end`.
     const { error } = await supabase
       .from("subscriptions")
       .update({
