@@ -142,12 +142,14 @@ export const checkUsernameAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { username: string }) => data)
   .handler(async ({ data, context }) => {
-    const check = validateUsername(data.username);
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const check = validateUsername(data.username, { bypassReserved: !!isAdmin });
     if (!check.ok) {
       return { available: false, isSelf: false, reason: check.reason } as const;
     }
-    const { supabase, userId } = context;
     const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
+
     const [profilesRes, creatorProfilesRes] = await Promise.all([
       supabase.from("profiles").select("user_id, username").eq("username", check.value).maybeSingle(),
       supabase.from("creator_profiles").select("id, user_id, username").eq("username", check.value).maybeSingle(),
