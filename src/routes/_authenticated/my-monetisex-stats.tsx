@@ -1202,14 +1202,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {ENGAJAMENTO_TABS.map(t => (
-          <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-              t === tab ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border hover:text-foreground"
-            }`}>{t}</button>
-        ))}
-      </div>
+      <SubTabsRow tabs={ENGAJAMENTO_TABS} active={tab} onChange={setTab} />
 
       <div className="space-y-3 border-t border-border pt-5">
         <p className="text-sm font-bold text-foreground">Ordenar por</p>
