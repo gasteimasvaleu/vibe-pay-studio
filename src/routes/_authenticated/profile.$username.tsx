@@ -91,14 +91,24 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
 
   const userId = profile.user_id;
 
+  const nowIso = new Date().toISOString();
+
   const pubsQuery = supabase
     .from("publications")
     .select("id", { count: "exact", head: true })
-    .eq("author_id", userId);
+    .eq("author_id", userId)
+    .eq("moderation_status", "approved")
+    .is("archived_at", null)
+    .not("published_at", "is", null)
+    .lte("published_at", nowIso);
   const mediasQuery = supabase
     .from("publication_media")
-    .select("id, publications!inner(author_id, creator_profile_id)", { count: "exact", head: true })
-    .eq("publications.author_id", userId);
+    .select("id, publications!inner(author_id, creator_profile_id, moderation_status, archived_at, published_at)", { count: "exact", head: true })
+    .eq("publications.author_id", userId)
+    .eq("publications.moderation_status", "approved")
+    .is("publications.archived_at", null)
+    .not("publications.published_at", "is", null)
+    .lte("publications.published_at", nowIso);
 
   const [{ count: postsCount }, { count: mediasCount }] = await Promise.all([
     creatorProfileId ? pubsQuery.eq("creator_profile_id", creatorProfileId) : pubsQuery,
@@ -106,6 +116,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
       ? mediasQuery.eq("publications.creator_profile_id", creatorProfileId)
       : mediasQuery,
   ]);
+
 
   const isCreatorProfile = !!creatorProfile;
   const accountType = isCreatorProfile
