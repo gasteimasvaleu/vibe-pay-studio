@@ -170,8 +170,9 @@ export function VaultPickerSheet({
         </div>
 
         {/* Abas */}
-        <div className="border-b overflow-x-auto no-scrollbar">
-          <div className="flex gap-1 px-4 min-w-max">
+        <div className="border-b">
+          <div className="flex flex-wrap gap-x-1 gap-y-0 px-2">
+
             {FIXED_TABS.map((t) => {
               const isActive = activeTab.kind === "fixed" && activeTab.key === t.key;
               return (
