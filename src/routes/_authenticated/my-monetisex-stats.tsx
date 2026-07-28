@@ -2102,10 +2102,8 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
           { label: "Arquivar post", onSelect: () => chooseAction("archive") },
         ]} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {TOP_POST_TABS.map(t => (
-          <Chip key={t} label={t} active={t === tab} onClick={() => setTab(t)} />
-        ))}
+      <div className="mt-4">
+        <CardTabsRow tabs={TOP_POST_TABS} active={tab} onChange={setTab} />
       </div>
       {action && (
         <div className="mt-4 flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2 text-sm">
