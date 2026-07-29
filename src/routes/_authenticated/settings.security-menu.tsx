@@ -171,8 +171,9 @@ function SecurityMenuPage() {
                         Atual
                       </span>
                     ) : (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                      <ActionPopover
+                        widthClass="w-[260px]"
+                        trigger={
                           <button
                             type="button"
                             className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -180,17 +181,15 @@ function SecurityMenuPage() {
                           >
                             <MoreVertical className="h-5 w-5" />
                           </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem
-                            onClick={() => setToRevoke(s)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Remover acesso
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        }
+                      >
+                        <ActionPopoverDestructive
+                          icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+                          label="Remover acesso"
+                          onClick={() => setToRevoke(s)}
+                          className="mt-0"
+                        />
+                      </ActionPopover>
                     )}
                   </div>
                 );
