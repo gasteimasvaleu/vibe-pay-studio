@@ -55,6 +55,7 @@ export const listSavedCards = createServerFn({ method: "GET" })
       .from("saved_cards")
       .select("id, brand, last4, holder_name, exp_month, exp_year, created_at")
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r: any) => ({
