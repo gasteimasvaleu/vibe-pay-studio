@@ -736,6 +736,19 @@ export const getAlcance = createServerFn({ method: "GET" })
       subscriptionsRevenueCents += s.price_cents_paid ?? 0;
     }
 
+    // Breakdown por produto (contagem + faturamento bruto)
+    const byProductMap = new Map<string, { count: number; grossCents: number }>();
+    for (const t of txRows as { kind: string; amount_cents_gross: number | null }[]) {
+      const key = t.kind;
+      const cur = byProductMap.get(key) ?? { count: 0, grossCents: 0 };
+      cur.count += 1;
+      cur.grossCents += t.amount_cents_gross ?? 0;
+      byProductMap.set(key, cur);
+    }
+    const byProduct = Array.from(byProductMap.entries())
+      .map(([kind, v]) => ({ kind, count: v.count, grossCents: v.grossCents }))
+      .sort((a, b) => b.grossCents - a.grossCents);
+
     return {
       profileViews: profViews.length,
       profileUniqueViewers: profVisitors.size,
@@ -747,6 +760,7 @@ export const getAlcance = createServerFn({ method: "GET" })
       subscriptionsCount,
       renewalsCount,
       subscriptionsRevenueCents,
+      byProduct,
     };
   });
 
