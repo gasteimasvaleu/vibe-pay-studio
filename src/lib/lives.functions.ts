@@ -322,19 +322,15 @@ export const getLive = createServerFn({ method: "GET" })
     ]);
     const src = prof.data ?? legacy.data ?? {};
 
-    // Resolve o whepUrl real (UID do vídeo ao vivo, não do Live Input).
-    // Só faz sentido quando o viewer pode assistir E a live está no ar.
+    // WHEP para live WHIP na Cloudflare Stream: usar a URL do próprio Live Input
+    // (`webRTCPlayback.url`, salva em `cf_webrtc_play_url`). O caminho por videoUid
+    // só existe para o VOD gerado após o fim da live.
     let whepUrl: string | null = null;
-    if (canWatch && live.status === "live" && (live as any).cf_live_input_id) {
-      try {
-        const { resolveActiveWhepUrl } = await import("@/lib/cloudflare-stream.server");
-        whepUrl = await resolveActiveWhepUrl(
-          (live as any).cf_live_input_id as string,
-          ((live as any).cf_webrtc_play_url as string | null) ?? ((live as any).cf_webrtc_url as string | null) ?? null,
-        );
-      } catch (e) {
-        console.warn("[lives] resolveActiveWhepUrl failed", e);
-      }
+    if (canWatch && live.status === "live") {
+      whepUrl =
+        ((live as any).cf_webrtc_play_url as string | null) ??
+        ((live as any).cf_webrtc_url as string | null) ??
+        null;
     }
 
     return {
