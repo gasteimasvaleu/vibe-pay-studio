@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Check, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { tokenizeAndSaveCard, deleteSavedCard } from "@/lib/saved-cards.functions";
+
+type Phase = "idle" | "tokenizing" | "charging" | "done" | "error";
 
 type Props = {
   /** Valor apenas informativo, mostrado no botão. */
