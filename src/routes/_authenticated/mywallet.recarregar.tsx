@@ -1,18 +1,21 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Minus, Plus, Loader2, QrCode, CreditCard } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Loader2, QrCode, CreditCard, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PixCheckout } from "@/components/payments/PixCheckout";
 import { CardCheckout } from "@/components/payments/CardCheckout";
 import { createWalletTopupPayment } from "@/lib/payments.functions";
+import { listSavedCards, chargeSavedCardTopUp } from "@/lib/saved-cards.functions";
 import {
   translatePaymentError,
   PAYMENT_MIN_GROSS_CENTS,
   formatMinimum,
 } from "@/lib/payment-limits";
+
 
 export const Route = createFileRoute("/_authenticated/mywallet/recarregar")({
   head: () => ({
@@ -46,9 +49,17 @@ function RecarregarPage() {
   const router = useRouter();
   const [amount, setAmount] = useState(50);
   const [method, setMethod] = useState<Method>("PIX");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTopup = useServerFn(createWalletTopupPayment);
+  const chargeSaved = useServerFn(chargeSavedCardTopUp);
+  const listCards = useServerFn(listSavedCards);
+  const cardsQuery = useQuery({
+    queryKey: ["saved-cards"],
+    queryFn: () => listCards(),
+  });
+  const savedCards = cardsQuery.data ?? [];
 
   const dec = () => setAmount((a) => Math.max(MIN, a - STEP));
   const inc = () => setAmount((a) => Math.min(MAX, a + STEP));
@@ -64,6 +75,25 @@ function RecarregarPage() {
     }
     setLoading(true);
     try {
+      // Cobrança 1-click com cartão salvo (sem iframe/redirecionamento)
+      if (method === "CREDIT_CARD" && savedCardId) {
+        const res = await chargeSaved({ data: { savedCardId, amountCents } });
+        const status = String(res.status ?? "").toUpperCase();
+        if (["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"].includes(status)) {
+          toast.success("Recarga confirmada!");
+          router.navigate({ to: "/mywallet" });
+        } else {
+          // Autorização pendente/análise — cai no iframe da Asaas como fallback
+          if (res.invoiceUrl) {
+            setCheckout({ method, paymentIntentId: res.paymentIntentId, invoiceUrl: res.invoiceUrl });
+          } else {
+            toast.message("Pagamento em processamento. Você será notificado quando confirmar.");
+            router.navigate({ to: "/mywallet" });
+          }
+        }
+        return;
+      }
+
       const res = await createTopup({ data: { amountCents, method } });
       if (method === "PIX") {
         if (!res.pixQrCode || !res.pixCopyPaste) throw new Error("Falha ao gerar QR Code PIX");
@@ -88,6 +118,7 @@ function RecarregarPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -201,6 +232,71 @@ function RecarregarPage() {
                 })}
               </div>
             </section>
+
+            {method === "CREDIT_CARD" && (
+              <section className="mt-8">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
+                  Cartão
+                </h2>
+                {cardsQuery.isLoading ? (
+                  <p className="mt-3 text-xs text-muted-foreground">Carregando cartões salvos…</p>
+                ) : savedCards.length === 0 ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    Você ainda não tem cartão salvo. Ao continuar, você usará o checkout seguro da Asaas e poderá salvar o cartão em{" "}
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2"
+                      onClick={() => router.navigate({ to: "/mywallet" })}
+                    >
+                      Minha carteira
+                    </button>{" "}
+                    para próximas recargas em 1 clique.
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {savedCards.map((c) => {
+                      const active = savedCardId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSavedCardId(active ? null : c.id)}
+                          className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                            active ? "border-primary bg-primary/5" : "border-border hover:bg-accent"
+                          }`}
+                        >
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
+                            <CreditCard className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-foreground">
+                              {c.brand ?? "Cartão"} •••• {c.last4}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {c.holderName} · {c.expMonth}/{c.expYear.slice(-2)}
+                            </span>
+                          </span>
+                          {active && <Check className="h-4 w-4 text-primary" />}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSavedCardId(null)}
+                      className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                        savedCardId === null ? "border-primary bg-primary/5" : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
+                        <Plus className="h-4 w-4" />
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">Usar novo cartão</span>
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
+
 
             <section className="mt-8">
               <h2 className="text-lg font-bold tracking-tight text-foreground">
