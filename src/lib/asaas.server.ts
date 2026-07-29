@@ -214,6 +214,22 @@ export async function updateCustomer(
   });
 }
 
+/** Busca um cliente já existente no Asaas pelo CPF/CNPJ (contas distintas do app com o mesmo CPF compartilham o cliente). */
+export async function findCustomerByCpf(
+  cpfCnpj: string,
+): Promise<AsaasCustomer | null> {
+  const clean = (cpfCnpj ?? "").replace(/\D/g, "");
+  if (!clean) return null;
+  try {
+    const res = await asaasFetch<{ data?: AsaasCustomer[] }>(
+      `/customers?cpfCnpj=${encodeURIComponent(clean)}&limit=1`,
+    );
+    return res?.data?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- Subaccounts (criadores) ----------
 
 export type AsaasSubaccount = {
