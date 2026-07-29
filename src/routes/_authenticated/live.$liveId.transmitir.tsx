@@ -13,6 +13,16 @@ import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
 import { LiveOverlayTop } from "@/components/live/LiveOverlayTop";
 import { useLiveDragChat } from "@/components/live/useLiveDragChat";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")({
   head: () => ({
