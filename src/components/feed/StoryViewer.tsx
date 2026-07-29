@@ -460,7 +460,7 @@ function LockedOverlay({
           className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-40"
         />
       )}
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
+      <div className="relative z-20 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
         <div className="h-14 w-14 rounded-full bg-white/10 grid place-items-center">
           <Lock className="h-6 w-6 text-white" />
         </div>
@@ -475,6 +475,7 @@ function LockedOverlay({
             value={method}
             onChange={onMethodChange}
             amountCents={priceCents}
+            tone="dark"
           />
         </div>
         <Button onClick={onUnlock} disabled={unlocking} className="w-full">
