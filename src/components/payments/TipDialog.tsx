@@ -218,7 +218,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} onNewCardTokenized={(id) => submit(id)} />
               {belowMethodMin && (method === "PIX" || method === "CREDIT_CARD") && (
                 <p className="text-[11px] text-destructive">
                   Valor mínimo para {method === "PIX" ? "PIX" : "cartão"}: {formatMinimum(method)}
@@ -227,7 +227,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
             </div>
 
             <Button
-              onClick={submit}
+              onClick={() => submit()}
               disabled={disableSubmit}
               className="w-full rounded-md bg-gradient-primary text-primary-foreground"
             >
