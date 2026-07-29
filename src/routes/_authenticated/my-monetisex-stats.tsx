@@ -80,6 +80,7 @@ import {
   getAlcance,
   getEngajamentoPublicacoes,
   getEngajamentoLives,
+  getEngajamentoStories,
 } from "@/lib/stats.functions";
 import { getCreatorEarningsSummary } from "@/lib/finance.functions";
 import { setPublicationPinned, setPublicationArchived } from "@/lib/publications.functions";
@@ -1186,33 +1187,45 @@ function ExtratoFaturamentoCard({ range }: { range: { from: string; to: string }
 
 /* ============================== Engajamento ============================== */
 
-const ENGAJAMENTO_TABS = ["Publicações", "Lives"] as const;
+const ENGAJAMENTO_TABS = ["Publicações", "Lives", "Stories"] as const;
 const ORDENAR_PUBLICACOES = ["Recentes", "Faturamento", "Mimos", "Curtidas", "Comentários"] as const;
 const ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações", "Comentários", "Curtidas"] as const;
+const ORDENAR_STORIES = ["Faturamento", "Desbloqueios", "Visualizações"] as const;
 
 function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ENGAJAMENTO_TABS)[number]>("Publicações");
   const [ordenarPub, setOrdenarPub] = useState<(typeof ORDENAR_PUBLICACOES)[number]>("Recentes");
   const [ordenarLive, setOrdenarLive] = useState<(typeof ORDENAR_LIVES)[number]>("Mais compradas");
+  const [ordenarStory, setOrdenarStory] = useState<(typeof ORDENAR_STORIES)[number]>("Faturamento");
   const isLives = tab === "Lives";
+  const isStories = tab === "Stories";
   const pubSortMap: Record<(typeof ORDENAR_PUBLICACOES)[number], "recent"|"revenue"|"tips"|"likes"|"comments"> = {
     "Recentes": "recent", "Faturamento": "revenue", "Mimos": "tips", "Curtidas": "likes", "Comentários": "comments",
   };
   const liveSortMap: Record<(typeof ORDENAR_LIVES)[number], "revenue"|"tips"|"views"|"likes"|"comments"> = {
     "Mais compradas": "revenue", "Mimos": "tips", "Visualizações": "views", "Comentários": "comments", "Curtidas": "likes",
   };
+  const storySortMap: Record<(typeof ORDENAR_STORIES)[number], "revenue"|"unlocks"|"views"> = {
+    "Faturamento": "revenue", "Desbloqueios": "unlocks", "Visualizações": "views",
+  };
 
   const pubFn = useServerFn(getEngajamentoPublicacoes);
   const pubQ = useQuery({
     queryKey: ["stats", "engPub", range.from, range.to, ordenarPub],
     queryFn: () => pubFn({ data: { ...range, sort: pubSortMap[ordenarPub] } }),
-    enabled: !isLives, staleTime: 30_000,
+    enabled: !isLives && !isStories, staleTime: 30_000,
   });
   const liveFn = useServerFn(getEngajamentoLives);
   const liveQ = useQuery({
     queryKey: ["stats", "engLive", range.from, range.to, ordenarLive],
     queryFn: () => liveFn({ data: { ...range, sort: liveSortMap[ordenarLive] } }),
     enabled: isLives, staleTime: 30_000,
+  });
+  const storyFn = useServerFn(getEngajamentoStories);
+  const storyQ = useQuery({
+    queryKey: ["stats", "engStory", range.from, range.to, ordenarStory],
+    queryFn: () => storyFn({ data: { ...range, sort: storySortMap[ordenarStory] } }),
+    enabled: isStories, staleTime: 30_000,
   });
 
   return (
@@ -1222,9 +1235,14 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="space-y-3 border-t border-border pt-5">
         <p className="text-sm font-bold text-foreground">Ordenar por</p>
         <div className="flex flex-wrap items-center gap-2">
-          {(isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
-            <Chip key={o} label={o} active={isLives ? o === ordenarLive : o === ordenarPub}
-              onClick={() => isLives ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number]) : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number])} />
+          {(isStories ? ORDENAR_STORIES : isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
+            <Chip key={o} label={o}
+              active={isStories ? o === ordenarStory : isLives ? o === ordenarLive : o === ordenarPub}
+              onClick={() => isStories
+                ? setOrdenarStory(o as (typeof ORDENAR_STORIES)[number])
+                : isLives
+                  ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number])
+                  : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number])} />
           ))}
         </div>
       </div>
@@ -1232,7 +1250,28 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            {isLives ? (() => {
+            {isStories ? (() => {
+              const cfg: Record<(typeof ORDENAR_STORIES)[number], { label: string; format: "brl" | "int"; get: (s: NonNullable<typeof storyQ.data>["items"][number]) => number }> = {
+                "Faturamento": { label: "Faturamento", format: "brl", get: s => (s.revenue_cents ?? 0) / 100 },
+                "Desbloqueios": { label: "Desbloqueios", format: "int", get: s => s.unlocks ?? 0 },
+                "Visualizações": { label: "Visualizações", format: "int", get: s => s.views ?? 0 },
+              };
+              const c = cfg[ordenarStory];
+              return (
+                <EngajamentoChart
+                  loading={storyQ.isLoading}
+                  totalLabel={`${storyQ.data?.totalCount ?? 0} stories`}
+                  totalRevenue={storyQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(storyQ.data?.items ?? []).map(s => ({
+                    date: s.published_at as string,
+                    metric: c.get(s),
+                  }))}
+                />
+              );
+            })() : isLives ? (() => {
               const cfg: Record<(typeof ORDENAR_LIVES)[number], { label: string; format: "brl" | "int"; get: (l: NonNullable<typeof liveQ.data>["items"][number]) => number }> = {
                 "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
                 "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
@@ -1287,7 +1326,14 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             <h3 className="text-base font-bold">Resumo</h3>
-            {isLives ? (
+            {isStories ? (
+              <div className="mt-4 space-y-4">
+                <ResumoItem icon={Sparkles} label="Quantidade" value={String(storyQ.data?.totalCount ?? 0)} />
+                <ResumoItem icon={Eye} label="Visualizações" value={String(storyQ.data?.totalViews ?? 0)} />
+                <ResumoItem icon={Users} label="Desbloqueios" value={String(storyQ.data?.totalUnlocks ?? 0)} />
+                <ResumoItem icon={DollarSign} label="Faturamento" value={formatBRL(storyQ.data?.totalRevenue ?? 0)} />
+              </div>
+            ) : isLives ? (
               <div className="mt-4 space-y-4">
                 <ResumoItem icon={Radio} label="Quantidade" value={String(liveQ.data?.totalCount ?? 0)} />
                 <ResumoItem icon={Eye} label="Visualizações" value={String(liveQ.data?.totalViews ?? 0)} />
@@ -1304,12 +1350,28 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
           {(() => {
             const topPub = [...(pubQ.data?.items ?? [])].sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))[0];
             const topLive = [...(liveQ.data?.items ?? [])].sort((a, b) => (b.gross_cents ?? 0) - (a.gross_cents ?? 0))[0];
-            const hasTop = isLives ? !!topLive : !!topPub;
+            const topStory = [...(storyQ.data?.items ?? [])].sort((a, b) => (b.revenue_cents ?? 0) - (a.revenue_cents ?? 0))[0];
+            const hasTop = isStories ? !!topStory : isLives ? !!topLive : !!topPub;
+            const title = isStories ? "Top story" : isLives ? "Top live" : "Top postagem";
+            const emptyMsg = isStories ? "Sem stories no período." : isLives ? "Sem lives no período." : "Nenhuma postagem no período.";
             return (
               <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-                <h3 className="text-base font-bold">{isLives ? "Top live" : "Top postagem"}</h3>
+                <h3 className="text-base font-bold">{title}</h3>
                 {!hasTop ? (
-                  <p className="mt-6 text-sm text-muted-foreground">{isLives ? "Sem lives no período." : "Nenhuma postagem no período."}</p>
+                  <p className="mt-6 text-sm text-muted-foreground">{emptyMsg}</p>
+                ) : isStories ? (
+                  <div className="mt-3 flex items-center gap-3">
+                    {topStory!.cover_url ? (
+                      <img src={topStory!.cover_url} alt="Miniatura do story" className="h-14 w-14 flex-shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-muted"><Sparkles className="h-5 w-5 text-muted-foreground" /></div>
+                    )}
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="font-semibold truncate">Story</p>
+                      <p className="text-muted-foreground text-xs">{fullDate.format(new Date(topStory!.published_at as string))}</p>
+                      <p className="text-xs font-semibold text-foreground">{formatBRL(topStory!.revenue_cents ?? 0)} · {topStory!.unlocks} desbloqueios</p>
+                    </div>
+                  </div>
                 ) : isLives ? (
                   <div className="mt-3 flex items-center gap-3">
                     {topLive!.cover_url ? (
@@ -1531,10 +1593,28 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
             <h3 className="text-base font-bold">Resumo</h3>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <ResumoItem icon={Users} label="Visitantes" value={String(data?.profileViews ?? 0)} />
-              <ResumoItem icon={UserPlus} label="Assinaturas" value={String(data?.subscriptionsCount ?? 0)} />
-              <ResumoItem icon={DollarSign} label="Assinaturas" value={formatBRL(data?.subscriptionsRevenueCents ?? 0)} />
+              <ResumoItem icon={UserPlus} label="Novos assinantes" value={String(data?.subscriptionsCount ?? 0)} />
               <ResumoItem icon={RefreshCw} label="Renovações" value={String(data?.renewalsCount ?? 0)} />
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Faturamento por produto</h3>
+            {(data?.byProduct ?? []).length === 0 ? (
+              <p className="mt-6 text-sm text-muted-foreground">Sem vendas no período.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {(data?.byProduct ?? []).map(p => (
+                  <div key={p.kind} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate text-foreground">{KIND_LABEL[p.kind] ?? p.kind}</span>
+                    <span className="flex items-center gap-3 text-muted-foreground">
+                      <span className="text-xs">{p.count}×</span>
+                      <span className="font-semibold text-foreground">{formatBRL(p.grossCents)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1566,9 +1646,16 @@ function countryName(iso: string | null): string {
 /* ============================== Assinantes ============================== */
 
 const ASSINANTES_TABS = ["Assinaturas", "Top assinantes", "Atividade dos assinantes"] as const;
-const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat"] as const;
-const TOP_METRIC_MAP: Record<(typeof TOP_ASSINANTES_CHIPS)[number], "total"|"subscription"|"tip"|"chat_unlock"> = {
-  Total: "total", Assinaturas: "subscription", Mimos: "tip", Chat: "chat_unlock",
+const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat", "Postagem", "Story", "Videochamada", "Live"] as const;
+const TOP_METRIC_MAP: Record<(typeof TOP_ASSINANTES_CHIPS)[number], "total"|"subscription"|"tip"|"chat_unlock"|"publication_unlock"|"story_unlock"|"video_call"|"live_ticket"> = {
+  Total: "total",
+  Assinaturas: "subscription",
+  Mimos: "tip",
+  Chat: "chat_unlock",
+  Postagem: "publication_unlock",
+  Story: "story_unlock",
+  Videochamada: "video_call",
+  Live: "live_ticket",
 };
 
 const chartDate = new Intl.DateTimeFormat("pt-BR", { month: "short", day: "numeric", year: "numeric" });

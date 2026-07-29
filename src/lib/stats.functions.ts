@@ -12,6 +12,7 @@ const EARNING_KINDS = [
   "video_call",
   "live_ticket",
   "challenge_contribution",
+  "story_unlock",
 ] as const;
 
 const rangeValidator = (data: { from: string; to: string }): Range => {
@@ -385,7 +386,11 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
  */
 export const getTopAssinantes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { from: string; to: string; metric?: "total" | "subscription" | "tip" | "chat_unlock" }) => ({
+  .inputValidator((data: {
+    from: string;
+    to: string;
+    metric?: "total" | "subscription" | "tip" | "chat_unlock" | "publication_unlock" | "story_unlock" | "video_call" | "live_ticket";
+  }) => ({
     ...rangeValidator({ from: data.from, to: data.to }),
     metric: data.metric ?? "total",
   }))
@@ -399,9 +404,10 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
       .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from).lte("created_at", data.to);
 
-    if (data.metric === "subscription") q = q.eq("kind", "subscription");
-    else if (data.metric === "tip") q = q.eq("kind", "tip");
-    else if (data.metric === "chat_unlock") q = q.eq("kind", "chat_unlock");
+    const KIND_METRICS = new Set(["subscription", "tip", "chat_unlock", "publication_unlock", "story_unlock", "video_call", "live_ticket"]);
+    if (data.metric !== "total" && KIND_METRICS.has(data.metric)) {
+      q = q.eq("kind", data.metric as any);
+    }
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -640,7 +646,7 @@ export const getAlcance = createServerFn({ method: "GET" })
       .eq("creator_profile_id", profileId);
     const ids = (pubIds ?? []).map(p => p.id as string);
 
-    const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes] = await Promise.all([
+    const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes, txRes] = await Promise.all([
       supabase.from("profile_views")
         .select("viewer_id, created_at, country")
         .eq("profile_id", userId)
@@ -663,6 +669,11 @@ export const getAlcance = createServerFn({ method: "GET" })
         .eq("creator_profile_id", profileId)
         .gte("created_at", data.from).lte("created_at", data.to)
         .order("created_at", { ascending: true }),
+      supabase.from("transactions")
+        .select("kind, amount_cents_gross")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
+        .in("kind", EARNING_KINDS as unknown as never[])
+        .gte("created_at", data.from).lte("created_at", data.to),
     ]);
 
     const profViews = ("data" in profRes ? profRes.data : []) ?? [];
@@ -670,6 +681,7 @@ export const getAlcance = createServerFn({ method: "GET" })
     const follows = ("data" in followRes ? followRes.data : []) ?? [];
     const subsAll = ("data" in subsAllRes ? subsAllRes.data : []) ?? [];
     const subsPeriod = ("data" in subsPeriodRes ? subsPeriodRes.data : []) ?? [];
+    const txRows = ("data" in txRes ? txRes.data : []) ?? [];
 
     const profVisitors = new Set((profViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
     const pubVisitors = new Set((pubViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
@@ -724,6 +736,19 @@ export const getAlcance = createServerFn({ method: "GET" })
       subscriptionsRevenueCents += s.price_cents_paid ?? 0;
     }
 
+    // Breakdown por produto (contagem + faturamento bruto)
+    const byProductMap = new Map<string, { count: number; grossCents: number }>();
+    for (const t of txRows as { kind: string; amount_cents_gross: number | null }[]) {
+      const key = t.kind;
+      const cur = byProductMap.get(key) ?? { count: 0, grossCents: 0 };
+      cur.count += 1;
+      cur.grossCents += t.amount_cents_gross ?? 0;
+      byProductMap.set(key, cur);
+    }
+    const byProduct = Array.from(byProductMap.entries())
+      .map(([kind, v]) => ({ kind, count: v.count, grossCents: v.grossCents }))
+      .sort((a, b) => b.grossCents - a.grossCents);
+
     return {
       profileViews: profViews.length,
       profileUniqueViewers: profVisitors.size,
@@ -735,6 +760,7 @@ export const getAlcance = createServerFn({ method: "GET" })
       subscriptionsCount,
       renewalsCount,
       subscriptionsRevenueCents,
+      byProduct,
     };
   });
 
@@ -889,6 +915,83 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
       totalViews: list.reduce((a, r) => a + (r.total_views ?? 0), 0),
       totalLikes: list.reduce((a, r) => a + r.likes, 0),
       totalComments: list.reduce((a, r) => a + r.comments, 0),
+    };
+  });
+
+
+/**
+ * Stories do período (Engajamento › Stories, Top Story).
+ */
+export const getEngajamentoStories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { from: string; to: string; sort?: "revenue" | "unlocks" | "views" }) => ({
+    ...rangeValidator({ from: data.from, to: data.to }),
+    sort: data.sort ?? "revenue",
+  }))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
+    const { data: rows, error } = await supabase
+      .from("stories")
+      .select("id, media_path, thumb_path, price_cents, published_at")
+      .eq("creator_profile_id", profileId)
+      .gte("published_at", data.from).lte("published_at", data.to);
+    if (error) throw new Error(error.message);
+    const base = rows ?? [];
+    const ids = base.map(r => r.id as string);
+    const unlocksMap = new Map<string, { count: number; revenueCents: number }>();
+    const viewsMap = new Map<string, number>();
+    if (ids.length > 0) {
+      const [unlocksRes, viewsRes] = await Promise.all([
+        supabase.from("story_unlocks").select("story_id, amount_cents").in("story_id", ids).eq("status", "paid"),
+        supabase.from("story_views").select("story_id").in("story_id", ids),
+      ]);
+      for (const r of (unlocksRes.data ?? []) as { story_id: string; amount_cents: number | null }[]) {
+        const cur = unlocksMap.get(r.story_id) ?? { count: 0, revenueCents: 0 };
+        cur.count += 1;
+        cur.revenueCents += r.amount_cents ?? 0;
+        unlocksMap.set(r.story_id, cur);
+      }
+      for (const r of (viewsRes.data ?? []) as { story_id: string }[]) {
+        viewsMap.set(r.story_id, (viewsMap.get(r.story_id) ?? 0) + 1);
+      }
+    }
+    const list = base.map(r => {
+      const u = unlocksMap.get(r.id as string) ?? { count: 0, revenueCents: 0 };
+      return {
+        id: r.id as string,
+        media_path: r.media_path as string | null,
+        thumb_path: r.thumb_path as string | null,
+        price_cents: r.price_cents as number | null,
+        published_at: r.published_at as string,
+        unlocks: u.count,
+        revenue_cents: u.revenueCents,
+        views: viewsMap.get(r.id as string) ?? 0,
+      };
+    });
+    const sorters = {
+      revenue: (a: (typeof list)[number], b: (typeof list)[number]) => b.revenue_cents - a.revenue_cents,
+      unlocks: (a: (typeof list)[number], b: (typeof list)[number]) => b.unlocks - a.unlocks,
+      views: (a: (typeof list)[number], b: (typeof list)[number]) => b.views - a.views,
+    };
+    list.sort(sorters[data.sort]);
+    // Assinar URLs de thumb/media
+    const bucket = supabase.storage.from("stories");
+    const withUrls = await Promise.all(list.map(async (r) => {
+      const path = r.thumb_path ?? r.media_path;
+      let cover_url: string | null = null;
+      if (path) {
+        const { data: signed } = await bucket.createSignedUrl(path, 3600);
+        cover_url = signed?.signedUrl ?? null;
+      }
+      return { ...r, cover_url };
+    }));
+    return {
+      items: withUrls,
+      totalCount: withUrls.length,
+      totalRevenue: withUrls.reduce((a, r) => a + r.revenue_cents, 0),
+      totalUnlocks: withUrls.reduce((a, r) => a + r.unlocks, 0),
+      totalViews: withUrls.reduce((a, r) => a + r.views, 0),
     };
   });
 
