@@ -94,9 +94,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
     const [
       { count: postsCount },
-      { count: mediaCount },
-      { count: photosCount },
-      { count: videosCount },
+      { data: mediaAgg },
       { count: lockedCount },
       { count: likesCount },
     ] = await Promise.all([
@@ -104,20 +102,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .from("publications")
         .select("id", { count: "exact", head: true })
         .eq("author_id", profile.user_id),
-      supabase
-        .from("publication_media")
-        .select("id, publications!inner(author_id)", { count: "exact", head: true })
-        .eq("publications.author_id", profile.user_id),
-      supabase
-        .from("publication_media")
-        .select("id, publications!inner(author_id)", { count: "exact", head: true })
-        .eq("publications.author_id", profile.user_id)
-        .eq("type", "image"),
-      supabase
-        .from("publication_media")
-        .select("id, publications!inner(author_id)", { count: "exact", head: true })
-        .eq("publications.author_id", profile.user_id)
-        .eq("type", "video"),
+      supabase.rpc("count_author_media", { _author_id: profile.user_id }),
       supabase
         .from("publications")
         .select("id", { count: "exact", head: true })
@@ -128,6 +113,12 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         .select("publication_id, publications!inner(author_id)", { count: "exact", head: true })
         .eq("publications.author_id", profile.user_id),
     ]);
+
+    const mediaAggRow = Array.isArray(mediaAgg) ? mediaAgg[0] : null;
+    const mediaCount = mediaAggRow?.total ?? 0;
+    const photosCount = mediaAggRow?.photos ?? 0;
+    const videosCount = mediaAggRow?.videos ?? 0;
+
 
     const nowIso = new Date().toISOString();
     const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
