@@ -413,7 +413,7 @@ function ChatThreadView() {
     setPendingMsg({ id: messageId, priceCents });
   };
 
-  const confirmUnlockPayment = async (method: PaymentMethod) => {
+  const confirmUnlockPayment = async (method: PaymentMethod, savedCardId: string | null) => {
     if (!pendingMsg) return;
     const messageId = pendingMsg.id;
     try {
@@ -426,7 +426,14 @@ function ChatThreadView() {
         toast.success("Mensagem desbloqueada");
         return;
       }
-      const res = await unlockFn({ data: { messageId, method } });
+      const res = await unlockFn({ data: { messageId, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null } });
+      if (res.paidImmediately) {
+        setPendingMsg(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Mensagem desbloqueada");
+        return;
+      }
       setPendingMsg(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
