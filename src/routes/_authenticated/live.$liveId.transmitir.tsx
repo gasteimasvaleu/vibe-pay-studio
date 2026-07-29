@@ -119,6 +119,8 @@ function TransmitirPage() {
   const [autoStarted, setAutoStarted] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
