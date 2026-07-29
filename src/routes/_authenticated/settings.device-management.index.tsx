@@ -286,8 +286,9 @@ function SessionCard({
         </p>
       </div>
       {!isCurrent && onRevoke ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <ActionPopover
+          widthClass="w-[260px]"
+          trigger={
             <button
               type="button"
               className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -295,17 +296,15 @@ function SessionCard({
             >
               <MoreVertical className="h-5 w-5" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={onRevoke}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remover acesso
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+        >
+          <ActionPopoverDestructive
+            icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+            label="Remover acesso"
+            onClick={onRevoke}
+            className="mt-0"
+          />
+        </ActionPopover>
       ) : (
         <span className="text-xs font-semibold uppercase tracking-wide text-primary">
           Atual
