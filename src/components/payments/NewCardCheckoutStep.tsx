@@ -96,6 +96,7 @@ export function NewCardCheckoutStep({
       if (!addressNumber.trim()) throw new Error("Informe o número do endereço");
       if (phoneDigits.length < 10 || phoneDigits.length > 11)
         throw new Error("Informe um telefone válido com DDD");
+      setPhase("tokenizing");
       const expYear = `20${yy}`;
       const tokenized = await tokenize({
         data: {
@@ -115,7 +116,10 @@ export function NewCardCheckoutStep({
     },
     onSuccess: async (res) => {
       try {
+        setPhase("charging");
         await onSuccess(res.id, keepCard);
+        setPhase("done");
+        await new Promise((r) => setTimeout(r, 500));
       } finally {
         if (!keepCard) {
           try {
@@ -128,6 +132,7 @@ export function NewCardCheckoutStep({
       }
     },
     onError: (e: any) => {
+      setPhase("error");
       toast.error(e?.message ?? "Erro ao validar cartão");
     },
   });
