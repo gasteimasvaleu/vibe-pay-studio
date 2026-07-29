@@ -26,6 +26,7 @@ import {
   tokenizeAndSaveCard,
   type SavedCardDTO,
 } from "@/lib/saved-cards.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 export const Route = createFileRoute("/_authenticated/mywallet/")({
   head: () => ({
