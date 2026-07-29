@@ -1685,6 +1685,7 @@ export type Database = {
           kyc_rejection_reason: string | null
           kyc_status: string
           kyc_verified_at: string | null
+          last_seen_at: string | null
           location: string | null
           nickname: string | null
           onboarding_completed_at: string | null
@@ -1754,6 +1755,7 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
+          last_seen_at?: string | null
           location?: string | null
           nickname?: string | null
           onboarding_completed_at?: string | null
@@ -1823,6 +1825,7 @@ export type Database = {
           kyc_rejection_reason?: string | null
           kyc_status?: string
           kyc_verified_at?: string | null
+          last_seen_at?: string | null
           location?: string | null
           nickname?: string | null
           onboarding_completed_at?: string | null

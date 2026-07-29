@@ -50,6 +50,8 @@ import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
 import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
 import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
+import { useIsUserOnline } from "@/hooks/useIsUserOnline";
+import { getLastSeen } from "@/lib/presence.functions";
 import { Radio } from "lucide-react";
 
 
@@ -376,6 +378,27 @@ function PerfilPage() {
   const isFriendState = !!friendQuery.data?.isFriend;
   const activeLiveQuery = useCreatorActiveLive(profile.userId);
   const activeLiveId = activeLiveQuery.data?.id ?? null;
+
+  const getLastSeenFn = useServerFn(getLastSeen);
+  const isOnlineNow = useIsUserOnline(profile.userId);
+  const lastSeenQuery = useQuery({
+    queryKey: ["presence", "lastSeen", profile.userId],
+    queryFn: () => getLastSeenFn({ data: { userId: profile.userId } }),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const wasSeenToday = (() => {
+    const ts = lastSeenQuery.data?.lastSeenAt;
+    if (!ts) return false;
+    const d = new Date(ts);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  })();
+  const showOnlineToday = isOnlineNow || wasSeenToday;
 
   const [friendBusy, setFriendBusy] = useState(false);
 
@@ -739,20 +762,29 @@ function PerfilPage() {
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <LiveAvatarBadge creatorId={profile.userId}>
-              <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  profile.username.slice(0, 1).toUpperCase()
-                )}
-              </div>
-            </LiveAvatarBadge>
+            <div className="relative">
+              <LiveAvatarBadge creatorId={profile.userId}>
+                <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
+                  {profile.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    profile.username.slice(0, 1).toUpperCase()
+                  )}
+                </div>
+              </LiveAvatarBadge>
+              {isOnlineNow && (
+                <span
+                  aria-label="Online agora"
+                  className="pointer-events-none absolute bottom-1 right-1 h-4 w-4 md:h-4.5 md:w-4.5 rounded-full bg-emerald-500 ring-4 ring-background"
+                />
+              )}
+            </div>
           </div>
+
 
 
           {/* Stats */}
@@ -765,10 +797,16 @@ function PerfilPage() {
         </motion.section>
 
         {/* Identity */}
-        <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 pl-4 md:pl-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card border border-primary/30">
+        <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 pl-4 md:pl-6 pr-4 md:pr-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card border border-primary/30">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight text-foreground">{displayName}</h2>
-            <BadgeCheck className="h-6 w-6 text-fuchsia-400 fill-fuchsia-400/20" />
+            <h2 className="text-2xl font-black tracking-tight text-foreground truncate">{displayName}</h2>
+            <BadgeCheck className="h-6 w-6 shrink-0 text-fuchsia-400 fill-fuchsia-400/20" />
+            {showOnlineToday && (
+              <span className="ml-auto shrink-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-300/60 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Online hoje
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>@{profile.username}</span>

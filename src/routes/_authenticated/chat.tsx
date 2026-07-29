@@ -112,19 +112,16 @@ function ChatLayout() {
 
   useEffect(() => {
     if (!meId) return;
-    const channel = supabase.channel("online-users", {
-      config: { presence: { key: meId } },
-    });
+    // Presence tracking is done globally by usePresenceHeartbeat in the
+    // authenticated layout. Here we only read the shared `online-users`
+    // channel state to render online indicators next to threads.
+    const channel = supabase.channel("online-users");
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
         setOnlineUsers(new Set(Object.keys(state)));
       })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ online_at: new Date().toISOString() });
-        }
-      });
+      .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
