@@ -329,7 +329,7 @@ export function StoryViewer({
           )}
 
           {/* Tap zones — desabilitadas enquanto o story estiver bloqueado */}
-          {current.unlocked && (
+          {current && current.unlocked && (
             <>
               <button
                 type="button"
