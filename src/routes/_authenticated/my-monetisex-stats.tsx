@@ -1187,33 +1187,45 @@ function ExtratoFaturamentoCard({ range }: { range: { from: string; to: string }
 
 /* ============================== Engajamento ============================== */
 
-const ENGAJAMENTO_TABS = ["Publicações", "Lives"] as const;
+const ENGAJAMENTO_TABS = ["Publicações", "Lives", "Stories"] as const;
 const ORDENAR_PUBLICACOES = ["Recentes", "Faturamento", "Mimos", "Curtidas", "Comentários"] as const;
 const ORDENAR_LIVES = ["Mais compradas", "Mimos", "Visualizações", "Comentários", "Curtidas"] as const;
+const ORDENAR_STORIES = ["Faturamento", "Desbloqueios", "Visualizações"] as const;
 
 function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
   const [tab, setTab] = useState<(typeof ENGAJAMENTO_TABS)[number]>("Publicações");
   const [ordenarPub, setOrdenarPub] = useState<(typeof ORDENAR_PUBLICACOES)[number]>("Recentes");
   const [ordenarLive, setOrdenarLive] = useState<(typeof ORDENAR_LIVES)[number]>("Mais compradas");
+  const [ordenarStory, setOrdenarStory] = useState<(typeof ORDENAR_STORIES)[number]>("Faturamento");
   const isLives = tab === "Lives";
+  const isStories = tab === "Stories";
   const pubSortMap: Record<(typeof ORDENAR_PUBLICACOES)[number], "recent"|"revenue"|"tips"|"likes"|"comments"> = {
     "Recentes": "recent", "Faturamento": "revenue", "Mimos": "tips", "Curtidas": "likes", "Comentários": "comments",
   };
   const liveSortMap: Record<(typeof ORDENAR_LIVES)[number], "revenue"|"tips"|"views"|"likes"|"comments"> = {
     "Mais compradas": "revenue", "Mimos": "tips", "Visualizações": "views", "Comentários": "comments", "Curtidas": "likes",
   };
+  const storySortMap: Record<(typeof ORDENAR_STORIES)[number], "revenue"|"unlocks"|"views"> = {
+    "Faturamento": "revenue", "Desbloqueios": "unlocks", "Visualizações": "views",
+  };
 
   const pubFn = useServerFn(getEngajamentoPublicacoes);
   const pubQ = useQuery({
     queryKey: ["stats", "engPub", range.from, range.to, ordenarPub],
     queryFn: () => pubFn({ data: { ...range, sort: pubSortMap[ordenarPub] } }),
-    enabled: !isLives, staleTime: 30_000,
+    enabled: !isLives && !isStories, staleTime: 30_000,
   });
   const liveFn = useServerFn(getEngajamentoLives);
   const liveQ = useQuery({
     queryKey: ["stats", "engLive", range.from, range.to, ordenarLive],
     queryFn: () => liveFn({ data: { ...range, sort: liveSortMap[ordenarLive] } }),
     enabled: isLives, staleTime: 30_000,
+  });
+  const storyFn = useServerFn(getEngajamentoStories);
+  const storyQ = useQuery({
+    queryKey: ["stats", "engStory", range.from, range.to, ordenarStory],
+    queryFn: () => storyFn({ data: { ...range, sort: storySortMap[ordenarStory] } }),
+    enabled: isStories, staleTime: 30_000,
   });
 
   return (
