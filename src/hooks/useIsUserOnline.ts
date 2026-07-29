@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Read-only subscription to the global `online-users` presence channel.
- * Returns true if the given userId currently has an active presence.
+ * Returns true when the target user's `profiles.last_seen_at` is within the
+ * last 90 seconds. Uses polling instead of a Realtime presence reader — the
+ * shared `online-users` presence channel is a singleton owned by
+ * `usePresenceHeartbeat`, and attaching another `.on("presence", ...)` after
+ * its `subscribe()` throws "cannot add `presence` callbacks after
+ * `subscribe()`".
  */
 export function useIsUserOnline(userId: string | null | undefined): boolean {
   const [online, setOnline] = useState(false);
@@ -13,31 +17,31 @@ export function useIsUserOnline(userId: string | null | undefined): boolean {
       setOnline(false);
       return;
     }
-    const channel = supabase.channel("online-users-reader-" + userId);
-    // Join the same room to receive presence sync events. We do NOT track
-    // ourselves here — tracking is handled globally by usePresenceHeartbeat.
-    channel
-      .on("presence", { event: "sync" }, () => {
-        // Presence state is keyed by userId (see usePresenceHeartbeat).
-        // Read from the shared `online-users` channel via presenceState of
-        // a peer channel is not possible; instead, subscribe to the same
-        // channel name that peers track on.
-      })
-      .subscribe();
 
-    // Use a second channel bound to the same room name as writers to read
-    // presence keys from all peers.
-    const shared = supabase.channel("online-users");
-    shared
-      .on("presence", { event: "sync" }, () => {
-        const state = shared.presenceState();
-        setOnline(Boolean(state[userId] && state[userId].length > 0));
-      })
-      .subscribe();
+    let cancelled = false;
+
+    async function check() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("last_seen_at")
+        .eq("id", userId as string)
+        .maybeSingle();
+      if (cancelled) return;
+      const iso = (data as { last_seen_at?: string | null } | null)?.last_seen_at;
+      if (!iso) {
+        setOnline(false);
+        return;
+      }
+      const diffMs = Date.now() - new Date(iso).getTime();
+      setOnline(diffMs < 90_000);
+    }
+
+    check();
+    const timer = setInterval(check, 30_000);
 
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(shared);
+      cancelled = true;
+      clearInterval(timer);
     };
   }, [userId]);
 
