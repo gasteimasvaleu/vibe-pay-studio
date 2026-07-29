@@ -313,11 +313,15 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
             .eq("asaas_subscription_id", paymentSubscriptionId)
             .maybeSingle();
           if (localSub) {
-            const { data: newIntent } = await supabaseAdmin
+            const { data: newIntent } = await (supabaseAdmin as any)
               .from("payment_intents")
               .insert({
-                asaas_payment_id: paymentId,
+                provider: "asaas",
+                event_id: paymentId,
                 event_type: eventType,
+                asaas_payment_id: paymentId,
+                asaas_invoice_url: payload.payment?.invoiceUrl ?? null,
+                method: "CREDIT_CARD",
                 metadata: {
                   referenceTable: "subscriptions",
                   referenceId: localSub.id,
@@ -333,6 +337,12 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           }
         }
 
+        const meta = (intent?.metadata ?? {}) as {
+          referenceTable?: string;
+          referenceId?: string;
+          buyerId?: string;
+          amountCents?: number;
+        };
 
         let targetStatus: TargetStatus | null = null;
         if (TERMINAL_PAID.has(eventType) || RISK_APPROVED.has(eventType)) {
@@ -355,9 +365,22 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           });
         }
 
-        // Renovações automáticas de assinatura: DESATIVADAS enquanto a chave
-        // Asaas não tem tokenização de cartão. Reativar aqui quando o
-        // /v3/subscriptions voltar a ser criado em `createSubscriptionPayment`.
+        // PAYMENT_OVERDUE numa assinatura recorrente = pagamento falhou.
+        // Não cancelamos a assinatura (o Asaas ainda tenta cobrar em ciclos
+        // seguintes); apenas marcamos past_due para a UI avisar o usuário.
+        if (
+          eventType === "PAYMENT_OVERDUE" &&
+          meta.referenceTable === "subscriptions" &&
+          meta.referenceId
+        ) {
+          targetStatus = null;
+          await (supabaseAdmin as any)
+            .from("subscriptions")
+            .update({ status: "past_due", provider_ref: paymentId })
+            .eq("id", meta.referenceId)
+            .neq("status", "cancelled");
+        }
+
 
 
 
