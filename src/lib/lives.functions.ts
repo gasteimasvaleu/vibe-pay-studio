@@ -32,6 +32,31 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
+/**
+ * Encerra automaticamente lives cujo heartbeat (`updated_at`) está
+ * parado há mais de 2 minutos. Chamado no início dos readers para
+ * evitar badges/CTAs "LIVE" fantasmas quando o criador fecha a aba,
+ * cai a rede, ou o navegador trava sem chamar `endLive`.
+ */
+async function expireStaleLives(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  scope?: { creatorId?: string; creatorIds?: string[] },
+) {
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  let q = admin
+    .from("live_sessions")
+    .update({ status: "ended", ended_at: cutoff, cf_webrtc_url: null })
+    .eq("status", "live")
+    .lt("updated_at", cutoff);
+  if (scope?.creatorId) q = q.eq("creator_id", scope.creatorId);
+  if (scope?.creatorIds && scope.creatorIds.length) q = q.in("creator_id", scope.creatorIds);
+  try {
+    await q;
+  } catch (e) {
+    console.warn("[expireStaleLives]", e);
+  }
+}
+
 /* ---------- Iniciar live ---------- */
 export const startLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
