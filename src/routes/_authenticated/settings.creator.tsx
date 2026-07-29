@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import {
+  Archive,
   ArrowLeft,
   ChevronRight,
   DollarSign,
@@ -194,6 +195,11 @@ function SettingsCreatorPage() {
                 icon={<UserX className="h-5 w-5" />}
                 label="Assinantes restritos"
                 to="/settings/restrictions"
+              />
+              <SettingsRow
+                icon={<Archive className="h-5 w-5" />}
+                label="Postagens arquivadas"
+                to="/postsarquivados"
               />
               <SettingsRow
                 icon={<Contrast className="h-5 w-5" />}
