@@ -97,8 +97,8 @@ export function PublishStoryDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
+        <DialogHeader className="sticky top-0 bg-background z-10 pb-2">
           <DialogTitle>Publicar story</DialogTitle>
           <DialogDescription>
             Fica visível por 24h para os assinantes que te seguem.
@@ -107,7 +107,7 @@ export function PublishStoryDialog({
 
         <div className="space-y-4">
           {preview ? (
-            <div className="relative rounded-2xl overflow-hidden bg-black aspect-[9/16] max-h-[50vh]">
+            <div className="relative rounded-2xl overflow-hidden bg-black aspect-[9/16] max-h-[40dvh] sm:max-h-[50vh]">
               {file?.type.startsWith("video/") ? (
                 <video src={preview} className="h-full w-full object-contain" controls />
               ) : (
