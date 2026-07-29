@@ -44,7 +44,7 @@ export function CardCheckout({ paymentIntentId, invoiceUrl, onPaid, onCancel }: 
       <header>
         <h3 className="text-lg font-bold text-foreground">Pagamento com cartão</h3>
         <p className="text-sm text-muted-foreground">
-          Uma nova aba foi aberta com o checkout seguro do Asaas. Complete o pagamento por lá.
+          Abra o checkout seguro do Asaas para concluir. A tela atualiza sozinha após a confirmação.
         </p>
       </header>
 
