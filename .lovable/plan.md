@@ -1,57 +1,25 @@
-## Objetivo
+## Problema
 
-Criar um padrão de campo com rótulo flutuante e 3 estados visuais, adaptado à paleta roxa do app, e aplicá-lo nos formulários de perfil/configurações.
+No paywall de story (`LockedOverlay` em `src/components/feed/StoryViewer.tsx`):
 
-## Os 3 estados (adaptados ao tema)
+1. As **zonas de toque** (botões absolutos `left-0 w-1/3` e `right-0 w-1/3`, ambos em `z-10`) ficam por cima das laterais do card do paywall no mobile. Clicar em "Carteira" (esquerda) dispara `back()` e clicar em "Cartão" (direita) dispara `advance()` — que no último story fecha o viewer. O `stopPropagation` no `onClick` do wrapper não resolve porque os tap zones são elementos irmãos, não pais.
+2. Os cards do `PaymentMethodPicker` usam tokens claros (`bg-secondary`, `border-border`, `text-foreground`) que ficam com baixíssimo contraste sobre o fundo `bg-black/60` do overlay escuro — só o card ativo (roxo) fica visível.
 
-1. **Repouso** — preenchido, sem borda visível. `bg-muted/60`, `border-transparent`, rótulo em `text-muted-foreground`.
-2. **Hover** — borda sutil aparece. `border-border`, fundo levemente mais claro (`bg-muted/40`).
-3. **Foco** — borda destacada em roxo e rótulo colorido. `border-primary`, `ring-1 ring-primary/30`, rótulo em `text-primary`, fundo `bg-background`.
+## Correção
 
-Transição suave (`transition-colors`) entre estados. Rótulo sempre "flutuando" acima do valor dentro do campo (não sobe/desce), como nos screenshots.
+**`src/components/feed/StoryViewer.tsx`**
+- Elevar o `LockedOverlay` para ficar acima das tap zones: mudar o container externo do overlay para `z-20` (ou envolvê-lo em wrapper `absolute inset-0 z-20`), garantindo que os cliques nas 3 opções de pagamento nunca atinjam os botões `back`/`advance`.
+- Alternativa complementar: não renderizar as tap zones enquanto o story estiver bloqueado (`!current.unlocked && !current.is_self` → esconder `back`/`advance`), já que navegar num story pago sem desbloquear não faz sentido. Aplicar as duas mudanças.
 
-## Componentes novos
+**`src/components/payments/PaymentMethodPicker.tsx`** — variante para superfícies escuras
+- Adicionar prop opcional `tone?: "light" | "dark"` (default `"light"` — mantém aparência atual em todos os outros usos: SubscribeDialog, TipDialog, PaymentMethodDialog, recarregar).
+- Quando `tone="dark"`, aplicar classes com contraste sobre fundo preto:
+  - inativo: `border-white/15 bg-white/5 text-white hover:bg-white/10`
+  - ativo: `border-primary bg-primary/20 text-white`
+  - desabilitado: `border-white/10 bg-white/5 opacity-50`
+  - label branco, hint `text-white/70`
+- Em `StoryViewer.tsx`, passar `tone="dark"` para o `PaymentMethodPicker` dentro do `LockedOverlay`.
 
-- `src/components/ui/floating-input.tsx` — wrapper com `<label>` interno + `<input>`. Props: `label`, e todas as props nativas de input. Altura ~ `h-14` para acomodar rótulo + valor. Estados via `group` + `peer` do Tailwind + `focus-within`.
-- `src/components/ui/floating-textarea.tsx` — mesma lógica para áreas longas (bio).
+## Fora de escopo
 
-Ambos usam apenas tokens semânticos (`--primary`, `--muted`, `--border`, `--foreground`, `--muted-foreground`) — funcionam automaticamente em dark mode.
-
-## Onde aplicar (só formulários de perfil/configurações)
-
-Substituir `<Input>`/`<Textarea>` por `<FloatingInput>`/`<FloatingTextarea>` (com prop `label` no lugar do `<Label>` externo) em:
-
-- `src/routes/_authenticated/settings.personal.tsx` (Apelido, bio, etc.)
-- `src/routes/_authenticated/settings.details.tsx`
-- `src/routes/_authenticated/settings.social.tsx`
-- `src/routes/_authenticated/settings.change-password.tsx`
-- `src/routes/_authenticated/settings.subscription.tsx` (apenas campos de edição, se houver)
-- `src/components/banco/CadastrarBancoForm.tsx`
-- `src/components/banco/SacarDialog.tsx`
-
-Fora do escopo desta rodada: chat composer, busca, dialogs de pagamento, admin, auth — continuam com o `Input` atual.
-
-## Detalhes técnicos
-
-```tsx
-// floating-input.tsx (essência)
-<div className="group relative rounded-2xl bg-muted/60 border border-transparent
-                hover:border-border hover:bg-muted/40
-                focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30
-                focus-within:bg-background transition-colors">
-  <label className="block px-4 pt-2 text-xs text-muted-foreground
-                    group-focus-within:text-primary transition-colors">
-    {label}
-  </label>
-  <input className="w-full bg-transparent px-4 pb-2 text-base
-                    outline-none placeholder:text-muted-foreground/60" ... />
-</div>
-```
-
-- `rounded-2xl` (pill/arredondado como no screenshot).
-- Erro (opcional, futuro): prop `error` troca `border-primary` por `border-destructive`.
-- Disabled: `opacity-60 cursor-not-allowed`, sem hover.
-
-## Validação
-
-Após implementar, abrir `/settings/personal` e `/banco/cadastrar` e verificar visualmente os 3 estados (repouso, hover, foco) em light e dark mode.
+Nenhuma mudança em outras superfícies de pagamento — só o paywall do story.
