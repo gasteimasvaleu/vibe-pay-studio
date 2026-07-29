@@ -901,13 +901,14 @@ function RecordeCard({ title, rows, loading }: { title: string; rows: { day: str
 /* ============================== Extratos ============================== */
 
 const EXTRATO_TABS = ["Faturamento", "Ganhos por produto"] as const;
-const PRODUTO_OPTIONS = ["Todos os produtos", "Live", "Desafio", "Chat", "Postagem", "Videochamada", "Mimo", "Assinatura"] as const;
+const PRODUTO_OPTIONS = ["Todos os produtos", "Live", "Desafio", "Chat", "Postagem", "Story", "Videochamada", "Mimo", "Assinatura"] as const;
 const PRODUTO_TO_KIND: Record<string, string | null> = {
   "Todos os produtos": null,
   "Live": "live_ticket",
   "Desafio": "challenge_contribution",
   "Chat": "chat_unlock",
   "Postagem": "publication_unlock",
+  "Story": "story_unlock",
   "Videochamada": "video_call",
   "Mimo": "tip",
   "Assinatura": "subscription",
