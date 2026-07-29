@@ -236,7 +236,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Forma de pagamento
                   </p>
-                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
+                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} onNewCardTokenized={(id) => submit(id)} />
                 </div>
 
                 <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
@@ -248,7 +248,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
 
 
                 <Button
-                  onClick={submit}
+                  onClick={() => submit()}
                   disabled={loading || totals[plan].cents <= 0}
                   className="w-full rounded-md bg-gradient-primary text-primary-foreground"
                 >
