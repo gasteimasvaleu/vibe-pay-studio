@@ -1695,7 +1695,7 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
     faturamento: (r.gross ?? 0) / 100,
     quantidade: (r.novos ?? 0) + (r.renovacoes ?? 0),
   }));
-  const totalAssinantes = (stats.data?.novosPeriodo ?? 0) + (stats.data?.renovacoesPeriodo ?? 0);
+  const totalAssinantes = stats.data?.assinantesUnicosPeriodo ?? 0;
 
   return (
     <div className="space-y-5">
