@@ -172,15 +172,22 @@ export function StoryViewer({
         onChanged();
       } else {
         const res = await createStoryPayment({
-          data: { storyId: current.id, method: selectedMethod },
+          data: { storyId: current.id, method: selectedMethod, savedCardId: selectedMethod === "CREDIT_CARD" ? savedCardId : null },
         });
-        setCheckout({
-          paymentIntentId: res.paymentIntentId,
-          method: res.method,
-          pixQrCode: res.pixQrCode ?? null,
-          pixCopyPaste: res.pixCopyPaste ?? null,
-          invoiceUrl: res.invoiceUrl ?? null,
-        });
+        if (res.paidImmediately) {
+          toast.success("Story desbloqueado!");
+          await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+          await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+          onChanged();
+        } else {
+          setCheckout({
+            paymentIntentId: res.paymentIntentId,
+            method: res.method,
+            pixQrCode: res.pixQrCode ?? null,
+            pixCopyPaste: res.pixCopyPaste ?? null,
+            invoiceUrl: res.invoiceUrl ?? null,
+          });
+        }
       }
     } catch (e: any) {
       toast.error(translatePaymentError(e, "Falha ao desbloquear"));
