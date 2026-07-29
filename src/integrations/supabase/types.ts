@@ -3748,6 +3748,7 @@ export type Database = {
         | "affiliate_credit"
         | "withdrawal"
         | "refund"
+        | "story_unlock"
       transaction_status:
         | "pending"
         | "paid"
@@ -3937,6 +3938,7 @@ export const Constants = {
         "affiliate_credit",
         "withdrawal",
         "refund",
+        "story_unlock",
       ],
       transaction_status: [
         "pending",
