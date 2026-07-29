@@ -6,6 +6,7 @@ import { Loader2, ShieldCheck, Check, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { tokenizeAndSaveCard, deleteSavedCard } from "@/lib/saved-cards.functions";
+import { translatePaymentError } from "@/lib/payment-limits";
 
 type Phase = "idle" | "tokenizing" | "charging" | "done" | "error";
 
@@ -133,7 +134,7 @@ export function NewCardCheckoutStep({
     },
     onError: (e: any) => {
       setPhase("error");
-      toast.error(e?.message ?? "Erro ao validar cartão");
+      toast.error(translatePaymentError(e, "Erro ao validar cartão"));
     },
   });
 
