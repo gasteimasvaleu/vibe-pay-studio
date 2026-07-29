@@ -1,55 +1,32 @@
+# Tela branca em `/perfil/monetisexy`
+
 ## Diagnóstico
 
-O contador "Mídias" (e por tabela "Fotos"/"Vídeos") do header do perfil está caindo para 0 quando o visitante não é assinante do criador.
+Testei a rota logado como dono e o loader/componente renderizam normalmente (~28 KB de HTML, título correto). Isso indica que o problema aparece só quando o visitante **não** é o dono do perfil (caso reportado: `sexandoapp7` vendo `monetisexy`).
 
-Verifiquei no banco:
-- `monetisexy` tem 4 publicações, todas com 1 mídia cada e `visibility = 'paid'`.
-- Apenas 1 não está arquivada → é essa que aparece como "1 Postagens" (RLS de `publications` esconde as arquivadas para quem não é dono).
-- As linhas de `publication_media` das publicações pagas ficam bloqueadas por RLS para quem ainda não pagou, então o `count()` de `publication_media` retorna 0 mesmo com a postagem visível.
+Dois pontos suspeitos:
 
-Ou seja: o contador de postagens vem do count de `publications` (visíveis), e o contador de mídias vem do count de `publication_media` (paywalladas). Eles usam RLS diferentes, e por isso divergem.
+1. **`errorComponent` invisível no tema claro.** Em `src/routes/_authenticated/perfil.$username.tsx` (linhas 229–233) o fallback de erro usa `bg-background text-white`. No tema claro, `bg-background` é praticamente branco → o texto branco fica invisível. Se o loader lançar qualquer erro para o visitante, o usuário vê uma tela "totalmente branca" mesmo com o boundary renderizado.
+2. **Erro real no loader para não-donos.** Ainda não confirmei a causa; preciso reproduzir logado como assinante para capturar a exceção.
 
-## Correção
+## Passos
 
-Fazer a contagem de mídias derivar das mesmas linhas de `publications` que já passaram pela RLS, em vez de contar `publication_media` diretamente.
+1. **Instrumentar e reproduzir**
+   - Logar no preview como `sexandoapp7@hotmail.com`, abrir `/perfil/monetisexy` e capturar o erro (console + `stack_modern--server-function-logs`).
+   - Confirmar se vem do loader (query em `subscriptions`/`follows`/`promotions`/RPC `count_author_media`) ou de algum `useServerFn` no render (`getLastSeen`, `isMuted`, `isFriend`, `useCreatorActiveLive`).
 
-### Arquivo
-`src/routes/_authenticated/perfil.$username.tsx` (loader, linhas 95–130 e 223–226)
+2. **Corrigir o `errorComponent` do perfil**
+   - Trocar `bg-background text-white` por tokens que funcionem em ambos os temas (`bg-background text-foreground` + borda/card), garantindo que qualquer erro futuro seja legível.
+   - Incluir botão "Voltar" e "Tentar novamente" (`router.invalidate()` + `reset()`).
 
-### Mudanças
-1. Trocar os três counts de `publication_media` (mediaCount, photosCount, videosCount) por uma única query em `publications` que traga, para o mesmo `author_id` visível ao viewer, os agregados via uma coluna calculada no server ou via chamada a uma RPC dedicada.
-2. Implementação prática sem migração nova: no loader, buscar os `id`s das publicações visíveis do autor (`select id, visibility from publications where author_id = ...`) — o resultado já respeita RLS. Em paralelo, chamar uma pequena RPC `public.count_author_media(author_id uuid)` (SECURITY DEFINER, `set search_path=public`) que retorna `{ total, photos, videos }` contando `publication_media` juntando em `publications` com os mesmos filtros públicos do feed (não arquivada, `moderation_status='approved'`, `published_at <= now()`), bypassando a RLS de paywall — porque contar quantas mídias existem não expõe o conteúdo em si.
-3. Usar o retorno da RPC para preencher `mediaCount`, `photosCount`, `videosCount`. `lockedCount` continua vindo de `publications` (já respeita RLS e é o que queremos exibir).
+3. **Corrigir a causa raiz** (depois de identificada no passo 1)
+   - Ajuste pontual no loader ou nos hooks conforme o stack (ex.: guardar contra `profile.user_id` ausente, tratar retorno da RPC, tornar `getLastSeen` tolerante quando o alvo não tem linha em `profiles`, etc.).
 
-### Migração
-Adicionar função:
+4. **Verificar**
+   - Recarregar `/perfil/monetisexy` como `sexandoapp7` e confirmar render normal com dados do perfil, contadores e badge de presença.
 
-```text
-create or replace function public.count_author_media(_author_id uuid)
-returns table(total int, photos int, videos int)
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select
-    count(*)::int as total,
-    count(*) filter (where m.type = 'image')::int as photos,
-    count(*) filter (where m.type = 'video')::int as videos
-  from publication_media m
-  join publications p on p.id = m.publication_id
-  where p.author_id = _author_id
-    and p.archived_at is null
-    and p.moderation_status = 'approved'
-    and p.published_at is not null
-    and p.published_at <= now();
-$$;
+## Detalhes técnicos
 
-grant execute on function public.count_author_media(uuid) to anon, authenticated;
-```
-
-Isso mantém o número de mídias consistente com "1 Postagens" (1 mídia visível na aba, portanto o header vai mostrar "1 Mídias" em vez de 0) e não vaza os arquivos em si — a mídia continua bloqueada até o pagamento; apenas o *contador* fica coerente.
-
-## Observação
-
-Se você preferir a política oposta — "só conta o que o visitante já pode ver" — o caminho seria o inverso: usar o count de `publication_media` como fonte da verdade **também** para "Postagens" (só contar posts cuja mídia é visível). Prefiro a proposta acima porque bate com o comportamento típico de plataformas (o contador do header mostra o acervo do criador, o paywall bloqueia só o conteúdo).
+- Arquivo principal: `src/routes/_authenticated/perfil.$username.tsx` (loader linhas 67–223, errorComponent 229–233, hooks de presença 373–392).
+- Server fns envolvidas: `getLastSeen` (`src/lib/presence.functions.ts`), `isMuted`, `isFriend`, `getUserPublications`.
+- Sem migração de banco prevista; correção fica em frontend + eventual guarda numa server fn.
