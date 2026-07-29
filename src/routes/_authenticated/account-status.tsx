@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Check, MessageCircle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  getMyStatus,
+  setMyStatus,
+  type ClearAfter,
+  type UserStatusKind,
+} from "@/lib/user-status.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/account-status")({
   head: () => ({
@@ -22,10 +31,8 @@ export const Route = createFileRoute("/_authenticated/account-status")({
   component: AccountStatusPage,
 });
 
-type StatusKey = "online" | "offline" | "in_chat";
-
 type StatusOption = {
-  key: StatusKey;
+  key: UserStatusKind;
   title: string;
   subtitle: string;
   iconWrap: string;
@@ -43,7 +50,7 @@ const OPTIONS: StatusOption[] = [
   {
     key: "offline",
     title: "Offline",
-    subtitle: "Você vê tudo normalmente",
+    subtitle: "Você fica invisível para todos",
     iconWrap: "bg-muted",
     icon: <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground" />,
   },
@@ -59,8 +66,35 @@ const OPTIONS: StatusOption[] = [
 function AccountStatusPage() {
   const navigate = useNavigate();
   const router = useRouter();
-  const [selected, setSelected] = useState<StatusKey | null>(null);
-  const [clearAfter, setClearAfter] = useState<string>("30m");
+  const queryClient = useQueryClient();
+
+  const getMyStatusFn = useServerFn(getMyStatus);
+  const setMyStatusFn = useServerFn(setMyStatus);
+
+  const { data: current } = useQuery({
+    queryKey: ["user-status", "me"],
+    queryFn: () => getMyStatusFn(),
+  });
+
+  const [selected, setSelected] = useState<UserStatusKind | null>(null);
+  const [clearAfter, setClearAfter] = useState<ClearAfter>("30m");
+
+  useEffect(() => {
+    if (current && selected === null) {
+      setSelected(current.status);
+    }
+  }, [current, selected]);
+
+  const mutation = useMutation({
+    mutationFn: (input: { status: UserStatusKind; clearAfter: ClearAfter }) =>
+      setMyStatusFn({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-status"] });
+      toast.success("Status atualizado");
+      navigate({ to: "/chat" });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
+  });
 
   const goBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -72,13 +106,10 @@ function AccountStatusPage() {
 
   const handleSave = () => {
     if (!selected) return;
-    try {
-      localStorage.setItem(
-        "account-status",
-        JSON.stringify({ status: selected, clearAfter, updatedAt: Date.now() }),
-      );
-    } catch {}
-    navigate({ to: "/chat" });
+    mutation.mutate({
+      status: selected,
+      clearAfter: selected === "online" ? "never" : clearAfter,
+    });
   };
 
   return (
@@ -135,12 +166,27 @@ function AccountStatusPage() {
               );
             })}
           </div>
+          {selected === "offline" && (
+            <p className="text-xs text-muted-foreground px-1">
+              Enquanto Offline, sua bolinha verde e o aviso "Online hoje" ficam ocultos para
+              outros usuários — inclusive na lista do chat.
+            </p>
+          )}
+          {selected === "in_chat" && (
+            <p className="text-xs text-muted-foreground px-1">
+              No chat, seu avatar aparece com o ícone azul de mensagem para outros usuários,
+              indicando que você está respondendo agora.
+            </p>
+          )}
         </section>
 
         {selected && selected !== "online" && (
           <section className="space-y-3 mt-8">
             <h2 className="text-sm font-semibold text-foreground">Limpar status após</h2>
-            <Select value={clearAfter} onValueChange={setClearAfter}>
+            <p className="text-xs text-muted-foreground -mt-1">
+              Passado esse tempo, seu status volta automaticamente para Online.
+            </p>
+            <Select value={clearAfter} onValueChange={(v) => setClearAfter(v as ClearAfter)}>
               <SelectTrigger className="h-14 rounded-2xl bg-muted border-border px-4 text-base">
                 <SelectValue />
               </SelectTrigger>
@@ -168,10 +214,10 @@ function AccountStatusPage() {
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!selected}
+            disabled={!selected || mutation.isPending}
             className="rounded-md bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50"
           >
-            Definir status
+            {mutation.isPending ? "Salvando…" : "Definir status"}
           </Button>
         </div>
       </div>
