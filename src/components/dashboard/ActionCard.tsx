@@ -21,14 +21,14 @@ export function ActionCard({
   const navigate = useNavigate();
   const isDanger = tone === "danger";
   const className = disabled
-    ? "group text-left rounded-2xl border border-border bg-card p-5 shadow-card opacity-60 cursor-not-allowed"
-    : "group text-left rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/40 hover:bg-accent";
+    ? "group text-left rounded-2xl border border-border bg-card p-4 shadow-card opacity-60 cursor-not-allowed"
+    : "group text-left rounded-2xl border border-border bg-card p-4 shadow-card transition-all hover:border-primary/40 hover:bg-accent";
 
   const content = (
     <>
       <div className="flex items-center gap-3">
         <div
-          className={`h-10 w-10 rounded-xl border grid place-items-center ${
+          className={`h-9 w-9 rounded-lg border grid place-items-center ${
             isDanger
               ? "bg-destructive/10 border-destructive/20 text-destructive"
               : "bg-primary/10 border-primary/20 text-primary"
@@ -37,14 +37,14 @@ export function ActionCard({
           {icon}
         </div>
         <span
-          className={`text-base font-semibold ${
+          className={`text-sm font-semibold ${
             isDanger ? "text-destructive" : "text-card-foreground"
           }`}
         >
           {title}
         </span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{description}</p>
     </>
   );
 

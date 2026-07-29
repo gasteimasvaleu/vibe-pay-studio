@@ -1,41 +1,41 @@
-## Problema
-Na tela `/live/$liveId/transmitir` (desktop) há um header com dois botões textuais lado a lado: **Voltar** (esquerda) e **Encerrar transmissão** (direita). Eles:
-- Quebram a harmonia visual da interface de live;
-- São redundantes, pois o componente `LiveOverlayTop` já exibe um botão **Encerrar** no topo direito do vídeo.
-
 ## Objetivo
-Remover a duplicidade e deixar a navegação mais discreta, alinhada ao padrão já usado na versão mobile.
+Reduzir a densidade visual do dashboard (creator e subscriber) para uma aparência mais sutil e delicada, sem alterar funcionalidade. As alterações são puramente de presentation (tipografia e padding), sem mudanças de lógica.
 
-## Plano de mudança
+## Arquivos e mudanças
 
-### 1. Remover o header desktop redundante
-- Excluir o bloco do header atual em `src/routes/_authenticated/live.$liveId.transmitir.tsx` (linhas ~683-690) que contém os botões "Voltar" e "Encerrar transmissão".
+### 1. `src/components/dashboard/EarningsSummary.tsx` (cards Faturamento / Liberado / Total)
+- Padding: `p-5` → `p-4`
+- Título ("Faturamento", "Liberado", "Total"): `text-lg font-bold` → `text-sm font-semibold`
+- Subtítulo ("Hoje", "Valor disponível…"): `text-sm` → `text-xs`
+- Valor grande ("R$ —"): `text-3xl font-bold` → `text-xl font-semibold`
+- Skeleton: `h-8 w-28` → `h-6 w-20`
+- Gap do grid: `gap-4` → `gap-3`
 
-### 2. Adicionar botão flutuante "Voltar" sobre o player desktop
-- Inserir um botão circular absoluto no canto superior esquerdo do player de vídeo, usando o mesmo estilo do mobile (`bg-black/45 backdrop-blur rounded-full text-white`).
-- Posicioná-lo abaixo do `LiveOverlayTop` para evitar sobreposição (ex: `top-14 left-3` no desktop).
-- Navegar para `/dashboard` ao clicar.
+### 2. `src/components/dashboard/ActionCard.tsx` (cards da "Área do Criador")
+- Padding: `p-5` → `p-4`
+- Ícone container: `h-10 w-10 rounded-xl` → `h-9 w-9 rounded-lg`
+- Ícone interno (via prop nos usos): manter `h-5 w-5` (opcional reduzir para `h-4 w-4` — sugestão: manter)
+- Título: `text-base font-semibold` → `text-sm font-semibold`
+- Descrição: `mt-3 text-sm` → `mt-2 text-xs`
 
-### 3. Manter o botão "Encerrar" no `LiveOverlayTop`
-- O botão já existe no slot `right` do `LiveOverlayTop` (linha 455).
-- Apenas garantir que ele continue funcionando e abrindo o `AlertDialog` customizado de confirmação.
+### 3. `src/components/dashboard/ProfileHeaderCard.tsx` (card do perfil no topo)
+- Faixa gradiente: `h-24` → `h-20`
+- Avatar: `h-20 w-20` + `-mt-10` → `h-16 w-16` + `-mt-8`; fallback texto `text-2xl` → `text-xl`
+- Nome: `text-2xl font-bold` → `text-lg font-semibold`
+- Badge check: `h-5 w-5` → `h-4 w-4`
+- Handle e stat label: `text-sm` → `text-xs`
+- Stat valor: `text-lg font-bold` → `text-sm font-semibold`
+- Level badge (+100°): `px-3 py-1 text-sm` → `px-2.5 py-0.5 text-xs`
+- Padding corpo: `px-5 pb-5/pb-4` → `px-4 pb-4/pb-3`
+- Link "Ver perfil": manter `text-sm` (compacto o suficiente) ou reduzir para `text-xs` — proposta: `text-xs`
 
-### 4. Harmonizar estilos (opcional, se necessário)
-- Se o botão "Encerrar" do `LiveOverlayTop` estiver visualmente destoante do novo botão "Voltar", ajustar altura, padding e arredondamento para que ambos compartilhem a mesma linguagem visual (ícone + label compacto, backdrop-blur, altura `h-8`/`h-9`).
+### 4. `src/components/dashboard/DashboardShell.tsx` — títulos de grupo
+- Verificar o `DashboardGroup` (título "Área do Criador"/"Outras Funcionalidades") e reduzir de estilo grande para `text-base font-semibold` se estiver maior. (Confirmar ao abrir o arquivo em build mode.)
 
-### 5. Verificar mobile
-- A versão mobile já possui o botão "Voltar" flutuante (linhas 645-651); mantê-lo inalterado.
+## Não incluso
+- Sem mudança em cores, tokens do design system, rotas, dados ou funções server.
+- Sem alteração no BottomNav, TopNav ou switch bar (a switch bar já parece proporcional na referência).
 
-### 6. Testar visualmente
-- Abrir a preview em `/live/$liveId/transmitir` no desktop e confirmar que:
-  - O header com os dois botões desapareceu;
-  - O botão "Voltar" flutuante aparece no canto superior esquerdo do player;
-  - O botão "Encerrar" continua no topo direito via `LiveOverlayTop`;
-  - Não há sobreposição entre os elementos.
-
-## Arquivos envolvidos
-- `src/routes/_authenticated/live.$liveId.transmitir.tsx` (edição do layout desktop)
-- `src/components/live/LiveOverlayTop.tsx` (ajuste visual do botão Encerrar, se necessário)
-
-## Resultado esperado
-Interface de transmissão desktop mais limpa, com navegação de saída discreta e botão de encerrar centralizado no overlay superior do vídeo, eliminando a duplicidade e melhorando a harmonia visual.
+## Verificação
+- Rodar typecheck.
+- Capturar screenshot do `/dashboard` via Playwright autenticado e comparar com a referência anexada.

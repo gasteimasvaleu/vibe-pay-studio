@@ -37,20 +37,20 @@ export function EarningsSummary() {
   ];
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {items.map((it) => (
         <div
           key={it.title}
-          className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]"
+          className="rounded-2xl border bg-card p-4 shadow-[var(--shadow-card)]"
         >
-          <h3 className="text-lg font-bold tracking-tight text-foreground">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">
             {it.title}
           </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{it.subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{it.subtitle}</p>
           {isLoading ? (
-            <div className="mt-4 h-8 w-28 animate-pulse rounded-md bg-muted" />
+            <div className="mt-3 h-6 w-20 animate-pulse rounded-md bg-muted" />
           ) : (
-            <p className="mt-4 text-3xl font-bold tracking-tight text-foreground">
+            <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">
               {isError ? "R$ —" : it.value}
             </p>
           )}
