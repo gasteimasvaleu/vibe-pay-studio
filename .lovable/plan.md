@@ -1,38 +1,69 @@
-## Objetivo
-Adicionar indicador visual de etapas no checkout inline de cartão (`NewCardCheckoutStep`) para dar feedback claro durante o fluxo tokenização → cobrança → confirmação, evitando a sensação de "travado tokenizando".
+## Problema
+
+Toda cobrança com **cartão** (salvo OU novo) já funciona ponta-a-ponta: Asaas recebe, cobra e o webhook libera o conteúdo. O único gap é de UX: quando o Asaas retorna o pagamento como `PENDING` (em vez de `CONFIRMED` sincronamente), o frontend fecha o modal sem indicar que a confirmação ainda está sendo processada, e o desbloqueio só aparece após reload manual.
+
+Verificado: `getPaymentIntentStatus` já existe em `src/lib/payments.functions.ts` e força reconciliação com o Asaas quando o intent está `pending` — o `PixCheckout` já usa esse polling. Basta aplicar o mesmo comportamento no caminho "cartão sem confirmação síncrona".
 
 ## Escopo
-Somente UI/UX do componente `src/components/payments/NewCardCheckoutStep.tsx` e ajustes mínimos nos chamadores para sinalizar a fase de cobrança.
 
-## Mudanças
+**Vale para tudo que é pago com cartão** (salvo ou novo, todos os tipos):
 
-### 1. `NewCardCheckoutStep.tsx`
-- Adicionar estado interno `phase: "idle" | "tokenizing" | "charging" | "done" | "error"`.
-- Definir `phase = "tokenizing"` ao iniciar `mutation`.
-- Após `tokenize()` resolver com sucesso, transicionar para `"charging"` antes de chamar `onSuccess()`.
-- Após `onSuccess()` resolver, transicionar para `"done"` (breve, ~600ms) antes de deixar o pai fechar o dialog.
-- Em erro, `phase = "error"` e volta para `"idle"` ao editar qualquer campo.
-- Substituir o texto simples "Validando cartão…" do botão por um **StepIndicator** compacto acima dos botões, com 3 pontos/linhas conectados:
-  1. Tokenizando cartão
-  2. Processando pagamento
-  3. Confirmado
-- Cada etapa mostra: ícone circular (spinner ativo / check concluído / número pendente), label pequeno, e uma linha de progresso animada (pulse/gradient) entre elas.
-- O botão permanece desabilitado durante `tokenizing`/`charging`/`done`; label do botão reflete a fase ("Tokenizando cartão…", "Processando pagamento…", "Concluído").
-- Enquanto `phase !== "idle"`, esconder inputs (ou reduzir opacidade) e destacar o indicador no lugar — decisão: manter os inputs visíveis mas com `opacity-60 pointer-events-none`, focando o olhar no indicador logo abaixo.
+- Desbloqueio de publicação (feed, perfil)
+- Desbloqueio de story
+- Desbloqueio de chat / PPV de mídia no chat
+- Gorjeta (tip)
+- Assinatura
+- Ticket de live
+- Videochamada 1:1
+- Recarga de carteira
 
-### 2. Sinalização "charging" nos chamadores
-O componente já sabe quando saiu da tokenização (promise `tokenize` resolveu), então a transição para `"charging"` acontece automaticamente enquanto aguarda `onSuccess()` do pai (que hoje já executa a cobrança 1‑click). Nenhuma mudança de assinatura necessária.
+Onde o pagamento passa pelo `PaymentModal` (feed/perfil/chat) ou por diálogos dedicados (`SubscribeDialog`, `TipDialog`, `LiveTicketDialog`, `StoryViewer`, `ChallengeContributeSheet`, videochamada, recarga), garantimos o mesmo tratamento.
 
-Opcional: expor prop `chargingLabel?: string` para o pai customizar (ex.: "Gerando PIX de fallback…"), mas não obrigatório.
+## Solução
+
+### 1. Novo componente `CardProcessingStep`
+`src/components/payments/CardProcessingStep.tsx`:
+
+- Props: `paymentIntentId`, `onPaid`, `onCancel`, `title?`
+- Faz polling de `getPaymentIntentStatus` a cada 2s (mesmo padrão do `CardCheckout`)
+- UI: spinner + "Confirmando pagamento com o banco… isso pode levar alguns segundos"
+- Ao detectar `paid`: chama `onPaid()` (que dispara `invalidateQueries` + toast + fecha)
+- Após ~60s sem confirmação: mostra "Está demorando mais que o normal. Pode fechar — assim que confirmar, o conteúdo aparece." + botão fechar
+- Sem link externo (é 1‑click, não há `invoiceUrl`)
+
+### 2. `PaymentModal` renderiza o novo step
+Em `src/components/payments/PaymentModal.tsx`:
+
+- Quando `checkout.method === "CREDIT_CARD"` e **não** houver `invoiceUrl`, renderizar `CardProcessingStep` em vez do bloco "Preparando pagamento..."
+- Mantém `CardCheckout` (com `invoiceUrl`) e `PixCheckout` inalterados
+
+### 3. Ajustar handlers para abrir o modal quando `paidImmediately=false` no cartão
+Nos `confirmPayment`/`submit` que hoje só abrem o `PaymentModal` para PIX ou cartão com `invoiceUrl`, garantir que também abrem para cartão 1‑click sem confirmação síncrona (setando `checkout` com `method:"CREDIT_CARD"` e sem `invoiceUrl`):
+
+- `src/routes/_authenticated/feed.tsx` (fluxo já monta checkout — validar)
+- `src/routes/_authenticated/perfil.$username.tsx`
+- `src/routes/_authenticated/chat.$threadId.tsx`
+- `src/components/feed/StoryViewer.tsx`
+- `src/components/payments/TipDialog.tsx`
+- `src/components/payments/SubscribeDialog.tsx`
+- `src/components/live/LiveTicketDialog.tsx`
+- `src/components/payments/ChallengeContributeSheet.tsx`
+- Videochamada e recarga de carteira
+
+Em cada `onPaid` do step: `invalidateQueries` das keys relevantes daquela tela (`feed`, `profile-feed`, `story-*`, `chat-thread`, `subscriptions`, `subscriber-wallet`, `live-*`, etc.) + toast de sucesso + fecha.
+
+### 4. Mensagens
+- Ao abrir o step: toast leve "Pagamento em processamento…" (opcional; evita duplicar com o texto do modal)
+- Ao confirmar: toast atual de sucesso do fluxo (ex.: "Publicação desbloqueada!")
 
 ## Detalhes técnicos
 
-- Ícones: `Loader2` (spinner), `Check`, `AlertCircle` do `lucide-react` (já usados).
-- Animação da linha entre etapas: `bg-gradient-to-r from-primary to-primary/40 bg-[length:200%_100%] animate-[shimmer_1.2s_linear_infinite]` — adicionar keyframes locais via classe utilitária inline (`style={{ animation: "..." }}`) para evitar mexer em `tailwind.config`/`styles.css`. Alternativa mais simples e já suportada: usar `animate-pulse` no segmento ativo.
-- Respeitar `tone="light" | "dark"` já existente para cores do indicador.
-- Sem novas dependências.
+- Polling: `setInterval(2000)` com `clearInterval` no unmount; timeout duro em 90s.
+- Reutiliza `getPaymentIntentStatus` (server fn já existente) — sem mudança de schema, sem mudança no webhook Asaas.
+- Não altera `NewCardCheckoutStep`, `CardCheckout`, `PixCheckout` nem a lógica de tokenização.
 
 ## Fora de escopo
-- Não alterar server functions (`tokenizeAndSaveCard`, `chargeSavedCardTopUp`, `payments.functions.ts`).
-- Não mudar layout dos `PaymentMethodPicker`/`PaymentMethodDialog` além do que o componente interno renderiza.
-- Não introduzir toasts adicionais (mantém `toast.error` existente em falha).
+
+- Redesenho dos modais de checkout
+- Alterações no webhook Asaas / no `applyPaidIntent`
+- Alterações nos server functions de pagamento
