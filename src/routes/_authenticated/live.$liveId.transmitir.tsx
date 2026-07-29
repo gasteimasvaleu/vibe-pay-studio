@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoOff } from "lucide-react";
-import { getLive, endLive } from "@/lib/lives.functions";
+import { getLive, endLive, pingLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDarkSurface } from "@/hooks/useDarkSurface";
