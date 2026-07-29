@@ -389,6 +389,28 @@ function TransmitirPage() {
     };
   }, []);
 
+  // Heartbeat: mantém `updated_at` fresco enquanto a página está aberta,
+  // e tenta encerrar quando o publisher fecha a aba/navega para fora.
+  useEffect(() => {
+    if (!connected) return;
+    let cancelled = false;
+    const beat = () => {
+      if (cancelled) return;
+      pingFn({ data: { liveId } }).catch(() => {});
+    };
+    beat();
+    const id = window.setInterval(beat, 15000);
+    const onHide = () => {
+      endFn({ data: { liveId } }).catch(() => {});
+    };
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, [connected, liveId, pingFn, endFn]);
+
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;
     try {
