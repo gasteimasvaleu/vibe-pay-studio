@@ -223,7 +223,7 @@ function MyWalletPage() {
                 className="block -m-2 p-2 rounded-lg hover:bg-accent/40 transition-colors"
               >
                 <p className="text-sm text-muted-foreground">Saldo na carteira</p>
-                <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+                <p className="mt-1 text-xl font-semibold tracking-tight text-foreground">
                   {walletQ.isLoading
                     ? "R$ …"
                     : currency.format(balanceCents / 100)}

@@ -148,7 +148,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
             </header>
 
             <div className="text-center">
-              <span className="text-3xl font-extrabold tabular-nums text-foreground">
+              <span className="text-xl font-semibold tabular-nums text-foreground">
                 {brl.format(priceCents / 100)}
               </span>
             </div>

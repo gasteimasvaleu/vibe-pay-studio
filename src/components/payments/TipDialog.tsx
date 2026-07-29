@@ -165,7 +165,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               >
                 <Minus className="h-5 w-5" />
               </button>
-              <span className="text-4xl font-extrabold tabular-nums text-foreground">
+              <span className="text-2xl font-semibold tabular-nums text-foreground">
                 {brl.format(amount)}
               </span>
               <button

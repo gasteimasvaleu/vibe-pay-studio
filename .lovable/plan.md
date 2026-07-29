@@ -1,41 +1,55 @@
 ## Objetivo
-Reduzir a densidade visual do dashboard (creator e subscriber) para uma aparência mais sutil e delicada, sem alterar funcionalidade. As alterações são puramente de presentation (tipografia e padding), sem mudanças de lógica.
+Reduzir a tipografia e o peso de valores/títulos ainda "gigantes" para o mesmo nível sutil aplicado ao dashboard. Trabalho puramente visual (classes Tailwind), sem tocar em lógica ou dados.
 
-## Arquivos e mudanças
+## 1. `src/routes/_authenticated/my-monetisex-stats.tsx`
+Padrão a aplicar em todos os painéis (Resumo, Faturamento, Assinantes, Projeção, Ganhos por produto, Alcance, Engajamento, Top Postagem, Top Live, Top Assinantes, Superfãs):
 
-### 1. `src/components/dashboard/EarningsSummary.tsx` (cards Faturamento / Liberado / Total)
-- Padding: `p-5` → `p-4`
-- Título ("Faturamento", "Liberado", "Total"): `text-lg font-bold` → `text-sm font-semibold`
-- Subtítulo ("Hoje", "Valor disponível…"): `text-sm` → `text-xs`
-- Valor grande ("R$ —"): `text-3xl font-bold` → `text-xl font-semibold`
-- Skeleton: `h-8 w-28` → `h-6 w-20`
-- Gap do grid: `gap-4` → `gap-3`
+- Títulos de card `text-lg font-bold` → `text-sm font-semibold`.
+- Títulos "base" `text-base font-bold` → `text-sm font-semibold`.
+- Valores destacados `text-2xl font-bold` → `text-lg font-semibold`.
+- Valores "hoje/no período" `text-xl font-bold` → `text-base font-semibold`.
+- Valores secundários `text-lg font-bold` → `text-sm font-semibold`.
+- Labels de filtro `text-sm font-bold` → `text-xs font-semibold`.
+- Totais em linhas `font-bold` → `font-semibold`.
+- Sub-cards internos `p-3` mantidos, mas rótulos numéricos passam de `text-lg font-bold` → `text-base font-semibold`.
+- Streaks `text-2xl font-bold` (Atividade no mês) → `text-lg font-semibold`.
+- Visitantes `text-xl font-bold` → `text-base font-semibold`.
 
-### 2. `src/components/dashboard/ActionCard.tsx` (cards da "Área do Criador")
-- Padding: `p-5` → `p-4`
-- Ícone container: `h-10 w-10 rounded-xl` → `h-9 w-9 rounded-lg`
-- Ícone interno (via prop nos usos): manter `h-5 w-5` (opcional reduzir para `h-4 w-4` — sugestão: manter)
-- Título: `text-base font-semibold` → `text-sm font-semibold`
-- Descrição: `mt-3 text-sm` → `mt-2 text-xs`
+Não altero ícones, cores, layout ou grid.
 
-### 3. `src/components/dashboard/ProfileHeaderCard.tsx` (card do perfil no topo)
-- Faixa gradiente: `h-24` → `h-20`
-- Avatar: `h-20 w-20` + `-mt-10` → `h-16 w-16` + `-mt-8`; fallback texto `text-2xl` → `text-xl`
-- Nome: `text-2xl font-bold` → `text-lg font-semibold`
-- Badge check: `h-5 w-5` → `h-4 w-4`
-- Handle e stat label: `text-sm` → `text-xs`
-- Stat valor: `text-lg font-bold` → `text-sm font-semibold`
-- Level badge (+100°): `px-3 py-1 text-sm` → `px-2.5 py-0.5 text-xs`
-- Padding corpo: `px-5 pb-5/pb-4` → `px-4 pb-4/pb-3`
-- Link "Ver perfil": manter `text-sm` (compacto o suficiente) ou reduzir para `text-xs` — proposta: `text-xs`
+## 2. Aplicar mesma redução em outras telas com o mesmo problema
 
-### 4. `src/components/dashboard/DashboardShell.tsx` — títulos de grupo
-- Verificar o `DashboardGroup` (título "Área do Criador"/"Outras Funcionalidades") e reduzir de estilo grande para `text-base font-semibold` se estiver maior. (Confirmar ao abrir o arquivo em build mode.)
+### `src/routes/_authenticated/settings.subscription.tsx`
+- Valor mensal `text-4xl md:text-5xl font-extrabold` → `text-2xl font-semibold`.
+- Trimestral/Semestral `text-xl md:text-2xl font-bold` → `text-base font-semibold`.
+- Paddings `p-6 md:p-8` → `p-5`; `space-y-5` → `space-y-4`.
+- Blocos de input `px-5 py-3` → `px-4 py-2.5`, texto `text-base` → `text-sm`.
 
-## Não incluso
-- Sem mudança em cores, tokens do design system, rotas, dados ou funções server.
-- Sem alteração no BottomNav, TopNav ou switch bar (a switch bar já parece proporcional na referência).
+### `src/components/promotion/PromotionShell.tsx` (wizard Criando oferta)
+- `PromotionHeader.title` `text-2xl md:text-3xl font-bold` → `text-lg font-semibold`.
+- Subtítulo `text-sm` → `text-xs`; margens `mb-8/mb-5` → `mb-6/mb-4`.
+- Progresso `h-1.5` → `h-1`.
 
-## Verificação
-- Rodar typecheck.
-- Capturar screenshot do `/dashboard` via Playwright autenticado e comparar com a referência anexada.
+### `src/routes/_authenticated/banco.tsx`
+- Saldo `text-3xl font-bold` → `text-xl font-semibold`.
+
+### `src/routes/_authenticated/mywallet.index.tsx`
+- Saldo `text-3xl font-bold` → `text-xl font-semibold`.
+
+### `src/routes/_authenticated/mywallet.recarregar.tsx`
+- Valor `text-4xl md:text-5xl font-extrabold` → `text-2xl font-semibold`.
+
+### `src/routes/_authenticated/chat-agendamento.tsx` (linha 785)
+- Valor `text-4xl font-semibold` → `text-2xl font-semibold`.
+
+### `src/components/payments/TipDialog.tsx` (linha 168)
+- Valor `text-4xl font-extrabold` → `text-2xl font-semibold`.
+
+### `src/components/live/LiveTicketDialog.tsx` (linha 151)
+- Valor `text-3xl font-extrabold` → `text-xl font-semibold`.
+
+### `src/components/payments/ChallengeContributeSheet.tsx`
+- `text-2xl font-black` → `text-lg font-semibold`; `text-lg font-black` → `text-sm font-semibold`.
+
+## Fora do escopo
+Não altero páginas de onboarding (`creator.onboarding.*`), perfil público (`perfil.$username.tsx`), landing/hero, publisher (câmera fullscreen) nem componentes onde a fonte grande faz parte do design intencional (ex.: rank em `em-alta/Cards.tsx`, floating reactions).

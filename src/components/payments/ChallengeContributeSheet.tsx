@@ -138,7 +138,7 @@ export function ChallengeContributeSheet({
             {/* Meta + progresso */}
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Meta do desafio</p>
-              <p className="mt-1 text-2xl font-black">
+              <p className="mt-1 text-lg font-semibold">
                 {status ? brl.format(status.goalCents / 100) : "—"}
               </p>
               <div className="mt-3">
@@ -211,7 +211,7 @@ export function ChallengeContributeSheet({
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                           Contribuir
                         </p>
-                        <p className="text-lg font-black">
+                        <p className="text-sm font-semibold">
                           {brl.format(t.amountCents / 100)}
                         </p>
                       </button>
