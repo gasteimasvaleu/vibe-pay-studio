@@ -118,18 +118,113 @@ export const cancelSubscription = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Auto-renovação está desativada — cancelar é apenas registrar a intenção
-    // no banco. O assinante mantém acesso até `current_period_end`.
+    // Se a assinatura tem recorrência no Asaas, cancela lá primeiro para
+    // evitar cobranças futuras. Mantém o acesso local até current_period_end.
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("id, asaas_subscription_id, subscriber_id")
+      .eq("id", data.subscriptionId)
+      .eq("subscriber_id", userId)
+      .maybeSingle();
+    if (!sub) throw new Error("Assinatura não encontrada");
+
+    if (sub.asaas_subscription_id) {
+      try {
+        const asaas = await import("./asaas.server");
+        await asaas.deleteAsaasSubscription(sub.asaas_subscription_id as string);
+      } catch (err) {
+        console.warn("[cancelSubscription] Asaas delete falhou", err);
+      }
+    }
+
     const { error } = await supabase
       .from("subscriptions")
       .update({
         auto_renew: false,
         cancelled_at: new Date().toISOString(),
-      })
+        asaas_subscription_id: null,
+      } as any)
       .eq("id", data.subscriptionId)
       .eq("subscriber_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Reativa a renovação automática recriando a assinatura no Asaas com um
+ * cartão salvo. Só funciona enquanto o período atual ainda estiver ativo.
+ */
+export const reactivateSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { subscriptionId: string; savedCardId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: sub, error } = await supabase
+      .from("subscriptions")
+      .select(
+        "id, subscriber_id, creator_id, plan, price_cents_paid, current_period_end, status",
+      )
+      .eq("id", data.subscriptionId)
+      .eq("subscriber_id", userId)
+      .maybeSingle();
+    if (error || !sub) throw new Error("Assinatura não encontrada");
+    if (new Date(sub.current_period_end as string).getTime() < Date.now()) {
+      throw new Error("Assinatura expirada — faça uma nova assinatura");
+    }
+
+    const { data: card } = await supabase
+      .from("saved_cards")
+      .select("asaas_card_token, asaas_customer_id")
+      .eq("id", data.savedCardId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!card) throw new Error("Cartão salvo não encontrado");
+
+    const { data: creator } = await supabase
+      .from("profiles")
+      .select("asaas_wallet_id")
+      .eq("user_id", sub.creator_id as string)
+      .maybeSingle();
+    const walletId = (creator as any)?.asaas_wallet_id as string | null;
+    if (!walletId) throw new Error("Criador sem carteira configurada");
+
+    const asaas = await import("./asaas.server");
+    const amountCents = sub.price_cents_paid as number;
+    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, "CREDIT_CARD");
+    const cycle =
+      sub.plan === "quarterly"
+        ? "QUARTERLY"
+        : sub.plan === "semiannual"
+          ? "SEMIANNUALLY"
+          : "MONTHLY";
+    const nextDueDate = new Date(sub.current_period_end as string)
+      .toISOString()
+      .slice(0, 10);
+
+    const recurring = await asaas.createAsaasSubscription({
+      customerId: card.asaas_customer_id as string,
+      billingType: "CREDIT_CARD",
+      amountCents,
+      cycle,
+      nextDueDate,
+      description: `Assinatura MTX`,
+      externalReference: `subscription:${sub.id}`,
+      creatorWalletId: walletId,
+      netCreatorCents,
+      creditCardToken: card.asaas_card_token as string,
+    });
+
+    await supabase
+      .from("subscriptions")
+      .update({
+        auto_renew: true,
+        cancelled_at: null,
+        asaas_subscription_id: recurring.id,
+        status: sub.status === "past_due" ? "active" : sub.status,
+      } as any)
+      .eq("id", data.subscriptionId);
+
+    return { ok: true, asaasSubscriptionId: recurring.id };
   });
 
 export type MySubscription = {
