@@ -780,15 +780,47 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       ...__cardArgs.args,
     });
 
-    // Renovação automática desativada: cobramos apenas o 1º ciclo. O assinante
-    // recebe lembrete por e-mail 7 dias antes do vencimento e renova manualmente
-    // pelo perfil do criador. Reativar quando a chave Asaas tiver tokenização
-    // de cartão liberada (endpoint /v3/subscriptions com creditCardToken).
+    // Renovação automática: só habilitamos quando o assinante usou um cartão
+    // salvo (temos o `creditCardToken`). PIX / Boleto / cartão sem token seguem
+    // com renovação manual + lembrete por e-mail antes do vencimento.
+    let asaasSubscriptionId: string | null = null;
+    let autoRenew = false;
+    if (data.method === "CREDIT_CARD" && __cardArgs.useSavedCard) {
+      try {
+        const cycle =
+          data.plan === "quarterly"
+            ? "QUARTERLY"
+            : data.plan === "semiannual"
+              ? "SEMIANNUALLY"
+              : "MONTHLY";
+        // nextDueDate = data do próximo ciclo (após o 1º pagamento já feito).
+        const nextDueDate = new Date(periodEnd).toISOString().slice(0, 10);
+        const recurring = await asaas.createAsaasSubscription({
+          customerId,
+          billingType: "CREDIT_CARD",
+          amountCents,
+          cycle,
+          nextDueDate,
+          description: `Assinatura MTX`,
+          externalReference: `subscription:${sub.id}`,
+          creatorWalletId: creator.asaas_wallet_id,
+          netCreatorCents,
+          creditCardToken: (__cardArgs.args as any).creditCardToken as string,
+        });
+        asaasSubscriptionId = recurring.id;
+        autoRenew = true;
+      } catch (err) {
+        console.warn("[subscription] falha ao criar recorrência Asaas", err);
+      }
+    }
+
     await supabase
       .from("subscriptions")
       .update({
         provider_ref: payment.id,
         last_payment_id: payment.id,
+        asaas_subscription_id: asaasSubscriptionId,
+        auto_renew: autoRenew,
       } as any)
       .eq("id", sub.id);
 
