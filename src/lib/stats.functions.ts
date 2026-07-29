@@ -943,13 +943,13 @@ export const getEngajamentoStories = createServerFn({ method: "GET" })
     const viewsMap = new Map<string, number>();
     if (ids.length > 0) {
       const [unlocksRes, viewsRes] = await Promise.all([
-        supabase.from("story_unlocks").select("story_id, price_cents").in("story_id", ids).eq("status", "paid"),
+        supabase.from("story_unlocks").select("story_id, amount_cents").in("story_id", ids).eq("status", "paid"),
         supabase.from("story_views").select("story_id").in("story_id", ids),
       ]);
-      for (const r of (unlocksRes.data ?? []) as { story_id: string; price_cents: number | null }[]) {
+      for (const r of (unlocksRes.data ?? []) as { story_id: string; amount_cents: number | null }[]) {
         const cur = unlocksMap.get(r.story_id) ?? { count: 0, revenueCents: 0 };
         cur.count += 1;
-        cur.revenueCents += r.price_cents ?? 0;
+        cur.revenueCents += r.amount_cents ?? 0;
         unlocksMap.set(r.story_id, cur);
       }
       for (const r of (viewsRes.data ?? []) as { story_id: string }[]) {
