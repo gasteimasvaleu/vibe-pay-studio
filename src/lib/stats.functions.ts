@@ -386,7 +386,11 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
  */
 export const getTopAssinantes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { from: string; to: string; metric?: "total" | "subscription" | "tip" | "chat_unlock" }) => ({
+  .inputValidator((data: {
+    from: string;
+    to: string;
+    metric?: "total" | "subscription" | "tip" | "chat_unlock" | "publication_unlock" | "story_unlock" | "video_call" | "live_ticket";
+  }) => ({
     ...rangeValidator({ from: data.from, to: data.to }),
     metric: data.metric ?? "total",
   }))
@@ -400,9 +404,10 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
       .in("kind", EARNING_KINDS as unknown as never[])
       .gte("created_at", data.from).lte("created_at", data.to);
 
-    if (data.metric === "subscription") q = q.eq("kind", "subscription");
-    else if (data.metric === "tip") q = q.eq("kind", "tip");
-    else if (data.metric === "chat_unlock") q = q.eq("kind", "chat_unlock");
+    const KIND_METRICS = new Set(["subscription", "tip", "chat_unlock", "publication_unlock", "story_unlock", "video_call", "live_ticket"]);
+    if (data.metric !== "total" && KIND_METRICS.has(data.metric)) {
+      q = q.eq("kind", data.metric as any);
+    }
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
