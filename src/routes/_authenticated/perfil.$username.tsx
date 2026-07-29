@@ -379,6 +379,27 @@ function PerfilPage() {
   const activeLiveQuery = useCreatorActiveLive(profile.userId);
   const activeLiveId = activeLiveQuery.data?.id ?? null;
 
+  const getLastSeenFn = useServerFn(getLastSeen);
+  const isOnlineNow = useIsUserOnline(profile.userId);
+  const lastSeenQuery = useQuery({
+    queryKey: ["presence", "lastSeen", profile.userId],
+    queryFn: () => getLastSeenFn({ data: { userId: profile.userId } }),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const wasSeenToday = (() => {
+    const ts = lastSeenQuery.data?.lastSeenAt;
+    if (!ts) return false;
+    const d = new Date(ts);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  })();
+  const showOnlineToday = isOnlineNow || wasSeenToday;
+
   const [friendBusy, setFriendBusy] = useState(false);
 
   const mutedQueryKey = ["mutes", "is", viewerId, profile.userId] as const;
