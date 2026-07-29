@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PixCheckout } from "@/components/payments/PixCheckout";
-import { CardCheckout } from "@/components/payments/CardCheckout";
+import { CardProcessingStep } from "@/components/payments/CardProcessingStep";
 
 export type PaymentMethod = "PIX" | "CREDIT_CARD" | "WALLET";
 
@@ -34,10 +34,9 @@ export function PaymentModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 bg-transparent border-none shadow-none">
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        {checkout && isCard && checkout.invoiceUrl ? (
-          <CardCheckout
+        {checkout && isCard ? (
+          <CardProcessingStep
             paymentIntentId={checkout.paymentIntentId}
-            invoiceUrl={checkout.invoiceUrl}
             onPaid={() => {
               onPaid?.();
               onOpenChange(false);
