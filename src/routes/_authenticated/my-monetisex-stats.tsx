@@ -14,6 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+} from "@/components/ui/action-popover";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -356,20 +361,27 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
 
 function CardMenu({ items }: { items: { label: string; onSelect?: () => void; disabled?: boolean }[] }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <ActionPopover
+      widthClass="w-[260px]"
+      trigger={
         <button
           type="button"
           aria-label="Mais opções"
           className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         ><MoreVertical className="h-4 w-4" /></button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-56 rounded-2xl border-border bg-popover text-popover-foreground shadow-lg p-2">
-        {items.map(it => (
-          <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled} className="py-3 px-3 text-base cursor-pointer rounded-xl">{it.label}</DropdownMenuItem>
+      }
+    >
+      <ActionPopoverList>
+        {items.map((it) => (
+          <ActionPopoverItem
+            key={it.label}
+            label={it.label}
+            onClick={it.onSelect}
+            disabled={it.disabled}
+          />
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </ActionPopoverList>
+    </ActionPopover>
   );
 }
 

@@ -17,11 +17,10 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+} from "@/components/ui/action-popover";
 import { supabase } from "@/integrations/supabase/client";
 import { isCreatorLike, type AccountType } from "@/lib/auth";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -275,41 +274,38 @@ function ProfilePage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-semibold text-foreground truncate">Meu perfil</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <ActionPopover
+          widthClass="w-[280px]"
+          trigger={
             <button type="button" className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label="Mais opções">
               <MoreVertical className="h-5 w-5" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
-            <DropdownMenuItem className="gap-3 rounded-xl py-3 text-base">
-              <CalendarCheck className="h-5 w-5" />
-              Posts agendados
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="gap-3 rounded-xl py-3 text-base"
-              onSelect={() => navigate({ to: "/postsarquivados" })}
-            >
-              <Archive className="h-5 w-5" />
-              Arquivados
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="gap-3 rounded-xl py-3 text-base"
+          }
+        >
+          <ActionPopoverList>
+            <ActionPopoverItem
+              icon={<CalendarCheck className="h-5 w-5" strokeWidth={1.75} />}
+              label="Posts agendados"
+              onClick={() => {}}
+            />
+            <ActionPopoverItem
+              icon={<Archive className="h-5 w-5" strokeWidth={1.75} />}
+              label="Arquivados"
+              onClick={() => navigate({ to: "/postsarquivados" })}
+            />
+            <ActionPopoverItem
+              icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
+              label="Editar perfil"
               disabled={editingProfile}
-              onSelect={(event) => {
-                event.preventDefault();
-                void handleEditProfile();
-              }}
-            >
-              <Settings className="h-5 w-5" />
-              Editar perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 rounded-xl py-3 text-base">
-              <BadgeCheck className="h-5 w-5" />
-              Solicitar verificação
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              onClick={() => void handleEditProfile()}
+            />
+            <ActionPopoverItem
+              icon={<BadgeCheck className="h-5 w-5" strokeWidth={1.75} />}
+              label="Solicitar verificação"
+              onClick={() => {}}
+            />
+          </ActionPopoverList>
+        </ActionPopover>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 md:px-6 space-y-4">

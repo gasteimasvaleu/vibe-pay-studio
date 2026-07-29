@@ -15,12 +15,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -165,8 +164,9 @@ export function ThreadActionsMenu({ threadId, partnerId, partnerUsername }: Prop
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <ActionPopover
+        widthClass="w-[300px]"
+        trigger={
           <button
             type="button"
             aria-label="Ações da conversa"
@@ -174,81 +174,57 @@ export function ThreadActionsMenu({ threadId, partnerId, partnerUsername }: Prop
           >
             <MoreVertical className="h-5 w-5" />
           </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem asChild>
-            <Link to="/perfil/$username" params={{ username: partnerUsername }}>
-              <UserRound className="h-4 w-4" />
-              Ver perfil
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              toggleMute.mutate();
-            }}
+        }
+      >
+        <ActionPopoverList>
+          <Link
+            to="/perfil/$username"
+            params={{ username: partnerUsername }}
+            className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-foreground/5 transition-colors"
           >
-            {muted?.muted ? (
-              <>
-                <Bell className="h-4 w-4" />
-                Reativar notificações
-              </>
-            ) : (
-              <>
-                <BellOff className="h-4 w-4" />
-                Silenciar conversa
-              </>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              toggleRestrict.mutate();
-            }}
-          >
-            {restricted?.restricted ? (
-              <>
-                <ShieldOff className="h-4 w-4" />
-                Remover restrição
-              </>
-            ) : (
-              <>
-                <Shield className="h-4 w-4" />
-                Restringir assinante
-              </>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setReportOpen(true);
-            }}
-          >
-            <Flag className="h-4 w-4" />
-            Denunciar usuário
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setConfirmClear(true);
-            }}
-          >
-            <Eraser className="h-4 w-4" />
-            Limpar conversa
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onSelect={(e) => {
-              e.preventDefault();
-              setConfirmDelete(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            Apagar conversa
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <UserRound className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.75} />
+            <span className="text-sm font-semibold text-foreground">Ver perfil</span>
+          </Link>
+          <ActionPopoverItem
+            icon={
+              muted?.muted ? (
+                <Bell className="h-5 w-5" strokeWidth={1.75} />
+              ) : (
+                <BellOff className="h-5 w-5" strokeWidth={1.75} />
+              )
+            }
+            label={muted?.muted ? "Reativar notificações" : "Silenciar conversa"}
+            onClick={() => toggleMute.mutate()}
+          />
+          <ActionPopoverItem
+            icon={
+              restricted?.restricted ? (
+                <ShieldOff className="h-5 w-5" strokeWidth={1.75} />
+              ) : (
+                <Shield className="h-5 w-5" strokeWidth={1.75} />
+              )
+            }
+            label={restricted?.restricted ? "Remover restrição" : "Restringir assinante"}
+            onClick={() => toggleRestrict.mutate()}
+          />
+          <ActionPopoverItem
+            icon={<Flag className="h-5 w-5" strokeWidth={1.75} />}
+            label="Denunciar usuário"
+            onClick={() => setReportOpen(true)}
+          />
+          <ActionPopoverItem
+            icon={<Eraser className="h-5 w-5" strokeWidth={1.75} />}
+            label="Limpar conversa"
+            onClick={() => setConfirmClear(true)}
+          />
+        </ActionPopoverList>
+
+        <ActionPopoverDestructive
+          icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+          label="Apagar conversa"
+          onClick={() => setConfirmDelete(true)}
+        />
+      </ActionPopover>
 
       <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
         <AlertDialogContent>

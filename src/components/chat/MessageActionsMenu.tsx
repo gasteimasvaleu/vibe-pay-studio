@@ -13,12 +13,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -170,8 +169,10 @@ export function MessageActionsMenu({ message, mine, threadId, onReply }: Props) 
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <ActionPopover
+        align={mine ? "end" : "start"}
+        widthClass="w-[280px]"
+        trigger={
           <button
             type="button"
             aria-label="Ações da mensagem"
@@ -183,83 +184,55 @@ export function MessageActionsMenu({ message, mine, threadId, onReply }: Props) 
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align={mine ? "end" : "start"} className="w-48">
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              onReply(message);
-            }}
-          >
-            <Reply className="h-4 w-4" />
-            Responder
-          </DropdownMenuItem>
+        }
+      >
+        <ActionPopoverList>
+          <ActionPopoverItem
+            icon={<Reply className="h-5 w-5" strokeWidth={1.75} />}
+            label="Responder"
+            onClick={() => onReply(message)}
+          />
           {hasText && (
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                void handleCopy();
-              }}
-            >
-              <Copy className="h-4 w-4" />
-              Copiar texto
-            </DropdownMenuItem>
+            <ActionPopoverItem
+              icon={<Copy className="h-5 w-5" strokeWidth={1.75} />}
+              label="Copiar texto"
+              onClick={() => void handleCopy()}
+            />
           )}
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setForwardOpen(true);
-            }}
-          >
-            <Forward className="h-4 w-4" />
-            Encaminhar
-          </DropdownMenuItem>
+          <ActionPopoverItem
+            icon={<Forward className="h-5 w-5" strokeWidth={1.75} />}
+            label="Encaminhar"
+            onClick={() => setForwardOpen(true)}
+          />
           {canDownload && (
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                void handleDownload();
-              }}
-            >
-              <Download className="h-4 w-4" />
-              Salvar mídia
-            </DropdownMenuItem>
+            <ActionPopoverItem
+              icon={<Download className="h-5 w-5" strokeWidth={1.75} />}
+              label="Salvar mídia"
+              onClick={() => void handleDownload()}
+            />
           )}
           {!mine && (
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                setReportOpen(true);
-              }}
-            >
-              <Flag className="h-4 w-4" />
-              Denunciar
-            </DropdownMenuItem>
+            <ActionPopoverItem
+              icon={<Flag className="h-5 w-5" strokeWidth={1.75} />}
+              label="Denunciar"
+              onClick={() => setReportOpen(true)}
+            />
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setConfirmHide(true);
-            }}
-          >
-            <Trash className="h-4 w-4" />
-            Apagar para mim
-          </DropdownMenuItem>
-          {canDeleteForAll && (
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onSelect={(e) => {
-                e.preventDefault();
-                setConfirmDelete(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-              Apagar para todos
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <ActionPopoverItem
+            icon={<Trash className="h-5 w-5" strokeWidth={1.75} />}
+            label="Apagar para mim"
+            onClick={() => setConfirmHide(true)}
+          />
+        </ActionPopoverList>
+
+        {canDeleteForAll && (
+          <ActionPopoverDestructive
+            icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+            label="Apagar para todos"
+            onClick={() => setConfirmDelete(true)}
+          />
+        )}
+      </ActionPopover>
 
       <AlertDialog open={confirmHide} onOpenChange={setConfirmHide}>
         <AlertDialogContent>
