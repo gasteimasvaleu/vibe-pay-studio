@@ -475,16 +475,20 @@ export const getAssinantesList = createServerFn({ method: "GET" })
     if (allRes.error) throw new Error(allRes.error.message);
     if (periodRes.error) throw new Error(periodRes.error.message);
 
+    // Ignora intents PIX abandonados (status pending) — só conta assinaturas efetivamente pagas.
+    const PAID_STATUSES = new Set(["active", "canceled", "expired"]);
     const historyBefore = new Set(
       (allRes.data ?? [])
-        .filter(s => new Date(s.created_at as string) < new Date(data.from))
+        .filter(s => PAID_STATUSES.has((s as { status?: string }).status ?? "") && new Date(s.created_at as string) < new Date(data.from))
         .map(s => s.subscriber_id as string),
     );
 
     // Ordenar por created_at asc para calcular "novo vs renovação" corretamente
-    const period = (periodRes.data ?? []).slice().sort(
-      (a, b) => (a.created_at as string).localeCompare(b.created_at as string),
-    );
+    const period = (periodRes.data ?? [])
+      .filter(s => PAID_STATUSES.has(s.status as string))
+      .slice()
+      .sort((a, b) => (a.created_at as string).localeCompare(b.created_at as string));
+
     const seen = new Set<string>();
     const flags = new Map<string, boolean>(); // id -> isRenewal
     for (const s of period) {
