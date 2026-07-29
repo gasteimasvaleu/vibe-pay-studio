@@ -41,6 +41,11 @@ export function NewCardCheckoutStep({
   const [addressNumber, setAddressNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [keepCard, setKeepCard] = useState(true);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const busy = phase === "tokenizing" || phase === "charging" || phase === "done";
+  const resetIfError = () => {
+    if (phase === "error") setPhase("idle");
+  };
 
   const formatNumber = (v: string) =>
     v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
