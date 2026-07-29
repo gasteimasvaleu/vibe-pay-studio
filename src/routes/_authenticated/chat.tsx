@@ -68,8 +68,9 @@ function ChatLayout() {
     topBuyers: false,
     sort: "recent",
   });
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const onlineUsers = useOnlineUsers();
   const [meId, setMeId] = useState<string | null>(null);
+
 
   const params = useParams({ strict: false }) as { threadId?: string };
   const activeThreadId = params.threadId;
