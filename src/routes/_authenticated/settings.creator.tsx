@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import {
+  Archive,
   ArrowLeft,
   ChevronRight,
   DollarSign,
