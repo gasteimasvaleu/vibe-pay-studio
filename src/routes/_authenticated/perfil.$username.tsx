@@ -226,11 +226,27 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
 
 
   component: PerfilPage,
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen bg-background text-white grid place-items-center p-6">
-      <p className="text-sm text-white/70">Não foi possível carregar o perfil: {error.message}</p>
-    </div>
-  ),
+  errorComponent: ({ error, reset }) => {
+    if (typeof console !== "undefined") console.error("[perfil] loader/render error:", error);
+    return (
+      <div className="min-h-screen bg-background text-foreground grid place-items-center p-6">
+        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
+          <p className="text-base font-semibold">Não foi possível carregar este perfil</p>
+          <p className="text-sm text-muted-foreground break-words">{error?.message ?? "Erro desconhecido"}</p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => { try { history.back(); } catch {} }}
+              className="h-9 px-4 rounded-md border border-border text-sm"
+            >Voltar</button>
+            <button
+              onClick={() => reset()}
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold"
+            >Tentar novamente</button>
+          </div>
+        </div>
+      </div>
+    );
+  },
   notFoundComponent: () => <CreatorGatedNotFound />,
 });
 
