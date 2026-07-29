@@ -13,11 +13,9 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import {
   AlertDialog,
   AlertDialogAction,
