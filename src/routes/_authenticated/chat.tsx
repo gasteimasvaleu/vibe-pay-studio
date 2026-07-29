@@ -223,6 +223,7 @@ function ChatLayout() {
                     thread={t}
                     active={t.threadId === activeThreadId}
                     online={onlineUsers.has(t.partnerId)}
+                    partnerStatus={statuses[t.partnerId]}
                   />
                 ))}
               </ul>
