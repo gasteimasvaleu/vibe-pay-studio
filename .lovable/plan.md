@@ -1,32 +1,29 @@
-# Tela branca em `/perfil/monetisexy`
+# Corrigir "cannot add `presence` callbacks … after `subscribe()`" no perfil
 
-## Diagnóstico
+## Diagnóstico (confirmado pelo errorComponent)
 
-Testei a rota logado como dono e o loader/componente renderizam normalmente (~28 KB de HTML, título correto). Isso indica que o problema aparece só quando o visitante **não** é o dono do perfil (caso reportado: `sexandoapp7` vendo `monetisexy`).
+Erro exato: `cannot add 'presence' callbacks for realtime:online-users after 'subscribe()'`.
 
-Dois pontos suspeitos:
+Causa: em `src/hooks/useIsUserOnline.ts` (linha 30) o leitor chama `supabase.channel("online-users")` para ler a presença. Esse nome é o mesmo usado pelo `usePresenceHeartbeat` global, que já executou `.subscribe()`. O Supabase Realtime retorna a **mesma instância de canal** quando o topic já existe — então o `.on("presence", …)` seguido de novo `.subscribe()` é aplicado sobre um canal já inscrito e lança. Isso é o que joga o loader para o `errorComponent` e resulta na tela branca original.
 
-1. **`errorComponent` invisível no tema claro.** Em `src/routes/_authenticated/perfil.$username.tsx` (linhas 229–233) o fallback de erro usa `bg-background text-white`. No tema claro, `bg-background` é praticamente branco → o texto branco fica invisível. Se o loader lançar qualquer erro para o visitante, o usuário vê uma tela "totalmente branca" mesmo com o boundary renderizado.
-2. **Erro real no loader para não-donos.** Ainda não confirmei a causa; preciso reproduzir logado como assinante para capturar a exceção.
+O canal auxiliar `"online-users-reader-" + userId` (linhas 16–26) também é código morto — nunca lê `presenceState` de outro topic.
 
-## Passos
+## Correção
 
-1. **Instrumentar e reproduzir**
-   - Logar no preview como `sexandoapp7@hotmail.com`, abrir `/perfil/monetisexy` e capturar o erro (console + `stack_modern--server-function-logs`).
-   - Confirmar se vem do loader (query em `subscriptions`/`follows`/`promotions`/RPC `count_author_media`) ou de algum `useServerFn` no render (`getLastSeen`, `isMuted`, `isFriend`, `useCreatorActiveLive`).
+Substituir a estratégia de presença pelo campo `profiles.last_seen_at` (já mantido pelo heartbeat global). É consistente com o badge "Online hoje" do header e não conflita com o singleton de canal.
 
-2. **Corrigir o `errorComponent` do perfil**
-   - Trocar `bg-background text-white` por tokens que funcionem em ambos os temas (`bg-background text-foreground` + borda/card), garantindo que qualquer erro futuro seja legível.
-   - Incluir botão "Voltar" e "Tentar novamente" (`router.invalidate()` + `reset()`).
+1. **Reescrever `src/hooks/useIsUserOnline.ts`** para:
+   - Buscar `last_seen_at` do `userId` alvo via `supabase.from("profiles").select("last_seen_at").eq(...)`.
+   - Considerar online se `now() - last_seen_at < 90s`.
+   - Repetir a checagem com `setInterval` de 30s enquanto o hook estiver montado.
+   - Cleanup: `clearInterval`. Sem canais de Realtime.
 
-3. **Corrigir a causa raiz** (depois de identificada no passo 1)
-   - Ajuste pontual no loader ou nos hooks conforme o stack (ex.: guardar contra `profile.user_id` ausente, tratar retorno da RPC, tornar `getLastSeen` tolerante quando o alvo não tem linha em `profiles`, etc.).
+2. **Nenhuma migração** e nenhum outro arquivo precisa mudar — a bolinha verde no avatar e demais consumidores do hook continuam com a mesma assinatura (`boolean`).
 
-4. **Verificar**
-   - Recarregar `/perfil/monetisexy` como `sexandoapp7` e confirmar render normal com dados do perfil, contadores e badge de presença.
+3. **Verificar** recarregando `/perfil/monetisexy` como `sexandoapp7`: página deve renderizar normalmente, bolinha verde acende quando o dono esteve ativo nos últimos ~90s.
 
 ## Detalhes técnicos
 
-- Arquivo principal: `src/routes/_authenticated/perfil.$username.tsx` (loader linhas 67–223, errorComponent 229–233, hooks de presença 373–392).
-- Server fns envolvidas: `getLastSeen` (`src/lib/presence.functions.ts`), `isMuted`, `isFriend`, `getUserPublications`.
-- Sem migração de banco prevista; correção fica em frontend + eventual guarda numa server fn.
+- Arquivo único: `src/hooks/useIsUserOnline.ts`.
+- Deixa `usePresenceHeartbeat` intacto (ele já grava `last_seen_at`).
+- `errorComponent` do perfil (adicionado no turno anterior) permanece — agora só cobre erros futuros.
