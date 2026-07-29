@@ -8,7 +8,7 @@ import { getLive, registerLiveView } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveTicketDialog } from "@/components/live/LiveTicketDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useDarkSurface } from "@/hooks/useDarkSurface";
+
 import { WhepPlayer } from "@/components/live/WhepPlayer";
 import { LiveChat } from "@/components/live/LiveChat";
 import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
@@ -29,7 +29,7 @@ function LiveViewerPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useIsMobile();
-  useDarkSurface();
+  
 
   const getLiveFn = useServerFn(getLive);
   const registerViewFn = useServerFn(registerLiveView);
