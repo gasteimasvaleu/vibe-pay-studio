@@ -90,7 +90,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
   };
 
 
-  const submit = async () => {
+  const submit = async (overrideCardId?: string) => {
     setLoading(true);
     try {
       if (method === "WALLET") {
@@ -100,8 +100,9 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         onOpenChange(false);
         return;
       }
+      const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
       const res = await subscribe({
-        data: { creatorId, plan, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null },
+        data: { creatorId, plan, method, savedCardId: cardId },
       });
       if (res.paidImmediately) {
         toast.success("Assinatura ativada!");
@@ -134,6 +135,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         return;
       }
       toast.error(translatePaymentError(e, "Erro ao assinar"));
+      throw e;
     } finally {
       setLoading(false);
     }
