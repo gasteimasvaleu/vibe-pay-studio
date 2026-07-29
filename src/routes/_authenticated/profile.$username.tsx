@@ -17,11 +17,10 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+} from "@/components/ui/action-popover";
 import { supabase } from "@/integrations/supabase/client";
 import { isCreatorLike, type AccountType } from "@/lib/auth";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
