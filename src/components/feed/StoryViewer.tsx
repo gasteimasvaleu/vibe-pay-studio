@@ -331,6 +331,8 @@ export function StoryViewer({
               unlocking={unlocking}
               method={selectedMethod}
               onMethodChange={setSelectedMethod}
+              savedCardId={savedCardId}
+              onSavedCardChange={setSavedCardId}
               onUnlock={handleUnlock}
             />
 
