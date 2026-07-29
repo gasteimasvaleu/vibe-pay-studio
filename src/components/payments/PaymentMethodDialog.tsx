@@ -13,7 +13,7 @@ type Props = {
   title: string;
   amountCents: number;
   loading?: boolean;
-  onConfirm: (method: PaymentMethod, savedCardId: string | null) => void;
+  onConfirm: (method: PaymentMethod, savedCardId: string | null) => void | Promise<void>;
 };
 
 export function PaymentMethodDialog({
@@ -44,7 +44,14 @@ export function PaymentMethodDialog({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Forma de pagamento
             </p>
-            <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
+            <PaymentMethodPicker
+              value={method}
+              onChange={setMethod}
+              amountCents={amountCents}
+              savedCardId={savedCardId}
+              onSavedCardChange={setSavedCardId}
+              onNewCardTokenized={(id) => onConfirm("CREDIT_CARD", id)}
+            />
           </div>
 
           <Button

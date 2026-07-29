@@ -160,7 +160,7 @@ export function StoryViewer({
   };
 
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (overrideCardId?: string) => {
     if (!current || unlocking) return;
     setUnlocking(true);
     try {
@@ -171,8 +171,10 @@ export function StoryViewer({
         await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onChanged();
       } else {
+        const cardId =
+          selectedMethod === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
         const res = await createStoryPayment({
-          data: { storyId: current.id, method: selectedMethod, savedCardId: selectedMethod === "CREDIT_CARD" ? savedCardId : null },
+          data: { storyId: current.id, method: selectedMethod, savedCardId: cardId },
         });
         if (res.paidImmediately) {
           toast.success("Story desbloqueado!");
@@ -191,6 +193,7 @@ export function StoryViewer({
       }
     } catch (e: any) {
       toast.error(translatePaymentError(e, "Falha ao desbloquear"));
+      throw e;
     } finally {
       setUnlocking(false);
     }
@@ -461,7 +464,7 @@ function LockedOverlay({
   onMethodChange: (m: PaymentMethod) => void;
   savedCardId: string | null;
   onSavedCardChange: (id: string | null) => void;
-  onUnlock: () => void;
+  onUnlock: (overrideCardId?: string) => void | Promise<void>;
 }) {
   const label =
     method === "WALLET"
@@ -496,9 +499,10 @@ function LockedOverlay({
             tone="dark"
             savedCardId={savedCardId}
             onSavedCardChange={onSavedCardChange}
+            onNewCardTokenized={(newId) => onUnlock(newId)}
           />
         </div>
-        <Button onClick={onUnlock} disabled={unlocking} className="w-full">
+        <Button onClick={() => onUnlock()} disabled={unlocking} className="w-full">
           {unlocking ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...

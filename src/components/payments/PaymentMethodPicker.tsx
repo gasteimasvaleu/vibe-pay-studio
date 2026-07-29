@@ -19,6 +19,12 @@ type Props = {
   /** Controle opcional para seleção de cartão salvo (cobrança 1-click). */
   savedCardId?: string | null;
   onSavedCardChange?: (id: string | null) => void;
+  /**
+   * Callback chamado após tokenização bem-sucedida de um novo cartão.
+   * Se presente, o dialog só fecha após esse callback resolver,
+   * permitindo encadear tokenização + cobrança 1-click no mesmo clique.
+   */
+  onNewCardTokenized?: (savedCardId: string) => void | Promise<void>;
 };
 
 export function PaymentMethodPicker({
@@ -28,6 +34,7 @@ export function PaymentMethodPicker({
   tone = "light",
   savedCardId,
   onSavedCardChange,
+  onNewCardTokenized,
 }: Props) {
   const fetchWallet = useServerFn(getSubscriberWallet);
   const walletQuery = useQuery({
@@ -210,10 +217,23 @@ export function PaymentMethodPicker({
             </DialogHeader>
             <NewCardCheckoutStep
               amountCents={amountCents}
-              submitLabel="Adicionar cartão"
-              onSuccess={(newId) => {
+              submitLabel={
+                onNewCardTokenized && amountCents
+                  ? `Pagar ${brl.format(amountCents / 100)}`
+                  : "Adicionar cartão"
+              }
+              onSuccess={async (newId) => {
                 onSavedCardChange(newId);
-                setAddOpen(false);
+                if (onNewCardTokenized) {
+                  try {
+                    await onNewCardTokenized(newId);
+                    setAddOpen(false);
+                  } catch {
+                    // Mantém dialog aberto para retry; o handler já exibe toast.
+                  }
+                } else {
+                  setAddOpen(false);
+                }
               }}
               onCancel={() => setAddOpen(false)}
             />
