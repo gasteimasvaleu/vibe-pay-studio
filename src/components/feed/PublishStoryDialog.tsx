@@ -97,8 +97,8 @@ export function PublishStoryDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-background z-10 pb-2">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-7 sm:max-w-md sm:p-6">
+        <DialogHeader className="pr-9 sm:pr-0">
           <DialogTitle>Publicar story</DialogTitle>
           <DialogDescription>
             Fica visível por 24h para os assinantes que te seguem.
