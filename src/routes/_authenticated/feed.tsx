@@ -13,6 +13,7 @@ import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
+import { refreshAfterPayment } from "@/lib/refresh-after-payment";
 import { PublicationCard } from "@/components/feed/PublicationCard";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
@@ -58,6 +59,7 @@ function FeedPage() {
   const walletPay = useServerFn(payWithWallet);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [paidItemId, setPaidItemId] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
@@ -99,7 +101,20 @@ function FeedPage() {
     setChallengeFor(item);
   };
 
+  const isItemUnlocked = (id: string) => {
+    const data = queryClient.getQueryData<
+      InfiniteData<{ items: FeedItem[]; nextCursor: string | null }>
+    >(["feed"]);
+    return !!data?.pages.some((p) =>
+      p.items.some((it) => it.id === id && !it.locked),
+    );
+  };
 
+  /** Refetch automático até a publicação aparecer desbloqueada. */
+  const refreshUnlocked = (publicationId: string) =>
+    refreshAfterPayment(queryClient, ["feed", "subscriber-wallet"], {
+      until: () => isItemUnlocked(publicationId),
+    });
 
   const confirmPayment = async (method: PaymentMethod, savedCardId: string | null = null) => {
     if (!pending) return;
@@ -112,8 +127,7 @@ function FeedPage() {
         });
         setPending(null);
         toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: ["feed"] });
-        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        await refreshUnlocked(item.id);
         return;
       }
       const res = await unlock({
@@ -122,11 +136,11 @@ function FeedPage() {
       if (res.paidImmediately) {
         setPending(null);
         toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: ["feed"] });
-        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        await refreshUnlocked(item.id);
         return;
       }
       setPending(null);
+      setPaidItemId(item.id);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
         method,
@@ -135,6 +149,7 @@ function FeedPage() {
         invoiceUrl: res.invoiceUrl,
       });
       setModalOpen(true);
+
     } catch (e: any) {
       if (e?.message === "cpf_required") {
         setCpfPromptFor(method);
@@ -261,10 +276,14 @@ function FeedPage() {
         title="Desbloquear publicação"
         checkout={checkout}
         onPaid={() => {
-          toast.success("Pagamento confirmado! Recarregando feed...");
+          toast.success("Pagamento confirmado! Liberando conteúdo...");
           setModalOpen(false);
           setCheckout(null);
-          void queryClient.invalidateQueries({ queryKey: ["feed"] });
+          const id = paidItemId;
+          setPaidItemId(null);
+          void (id
+            ? refreshUnlocked(id)
+            : refreshAfterPayment(queryClient, ["feed", "subscriber-wallet"]));
         }}
       />
 
