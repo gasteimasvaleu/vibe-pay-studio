@@ -542,20 +542,19 @@ function PerfilPage() {
           {isOwner ? (
             <span className="w-9" />
           ) : (
-          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-            <PopoverTrigger asChild>
+          <ActionPopover
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            widthClass="w-64"
+            trigger={
               <button
                 className="h-9 w-9 grid place-items-center rounded-full text-black/80 hover:bg-black/10 transition-colors"
                 aria-label="Mais opções"
               >
                 <MoreVertical className="h-5 w-5" />
               </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              sideOffset={8}
-              className="w-64 rounded-3xl p-3 bg-card border border-border shadow-xl"
-            >
+            }
+          >
               <nav className="flex flex-col gap-1">
                 {(() => {
                   const isFree = profile.priceMonthly === 0;
