@@ -276,10 +276,14 @@ function FeedPage() {
         title="Desbloquear publicação"
         checkout={checkout}
         onPaid={() => {
-          toast.success("Pagamento confirmado! Recarregando feed...");
+          toast.success("Pagamento confirmado! Liberando conteúdo...");
           setModalOpen(false);
           setCheckout(null);
-          void queryClient.invalidateQueries({ queryKey: ["feed"] });
+          const id = paidItemId;
+          setPaidItemId(null);
+          void (id
+            ? refreshUnlocked(id)
+            : refreshAfterPayment(queryClient, ["feed", "subscriber-wallet"]));
         }}
       />
 
