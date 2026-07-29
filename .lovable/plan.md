@@ -1,27 +1,26 @@
-## Situação atual
+## Diagnóstico
 
-A rota `/postsarquivados` existe e o item de menu "Postagens arquivadas" já aparece em `/settings/creator` tanto para creators pagos quanto para creators free (`accountType !== "subscriber"`).
+Ao abrir um story, a tela toda mostra "This page didn't load" — é o `errorComponent` raiz reagindo a um throw dentro do `StoryViewer`.
 
-O problema é que a função `getArchivedPublications` filtra apenas por `author_id`, não por `creator_profile_id`. Como um usuário pode ter dois perfis (pago + free) vinculados à mesma conta, posts arquivados de ambos os perfis aparecem misturados, independentemente de qual perfil está ativo.
+Em `src/components/feed/StoryViewer.tsx`, a área de conteúdo trata corretamente o caso `!current` (mostra "Nenhum story disponível."), mas logo abaixo, ainda dentro do mesmo container, as **tap zones** são renderizadas com:
 
-## O que será feito
+```tsx
+{current.unlocked && ( … )}
+```
 
-1. **Isolar posts arquivados pelo perfil ativo**
-   - Atualizar `getArchivedPublications` em `src/lib/publications.functions.ts` para usar `getActiveProfileIdFor` e filtrar por `creator_profile_id`.
-   - Se o usuário não tiver nenhum creator_profile, a função retorna lista vazia (mantendo segurança).
+sem checar se `current` existe. Quando `stories` chega vazio (story expirou, foi apagado, ou a query terminou antes do estado local resetar), `current` é `undefined` e `current.unlocked` lança `TypeError`, derrubando a rota `/feed` inteira para o error boundary — exatamente o que o screenshot mostra.
 
-2. **Ajustar a página `/postsarquivados`**
-   - Garantir que o `queryKey` e a chamada reflitam o perfil ativo.
-   - Adicionar um pequeno indicador visual opcional informando de qual perfil os posts arquivados estão sendo exibidos (pago vs free), se houver ambos.
+## Correção
 
-3. **Manter ações consistentes**
-   - Verificar `setPublicationArchived`: como o `creator_profile_id` é preenchido no insert pelo trigger `publications_fill_profile`, o arquivamento/des-arquivamento continua funcionando corretamente para cada perfil.
+Arquivo único: `src/components/feed/StoryViewer.tsx`
 
-4. **Verificar navegação**
-   - Confirmar que o link em `/settings/creator` continua visível para creators free e redireciona corretamente para `/postsarquivados`.
+1. Trocar a guarda das tap zones para `{current && current.unlocked && ( … )}`.
+2. Sanity check nos outros usos de `current.*` fora do ternário (por ex. o bloco de caption já tem `current &&`, mantém como está).
 
-## Resultado esperado
+Sem mudanças em backend, tipos ou UX visual — apenas evita o crash quando não há story atual.
 
-- Creator free vê apenas os posts arquivados do seu perfil gratuito.
-- Creator pago vê apenas os posts arquivados do seu perfil pago.
-- Não há mistura de conteúdo entre os dois perfis vinculados à mesma conta.
+## Verificação
+
+- Typecheck.
+- Abrir um story existente: reproduz fluxo normal.
+- Simular lista vazia: agora mostra "Nenhum story disponível." em vez de tela branca.
