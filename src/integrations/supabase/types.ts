@@ -3757,7 +3757,13 @@ export type Database = {
       report_status: "open" | "reviewing" | "actioned" | "dismissed"
       report_target: "publication" | "profile" | "chat_message"
       subscription_plan: "monthly" | "quarterly" | "semiannual"
-      subscription_status: "active" | "cancelled" | "expired" | "pending"
+      subscription_status:
+        | "active"
+        | "cancelled"
+        | "expired"
+        | "pending"
+        | "past_due"
+        | "superseded"
       transaction_kind:
         | "subscription"
         | "publication_unlock"
@@ -3948,7 +3954,14 @@ export const Constants = {
       report_status: ["open", "reviewing", "actioned", "dismissed"],
       report_target: ["publication", "profile", "chat_message"],
       subscription_plan: ["monthly", "quarterly", "semiannual"],
-      subscription_status: ["active", "cancelled", "expired", "pending"],
+      subscription_status: [
+        "active",
+        "cancelled",
+        "expired",
+        "pending",
+        "past_due",
+        "superseded",
+      ],
       transaction_kind: [
         "subscription",
         "publication_unlock",
