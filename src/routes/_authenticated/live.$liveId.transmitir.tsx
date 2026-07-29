@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoOff } from "lucide-react";
-import { getLive, endLive } from "@/lib/lives.functions";
+import { getLive, endLive, pingLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDarkSurface } from "@/hooks/useDarkSurface";
@@ -95,6 +95,7 @@ function TransmitirPage() {
 
   const getLiveFn = useServerFn(getLive);
   const endFn = useServerFn(endLive);
+  const pingFn = useServerFn(pingLive);
 
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
@@ -387,6 +388,28 @@ function TransmitirPage() {
       void closePublisher(pc, stream, resource);
     };
   }, []);
+
+  // Heartbeat: mantém `updated_at` fresco enquanto a página está aberta,
+  // e tenta encerrar quando o publisher fecha a aba/navega para fora.
+  useEffect(() => {
+    if (!connected) return;
+    let cancelled = false;
+    const beat = () => {
+      if (cancelled) return;
+      pingFn({ data: { liveId } }).catch(() => {});
+    };
+    beat();
+    const id = window.setInterval(beat, 15000);
+    const onHide = () => {
+      endFn({ data: { liveId } }).catch(() => {});
+    };
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, [connected, liveId, pingFn, endFn]);
 
   async function handleEnd() {
     if (!confirm("Encerrar a transmissão?")) return;

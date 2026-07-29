@@ -32,6 +32,31 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
+/**
+ * Encerra automaticamente lives cujo heartbeat (`updated_at`) está
+ * parado há mais de 2 minutos. Chamado no início dos readers para
+ * evitar badges/CTAs "LIVE" fantasmas quando o criador fecha a aba,
+ * cai a rede, ou o navegador trava sem chamar `endLive`.
+ */
+async function expireStaleLives(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  scope?: { creatorId?: string; creatorIds?: string[] },
+) {
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  let q = admin
+    .from("live_sessions")
+    .update({ status: "ended", ended_at: cutoff, cf_webrtc_url: null })
+    .eq("status", "live")
+    .lt("updated_at", cutoff);
+  if (scope?.creatorId) q = q.eq("creator_id", scope.creatorId);
+  if (scope?.creatorIds && scope.creatorIds.length) q = q.in("creator_id", scope.creatorIds);
+  try {
+    await q;
+  } catch (e) {
+    console.warn("[expireStaleLives]", e);
+  }
+}
+
 /* ---------- Iniciar live ---------- */
 export const startLive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -129,11 +154,28 @@ export const endLive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------- Heartbeat do publisher (mantém a sessão viva) ---------- */
+export const pingLive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { liveId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const admin = await loadAdmin();
+    await admin
+      .from("live_sessions")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", data.liveId)
+      .eq("creator_id", userId)
+      .eq("status", "live");
+    return { ok: true };
+  });
+
 /* ---------- Listar lives ao vivo agora ---------- */
 export const listActiveLives = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const admin = await loadAdmin();
+    await expireStaleLives(admin);
     const { data: lives } = await admin
       .from("live_sessions")
       .select("id, creator_id, creator_profile_id, title, price_cents, cover_url, started_at, viewers_peak, total_views, likes_count")
@@ -183,6 +225,7 @@ export const getCreatorActiveLive = createServerFn({ method: "GET" })
   .inputValidator((data: { creatorId: string }) => data)
   .handler(async ({ data }) => {
     const admin = await loadAdmin();
+    await expireStaleLives(admin, { creatorId: data.creatorId });
     const { data: live } = await admin
       .from("live_sessions")
       .select("id, title, price_cents, started_at, viewers_peak")
@@ -211,6 +254,7 @@ export const getActiveLivesForCreators = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (data.creatorIds.length === 0) return { liveByCreator: {} as Record<string, string> };
     const admin = await loadAdmin();
+    await expireStaleLives(admin, { creatorIds: data.creatorIds });
     const { data: lives } = await admin
       .from("live_sessions")
       .select("id, creator_id")
