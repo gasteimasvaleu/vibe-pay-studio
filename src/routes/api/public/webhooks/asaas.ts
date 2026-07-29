@@ -6,6 +6,11 @@ type AsaasWebhookPayload = {
   payment?: {
     id: string;
     status: string;
+    value?: number;
+    netValue?: number;
+    dueDate?: string;
+    invoiceUrl?: string | null;
+    subscription?: string | null;
     externalReference?: string | null;
   };
   transfer?: {
