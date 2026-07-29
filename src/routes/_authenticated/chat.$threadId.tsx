@@ -503,11 +503,6 @@ function ChatThreadView() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const confirmActionPayment = async (method: PaymentMethod) => {
-    if (!pendingAction) return;
-    try {
-      setUnlockingId(pendingAction.id);
-      if (method === "WALLET") {
   const confirmActionPayment = async (method: PaymentMethod, savedCardId: string | null) => {
     if (!pendingAction) return;
     try {
@@ -558,6 +553,8 @@ function ChatThreadView() {
       setUnlockingId(null);
     }
   };
+
+  function openPaymentForCallInvite(messageId: string, callId: string, priceCents: number) {
     setPendingAction({ type: "call", id: callId, priceCents });
   }
 
