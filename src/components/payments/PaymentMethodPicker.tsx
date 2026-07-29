@@ -217,10 +217,23 @@ export function PaymentMethodPicker({
             </DialogHeader>
             <NewCardCheckoutStep
               amountCents={amountCents}
-              submitLabel="Adicionar cartão"
-              onSuccess={(newId) => {
+              submitLabel={
+                onNewCardTokenized && amountCents
+                  ? `Pagar ${brl.format(amountCents / 100)}`
+                  : "Adicionar cartão"
+              }
+              onSuccess={async (newId) => {
                 onSavedCardChange(newId);
-                setAddOpen(false);
+                if (onNewCardTokenized) {
+                  try {
+                    await onNewCardTokenized(newId);
+                    setAddOpen(false);
+                  } catch {
+                    // Mantém dialog aberto para retry; o handler já exibe toast.
+                  }
+                } else {
+                  setAddOpen(false);
+                }
               }}
               onCancel={() => setAddOpen(false)}
             />
