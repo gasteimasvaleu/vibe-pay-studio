@@ -1,40 +1,55 @@
-## Presença global + badge "Online hoje" no perfil
+## Diagnóstico
 
-### Backend
-- **Migração SQL**: adicionar `last_seen_at timestamptz` em `public.profiles` (index em `last_seen_at desc`). GRANT já existente cobre a coluna.
-- **Server function** `touchPresence` em `src/lib/presence.functions.ts` (auth middleware): faz `update profiles set last_seen_at = now() where id = auth.uid()`. Throttle no cliente para no máx. 1 chamada/60s.
+O contador "Mídias" (e por tabela "Fotos"/"Vídeos") do header do perfil está caindo para 0 quando o visitante não é assinante do criador.
 
-### Presença ao vivo (global)
-- Novo hook `src/hooks/usePresenceHeartbeat.ts`:
-  - Entra no canal Supabase `online-users` com `presence.key = userId` assim que o usuário autentica.
-  - Chama `touchPresence()` no mount e depois a cada 60s (via `setInterval`), e também em `visibilitychange → visible`.
-  - Em `visibilitychange → hidden` / `pagehide` / unmount: `channel.untrack()` + `removeChannel()` (fica offline instantaneamente para os outros).
-- Montar o hook uma única vez em `src/routes/_authenticated/route.tsx`, para valer em todas as rotas logadas (não só `/chat`).
-- Remover o `track()` duplicado de `src/routes/_authenticated/chat.tsx` (mantém apenas a leitura do canal para a lista de threads).
+Verifiquei no banco:
+- `monetisexy` tem 4 publicações, todas com 1 mídia cada e `visibility = 'paid'`.
+- Apenas 1 não está arquivada → é essa que aparece como "1 Postagens" (RLS de `publications` esconde as arquivadas para quem não é dono).
+- As linhas de `publication_media` das publicações pagas ficam bloqueadas por RLS para quem ainda não pagou, então o `count()` de `publication_media` retorna 0 mesmo com a postagem visível.
 
-### Leitura no perfil
-- Novo hook `src/hooks/useIsUserOnline.ts`: assina o canal `online-users` em modo leitura e retorna `boolean` para um `userId`.
-- Nova server function `getLastSeen(userId)` em `src/lib/presence.functions.ts` (pública): retorna `last_seen_at` do dono do perfil. Usada via `useQuery` na página de perfil.
+Ou seja: o contador de postagens vem do count de `publications` (visíveis), e o contador de mídias vem do count de `publication_media` (paywalladas). Eles usam RLS diferentes, e por isso divergem.
 
-### UI — `src/routes/_authenticated/perfil.$username.tsx`
-- Bolinha verde (`bg-emerald-500` com `ring-4 ring-background`) sobreposta no canto inferior direito do avatar, **somente** quando `useIsUserOnline(profile.user_id) === true`.
-- Badge no cabeçalho da identidade, alinhada à direita do nome:
-  - Se online agora **ou** `last_seen_at >= início do dia local do visitante` → renderizar badge verde clara com texto **"Online hoje"** (mesmo estilo do screenshot: `bg-emerald-50 text-emerald-600 border-emerald-300/60`, variantes dark já previstas).
-  - Caso contrário: não renderizar nada (não mostrar "offline").
+## Correção
 
-### Regras / privacidade
-- Presença só é anunciada para usuários autenticados (já é o caso, canal fica no layout `_authenticated`).
-- `last_seen_at` é legível por qualquer autenticado via a server function (necessário para mostrar no perfil público logado). Não expõe timestamp bruto — a função retorna apenas o campo, o cálculo "hoje" é feito no cliente com o fuso do visitante.
+Fazer a contagem de mídias derivar das mesmas linhas de `publications` que já passaram pela RLS, em vez de contar `publication_media` diretamente.
 
-### Arquivos
-- Novo: `supabase/migrations/<timestamp>_profiles_last_seen.sql`
-- Novo: `src/lib/presence.functions.ts` (`touchPresence`, `getLastSeen`)
-- Novo: `src/hooks/usePresenceHeartbeat.ts`
-- Novo: `src/hooks/useIsUserOnline.ts`
-- Editar: `src/routes/_authenticated/route.tsx` (montar heartbeat)
-- Editar: `src/routes/_authenticated/chat.tsx` (remover `track` duplicado, manter leitura)
-- Editar: `src/routes/_authenticated/perfil.$username.tsx` (bolinha + badge)
+### Arquivo
+`src/routes/_authenticated/perfil.$username.tsx` (loader, linhas 95–130 e 223–226)
 
-### Fora de escopo
-- Mostrar "visto por último há X min" quando offline.
-- Preferência do usuário para ocultar status online (pode virar follow-up).
+### Mudanças
+1. Trocar os três counts de `publication_media` (mediaCount, photosCount, videosCount) por uma única query em `publications` que traga, para o mesmo `author_id` visível ao viewer, os agregados via uma coluna calculada no server ou via chamada a uma RPC dedicada.
+2. Implementação prática sem migração nova: no loader, buscar os `id`s das publicações visíveis do autor (`select id, visibility from publications where author_id = ...`) — o resultado já respeita RLS. Em paralelo, chamar uma pequena RPC `public.count_author_media(author_id uuid)` (SECURITY DEFINER, `set search_path=public`) que retorna `{ total, photos, videos }` contando `publication_media` juntando em `publications` com os mesmos filtros públicos do feed (não arquivada, `moderation_status='approved'`, `published_at <= now()`), bypassando a RLS de paywall — porque contar quantas mídias existem não expõe o conteúdo em si.
+3. Usar o retorno da RPC para preencher `mediaCount`, `photosCount`, `videosCount`. `lockedCount` continua vindo de `publications` (já respeita RLS e é o que queremos exibir).
+
+### Migração
+Adicionar função:
+
+```text
+create or replace function public.count_author_media(_author_id uuid)
+returns table(total int, photos int, videos int)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    count(*)::int as total,
+    count(*) filter (where m.type = 'image')::int as photos,
+    count(*) filter (where m.type = 'video')::int as videos
+  from publication_media m
+  join publications p on p.id = m.publication_id
+  where p.author_id = _author_id
+    and p.archived_at is null
+    and p.moderation_status = 'approved'
+    and p.published_at is not null
+    and p.published_at <= now();
+$$;
+
+grant execute on function public.count_author_media(uuid) to anon, authenticated;
+```
+
+Isso mantém o número de mídias consistente com "1 Postagens" (1 mídia visível na aba, portanto o header vai mostrar "1 Mídias" em vez de 0) e não vaza os arquivos em si — a mídia continua bloqueada até o pagamento; apenas o *contador* fica coerente.
+
+## Observação
+
+Se você preferir a política oposta — "só conta o que o visitante já pode ver" — o caminho seria o inverso: usar o count de `publication_media` como fonte da verdade **também** para "Postagens" (só contar posts cuja mídia é visível). Prefiro a proposta acima porque bate com o comportamento típico de plataformas (o contador do header mostra o acervo do criador, o paywall bloqueia só o conteúdo).
