@@ -197,6 +197,11 @@ function SettingsCreatorPage() {
                 to="/settings/restrictions"
               />
               <SettingsRow
+                icon={<Archive className="h-5 w-5" />}
+                label="Postagens arquivadas"
+                to="/postsarquivados"
+              />
+              <SettingsRow
                 icon={<Contrast className="h-5 w-5" />}
                 label="Tema"
                 to="/settings/theme"
