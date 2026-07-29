@@ -64,5 +64,9 @@ export function translatePaymentError(err: unknown, fallback = "Erro ao processa
     return "Você já tem uma assinatura ativa com esse plano ou maior. Escolha um plano maior para fazer upgrade.";
   }
 
+  if (raw.includes("card_already_tokenized") || /já\s+tokenizado/i.test(raw)) {
+    return "Este cartão já está cadastrado na sua conta. Selecione-o na lista de cartões salvos ou pague com PIX.";
+  }
+
   return raw || fallback;
 }
