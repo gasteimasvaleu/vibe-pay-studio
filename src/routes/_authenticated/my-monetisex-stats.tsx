@@ -1250,7 +1250,28 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            {isLives ? (() => {
+            {isStories ? (() => {
+              const cfg: Record<(typeof ORDENAR_STORIES)[number], { label: string; format: "brl" | "int"; get: (s: NonNullable<typeof storyQ.data>["items"][number]) => number }> = {
+                "Faturamento": { label: "Faturamento", format: "brl", get: s => (s.revenue_cents ?? 0) / 100 },
+                "Desbloqueios": { label: "Desbloqueios", format: "int", get: s => s.unlocks ?? 0 },
+                "Visualizações": { label: "Visualizações", format: "int", get: s => s.views ?? 0 },
+              };
+              const c = cfg[ordenarStory];
+              return (
+                <EngajamentoChart
+                  loading={storyQ.isLoading}
+                  totalLabel={`${storyQ.data?.totalCount ?? 0} stories`}
+                  totalRevenue={storyQ.data?.totalRevenue ?? 0}
+                  range={range}
+                  metricLabel={c.label}
+                  metricFormat={c.format}
+                  items={(storyQ.data?.items ?? []).map(s => ({
+                    date: s.published_at as string,
+                    metric: c.get(s),
+                  }))}
+                />
+              );
+            })() : isLives ? (() => {
               const cfg: Record<(typeof ORDENAR_LIVES)[number], { label: string; format: "brl" | "int"; get: (l: NonNullable<typeof liveQ.data>["items"][number]) => number }> = {
                 "Mais compradas": { label: "Faturamento", format: "brl", get: l => (l.gross_cents ?? 0) / 100 },
                 "Mimos": { label: "Mimos", format: "brl", get: l => (l.tips_cents ?? 0) / 100 },
@@ -1305,7 +1326,14 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             <h3 className="text-base font-bold">Resumo</h3>
-            {isLives ? (
+            {isStories ? (
+              <div className="mt-4 space-y-4">
+                <ResumoItem icon={Sparkles} label="Quantidade" value={String(storyQ.data?.totalCount ?? 0)} />
+                <ResumoItem icon={Eye} label="Visualizações" value={String(storyQ.data?.totalViews ?? 0)} />
+                <ResumoItem icon={Users} label="Desbloqueios" value={String(storyQ.data?.totalUnlocks ?? 0)} />
+                <ResumoItem icon={DollarSign} label="Faturamento" value={formatBRL(storyQ.data?.totalRevenue ?? 0)} />
+              </div>
+            ) : isLives ? (
               <div className="mt-4 space-y-4">
                 <ResumoItem icon={Radio} label="Quantidade" value={String(liveQ.data?.totalCount ?? 0)} />
                 <ResumoItem icon={Eye} label="Visualizações" value={String(liveQ.data?.totalViews ?? 0)} />
