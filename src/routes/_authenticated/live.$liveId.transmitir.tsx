@@ -13,6 +13,16 @@ import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
 import { LiveOverlayTop } from "@/components/live/LiveOverlayTop";
 import { useLiveDragChat } from "@/components/live/useLiveDragChat";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/live/$liveId/transmitir")({
   head: () => ({
@@ -109,6 +119,8 @@ function TransmitirPage() {
   const [autoStarted, setAutoStarted] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -411,14 +423,21 @@ function TransmitirPage() {
     };
   }, [connected, liveId, pingFn, endFn]);
 
-  async function handleEnd() {
-    if (!confirm("Encerrar a transmissão?")) return;
+  function handleEnd() {
+    setEndDialogOpen(true);
+  }
+
+  async function confirmEnd() {
+    setEnding(true);
     try {
       await endFn({ data: { liveId } });
       toast.success("Live encerrada");
+      setEndDialogOpen(false);
       navigate({ to: "/dashboard" });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao encerrar");
+    } finally {
+      setEnding(false);
     }
   }
 
@@ -582,6 +601,31 @@ function TransmitirPage() {
     </>
   );
 
+  const endDialog = (
+    <AlertDialog open={endDialogOpen} onOpenChange={(o) => !ending && setEndDialogOpen(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Encerrar transmissão?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Sua live será finalizada imediatamente e os espectadores serão desconectados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={ending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={ending}
+            onClick={(e) => { e.preventDefault(); confirmEnd(); }}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {ending ? "Encerrando…" : "Encerrar"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+
+
   // MOBILE
   if (isMobile) {
     return (
@@ -627,6 +671,7 @@ function TransmitirPage() {
             <LiveDonorsPanel liveId={liveId} variant="sheet" className="text-foreground bg-card mt-3 rounded-lg" />
           </SheetContent>
         </Sheet>
+        {endDialog}
       </div>
     );
   }
@@ -654,6 +699,7 @@ function TransmitirPage() {
           </div>
         </div>
       </div>
+      {endDialog}
     </div>
   );
 }
