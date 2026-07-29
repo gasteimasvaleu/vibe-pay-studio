@@ -12,6 +12,7 @@ const EARNING_KINDS = [
   "video_call",
   "live_ticket",
   "challenge_contribution",
+  "story_unlock",
 ] as const;
 
 const rangeValidator = (data: { from: string; to: string }): Range => {
