@@ -1,45 +1,57 @@
+# Assinatura recorrente automática (Asaas /v3/subscriptions)
 
-Com a tokenização Asaas funcionando, podemos eliminar o redirecionamento para a `invoiceUrl` no cartão e usar o token salvo para cobrar direto no app — inclusive assinaturas recorrentes automáticas.
+Reativar renovação automática usando o endpoint `/v3/subscriptions` do Asaas, **restrito a cartão de crédito com token salvo** (agora que a tokenização foi liberada). PIX/Boleto continuam com renovação manual + lembrete por e-mail, pois o Asaas não recorre nesses métodos sem token.
 
-## O que muda para o usuário
+## Escopo por método
 
-1. **Checkout de cartão dentro do app**: ao escolher "Cartão" em qualquer compra (recarga, tip, PPV, story, DM, live ticket, videochamada, assinatura), o app mostra a lista de cartões salvos + opção "Adicionar novo cartão". A cobrança é aprovada instantaneamente sem sair do Monetisexy.
-2. **Assinaturas recorrentes reais**: com token, criamos `/v3/subscriptions` na Asaas (renovação automática mensal/trimestral/semestral). Não precisa mais o botão "Renovar" manual — o cron atual vira só fallback para expiração/falha.
-3. **1‑click**: cartão salvo cobra sem redigitar CVV.
+- **CREDIT_CARD + savedCardId** → cria `/v3/subscriptions` no Asaas com `creditCardToken`, `cycle` e split. Renovação automática real.
+- **CREDIT_CARD sem cartão salvo** → cobrança única do 1º ciclo (comportamento atual); UI oferece salvar cartão + ativar auto-renew depois.
+- **PIX / BOLETO** → mantém fluxo atual (cobrança avulsa + lembrete manual). `auto_renew=false`.
 
-## Escopo técnico
+## Mudanças
 
-### Backend (novas / alteradas server functions)
+### 1. Backend — criação da assinatura
+Arquivo: `src/lib/payments.functions.ts` (`createSubscriptionPayment`)
+- Após criar a cobrança do 1º ciclo, se `method === "CREDIT_CARD"` e `savedCardId` presente, chamar `createAsaasSubscription` (já existe em `asaas.server.ts`) com:
+  - `cycle` derivado do plan (`monthly→MONTHLY`, `quarterly→QUARTERLY`, `semiannual→SEMIANNUALLY`)
+  - `nextDueDate` = `current_period_end` (yyyy-MM-dd)
+  - `creditCardToken` do cartão salvo
+  - `externalReference: subscription:<id>`
+  - split idêntico ao pagamento
+- Persistir `asaas_subscription_id` e `auto_renew=true` em `subscriptions`.
 
-- `chargeSavedCardTopUp` (já existe) — servir de modelo. Ampliar para todos os fluxos:
-  - `payments.functions.ts`: em `createPublicationUnlockPayment`, `createStoryUnlockPayment`, `createChatUnlockPayment`, `createTipPayment`, `createPaidDmPayment`, `createLiveTicketPayment`, `createVideoCallPayment`, `createWalletTopupPayment` — aceitar `savedCardId?: string`. Quando presente + método `CREDIT_CARD`, buscar `saved_cards`, chamar `asaas.createPayment` com `creditCardToken`, e retornar `{ paymentIntentId, status: 'CONFIRMED'|... }` sem `invoiceUrl` (não redireciona).
-  - `createSubscriptionPayment`: quando `savedCardId` + `CREDIT_CARD`, chamar `asaas.createSubscription` (em vez de `createPayment`) com `creditCardToken`, `cycle` derivado do plano, `nextDueDate = hoje`. Persistir `asaas_subscription_id`. Registrar `payment_intents` da primeira cobrança conforme webhook.
-- Novo helper `chargeWithSavedCard(supabase, userId, savedCardId, params)` em `saved-cards.functions.ts` (ou `payments-cards.server.ts`) para deduplicar a lógica de resolver token + cobrar + registrar intent.
-- Webhook `asaas.ts`: já processa `PAYMENT_CONFIRMED`. Verificar tratamento de eventos `SUBSCRIPTION_*` e cobranças filhas da subscription (usar `payment.subscription` para vincular à `subscriptions.asaas_subscription_id` e estender `current_period_end`).
+### 2. Webhook — eventos SUBSCRIPTION_* e PAYMENT_* recorrentes
+Arquivo: `src/routes/api/public/webhooks/asaas.ts`
+- Remover o bloco que hoje ignora `SUBSCRIPTION_*`.
+- Para `PAYMENT_CREATED` vindo de assinatura (payload contém `payment.subscription`), criar um novo `payment_intent` vinculado à `subscriptions.id` para o novo ciclo, se ainda não existir.
+- Ao receber `PAYMENT_CONFIRMED/RECEIVED` de uma cobrança de assinatura: estender `current_period_end` em +1 ciclo, marcar `status='active'`, registrar `transactions` (kind `subscription`) via `applyPaidIntent` (já reconcilia split/wallet).
+- Ao receber `PAYMENT_OVERDUE` ou falha de cartão em ciclo recorrente: setar `status='past_due'` e disparar e-mail informando falha.
+- Ao receber `SUBSCRIPTION_DELETED`/`SUBSCRIPTION_INACTIVATED`: setar `status='cancelled'`, `auto_renew=false`.
 
-### Frontend
+### 3. Cancelamento
+`src/lib/monetization.functions.ts` (`cancelSubscription`)
+- Se `asaas_subscription_id` presente, chamar `deleteAsaasSubscription(id)` antes do UPDATE.
+- Mantém acesso até `current_period_end`; `auto_renew=false`, `cancelled_at=now`.
+- Adicionar `reactivateSubscription` (novo server fn) que recria `/v3/subscriptions` no Asaas caso o usuário mude de ideia antes do vencimento e tenha cartão salvo.
 
-- **`PaymentMethodPicker`** (já existe): incluir grid dos cartões salvos (marca + last4) + card "Novo cartão" (abre o dialog de adicionar cartão em `mywallet.index.tsx`, reaproveitando o componente). Devolve `{ method, savedCardId? }`.
-- **`PaymentModal` / `CardCheckout`**: quando cobrança nasce já `CONFIRMED` (fluxo com token), pular o iframe e mostrar tela de sucesso + callback `onPaid` imediato. `CardCheckout` iframe permanece apenas como fallback quando o usuário escolhe "Novo cartão" sem salvar.
-- Consumidores: `mywallet.recarregar.tsx`, `TipDialog`, `SubscribeDialog`, `PaymentMethodDialog` (posts/stories/DM/ticket/videocall) — passar `savedCardId` selecionado ao chamar a server function.
-- `settings.subscription.tsx`: mostrar estado "Renovação automática ativa" quando `asaas_subscription_id` existir; botão para cancelar recorrência (`asaas.cancelSubscription`) mantendo o período pago.
+### 4. Status na UI
+Página `/subscriptions` (`src/routes/_authenticated/subscriptions.tsx`)
+- Adicionar badges de status: **Ativa (auto-renova)**, **Ativa (renovação manual)**, **Pendente**, **Falha no pagamento**, **Cancelada — expira em X**, **Expirada**.
+- Botão "Cancelar renovação" (quando `auto_renew=true`) e "Reativar renovação" (quando cancelada + ainda dentro do período + tem cartão salvo).
+- Se não houver cartão salvo, oferecer atalho para `/mywallet` antes de ativar auto-renew.
 
-### Banco
+### 5. Migração de schema
+Nenhuma coluna nova é necessária — `asaas_subscription_id`, `auto_renew`, `cancelled_at`, `status` já existem. Apenas ampliar o enum de status caso `past_due` ainda não exista (verificar antes da migração).
 
-- Migração leve: garantir `subscriptions.asaas_subscription_id text` (checar se já existe; se sim, sem alterações) e um índice único parcial para evitar duplicatas.
+### 6. Lembretes por e-mail
+`src/routes/api/public/hooks/subscription-reminders.ts`
+- Enviar apenas para assinaturas com `auto_renew=false` (PIX/Boleto ou cartão sem token). Cartão recorrente já cobra sozinho.
+- Adicionar aviso 3 dias antes quando `auto_renew=true` para permitir cancelamento.
 
-## Segurança
+## Detalhes técnicos
 
-- Nunca receber PAN no frontend após salvar — só o `savedCardId` (uuid interno). Token Asaas fica só no servidor.
-- Reconfirmar `saved_cards.user_id = auth.uid()` em toda cobrança (já feito em `chargeSavedCardTopUp`; replicar).
-- Recorrência: cancelamento no Asaas obrigatório quando usuário deleta o cartão vinculado a uma subscription ativa (bloquear delete ou cancelar sub antes).
-
-## Ordem de implementação sugerida
-
-1. Extrair helper `chargeWithSavedCard` + estender `createWalletTopupPayment` para aceitar `savedCardId` (menor risco, valida fluxo E2E).
-2. Ampliar `PaymentMethodPicker` + `PaymentModal` para fluxo "confirmado direto".
-3. Propagar para tip / PPV / story / DM / ticket / videocall.
-4. Assinatura recorrente (`createSubscription` + tratamento de webhook `SUBSCRIPTION_*`).
-5. UI de gestão de recorrência em `settings.subscription`.
-
-Quer que eu comece pelo passo 1 (recarga com cartão salvo, sem iframe) ou já vá direto para o fluxo completo incluindo assinatura recorrente?
+- **Split**: o Asaas replica o `split` da assinatura em cada cobrança recorrente automaticamente; passamos o mesmo `walletId + fixedValue` do 1º ciclo.
+- **Reconciliação**: `applyPaidIntent` já cuida de creditar wallet do criador e registrar `transactions`; basta que o webhook crie o intent do novo ciclo com `referenceTable='subscriptions'`, `referenceId=<subscription.id>`.
+- **Idempotência**: `asaas_events.event_id` + `payment_intents.asaas_payment_id` continuam sendo as chaves anti-duplicação.
+- **Retentativa Asaas**: em falha de cartão, o Asaas dispara `PAYMENT_OVERDUE` após retries automáticos — nesse ponto marcamos `past_due` e enviamos e-mail pedindo atualização do cartão.
+- **Admin** (`/admin/subscriptions`): passa a mostrar `asaas_subscription_id` e botão "Cancelar no Asaas" para suporte.
