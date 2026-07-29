@@ -95,6 +95,7 @@ function TransmitirPage() {
 
   const getLiveFn = useServerFn(getLive);
   const endFn = useServerFn(endLive);
+  const pingFn = useServerFn(pingLive);
 
   const [whipUrl, setWhipUrl] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
