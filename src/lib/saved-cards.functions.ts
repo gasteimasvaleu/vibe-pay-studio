@@ -22,6 +22,17 @@ async function ensureCustomerId(
   if (profile.asaas_customer_id) return profile.asaas_customer_id as string;
 
   const asaas = await loadAsaas();
+
+  // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
+  const existing = await asaas.findCustomerByCpf(cpf);
+  if (existing?.id) {
+    await supabase
+      .from("profiles")
+      .update({ asaas_customer_id: existing.id })
+      .eq("user_id", userId);
+    return existing.id;
+  }
+
   const { data: userRes } = await supabase.auth.getUser();
   const email = userRes?.user?.email ?? null;
   const customer = await asaas.createCustomer({
@@ -138,6 +149,45 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
     }
 
     const customerId = await ensureCustomerId(supabase, userId);
+
+    // 2) O mesmo cartão pode já estar tokenizado nesse cliente Asaas por outra
+    //    conta do app com o mesmo CPF. Nesse caso reaproveitamos o token.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: shared } = await supabaseAdmin
+      .from("saved_cards")
+      .select("asaas_card_token, brand")
+      .eq("asaas_customer_id", customerId)
+      .eq("last4", last4FromInput)
+      .eq("exp_month", data.expiryMonth)
+      .eq("exp_year", data.expiryYear)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (shared?.asaas_card_token) {
+      const { data: cloned, error: cloneErr } = await supabase
+        .from("saved_cards")
+        .insert({
+          user_id: userId,
+          asaas_customer_id: customerId,
+          asaas_card_token: shared.asaas_card_token,
+          brand: shared.brand ?? null,
+          last4: last4FromInput,
+          holder_name: data.holderName,
+          exp_month: data.expiryMonth,
+          exp_year: data.expiryYear,
+        })
+        .select("id")
+        .single();
+      if (cloneErr) throw new Error(cloneErr.message);
+      return {
+        id: cloned.id as string,
+        last4: last4FromInput,
+        brand: (shared.brand as string | null) ?? null,
+        reused: true,
+      };
+    }
+
     const { data: userRes } = await supabase.auth.getUser();
     const email = userRes?.user?.email ?? "no-reply@monetisexy.app";
 

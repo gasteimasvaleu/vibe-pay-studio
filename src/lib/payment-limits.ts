@@ -65,7 +65,7 @@ export function translatePaymentError(err: unknown, fallback = "Erro ao processa
   }
 
   if (raw.includes("card_already_tokenized") || /já\s+tokenizado/i.test(raw)) {
-    return "Este cartão já está cadastrado na sua conta. Selecione-o na lista de cartões salvos ou pague com PIX.";
+    return "Este cartão já está cadastrado em uma conta com o mesmo CPF. Selecione-o na lista de cartões salvos ou pague com PIX.";
   }
 
   return raw || fallback;

@@ -1,35 +1,37 @@
-## O que aconteceu
+## Diagnóstico (confirmado no banco)
 
-Ao adicionar um cartão no checkout inline, o app sempre chama `POST /creditCard/tokenize` no Asaas. Quando aquele cartão **já foi tokenizado antes para o mesmo cliente Asaas**, a API recusa e o erro cru do Asaas ("cartão já está tokenizado") vira toast — e o pagamento para ali.
+As duas contas usadas nos testes têm o **mesmo CPF** (`005.685.551-63`), mas foram criadas como **clientes diferentes no Asaas**:
 
-Isso acontece principalmente quando: o usuário já cadastrou esse cartão antes e depois **removeu** em `/mywallet` (o token continua existindo no Asaas, mas a linha some de `saved_cards`), ou tentou duas vezes seguidas.
+| Conta | Cliente Asaas | Cartões salvos |
+|---|---|---|
+| caiorobbb@gmail.com | `cus_000187878153` | VISA •7159 |
+| sexandoapp7@hotmail.com | `cus_000188942724` | nenhum |
 
-## Correção proposta
+O Asaas recusa tokenizar o mesmo cartão físico novamente para o mesmo CPF, mesmo que o cliente seja outro. Por isso a correção anterior (buscar cartão salvo do próprio usuário) não resolveu: a conta `sexandoapp7` não tem nenhum cartão salvo — ela cai direto na chamada de tokenização e recebe o erro.
 
-### 1. Reaproveitar cartão já salvo (caminho feliz)
-Antes de tokenizar, em `tokenizeAndSaveCard`, procurar em `saved_cards` uma linha do próprio usuário com mesmo `last4` + `exp_month` + `exp_year`. Se existir, não chama o Asaas: retorna o `id` existente e o fluxo segue direto para a cobrança 1-click. Sem erro, sem cartão duplicado na lista.
+## O que será feito
 
-### 2. Fallback quando o token existe só no Asaas
-Se não há linha local e o Asaas responde "já tokenizado", em vez de falhar:
-- criar a cobrança usando os **dados completos do cartão** (`creditCard` + `creditCardHolderInfo`), que `createPayment`/`createSubscription` já suportam;
-- gravar em `saved_cards` o token que o Asaas devolve na resposta da cobrança (quando vier), para que as próximas compras voltem a ser 1-click.
+Decisão aprovada: contas com o mesmo CPF passam a **compartilhar o cliente Asaas**.
 
-Assim o pagamento que o usuário iniciou é concluído no mesmo clique, sem ele precisar entender o que é tokenização.
+1. **Buscar cliente por CPF antes de criar**
+   Nova função `findCustomerByCpf` em `src/lib/asaas.server.ts` (consulta `/v3/customers?cpfCnpj=...`, mesmo padrão de `findSubaccount`).
+   `ensureCustomerId` (existe duplicada em `src/lib/payments.functions.ts` e `src/lib/saved-cards.functions.ts`) passa a: usar o `asaas_customer_id` do perfil → senão procurar por CPF no Asaas e gravar o id encontrado no perfil → só criar novo cliente se não existir nenhum.
 
-### 3. Mensagem amigável como última barreira
-Se ainda assim falhar, `translatePaymentError` passa a traduzir esse erro para algo acionável em pt-BR, ex.: "Este cartão já está cadastrado. Selecione-o na lista de cartões salvos ou use PIX." — em vez do texto cru do gateway.
+2. **Consolidar os clientes duplicados já existentes**
+   Migração que aponta os perfis com CPF repetido para o cliente Asaas mais antigo daquele CPF (no caso, `cus_000187878153`), evitando que o problema continue nas contas atuais.
 
-### 4. Evitar recriar o problema
-`deleteSavedCard` hoje remove só a linha local. Passa a registrar que aquele token do Asaas foi desativado (ou simplesmente marcar a linha como removida em vez de apagá-la), para que o mesmo cartão possa ser reativado sem novo tokenize.
+3. **Reaproveitar cartão já tokenizado do mesmo CPF**
+   Em `tokenizeAndSaveCard`, antes de chamar o Asaas, procurar um cartão ativo com o mesmo `asaas_customer_id` + `last4` + validade. Se existir (mesmo pertencendo a outra conta com o mesmo CPF), criar uma linha em `saved_cards` para o usuário atual reutilizando o `asaas_card_token`, sem chamar a tokenização. O checkout inline segue direto para a cobrança.
+
+4. **Mensagem de erro final**
+   Se ainda assim o Asaas responder “já tokenizado”, o toast passa a orientar: “Este cartão já está cadastrado em outra conta com o mesmo CPF — selecione-o na lista de cartões salvos.”
 
 ## Detalhes técnicos
 
-- `src/lib/saved-cards.functions.ts`: lookup prévio por `last4/exp` em `tokenizeAndSaveCard`; `try/catch` no `tokenizeCreditCard` detectando o código de erro Asaas (`invalid_creditCard` com mensagem de já tokenizado) e retornando um marcador `{ needsRawCardCharge: true }`.
-- `src/components/payments/NewCardCheckoutStep.tsx`: quando vier esse marcador, pular a fase "Tokenizando" direto para "Cobrando", enviando os dados do cartão à função de cobrança.
-- `src/lib/payments.functions.ts`: aceitar, além de `savedCardId`, um payload opcional de cartão bruto nos endpoints de checkout (publicação, story, tip, live, assinatura, chat PPV, recarga) e repassar a `createPayment`.
-- `src/lib/payment-limits.ts`: nova regra em `translatePaymentError`.
-- Nenhuma mudança de schema obrigatória para os itens 1–3; o item 4 usa uma coluna `deleted_at` em `saved_cards` (migração pequena, com GRANTs já existentes).
+- Arquivos: `src/lib/asaas.server.ts`, `src/lib/saved-cards.functions.ts`, `src/lib/payments.functions.ts`, `src/lib/payment-limits.ts` + uma migração de consolidação.
+- Sem mudança de UI; o fluxo do `NewCardCheckoutStep` continua igual (tokenizando → cobrando → confirmado), apenas a etapa de tokenização pode ser pulada quando o token já existe.
+- Cobranças continuam registradas em `payment_intents` com o `user_id` de quem pagou; apenas o cliente do gateway é compartilhado.
 
-## Enquanto isso
+## Validação
 
-Para concluir o pagamento agora: escolher o cartão já existente na lista de cartões salvos em `/mywallet` (ou usar PIX). Se ele não aparecer na lista, é exatamente o caso do item 2.
+Após aplicar: fazer um pagamento com `sexandoapp7@hotmail.com` usando o cartão •7159 — deve reaproveitar o token, cobrar e desbloquear sem erro.
