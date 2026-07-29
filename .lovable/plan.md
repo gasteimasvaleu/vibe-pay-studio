@@ -1,19 +1,18 @@
-## Problema
+Plano de ajuste
 
-No mobile o `PublishStoryDialog` estoura a altura da viewport: o header + preview 9:16 (`max-h-[50vh]`) + legenda + campo de preço + botão não cabem, e o dialog não rola — o botão "Publicar story" fica cortado atrás da barra do sistema.
+1. Corrigir o modal de publicar story
+- Remover o comportamento `sticky` do `DialogHeader` dentro de `PublishStoryDialog`, porque ele está ficando por cima do botão de fechar e dos campos ao rolar.
+- Manter o scroll no corpo do dialog para caber no mobile, mas sem deixar o cabeçalho flutuando sobre os elementos.
+- Ajustar o espaçamento superior/direito do conteúdo para respeitar o botão `X` nativo do modal.
 
-## Correção
+2. Melhorar a responsividade vertical no mobile
+- Manter `max-height` em `dvh` no `DialogContent`.
+- Usar uma estrutura com conteúdo rolável e espaçamentos seguros para que preview, legenda, preço e botão fiquem acessíveis sem cortes.
+- Garantir que o botão “Publicar story” não fique colado ou escondido no final do scroll.
 
-Arquivo: `src/components/feed/PublishStoryDialog.tsx`
-
-1. No `<DialogContent>`, limitar a altura ao viewport e habilitar scroll interno:
-   - `max-h-[90dvh] overflow-y-auto` (mantém `sm:max-w-md`).
-2. Reduzir o preview no mobile para não dominar a tela: trocar `max-h-[50vh]` por `max-h-[40dvh] sm:max-h-[50vh]`.
-3. Garantir que o `<DialogHeader>` fique fixo no topo do container rolável: adicionar `sticky top-0 bg-background z-10 pb-2` no header para o título continuar visível ao rolar.
-
-Sem alterações de comportamento; apenas layout responsivo do modal.
-
-## Verificação
-
-- Preview mobile 393px: abrir "Seu story" → dialog cabe, conteúdo rola, botão "Publicar story" visível.
-- Desktop: aparência inalterada.
+3. Validar visualmente
+- Conferir no viewport mobile atual que:
+  - o título não cobre o botão `X`;
+  - o header não sobrepõe preview/campos ao rolar;
+  - o botão final aparece inteiro;
+  - o modal continua centralizado e com largura adequada.
