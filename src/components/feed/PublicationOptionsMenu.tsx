@@ -16,7 +16,12 @@ import {
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import {
   AlertDialog,
   AlertDialogAction,
