@@ -3530,6 +3530,14 @@ export type Database = {
         Args: { _kind: string; _user_id: string }
         Returns: boolean
       }
+      count_author_media: {
+        Args: { _author_id: string }
+        Returns: {
+          photos: number
+          total: number
+          videos: number
+        }[]
+      }
       default_paid_profile: { Args: { _user_id: string }; Returns: string }
       ensure_creator_wallet: { Args: { _user_id: string }; Returns: undefined }
       ensure_subscriber_wallet: {
