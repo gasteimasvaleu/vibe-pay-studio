@@ -463,8 +463,9 @@ export const getAssinantesList = createServerFn({ method: "GET" })
 
     const [allRes, periodRes] = await Promise.all([
       supabase.from("subscriptions")
-        .select("subscriber_id, created_at")
+        .select("subscriber_id, status, created_at")
         .eq("creator_profile_id", profileId),
+
       supabase.from("subscriptions")
         .select("id, subscriber_id, status, price_cents_paid, started_at, current_period_end, created_at")
         .eq("creator_profile_id", profileId)
