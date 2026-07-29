@@ -100,7 +100,20 @@ function FeedPage() {
     setChallengeFor(item);
   };
 
+  const isItemUnlocked = (id: string) => {
+    const data = queryClient.getQueryData<
+      InfiniteData<{ items: FeedItem[]; nextCursor: string | null }>
+    >(["feed"]);
+    return !!data?.pages.some((p) =>
+      p.items.some((it) => it.id === id && !it.locked),
+    );
+  };
 
+  /** Refetch automático até a publicação aparecer desbloqueada. */
+  const refreshUnlocked = (publicationId: string) =>
+    refreshAfterPayment(queryClient, ["feed", "subscriber-wallet"], {
+      until: () => isItemUnlocked(publicationId),
+    });
 
   const confirmPayment = async (method: PaymentMethod, savedCardId: string | null = null) => {
     if (!pending) return;
@@ -113,8 +126,7 @@ function FeedPage() {
         });
         setPending(null);
         toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: ["feed"] });
-        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        await refreshUnlocked(item.id);
         return;
       }
       const res = await unlock({
@@ -123,11 +135,11 @@ function FeedPage() {
       if (res.paidImmediately) {
         setPending(null);
         toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: ["feed"] });
-        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        await refreshUnlocked(item.id);
         return;
       }
       setPending(null);
+      setPaidItemId(item.id);
       setCheckout({
         paymentIntentId: res.paymentIntentId,
         method,
@@ -136,6 +148,7 @@ function FeedPage() {
         invoiceUrl: res.invoiceUrl,
       });
       setModalOpen(true);
+
     } catch (e: any) {
       if (e?.message === "cpf_required") {
         setCpfPromptFor(method);
