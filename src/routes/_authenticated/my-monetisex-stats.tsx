@@ -1350,12 +1350,28 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
           {(() => {
             const topPub = [...(pubQ.data?.items ?? [])].sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))[0];
             const topLive = [...(liveQ.data?.items ?? [])].sort((a, b) => (b.gross_cents ?? 0) - (a.gross_cents ?? 0))[0];
-            const hasTop = isLives ? !!topLive : !!topPub;
+            const topStory = [...(storyQ.data?.items ?? [])].sort((a, b) => (b.revenue_cents ?? 0) - (a.revenue_cents ?? 0))[0];
+            const hasTop = isStories ? !!topStory : isLives ? !!topLive : !!topPub;
+            const title = isStories ? "Top story" : isLives ? "Top live" : "Top postagem";
+            const emptyMsg = isStories ? "Sem stories no período." : isLives ? "Sem lives no período." : "Nenhuma postagem no período.";
             return (
               <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-                <h3 className="text-base font-bold">{isLives ? "Top live" : "Top postagem"}</h3>
+                <h3 className="text-base font-bold">{title}</h3>
                 {!hasTop ? (
-                  <p className="mt-6 text-sm text-muted-foreground">{isLives ? "Sem lives no período." : "Nenhuma postagem no período."}</p>
+                  <p className="mt-6 text-sm text-muted-foreground">{emptyMsg}</p>
+                ) : isStories ? (
+                  <div className="mt-3 flex items-center gap-3">
+                    {topStory!.cover_url ? (
+                      <img src={topStory!.cover_url} alt="Miniatura do story" className="h-14 w-14 flex-shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-muted"><Sparkles className="h-5 w-5 text-muted-foreground" /></div>
+                    )}
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="font-semibold truncate">Story</p>
+                      <p className="text-muted-foreground text-xs">{fullDate.format(new Date(topStory!.published_at as string))}</p>
+                      <p className="text-xs font-semibold text-foreground">{formatBRL(topStory!.revenue_cents ?? 0)} · {topStory!.unlocks} desbloqueios</p>
+                    </div>
+                  </div>
                 ) : isLives ? (
                   <div className="mt-3 flex items-center gap-3">
                     {topLive!.cover_url ? (
