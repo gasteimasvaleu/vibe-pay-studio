@@ -241,6 +241,8 @@ export type MySubscription = {
   autoRenew: boolean;
   currentPeriodEnd: string;
   startedAt: string;
+  cancelledAt: string | null;
+  asaasSubscriptionId: string | null;
 };
 
 export const listMySubscriptions = createServerFn({ method: "GET" })
@@ -250,7 +252,7 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
     const { data: subs, error } = await supabase
       .from("subscriptions")
       .select(
-        "id, creator_id, creator_profile_id, plan, price_cents_paid, status, auto_renew, current_period_end, started_at",
+        "id, creator_id, creator_profile_id, plan, price_cents_paid, status, auto_renew, current_period_end, started_at, cancelled_at, asaas_subscription_id",
       )
       .eq("subscriber_id", userId)
       .order("started_at", { ascending: false });
@@ -293,9 +295,11 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
         plan: r.plan as string,
         priceCents: r.price_cents_paid ?? 0,
         status: r.status as string,
-        autoRenew: r.auto_renew ?? true,
+        autoRenew: r.auto_renew ?? false,
         currentPeriodEnd: (r.current_period_end as string) ?? null,
         startedAt: (r.started_at as string) ?? null,
+        cancelledAt: ((r as any).cancelled_at as string) ?? null,
+        asaasSubscriptionId: ((r as any).asaas_subscription_id as string) ?? null,
       };
     });
   });
