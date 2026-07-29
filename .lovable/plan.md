@@ -1,34 +1,31 @@
-## Diagnóstico
+## O que esse card faz hoje
 
-Consulta ao banco confirmou: existem **3 linhas** em `subscriptions` para `monetisexy`, mas todas do **mesmo `subscriber_id`** (`3fc0cc8a…`):
+É a lista detalhada de assinaturas do período (aba **Assinaturas** → seção "Assinantes"). Ela lê a tabela `subscriptions` filtrada por `creator_profile_id` e devolve uma linha **por registro de assinatura** criado no intervalo — não por assinante.
 
-| status | price | created_at |
-|---|---|---|
-| active | R$29 | 22/07 08:29 |
-| pending | R$29 | 22/07 08:20 |
-| pending | R$29 | 22/07 08:20 |
+Colunas:
+- **Nome / avatar**: dados do `profiles` do `subscriber_id`.
+- **Status**: `Ativo` se `status='active'` e `current_period_end > agora`; qualquer outra coisa vira `Expirado`.
+- **Preço**: `price_cents_paid` daquele registro.
+- **Duração total**: `min(current_period_end, agora) - started_at` em dias — ou seja, "há quanto tempo essa assinatura específica está rodando".
 
-Ou seja: 1 assinante real + 2 intents PIX pendentes (tentativas anteriores que não foram pagas). Não é resíduo de perfil deletado — é o mesmo assinante, com PIX abandonados persistidos como `pending`.
+Filtros no topo:
+- **Todos**: todas as linhas do período.
+- **Renovações**: linhas em que o `subscriber_id` já tinha assinatura antes desse período **ou** já apareceu antes dentro do próprio período (2ª+ ocorrência).
+- **Novos assinantes**: a 1ª ocorrência daquele `subscriber_id` no período, sem histórico anterior.
 
-A função `getAssinantesStats` conta cada **linha** da tabela como novo/renovação e ainda soma `pending` no faturamento do período, inflando o card para "3 Assinantes, R$ 87,00" quando o correto é "1 Assinante, R$ 29,00".
+## Por que ficou confuso no seu print
+
+Os 3 registros são o mesmo `sexando_3fc0cc8a` — 1 assinatura paga (Ativo) + 2 intents PIX abandonados (status `pending`) que a UI está rotulando como "Expirado". A lista não deveria mostrar pendings como se fossem assinaturas expiradas, e o filtro "Renovações" não deveria classificar retries de PIX como renovação real.
 
 ## Correção
 
-Em `src/lib/stats.functions.ts` → `getAssinantesStats`:
+Em `src/lib/stats.functions.ts` → `getAssinantesList`:
 
-1. Filtrar `periodRes` para considerar somente assinaturas efetivamente pagas: `status in ('active','canceled','expired')` (exclui `pending` — intents PIX que nunca fecharam). Aplicar o mesmo filtro no `historyBefore` para não classificar como "renovação" um pending anterior.
-2. Deduplicar por `subscriber_id` dentro do período ao calcular `novos` + `renovacoes`: cada assinante conta 1 vez por período (a primeira ocorrência). Se aparecer novamente, é renovação, mas o card principal deve exibir **assinantes únicos**, não linhas.
-3. Ajustar o retorno para expor `assinantesUnicosPeriodo` (novos + renovações deduplicadas) e manter `novosPeriodo`/`renovacoesPeriodo` como métricas separadas.
-4. `faturamentoPeriodo` passa a somar apenas as linhas não-`pending`.
-5. Ajustar `daily` (usado no gráfico Faturamento × Quantidade) para também refletir apenas linhas pagas.
+1. Filtrar `periodRes` e `allRes` para `status in ('active','canceled','expired')` — mesmo tratamento aplicado em `getAssinantesStats`. Intents `pending` deixam de aparecer na lista.
+2. Como consequência: com o dataset atual, a aba **Todos** mostra 1 linha (Ativo), **Renovações** fica vazia e **Novos assinantes** mostra a única assinatura real.
 
-Em `src/routes/_authenticated/my-monetisex-stats.tsx` (AssinantesPanel, linha ~1698 e ~1711):
-- Trocar `totalAssinantes = novosPeriodo + renovacoesPeriodo` por `stats.data?.assinantesUnicosPeriodo`, para o header "3 Assinantes, R$ 87,00" mostrar assinantes distintos.
+Nenhuma mudança de UI é necessária — o rótulo `Ativo/Expirado`, o preço e a duração continuam corretos para assinaturas que realmente existiram.
 
-## Limpeza opcional (fora do escopo, só sugestão)
+## Resposta curta
 
-Os 2 `pending` órfãos poderiam ser marcados como `expired` para higienizar o histórico, mas não é necessário para o fix da UI.
-
-## Resposta curta ao usuário
-
-Não é perfil deletado — são 2 tentativas de PIX abandonadas do mesmo assinante que ficaram como `pending` na tabela `subscriptions`. O card conta linha em vez de assinante único e ainda soma os pending no faturamento. O plano acima corrige as duas coisas.
+O card lista uma linha por assinatura criada no período. As 2 linhas "Expirado" que te confundiram são PIX pendentes do mesmo assinante que nunca fecharam — vou aplicar o mesmo filtro que já corrigiu o card de cima para o `getAssinantesList` ignorar `pending`.
