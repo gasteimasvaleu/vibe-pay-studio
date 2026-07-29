@@ -450,6 +450,8 @@ function LockedOverlay({
   unlocking,
   method,
   onMethodChange,
+  savedCardId,
+  onSavedCardChange,
   onUnlock,
 }: {
   thumbUrl: string | null;
@@ -457,6 +459,8 @@ function LockedOverlay({
   unlocking: boolean;
   method: PaymentMethod;
   onMethodChange: (m: PaymentMethod) => void;
+  savedCardId: string | null;
+  onSavedCardChange: (id: string | null) => void;
   onUnlock: () => void;
 }) {
   const label =
@@ -490,6 +494,8 @@ function LockedOverlay({
             onChange={onMethodChange}
             amountCents={priceCents}
             tone="dark"
+            savedCardId={savedCardId}
+            onSavedCardChange={onSavedCardChange}
           />
         </div>
         <Button onClick={onUnlock} disabled={unlocking} className="w-full">
