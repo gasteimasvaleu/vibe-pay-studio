@@ -97,6 +97,8 @@ export async function applyPaidIntent(
     buyerId?: string;
     amountCents?: number;
     supersedesSubscriptionId?: string;
+    recurringCycle?: boolean;
+    plan?: "monthly" | "quarterly" | "semiannual";
   };
 
   if (!meta.referenceTable) {
@@ -124,6 +126,36 @@ export async function applyPaidIntent(
       meta.referenceId,
       providerRef,
     );
+
+    // Ciclo recorrente do Asaas: estende current_period_end em +1 ciclo
+    // a partir do atual (ou de hoje, se já venceu) para preservar o
+    // acesso contínuo do assinante.
+    if (meta.referenceTable === "subscriptions" && meta.recurringCycle && meta.plan) {
+      try {
+        const monthsByPlan = { monthly: 1, quarterly: 3, semiannual: 6 } as const;
+        const months = monthsByPlan[meta.plan] ?? 1;
+        const { data: cur } = await supabaseAdmin
+          .from("subscriptions")
+          .select("current_period_end")
+          .eq("id", meta.referenceId)
+          .maybeSingle();
+        const base = cur?.current_period_end
+          ? new Date(cur.current_period_end as string).getTime()
+          : Date.now();
+        const from = Math.max(base, Date.now());
+        const nextEnd = new Date(from + months * 30 * 86400_000).toISOString();
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            current_period_end: nextEnd,
+            reminder_sent_at: null,
+            auto_renew: true,
+          })
+          .eq("id", meta.referenceId);
+      } catch (err) {
+        console.error("[reconcile] extend recurring period failed", err);
+      }
+    }
 
     // Upgrade de assinatura: marca a assinatura antiga como substituída
     // (o novo current_period_end já foi calculado somando o tempo restante).
