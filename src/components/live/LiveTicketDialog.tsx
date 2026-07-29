@@ -61,7 +61,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
     handleClose(false);
   };
 
-  const submit = async () => {
+  const submit = async (overrideCardId?: string) => {
     if (belowMethodMin && (method === "PIX" || method === "CREDIT_CARD")) {
       toast.error(`Valor mínimo para ${method === "PIX" ? "PIX" : "cartão"} é ${formatMinimum(method)}.`);
       return;
@@ -82,7 +82,8 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
         }
         return;
       }
-      const res = await createTicket({ data: { liveId, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null } });
+      const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
+      const res = await createTicket({ data: { liveId, method, savedCardId: cardId } });
       if (res.paidImmediately) {
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         finish();
@@ -108,6 +109,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
         return;
       }
       toast.error(translatePaymentError(e, "Erro ao comprar acesso"));
+      throw e;
     } finally {
       setLoading(false);
     }
