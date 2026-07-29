@@ -328,19 +328,23 @@ export function StoryViewer({
 
           )}
 
-          {/* Tap zones */}
-          <button
-            type="button"
-            className="absolute inset-y-0 left-0 w-1/3 z-10"
-            onClick={back}
-            aria-label="Anterior"
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 w-1/3 z-10"
-            onClick={advance}
-            aria-label="Próximo"
-          />
+          {/* Tap zones — desabilitadas enquanto o story estiver bloqueado */}
+          {current.unlocked && (
+            <>
+              <button
+                type="button"
+                className="absolute inset-y-0 left-0 w-1/3 z-10"
+                onClick={back}
+                aria-label="Anterior"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 w-1/3 z-10"
+                onClick={advance}
+                aria-label="Próximo"
+              />
+            </>
+          )}
         </div>
 
         {/* Caption + reply / subscribe CTA */}
@@ -460,7 +464,7 @@ function LockedOverlay({
           className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-40"
         />
       )}
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
+      <div className="relative z-20 w-full max-w-sm flex flex-col items-center gap-4 p-6 rounded-3xl bg-black/60 border border-white/10 backdrop-blur">
         <div className="h-14 w-14 rounded-full bg-white/10 grid place-items-center">
           <Lock className="h-6 w-6 text-white" />
         </div>
@@ -475,6 +479,7 @@ function LockedOverlay({
             value={method}
             onChange={onMethodChange}
             amountCents={priceCents}
+            tone="dark"
           />
         </div>
         <Button onClick={onUnlock} disabled={unlocking} className="w-full">
