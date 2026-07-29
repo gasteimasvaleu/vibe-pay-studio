@@ -464,7 +464,7 @@ function LockedOverlay({
   onMethodChange: (m: PaymentMethod) => void;
   savedCardId: string | null;
   onSavedCardChange: (id: string | null) => void;
-  onUnlock: () => void;
+  onUnlock: (overrideCardId?: string) => void | Promise<void>;
 }) {
   const label =
     method === "WALLET"
@@ -499,9 +499,10 @@ function LockedOverlay({
             tone="dark"
             savedCardId={savedCardId}
             onSavedCardChange={onSavedCardChange}
+            onNewCardTokenized={(newId) => onUnlock(newId)}
           />
         </div>
-        <Button onClick={onUnlock} disabled={unlocking} className="w-full">
+        <Button onClick={() => onUnlock()} disabled={unlocking} className="w-full">
           {unlocking ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...
