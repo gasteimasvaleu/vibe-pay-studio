@@ -1,45 +1,57 @@
-## Problema
+## Objetivo
 
-O perfil de `monetisexy` mostra badge "LIVE" e botão "ASSISTIR LIVE" verdes mesmo com nenhuma transmissão em curso. Query em `live_sessions` mostra **12 sessões travadas** com `status='live'` e `ended_at IS NULL` para esse criador, a mais recente de 27/07 (2 dias atrás). O código de `endLive` só roda quando o criador clica em "encerrar" — se ele fechar a aba, cair a rede, ou o navegador travar, a sessão fica eterna. Não existe heartbeat, `beforeunload`, `pagehide`, nem expiração no lado do leitor.
+Criar um padrão de campo com rótulo flutuante e 3 estados visuais, adaptado à paleta roxa do app, e aplicá-lo nos formulários de perfil/configurações.
 
-## Solução
+## Os 3 estados (adaptados ao tema)
 
-Três camadas para nunca mais deixar live fantasma:
+1. **Repouso** — preenchido, sem borda visível. `bg-muted/60`, `border-transparent`, rótulo em `text-muted-foreground`.
+2. **Hover** — borda sutil aparece. `border-border`, fundo levemente mais claro (`bg-muted/40`).
+3. **Foco** — borda destacada em roxo e rótulo colorido. `border-primary`, `ring-1 ring-primary/30`, rótulo em `text-primary`, fundo `bg-background`.
 
-1. **Heartbeat + auto-end no publisher** (`live.$liveId.transmitir.tsx`)
-2. **Expiração no lado do leitor** (funções de leitura em `lives.functions.ts`)
-3. **Cleanup one-shot** das lives travadas atuais via migração SQL
+Transição suave (`transition-colors`) entre estados. Rótulo sempre "flutuando" acima do valor dentro do campo (não sobe/desce), como nos screenshots.
 
-## Passos
+## Componentes novos
 
-**1. Nova server function `pingLive` em `src/lib/lives.functions.ts`**
-- Recebe `{ liveId }`, valida `creator_id === userId`, atualiza `updated_at = now()` (via `admin.update({}, ...)` para forçar o trigger, ou `set updated_at = now()`).
-- Barata, sem side effects.
+- `src/components/ui/floating-input.tsx` — wrapper com `<label>` interno + `<input>`. Props: `label`, e todas as props nativas de input. Altura ~ `h-14` para acomodar rótulo + valor. Estados via `group` + `peer` do Tailwind + `focus-within`.
+- `src/components/ui/floating-textarea.tsx` — mesma lógica para áreas longas (bio).
 
-**2. Novo helper `expireStaleLives(admin)` em `src/lib/lives.functions.ts`**
-- Marca como `ended` (status + `ended_at = updated_at`, zera `cf_webrtc_url`) toda linha com `status='live' AND updated_at < now() - interval '2 minutes'`.
-- Chamado no início de `getCreatorActiveLive`, `getActiveLivesForCreators` e `listActiveLives`, escopado por `creator_id`/`creator_ids` quando possível.
-- Efeito: mesmo sem heartbeat (ex: sessão antiga), o próprio fetch da badge encerra o registro em 2 min.
+Ambos usam apenas tokens semânticos (`--primary`, `--muted`, `--border`, `--foreground`, `--muted-foreground`) — funcionam automaticamente em dark mode.
 
-**3. Instrumentar `live.$liveId.transmitir.tsx`**
-- `setInterval` de 15 s chamando `pingLive({ liveId })` enquanto a página estiver montada e a live estiver em `live`/`starting`.
-- Listener `pagehide` (+ fallback `beforeunload`) que dispara `endLive` via `navigator.sendBeacon` para uma rota `/api/public/live-end` OU chamada síncrona ao server fn (sendBeacon é mais confiável no fechamento da aba). Preferência: criar rota pública `src/routes/api/public/live-end.ts` que valida `liveId + token curto (HMAC do liveId+creator_id)` gerado no `startLive` e devolvido para o cliente, evitando exigir sessão no beacon.
-- Alternativa mais simples se aceitar 2 min de atraso: pular o beacon; contar só com heartbeat + expiração. Recomendo começar pela versão simples (sem rota pública), porque a camada 2 já garante limpeza automática.
+## Onde aplicar (só formulários de perfil/configurações)
 
-**4. Migração SQL de limpeza**
-- `UPDATE public.live_sessions SET status='ended', ended_at = COALESCE(ended_at, updated_at, now()), cf_webrtc_url = NULL WHERE status='live' AND updated_at < now() - interval '5 minutes';`
-- Fecha as 12 sessões travadas do monetisexy e qualquer outra semelhante.
+Substituir `<Input>`/`<Textarea>` por `<FloatingInput>`/`<FloatingTextarea>` (com prop `label` no lugar do `<Label>` externo) em:
+
+- `src/routes/_authenticated/settings.personal.tsx` (Apelido, bio, etc.)
+- `src/routes/_authenticated/settings.details.tsx`
+- `src/routes/_authenticated/settings.social.tsx`
+- `src/routes/_authenticated/settings.change-password.tsx`
+- `src/routes/_authenticated/settings.subscription.tsx` (apenas campos de edição, se houver)
+- `src/components/banco/CadastrarBancoForm.tsx`
+- `src/components/banco/SacarDialog.tsx`
+
+Fora do escopo desta rodada: chat composer, busca, dialogs de pagamento, admin, auth — continuam com o `Input` atual.
 
 ## Detalhes técnicos
 
-- `live_sessions.updated_at` já existe (visto na query) — assume-se trigger padrão de `updated_at`. Se não houver, o `pingLive` faz `update({ updated_at: new Date().toISOString() })` explicitamente.
-- `expireStaleLives` roda com `admin` (service role) — bypass de RLS ok, é operação de manutenção.
-- Janela de 2 min: heartbeat de 15 s dá 8 tentativas antes de expirar; tolera latência/pausa breve sem falso positivo.
-- Nenhuma alteração de UI. `LiveAvatarBadge` e o botão "ASSISTIR LIVE" continuam iguais — só passam a receber `null` quando a live realmente acabou.
-- Escopo restrito a lives; não mexe em Stories, chamadas de vídeo, ou pagamentos.
+```tsx
+// floating-input.tsx (essência)
+<div className="group relative rounded-2xl bg-muted/60 border border-transparent
+                hover:border-border hover:bg-muted/40
+                focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30
+                focus-within:bg-background transition-colors">
+  <label className="block px-4 pt-2 text-xs text-muted-foreground
+                    group-focus-within:text-primary transition-colors">
+    {label}
+  </label>
+  <input className="w-full bg-transparent px-4 pb-2 text-base
+                    outline-none placeholder:text-muted-foreground/60" ... />
+</div>
+```
 
-## Arquivos afetados
+- `rounded-2xl` (pill/arredondado como no screenshot).
+- Erro (opcional, futuro): prop `error` troca `border-primary` por `border-destructive`.
+- Disabled: `opacity-60 cursor-not-allowed`, sem hover.
 
-- `src/lib/lives.functions.ts` — adicionar `pingLive`, `expireStaleLives`, chamar expire nos 3 readers.
-- `src/routes/_authenticated/live.$liveId.transmitir.tsx` — heartbeat + `pagehide`.
-- `supabase/migrations/<timestamp>_expire_stale_lives.sql` — cleanup imediato.
+## Validação
+
+Após implementar, abrir `/settings/personal` e `/banco/cadastrar` e verificar visualmente os 3 estados (repouso, hover, foco) em light e dark mode.
