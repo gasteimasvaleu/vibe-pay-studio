@@ -57,7 +57,7 @@ function RecarregarPage() {
   const listCards = useServerFn(listSavedCards);
   const cardsQuery = useQuery({
     queryKey: ["saved-cards"],
-    queryFn: () => listCards({}),
+    queryFn: () => listCards(),
   });
   const savedCards = cardsQuery.data ?? [];
 
