@@ -165,6 +165,8 @@ function SubscriptionsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const cancelFn = useServerFn(cancelSubscription);
+  const reactivateFn = useServerFn(reactivateSubscription);
+  const listCardsFn = useServerFn(listSavedCards);
 
   const { data } = useSuspenseQuery(subscriptionsQueryOptions);
 
@@ -173,6 +175,9 @@ function SubscriptionsPage() {
   const [sort, setSort] = useState<SortKey>("proxima_expiracao");
   const [query, setQuery] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
+  const [reactivateFor, setReactivateFor] = useState<MySubscription | null>(null);
+  const [savedCards, setSavedCards] = useState<SavedCardDTO[] | null>(null);
+  const [chosenCard, setChosenCard] = useState<string | null>(null);
 
   const deferredQ = useDeferredValue(query);
 
@@ -180,9 +185,35 @@ function SubscriptionsPage() {
     mutationFn: (subscriptionId: string) =>
       cancelFn({ data: { subscriptionId } }),
     onSuccess: () => {
+      toast.success("Renovação automática cancelada");
       queryClient.invalidateQueries({ queryKey: ["mySubscriptions"] });
     },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao cancelar"),
   });
+
+  const reactivateMutation = useMutation({
+    mutationFn: (input: { subscriptionId: string; savedCardId: string }) =>
+      reactivateFn({ data: input }),
+    onSuccess: () => {
+      toast.success("Renovação automática reativada");
+      setReactivateFor(null);
+      setChosenCard(null);
+      queryClient.invalidateQueries({ queryKey: ["mySubscriptions"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao reativar"),
+  });
+
+  async function openReactivate(sub: MySubscription) {
+    setReactivateFor(sub);
+    setChosenCard(null);
+    try {
+      const cards = await listCardsFn();
+      setSavedCards(cards);
+      if (cards.length > 0) setChosenCard(cards[0].id);
+    } catch {
+      setSavedCards([]);
+    }
+  }
 
   const filtered = useMemo(() => {
     let rows = [...data];
