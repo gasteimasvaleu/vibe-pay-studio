@@ -16,9 +16,11 @@ type Props = {
    * do mínimo aceito pelo Asaas.
    */
   amountCents?: number;
+  /** Variante visual — use "dark" sobre superfícies escuras (ex.: paywall de story). */
+  tone?: "light" | "dark";
 };
 
-export function PaymentMethodPicker({ value, onChange, amountCents = 0 }: Props) {
+export function PaymentMethodPicker({ value, onChange, amountCents = 0, tone = "light" }: Props) {
   const fetchWallet = useServerFn(getSubscriberWallet);
   const walletQuery = useQuery({
     queryKey: ["subscriber-wallet"],
@@ -70,30 +72,36 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0 }: Props)
     },
   ];
 
+  const isDark = tone === "dark";
   return (
     <div className="grid grid-cols-3 gap-2">
       {options.map((opt) => {
         const active = value === opt.id;
         const disabled = opt.disabled;
+        const classes = isDark
+          ? active
+            ? "border-primary bg-primary/20 text-white"
+            : disabled
+              ? "border-white/10 bg-white/5 text-white/60 opacity-60 cursor-not-allowed"
+              : "border-white/15 bg-white/5 text-white hover:bg-white/10"
+          : active
+            ? "border-primary bg-primary/5 text-foreground"
+            : disabled
+              ? "border-border bg-secondary/50 text-foreground opacity-60 cursor-not-allowed"
+              : "border-border bg-secondary text-foreground hover:bg-accent";
         return (
           <button
             key={opt.id}
             type="button"
             disabled={disabled}
             onClick={() => !disabled && onChange(opt.id)}
-            className={`rounded-xl border px-3 py-3 text-left transition-colors ${
-              active
-                ? "border-primary bg-primary/5"
-                : disabled
-                  ? "border-border bg-secondary/50 opacity-60 cursor-not-allowed"
-                  : "border-border bg-secondary hover:bg-accent"
-            }`}
+            className={`rounded-xl border px-3 py-3 text-left transition-colors ${classes}`}
           >
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <div className="flex items-center gap-2 text-sm font-semibold">
               {opt.icon}
               {opt.label}
             </div>
-            <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{opt.hint}</p>
+            <p className={`mt-0.5 text-[11px] leading-tight ${isDark ? "text-white/70" : "text-muted-foreground"}`}>{opt.hint}</p>
           </button>
         );
       })}
