@@ -1,41 +1,38 @@
-## Problema
+## Objetivo
+Adicionar indicador visual de etapas no checkout inline de cartão (`NewCardCheckoutStep`) para dar feedback claro durante o fluxo tokenização → cobrança → confirmação, evitando a sensação de "travado tokenizando".
 
-No fluxo inline de cartão (Story, Live, Tip, Assinatura, Chat/PPV, Desafio), quando o usuário não tem cartão salvo e clica em "Cartão":
+## Escopo
+Somente UI/UX do componente `src/components/payments/NewCardCheckoutStep.tsx` e ajustes mínimos nos chamadores para sinalizar a fase de cobrança.
 
-1. Abre o dialog `NewCardCheckoutStep`
-2. Usuário preenche e clica **"Adicionar cartão"**
-3. `tokenizeAndSaveCard` roda com sucesso (webhook chega no Asaas)
-4. `PaymentMethodPicker.onSuccess` apenas seta `savedCardId` e fecha o dialog
-5. **Nada mais acontece** — o usuário precisaria clicar novamente no botão "Desbloquear/Pagar" do dialog pai
+## Mudanças
 
-Ou seja, a tokenização e a cobrança são dois cliques desconectados. O rótulo "Adicionar cartão" também não deixa claro que o pagamento ainda não ocorreu.
+### 1. `NewCardCheckoutStep.tsx`
+- Adicionar estado interno `phase: "idle" | "tokenizing" | "charging" | "done" | "error"`.
+- Definir `phase = "tokenizing"` ao iniciar `mutation`.
+- Após `tokenize()` resolver com sucesso, transicionar para `"charging"` antes de chamar `onSuccess()`.
+- Após `onSuccess()` resolver, transicionar para `"done"` (breve, ~600ms) antes de deixar o pai fechar o dialog.
+- Em erro, `phase = "error"` e volta para `"idle"` ao editar qualquer campo.
+- Substituir o texto simples "Validando cartão…" do botão por um **StepIndicator** compacto acima dos botões, com 3 pontos/linhas conectados:
+  1. Tokenizando cartão
+  2. Processando pagamento
+  3. Confirmado
+- Cada etapa mostra: ícone circular (spinner ativo / check concluído / número pendente), label pequeno, e uma linha de progresso animada (pulse/gradient) entre elas.
+- O botão permanece desabilitado durante `tokenizing`/`charging`/`done`; label do botão reflete a fase ("Tokenizando cartão…", "Processando pagamento…", "Concluído").
+- Enquanto `phase !== "idle"`, esconder inputs (ou reduzir opacidade) e destacar o indicador no lugar — decisão: manter os inputs visíveis mas com `opacity-60 pointer-events-none`, focando o olhar no indicador logo abaixo.
 
-## Solução
+### 2. Sinalização "charging" nos chamadores
+O componente já sabe quando saiu da tokenização (promise `tokenize` resolveu), então a transição para `"charging"` acontece automaticamente enquanto aguarda `onSuccess()` do pai (que hoje já executa a cobrança 1‑click). Nenhuma mudança de assinatura necessária.
 
-Encadear tokenização + cobrança 1‑click no mesmo clique, sem mudar as server functions nem a lógica de negócio.
-
-### 1. `PaymentMethodPicker.tsx`
-- Nova prop opcional `onNewCardTokenized?: (savedCardId: string) => void | Promise<void>`.
-- Passar `submitLabel={amountCents ? "Pagar R$ X" : "Adicionar cartão"}` para `NewCardCheckoutStep` (deixa o botão explícito).
-- Em `onSuccess` do `NewCardCheckoutStep`:
-  1. `onSavedCardChange(newId)`
-  2. Se `onNewCardTokenized` presente → `await onNewCardTokenized(newId)`
-  3. Fechar o dialog só depois (tratando erro com toast e mantendo o dialog aberto se o charge falhar, para o usuário poder tentar de novo).
-
-### 2. Callers
-Cada caller que hoje faz "unlock/pay" com `savedCardId` passa `onNewCardTokenized={(id) => runCharge(id)}`, chamando a mesma mutation existente com o id recém-tokenizado (sem depender do state assíncrono `savedCardId`):
-
-- `src/components/feed/StoryViewer.tsx` (unlock de story)
-- `src/components/live/LiveTicketDialog.tsx`
-- `src/components/payments/TipDialog.tsx`
-- `src/components/payments/SubscribeDialog.tsx`
-- `src/components/payments/ChallengeContributeSheet.tsx`
-- `src/components/payments/PaymentMethodDialog.tsx` (usado em feed/perfil/chat) — reutilizar `onConfirm(method, id)` passando o id novo.
-
-Nenhuma mudança em server functions, webhooks ou reconciliação — apenas fecha o loop de UX entre tokenização e charge 1‑click.
+Opcional: expor prop `chargingLabel?: string` para o pai customizar (ex.: "Gerando PIX de fallback…"), mas não obrigatório.
 
 ## Detalhes técnicos
 
-- Manter o comportamento atual: se `onNewCardTokenized` não for passado, o dialog só salva o cartão (fluxo `/mywallet` "Adicionar cartão" continua igual).
-- Em caso de erro na cobrança pós-tokenização, mostrar toast e deixar o dialog aberto com o cartão já salvo selecionado para retry pelo botão principal do modal pai.
-- `NewCardCheckoutStep` já suporta `onSuccess` async, então não precisa refactor interno.
+- Ícones: `Loader2` (spinner), `Check`, `AlertCircle` do `lucide-react` (já usados).
+- Animação da linha entre etapas: `bg-gradient-to-r from-primary to-primary/40 bg-[length:200%_100%] animate-[shimmer_1.2s_linear_infinite]` — adicionar keyframes locais via classe utilitária inline (`style={{ animation: "..." }}`) para evitar mexer em `tailwind.config`/`styles.css`. Alternativa mais simples e já suportada: usar `animate-pulse` no segmento ativo.
+- Respeitar `tone="light" | "dark"` já existente para cores do indicador.
+- Sem novas dependências.
+
+## Fora de escopo
+- Não alterar server functions (`tokenizeAndSaveCard`, `chargeSavedCardTopUp`, `payments.functions.ts`).
+- Não mudar layout dos `PaymentMethodPicker`/`PaymentMethodDialog` além do que o componente interno renderiza.
+- Não introduzir toasts adicionais (mantém `toast.error` existente em falha).
