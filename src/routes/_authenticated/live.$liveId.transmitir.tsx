@@ -423,14 +423,21 @@ function TransmitirPage() {
     };
   }, [connected, liveId, pingFn, endFn]);
 
-  async function handleEnd() {
-    if (!confirm("Encerrar a transmissão?")) return;
+  function handleEnd() {
+    setEndDialogOpen(true);
+  }
+
+  async function confirmEnd() {
+    setEnding(true);
     try {
       await endFn({ data: { liveId } });
       toast.success("Live encerrada");
+      setEndDialogOpen(false);
       navigate({ to: "/dashboard" });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao encerrar");
+    } finally {
+      setEnding(false);
     }
   }
 
