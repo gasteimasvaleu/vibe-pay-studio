@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CreditCard, QrCode, Wallet, Plus, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { getSubscriberWallet } from "@/lib/finance.functions";
 import { listSavedCards, type SavedCardDTO } from "@/lib/saved-cards.functions";
 import { PAYMENT_MIN_GROSS_CENTS, formatMinimum } from "@/lib/payment-limits";
+import { NewCardCheckoutStep } from "@/components/payments/NewCardCheckoutStep";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -42,6 +44,7 @@ export function PaymentMethodPicker({
     enabled: !!onSavedCardChange,
   });
   const savedCards: SavedCardDTO[] = cardsQuery.data ?? [];
+  const [addOpen, setAddOpen] = useState(false);
 
   // Auto-selecionar primeiro cartão salvo quando o método muda para CREDIT_CARD
   useEffect(() => {
@@ -49,6 +52,13 @@ export function PaymentMethodPicker({
     if (savedCardId != null) return;
     if (savedCards.length > 0) onSavedCardChange(savedCards[0].id);
   }, [value, savedCards, savedCardId, onSavedCardChange]);
+
+  // Abre automaticamente o formulário quando o usuário escolhe CARTÃO sem ter nenhum salvo
+  useEffect(() => {
+    if (value !== "CREDIT_CARD" || !onSavedCardChange) return;
+    if (cardsQuery.isLoading) return;
+    if (savedCards.length === 0 && !addOpen) setAddOpen(true);
+  }, [value, cardsQuery.isLoading, savedCards.length, addOpen, onSavedCardChange]);
 
   const balance = walletQuery.data?.balanceCents ?? 0;
   const walletEnough = amountCents > 0 ? balance >= amountCents : balance > 0;
@@ -88,7 +98,7 @@ export function PaymentMethodPicker({
         ? `Mínimo ${formatMinimum("CREDIT_CARD")}`
         : savedCards.length > 0 && onSavedCardChange
           ? "1-click com cartão salvo"
-          : "Checkout seguro Asaas",
+          : "Adicionar cartão",
       icon: <CreditCard className="h-4 w-4" />,
       disabled: cardBelowMin,
     },
@@ -168,21 +178,47 @@ export function PaymentMethodPicker({
           })}
           <button
             type="button"
-            onClick={() => onSavedCardChange(null)}
+            onClick={() => setAddOpen(true)}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-              savedCardId === null
-                ? isDark
-                  ? "bg-primary/25 text-white"
-                  : "bg-primary/10 text-foreground"
-                : isDark
-                  ? "text-white/70 hover:bg-white/10"
-                  : "text-muted-foreground hover:bg-accent"
+              isDark ? "text-white/70 hover:bg-white/10" : "text-muted-foreground hover:bg-accent"
             }`}
           >
             <Plus className="h-4 w-4" />
-            Usar novo cartão
+            Usar outro cartão
           </button>
         </div>
+      )}
+
+      {onSavedCardChange && (
+        <Dialog
+          open={addOpen}
+          onOpenChange={(o) => {
+            setAddOpen(o);
+            // Se o usuário fechar sem adicionar cartão e não houver nenhum, voltar para PIX
+            if (!o && savedCards.length === 0 && value === "CREDIT_CARD") {
+              onChange("PIX");
+            }
+          }}
+        >
+          <DialogContent className="max-w-md rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Adicionar cartão</DialogTitle>
+              <DialogDescription>
+                O cartão será usado nesta compra e ficará salvo para próximas com 1 clique
+                (você pode desmarcar abaixo).
+              </DialogDescription>
+            </DialogHeader>
+            <NewCardCheckoutStep
+              amountCents={amountCents}
+              submitLabel="Adicionar cartão"
+              onSuccess={(newId) => {
+                onSavedCardChange(newId);
+                setAddOpen(false);
+              }}
+              onCancel={() => setAddOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
