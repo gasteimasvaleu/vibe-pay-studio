@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CreditCard, QrCode, Wallet } from "lucide-react";
+import { CreditCard, QrCode, Wallet, Plus, Check } from "lucide-react";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { getSubscriberWallet } from "@/lib/finance.functions";
+import { listSavedCards, type SavedCardDTO } from "@/lib/saved-cards.functions";
 import { PAYMENT_MIN_GROSS_CENTS, formatMinimum } from "@/lib/payment-limits";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -10,23 +12,43 @@ const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" 
 type Props = {
   value: PaymentMethod;
   onChange: (m: PaymentMethod) => void;
-  /**
-   * Valor total da compra em centavos. Usado para desabilitar "Carteira"
-   * quando o saldo é insuficiente e PIX/Cartão quando o valor está abaixo
-   * do mínimo aceito pelo Asaas.
-   */
   amountCents?: number;
-  /** Variante visual — use "dark" sobre superfícies escuras (ex.: paywall de story). */
   tone?: "light" | "dark";
+  /** Controle opcional para seleção de cartão salvo (cobrança 1-click). */
+  savedCardId?: string | null;
+  onSavedCardChange?: (id: string | null) => void;
 };
 
-export function PaymentMethodPicker({ value, onChange, amountCents = 0, tone = "light" }: Props) {
+export function PaymentMethodPicker({
+  value,
+  onChange,
+  amountCents = 0,
+  tone = "light",
+  savedCardId,
+  onSavedCardChange,
+}: Props) {
   const fetchWallet = useServerFn(getSubscriberWallet);
   const walletQuery = useQuery({
     queryKey: ["subscriber-wallet"],
     queryFn: () => fetchWallet(),
     staleTime: 15_000,
   });
+
+  const fetchSavedCards = useServerFn(listSavedCards);
+  const cardsQuery = useQuery({
+    queryKey: ["saved-cards"],
+    queryFn: () => fetchSavedCards(),
+    staleTime: 30_000,
+    enabled: !!onSavedCardChange,
+  });
+  const savedCards: SavedCardDTO[] = cardsQuery.data ?? [];
+
+  // Auto-selecionar primeiro cartão salvo quando o método muda para CREDIT_CARD
+  useEffect(() => {
+    if (value !== "CREDIT_CARD" || !onSavedCardChange) return;
+    if (savedCardId != null) return;
+    if (savedCards.length > 0) onSavedCardChange(savedCards[0].id);
+  }, [value, savedCards, savedCardId, onSavedCardChange]);
 
   const balance = walletQuery.data?.balanceCents ?? 0;
   const walletEnough = amountCents > 0 ? balance >= amountCents : balance > 0;
@@ -55,9 +77,7 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0, tone = "
     {
       id: "PIX",
       label: "PIX",
-      hint: pixBelowMin
-        ? `Mínimo ${formatMinimum("PIX")}`
-        : "Confirmação em segundos",
+      hint: pixBelowMin ? `Mínimo ${formatMinimum("PIX")}` : "Confirmação em segundos",
       icon: <QrCode className="h-4 w-4" />,
       disabled: pixBelowMin,
     },
@@ -66,7 +86,9 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0, tone = "
       label: "Cartão",
       hint: cardBelowMin
         ? `Mínimo ${formatMinimum("CREDIT_CARD")}`
-        : "Checkout seguro Asaas",
+        : savedCards.length > 0 && onSavedCardChange
+          ? "1-click com cartão salvo"
+          : "Checkout seguro Asaas",
       icon: <CreditCard className="h-4 w-4" />,
       disabled: cardBelowMin,
     },
@@ -74,37 +96,94 @@ export function PaymentMethodPicker({ value, onChange, amountCents = 0, tone = "
 
   const isDark = tone === "dark";
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {options.map((opt) => {
-        const active = value === opt.id;
-        const disabled = opt.disabled;
-        const classes = isDark
-          ? active
-            ? "border-primary bg-primary/20 text-white"
-            : disabled
-              ? "border-white/10 bg-white/5 text-white/60 opacity-60 cursor-not-allowed"
-              : "border-white/15 bg-white/5 text-white hover:bg-white/10"
-          : active
-            ? "border-primary bg-primary/5 text-foreground"
-            : disabled
-              ? "border-border bg-secondary/50 text-foreground opacity-60 cursor-not-allowed"
-              : "border-border bg-secondary text-foreground hover:bg-accent";
-        return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        {options.map((opt) => {
+          const active = value === opt.id;
+          const disabled = opt.disabled;
+          const classes = isDark
+            ? active
+              ? "border-primary bg-primary/20 text-white"
+              : disabled
+                ? "border-white/10 bg-white/5 text-white/60 opacity-60 cursor-not-allowed"
+                : "border-white/15 bg-white/5 text-white hover:bg-white/10"
+            : active
+              ? "border-primary bg-primary/5 text-foreground"
+              : disabled
+                ? "border-border bg-secondary/50 text-foreground opacity-60 cursor-not-allowed"
+                : "border-border bg-secondary text-foreground hover:bg-accent";
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => !disabled && onChange(opt.id)}
+              className={`rounded-xl border px-3 py-3 text-left transition-colors ${classes}`}
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                {opt.icon}
+                {opt.label}
+              </div>
+              <p
+                className={`mt-0.5 text-[11px] leading-tight ${isDark ? "text-white/70" : "text-muted-foreground"}`}
+              >
+                {opt.hint}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {value === "CREDIT_CARD" && onSavedCardChange && savedCards.length > 0 && (
+        <div
+          className={`space-y-1 rounded-xl border p-2 ${
+            isDark ? "border-white/10 bg-white/5" : "border-border bg-secondary/40"
+          }`}
+        >
+          {savedCards.map((c) => {
+            const active = savedCardId === c.id;
+            const rowBase = isDark
+              ? active
+                ? "bg-primary/25 text-white"
+                : "text-white/80 hover:bg-white/10"
+              : active
+                ? "bg-primary/10 text-foreground"
+                : "text-foreground hover:bg-accent";
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onSavedCardChange(c.id)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${rowBase}`}
+              >
+                <span className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span className="font-medium">
+                    {(c.brand ?? "Cartão").toUpperCase()} •••• {c.last4}
+                  </span>
+                </span>
+                {active && <Check className="h-4 w-4" />}
+              </button>
+            );
+          })}
           <button
-            key={opt.id}
             type="button"
-            disabled={disabled}
-            onClick={() => !disabled && onChange(opt.id)}
-            className={`rounded-xl border px-3 py-3 text-left transition-colors ${classes}`}
+            onClick={() => onSavedCardChange(null)}
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+              savedCardId === null
+                ? isDark
+                  ? "bg-primary/25 text-white"
+                  : "bg-primary/10 text-foreground"
+                : isDark
+                  ? "text-white/70 hover:bg-white/10"
+                  : "text-muted-foreground hover:bg-accent"
+            }`}
           >
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              {opt.icon}
-              {opt.label}
-            </div>
-            <p className={`mt-0.5 text-[11px] leading-tight ${isDark ? "text-white/70" : "text-muted-foreground"}`}>{opt.hint}</p>
+            <Plus className="h-4 w-4" />
+            Usar novo cartão
           </button>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }

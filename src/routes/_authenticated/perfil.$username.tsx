@@ -482,7 +482,7 @@ function PerfilPage() {
     setPending(item);
   };
 
-  const confirmPayment = async (method: PaymentMethod) => {
+  const confirmPayment = async (method: PaymentMethod, savedCardId: string | null = null) => {
     if (!pending) return;
     const item = pending;
     setUnlocking(item.id);
@@ -499,8 +499,16 @@ function PerfilPage() {
         return;
       }
       const res = await unlockFn({
-        data: { publicationId: item.id, method },
+        data: { publicationId: item.id, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null },
       });
+      if (res.paidImmediately) {
+        setPending(null);
+        toast.success("Publicação desbloqueada!");
+        void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        return;
+      }
       setPending(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,

@@ -11,7 +11,12 @@ type CheckoutResult = {
   invoiceUrl?: string | null;
   pixQrCode?: string | null;
   pixCopyPaste?: string | null;
+  /** true quando cobrança 1-click via cartão salvo (Asaas retornou CONFIRMED). */
+  paidImmediately?: boolean;
 };
+
+/** Se o Asaas confirmar sincronamente cartão salvo, marca paidImmediately. */
+const ASAAS_PAID_SYNC = new Set(["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"]);
 
 type CardInput = {
   holderName: string;
@@ -156,6 +161,44 @@ function buildCardArgs(card: CardInput | undefined) {
   };
 }
 
+/**
+ * Resolve os argumentos de cartão + billingType para o Asaas.
+ * - Se `savedCardId` for informado (e method === CREDIT_CARD), busca o token
+ *   salvo do usuário e retorna `{ creditCardToken }` + billingType CREDIT_CARD
+ *   para cobrança 1-click.
+ * - Caso contrário, delega ao `buildCardArgs(card)` (novo cartão / PIX).
+ */
+async function resolveCardArgs(
+  supabase: any,
+  userId: string,
+  method: Method,
+  opts: { card?: CardInput; savedCardId?: string | null },
+): Promise<{
+  args: Record<string, unknown>;
+  billingType: "PIX" | "UNDEFINED" | "CREDIT_CARD";
+  useSavedCard: boolean;
+}> {
+  if (method !== "CREDIT_CARD" || !opts.savedCardId) {
+    return {
+      args: buildCardArgs(opts.card),
+      billingType: asaasBillingTypeForMethod(method),
+      useSavedCard: false,
+    };
+  }
+  const { data: card, error } = await supabase
+    .from("saved_cards")
+    .select("asaas_customer_id, asaas_card_token")
+    .eq("id", opts.savedCardId)
+    .eq("user_id", userId)
+    .single();
+  if (error || !card) throw new Error("Cartão salvo não encontrado");
+  return {
+    args: { creditCardToken: card.asaas_card_token as string },
+    billingType: "CREDIT_CARD",
+    useSavedCard: true,
+  };
+}
+
 async function recordIntent(
   supabase: any,
   args: {
@@ -208,7 +251,7 @@ export const ensureAsaasCustomer = createServerFn({ method: "POST" })
 export const createUnlockPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { publicationId: string; method: Method; card?: CardInput }) => data,
+    (data: { publicationId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data,
   )
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
@@ -268,15 +311,16 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     }
 
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: pub.price_cents,
       description: `Compra MTX`,
       externalReference: `publication_unlock:${unlockId}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
 
     await supabase
@@ -305,6 +349,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -313,7 +358,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
 export const createStoryUnlockPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { storyId: string; method: Method; card?: CardInput }) => data,
+    (data: { storyId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data,
   )
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
@@ -375,15 +420,16 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
       unlockId = inserted.id;
     }
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: story.price_cents,
       description: `Compra MTX`,
       externalReference: `story_unlock:${unlockId}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
 
     await supabase
@@ -412,6 +458,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -547,6 +594,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
       publicationId?: string;
       message?: string;
       card?: CardInput;
+      savedCardId?: string | null;
     }) => data,
   )
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
@@ -576,15 +624,16 @@ export const createTipPayment = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: data.amountCents,
       description: `Compra MTX`,
       externalReference: `tip:${tip.id}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
 
     await supabase.from("tips").update({ provider_ref: payment.id }).eq("id", tip.id);
@@ -605,6 +654,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -624,6 +674,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       plan: "monthly" | "quarterly" | "semiannual";
       method: Method;
       card?: CardInput;
+      savedCardId?: string | null;
     }) => data,
   )
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
@@ -717,15 +768,16 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       .single();
     if (sErr) throw new Error(sErr.message);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents,
       description: `Assinatura MTX`,
       externalReference: `subscription:${sub.id}`,
       creatorWalletId: creator.asaas_wallet_id,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
 
     // Renovação automática desativada: cobramos apenas o 1º ciclo. O assinante
@@ -778,6 +830,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -785,7 +838,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
 
 export const createChatUnlockPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { messageId: string; method: Method; card?: CardInput }) => data)
+  .inputValidator((data: { messageId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     const { data: msg, error } = await supabase
@@ -818,15 +871,16 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
       .single();
     if (uErr) throw new Error(uErr.message);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: msg.price_cents,
       description: `Compra MTX`,
       externalReference: `chat_unlock:${unlock.id}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
     await supabase
       .from("chat_message_unlocks")
@@ -849,6 +903,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -856,7 +911,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
 
 export const createVideoCallPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { callId: string; method: Method; card?: CardInput }) => data)
+  .inputValidator((data: { callId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     const { data: call, error } = await supabase
@@ -875,15 +930,16 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(call.price_cents, data.method);
     const providerTag = providerForMethod(data.method);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: call.price_cents,
       description: `Compra MTX`,
       externalReference: `video_call:${call.id}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
     await supabase
       .from("video_calls")
@@ -906,6 +962,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -913,7 +970,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
 
 export const createPaidDmPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { requestId: string; method: Method; card?: CardInput }) => data)
+  .inputValidator((data: { requestId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     const { data: req, error } = await supabase
@@ -932,15 +989,16 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(req.price_cents, data.method);
     const providerTag = providerForMethod(data.method);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: req.price_cents,
       description: `Compra MTX`,
       externalReference: `chat_media_request:${req.id}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
     await supabase
       .from("chat_media_requests")
@@ -963,6 +1021,7 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -970,7 +1029,7 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
 
 export const createLiveTicketPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { liveId: string; method: Method; card?: CardInput }) => data)
+  .inputValidator((data: { liveId: string; method: Method; card?: CardInput; savedCardId?: string | null }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     const { data: live, error } = await supabase
@@ -1029,15 +1088,16 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(live.price_cents, data.method);
     const providerTag = providerForMethod(data.method);
 
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: live.price_cents,
       description: `Compra MTX`,
       externalReference: `live_tickets:${ticketId}`,
       creatorWalletId: walletId,
       netCreatorCents,
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
     await supabase
       .from("live_tickets")
@@ -1060,6 +1120,7 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 
@@ -1068,21 +1129,22 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
 
 export const createWalletTopupPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { amountCents: number; method: Method; card?: CardInput }) => data)
+  .inputValidator((data: { amountCents: number; method: Method; card?: CardInput; savedCardId?: string | null }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     if (data.amountCents < 1000) throw new Error("recarga mínima é R$ 10,00");
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
+        const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
     const payment = await asaas.createPayment({
       customerId,
-      billingType: asaasBillingTypeForMethod(data.method),
+      billingType: __cardArgs.billingType,
       amountCents: data.amountCents,
       description: `Recarga MTX`,
       externalReference: `wallet_topup:${userId}`,
       // sem split: 100% vai para a conta principal e é depois creditado como saldo do usuário via webhook
-      ...buildCardArgs(data.card),
+      ...__cardArgs.args,
     });
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
@@ -1102,6 +1164,7 @@ export const createWalletTopupPayment = createServerFn({ method: "POST" })
       invoiceUrl: payment.invoiceUrl ?? null,
       pixQrCode: pixQr?.encodedImage ?? null,
       pixCopyPaste: pixQr?.payload ?? null,
+      paidImmediately: __cardArgs.useSavedCard && ASAAS_PAID_SYNC.has(payment.status),
     };
   });
 

@@ -101,7 +101,7 @@ function FeedPage() {
 
 
 
-  const confirmPayment = async (method: PaymentMethod) => {
+  const confirmPayment = async (method: PaymentMethod, savedCardId: string | null = null) => {
     if (!pending) return;
     const item = pending;
     setUnlocking(item.id);
@@ -117,8 +117,15 @@ function FeedPage() {
         return;
       }
       const res = await unlock({
-        data: { publicationId: item.id, method },
+        data: { publicationId: item.id, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null },
       });
+      if (res.paidImmediately) {
+        setPending(null);
+        toast.success("Publicação desbloqueada!");
+        void queryClient.invalidateQueries({ queryKey: ["feed"] });
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        return;
+      }
       setPending(null);
       setCheckout({
         paymentIntentId: res.paymentIntentId,

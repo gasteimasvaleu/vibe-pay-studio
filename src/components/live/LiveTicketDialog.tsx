@@ -34,6 +34,7 @@ type Checkout = {
 
 export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, priceCents, onPaid }: Props) {
   const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTicket = useServerFn(createLiveTicketPayment);
@@ -44,6 +45,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
     if (!v) {
       setCheckout(null);
       setMethod("PIX");
+      setSavedCardId(null);
     }
     onOpenChange(v);
   };
@@ -80,7 +82,12 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
         }
         return;
       }
-      const res = await createTicket({ data: { liveId, method } });
+      const res = await createTicket({ data: { liveId, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null } });
+      if (res.paidImmediately) {
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        finish();
+        return;
+      }
       if (method === "PIX" && (!res.pixQrCode || !res.pixCopyPaste)) {
         throw new Error("Falha ao gerar PIX");
       }
@@ -157,7 +164,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={priceCents} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={priceCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
               {belowMethodMin && (method === "PIX" || method === "CREDIT_CARD") && (
                 <p className="text-[11px] text-destructive">
                   Valor mínimo para {method === "PIX" ? "PIX" : "cartão"}: {formatMinimum(method)}

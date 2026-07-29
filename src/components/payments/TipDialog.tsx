@@ -36,6 +36,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
   const [amount, setAmount] = useState(20);
   const [message, setMessage] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTip = useServerFn(createTipPayment);
@@ -48,6 +49,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       setMessage("");
       setAmount(20);
       setMethod("PIX");
+      setSavedCardId(null);
     }
     onOpenChange(v);
   };
@@ -94,8 +96,15 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
           method,
           publicationId,
           message: message.trim() || undefined,
+          savedCardId: method === "CREDIT_CARD" ? savedCardId : null,
         },
       });
+      if (res.paidImmediately) {
+        toast.success("Gorjeta enviada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        handleClose(false);
+        return;
+      }
       if (method === "PIX" && (!res.pixQrCode || !res.pixCopyPaste)) {
         throw new Error("Falha ao gerar PIX");
       }
@@ -207,7 +216,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Forma de pagamento
               </p>
-              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} />
+              <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
               {belowMethodMin && (method === "PIX" || method === "CREDIT_CARD") && (
                 <p className="text-[11px] text-destructive">
                   Valor mínimo para {method === "PIX" ? "PIX" : "cartão"}: {formatMinimum(method)}

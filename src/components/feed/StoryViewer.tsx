@@ -59,6 +59,7 @@ export function StoryViewer({
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const progressRef = useRef<number>(0);
@@ -171,15 +172,22 @@ export function StoryViewer({
         onChanged();
       } else {
         const res = await createStoryPayment({
-          data: { storyId: current.id, method: selectedMethod },
+          data: { storyId: current.id, method: selectedMethod, savedCardId: selectedMethod === "CREDIT_CARD" ? savedCardId : null },
         });
-        setCheckout({
-          paymentIntentId: res.paymentIntentId,
-          method: res.method,
-          pixQrCode: res.pixQrCode ?? null,
-          pixCopyPaste: res.pixCopyPaste ?? null,
-          invoiceUrl: res.invoiceUrl ?? null,
-        });
+        if (res.paidImmediately) {
+          toast.success("Story desbloqueado!");
+          await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
+          await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+          onChanged();
+        } else {
+          setCheckout({
+            paymentIntentId: res.paymentIntentId,
+            method: res.method,
+            pixQrCode: res.pixQrCode ?? null,
+            pixCopyPaste: res.pixCopyPaste ?? null,
+            invoiceUrl: res.invoiceUrl ?? null,
+          });
+        }
       }
     } catch (e: any) {
       toast.error(translatePaymentError(e, "Falha ao desbloquear"));
@@ -323,6 +331,8 @@ export function StoryViewer({
               unlocking={unlocking}
               method={selectedMethod}
               onMethodChange={setSelectedMethod}
+              savedCardId={savedCardId}
+              onSavedCardChange={setSavedCardId}
               onUnlock={handleUnlock}
             />
 
@@ -440,6 +450,8 @@ function LockedOverlay({
   unlocking,
   method,
   onMethodChange,
+  savedCardId,
+  onSavedCardChange,
   onUnlock,
 }: {
   thumbUrl: string | null;
@@ -447,6 +459,8 @@ function LockedOverlay({
   unlocking: boolean;
   method: PaymentMethod;
   onMethodChange: (m: PaymentMethod) => void;
+  savedCardId: string | null;
+  onSavedCardChange: (id: string | null) => void;
   onUnlock: () => void;
 }) {
   const label =
@@ -480,6 +494,8 @@ function LockedOverlay({
             onChange={onMethodChange}
             amountCents={priceCents}
             tone="dark"
+            savedCardId={savedCardId}
+            onSavedCardChange={onSavedCardChange}
           />
         </div>
         <Button onClick={onUnlock} disabled={unlocking} className="w-full">
