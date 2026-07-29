@@ -59,6 +59,7 @@ function FeedPage() {
   const walletPay = useServerFn(payWithWallet);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [paidItemId, setPaidItemId] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const [pending, setPending] = useState<FeedItem | null>(null);
   const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
