@@ -920,6 +920,83 @@ export const getEngajamentoLives = createServerFn({ method: "GET" })
 
 
 /**
+ * Stories do período (Engajamento › Stories, Top Story).
+ */
+export const getEngajamentoStories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { from: string; to: string; sort?: "revenue" | "unlocks" | "views" }) => ({
+    ...rangeValidator({ from: data.from, to: data.to }),
+    sort: data.sort ?? "revenue",
+  }))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const profileId = (await getActiveProfileIdFor(supabase, userId)) ?? "00000000-0000-0000-0000-000000000000";
+    const { data: rows, error } = await supabase
+      .from("stories")
+      .select("id, media_path, thumb_path, price_cents, published_at")
+      .eq("creator_profile_id", profileId)
+      .gte("published_at", data.from).lte("published_at", data.to);
+    if (error) throw new Error(error.message);
+    const base = rows ?? [];
+    const ids = base.map(r => r.id as string);
+    const unlocksMap = new Map<string, { count: number; revenueCents: number }>();
+    const viewsMap = new Map<string, number>();
+    if (ids.length > 0) {
+      const [unlocksRes, viewsRes] = await Promise.all([
+        supabase.from("story_unlocks").select("story_id, price_cents").in("story_id", ids).eq("status", "paid"),
+        supabase.from("story_views").select("story_id").in("story_id", ids),
+      ]);
+      for (const r of (unlocksRes.data ?? []) as { story_id: string; price_cents: number | null }[]) {
+        const cur = unlocksMap.get(r.story_id) ?? { count: 0, revenueCents: 0 };
+        cur.count += 1;
+        cur.revenueCents += r.price_cents ?? 0;
+        unlocksMap.set(r.story_id, cur);
+      }
+      for (const r of (viewsRes.data ?? []) as { story_id: string }[]) {
+        viewsMap.set(r.story_id, (viewsMap.get(r.story_id) ?? 0) + 1);
+      }
+    }
+    const list = base.map(r => {
+      const u = unlocksMap.get(r.id as string) ?? { count: 0, revenueCents: 0 };
+      return {
+        id: r.id as string,
+        media_path: r.media_path as string | null,
+        thumb_path: r.thumb_path as string | null,
+        price_cents: r.price_cents as number | null,
+        published_at: r.published_at as string,
+        unlocks: u.count,
+        revenue_cents: u.revenueCents,
+        views: viewsMap.get(r.id as string) ?? 0,
+      };
+    });
+    const sorters = {
+      revenue: (a: (typeof list)[number], b: (typeof list)[number]) => b.revenue_cents - a.revenue_cents,
+      unlocks: (a: (typeof list)[number], b: (typeof list)[number]) => b.unlocks - a.unlocks,
+      views: (a: (typeof list)[number], b: (typeof list)[number]) => b.views - a.views,
+    };
+    list.sort(sorters[data.sort]);
+    // Assinar URLs de thumb/media
+    const bucket = supabase.storage.from("stories");
+    const withUrls = await Promise.all(list.map(async (r) => {
+      const path = r.thumb_path ?? r.media_path;
+      let cover_url: string | null = null;
+      if (path) {
+        const { data: signed } = await bucket.createSignedUrl(path, 3600);
+        cover_url = signed?.signedUrl ?? null;
+      }
+      return { ...r, cover_url };
+    }));
+    return {
+      items: withUrls,
+      totalCount: withUrls.length,
+      totalRevenue: withUrls.reduce((a, r) => a + r.revenue_cents, 0),
+      totalUnlocks: withUrls.reduce((a, r) => a + r.unlocks, 0),
+      totalViews: withUrls.reduce((a, r) => a + r.views, 0),
+    };
+  });
+
+
+/**
  * Registra visita a uma publicação (throttle: 1 view por viewer_id/dia).
  */
 export const logPublicationView = createServerFn({ method: "POST" })
