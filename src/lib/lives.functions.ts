@@ -254,6 +254,7 @@ export const getActiveLivesForCreators = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (data.creatorIds.length === 0) return { liveByCreator: {} as Record<string, string> };
     const admin = await loadAdmin();
+    await expireStaleLives(admin, { creatorIds: data.creatorIds });
     const { data: lives } = await admin
       .from("live_sessions")
       .select("id, creator_id")
