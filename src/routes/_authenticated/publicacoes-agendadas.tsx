@@ -22,11 +22,11 @@ import {
 } from "@/lib/publications.functions";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ActionPopover,
+  ActionPopoverList,
+  ActionPopoverItem,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import {
   Dialog,
   DialogContent,
