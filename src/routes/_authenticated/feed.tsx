@@ -13,6 +13,7 @@ import { getFeed, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
+import { refreshAfterPayment } from "@/lib/refresh-after-payment";
 import { PublicationCard } from "@/components/feed/PublicationCard";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
