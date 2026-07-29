@@ -31,7 +31,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ActionPopover } from "@/components/ui/action-popover";
 import { SubscribeDialog } from "@/components/payments/SubscribeDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 import { PublicationCard } from "@/components/feed/PublicationCard";
