@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/site/BottomNav";
 import { TopNav } from "@/components/site/TopNav";
 import { useFullscreenOverlay } from "@/hooks/useFullscreenOverlay";
+import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 
 function AuthenticatedLayout() {
   const overlayActive = useFullscreenOverlay();
+  usePresenceHeartbeat();
   return (
     <div className={overlayActive ? "" : "pb-24"}>
       {!overlayActive && <TopNav />}
