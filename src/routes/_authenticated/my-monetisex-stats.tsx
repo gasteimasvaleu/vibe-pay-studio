@@ -1628,9 +1628,16 @@ function countryName(iso: string | null): string {
 /* ============================== Assinantes ============================== */
 
 const ASSINANTES_TABS = ["Assinaturas", "Top assinantes", "Atividade dos assinantes"] as const;
-const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat"] as const;
-const TOP_METRIC_MAP: Record<(typeof TOP_ASSINANTES_CHIPS)[number], "total"|"subscription"|"tip"|"chat_unlock"> = {
-  Total: "total", Assinaturas: "subscription", Mimos: "tip", Chat: "chat_unlock",
+const TOP_ASSINANTES_CHIPS = ["Total", "Assinaturas", "Mimos", "Chat", "Postagem", "Story", "Videochamada", "Live"] as const;
+const TOP_METRIC_MAP: Record<(typeof TOP_ASSINANTES_CHIPS)[number], "total"|"subscription"|"tip"|"chat_unlock"|"publication_unlock"|"story_unlock"|"video_call"|"live_ticket"> = {
+  Total: "total",
+  Assinaturas: "subscription",
+  Mimos: "tip",
+  Chat: "chat_unlock",
+  Postagem: "publication_unlock",
+  Story: "story_unlock",
+  Videochamada: "video_call",
+  Live: "live_ticket",
 };
 
 const chartDate = new Intl.DateTimeFormat("pt-BR", { month: "short", day: "numeric", year: "numeric" });
