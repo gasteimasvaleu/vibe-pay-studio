@@ -601,6 +601,31 @@ function TransmitirPage() {
     </>
   );
 
+  const endDialog = (
+    <AlertDialog open={endDialogOpen} onOpenChange={(o) => !ending && setEndDialogOpen(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Encerrar transmissão?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Sua live será finalizada imediatamente e os espectadores serão desconectados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={ending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={ending}
+            onClick={(e) => { e.preventDefault(); confirmEnd(); }}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {ending ? "Encerrando…" : "Encerrar"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+
+
   // MOBILE
   if (isMobile) {
     return (
