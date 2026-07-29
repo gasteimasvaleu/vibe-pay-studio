@@ -595,8 +595,8 @@ function EarningsChartCard({ range }: { range: { from: string; to: string } }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between">
-        <h3 className="text-lg font-bold tracking-tight">{rangeLabel(range.from, range.to)}</h3>
-        <span className="text-lg font-bold">{isLoading ? "—" : formatBRL(total)}</span>
+        <h3 className="text-sm font-semibold tracking-tight">{rangeLabel(range.from, range.to)}</h3>
+        <span className="text-sm font-semibold">{isLoading ? "—" : formatBRL(total)}</span>
       </div>
 
       <div className="mt-6 h-56">
@@ -670,16 +670,16 @@ function TopBadgeCard() {
 
       <div>
         <p className="text-sm text-muted-foreground">Faturamento hoje</p>
-        <p className="mt-1 text-xl font-bold">{isLoading ? "—" : formatBRL(data?.revenueTodayCents ?? 0)}</p>
+        <p className="mt-1 text-base font-semibold">{isLoading ? "—" : formatBRL(data?.revenueTodayCents ?? 0)}</p>
       </div>
 
       <div className="rounded-xl border border-border bg-background/40 grid grid-cols-2 divide-x divide-border">
         <div className="p-4">
-          <p className="text-lg font-bold">{isLoading ? "—" : formatBRL(data?.releasedCents ?? 0)}</p>
+          <p className="text-sm font-semibold">{isLoading ? "—" : formatBRL(data?.releasedCents ?? 0)}</p>
           <p className="text-xs text-muted-foreground mt-1">Saldo liberado</p>
         </div>
         <div className="p-4">
-          <p className="text-lg font-bold">
+          <p className="text-sm font-semibold">
             {isLoading ? "—" : formatBRL(((data?.pendingNationalCents ?? 0) + (data?.pendingInternationalCents ?? 0)))}
           </p>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -703,8 +703,8 @@ function PeriodTotalCard({ range }: { range: { from: string; to: string } }) {
   const positive = delta >= 0;
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Faturamento no período</h3>
-      <p className="mt-3 text-2xl font-bold">{isLoading ? "—" : formatBRL(cur)}</p>
+      <h3 className="text-sm font-semibold">Faturamento no período</h3>
+      <p className="mt-3 text-lg font-semibold">{isLoading ? "—" : formatBRL(cur)}</p>
       <p className={`mt-1 text-xs inline-flex items-center gap-1 ${positive ? "text-emerald-600" : "text-rose-600"}`}>
         {positive ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
         {Math.abs(delta).toFixed(1)}% vs período anterior
@@ -769,12 +769,12 @@ function VendasCard({ title, today, month, history, loading }: {
   ];
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
-      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
       <div className="space-y-3">
         {rows.map(r => (
           <div key={r.label} className="rounded-xl bg-muted/60 p-4">
             <p className="text-sm text-muted-foreground">{r.label}</p>
-            <p className="mt-1 text-lg font-bold">{loading ? "—" : formatBRL(r.value)}</p>
+            <p className="mt-1 text-sm font-semibold">{loading ? "—" : formatBRL(r.value)}</p>
           </div>
         ))}
       </div>
@@ -793,15 +793,15 @@ function MeuBancoCard({ today, released, pending, loading }: { today: number; re
       </div>
       <div>
         <p className="text-sm text-muted-foreground">Faturamento hoje</p>
-        <p className="mt-1 text-xl font-bold">{loading ? "—" : formatBRL(today)}</p>
+        <p className="mt-1 text-base font-semibold">{loading ? "—" : formatBRL(today)}</p>
       </div>
       <div className="rounded-xl bg-muted/60 grid grid-cols-2 divide-x divide-border">
         <div className="p-4">
-          <p className="text-lg font-bold">{loading ? "—" : formatBRL(released)}</p>
+          <p className="text-sm font-semibold">{loading ? "—" : formatBRL(released)}</p>
           <p className="text-xs text-muted-foreground mt-1">Saldo liberado</p>
         </div>
         <div className="p-4">
-          <p className="text-lg font-bold">{loading ? "—" : formatBRL(pending)}</p>
+          <p className="text-sm font-semibold">{loading ? "—" : formatBRL(pending)}</p>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
             Saldo a liberar <Info className="h-3 w-3" />
           </p>
@@ -823,22 +823,22 @@ function AssinantesCard({ range }: { range: { from: string; to: string } }) {
   });
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
-      <h3 className="text-lg font-bold tracking-tight">Assinantes</h3>
+      <h3 className="text-sm font-semibold tracking-tight">Assinantes</h3>
       <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Total</span>
-        <span className="text-lg font-bold">{isLoading ? "—" : data?.totalHistorico ?? 0}</span>
+        <span className="text-sm font-semibold">{isLoading ? "—" : data?.totalHistorico ?? 0}</span>
       </div>
       <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Ativos</span>
-        <span className="text-lg font-bold">{isLoading ? "—" : data?.totalAtivos ?? 0}</span>
+        <span className="text-sm font-semibold">{isLoading ? "—" : data?.totalAtivos ?? 0}</span>
       </div>
       <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Novos no período</span>
-        <span className="text-lg font-bold">{isLoading ? "—" : data?.novosPeriodo ?? 0}</span>
+        <span className="text-sm font-semibold">{isLoading ? "—" : data?.novosPeriodo ?? 0}</span>
       </div>
       <div className="rounded-xl bg-muted/60 p-4 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Ticket médio</span>
-        <span className="text-lg font-bold">{isLoading ? "—" : formatBRL(data?.ticketMedio ?? 0)}</span>
+        <span className="text-sm font-semibold">{isLoading ? "—" : formatBRL(data?.ticketMedio ?? 0)}</span>
       </div>
     </div>
   );
@@ -852,21 +852,21 @@ function ProjecaoFaturamentoCard({ monthTotal, avgDay, projection, loading }: {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
-        <h3 className="text-lg font-bold tracking-tight">Projeção de Faturamento</h3>
+        <h3 className="text-sm font-semibold tracking-tight">Projeção de Faturamento</h3>
         <p className="text-sm text-muted-foreground mt-1 capitalize">{monthLabel}</p>
       </div>
       <div className="rounded-xl bg-muted/60 p-4">
         <p className="text-sm text-muted-foreground">Total mês</p>
-        <p className="mt-1 text-lg font-bold">{loading ? "—" : formatBRL(monthTotal)}</p>
+        <p className="mt-1 text-sm font-semibold">{loading ? "—" : formatBRL(monthTotal)}</p>
       </div>
       <div className="rounded-xl bg-muted/60 p-4">
         <p className="text-sm text-muted-foreground">Média/dia</p>
-        <p className="mt-1 text-lg font-bold">{loading ? "—" : formatBRL(avgDay)}</p>
+        <p className="mt-1 text-sm font-semibold">{loading ? "—" : formatBRL(avgDay)}</p>
       </div>
       <div className="rounded-xl bg-muted/60 p-4 flex items-start justify-between">
         <span className="text-sm text-muted-foreground">Projeção</span>
         <div className="text-right">
-          <p className="text-lg font-bold text-primary">{loading ? "—" : formatBRL(projection)}</p>
+          <p className="text-sm font-semibold text-primary">{loading ? "—" : formatBRL(projection)}</p>
           <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
             {delta >= 0 ? "+" : ""}{delta.toFixed(1)}% <ArrowUp className="h-3 w-3" />
           </p>
@@ -879,7 +879,7 @@ function ProjecaoFaturamentoCard({ monthTotal, avgDay, projection, loading }: {
 function RecordeCard({ title, rows, loading }: { title: string; rows: { day: string; gross: number }[]; loading: boolean }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
-      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
       <div className="space-y-3">
         {loading ? (
           <Skeleton className="h-16 w-full" />
@@ -972,9 +972,9 @@ function GanhosPorProdutoChartCard({ range }: { range: { from: string; to: strin
   const byProduct = useByProduct(range);
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-lg font-bold tracking-tight">Ganhos por produto</h3>
+      <h3 className="text-sm font-semibold tracking-tight">Ganhos por produto</h3>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-lg font-bold">{formatBRL(byProduct.data?.totalGross ?? 0)}</span>
+        <span className="text-sm font-semibold">{formatBRL(byProduct.data?.totalGross ?? 0)}</span>
         <span className="text-sm text-muted-foreground">total no período</span>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
@@ -1030,10 +1030,10 @@ function GanhosPorProdutoTable({ range }: { range: { from: string; to: string } 
           </div>
         ))}
       <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] gap-x-3 sm:gap-x-10 items-center text-xs sm:text-sm">
-        <span className="font-bold">Total</span>
+        <span className="font-semibold">Total</span>
         <span />
-        <span className="text-right font-bold">{formatBRL(total)}</span>
-        <span className="text-right font-bold text-primary">{formatBRL(data?.totalNet ?? 0)}</span>
+        <span className="text-right font-semibold">{formatBRL(total)}</span>
+        <span className="text-right font-semibold text-primary">{formatBRL(data?.totalNet ?? 0)}</span>
       </div>
     </div>
   );
@@ -1051,8 +1051,8 @@ function ExtratoChartCard({ title, range, kind }: { title: string; range: { from
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-3">
-          <h3 className="text-lg font-bold tracking-tight">{title}</h3>
-          <span className="text-lg font-bold">{formatBRL(net)}</span>
+          <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+          <span className="text-sm font-semibold">{formatBRL(net)}</span>
           <span className="text-sm text-muted-foreground">({formatBRL(gross)} bruto)</span>
         </div>
       </div>
@@ -1152,7 +1152,7 @@ function Top5PaisesCard({ range }: { range: { from: string; to: string } }) {
   });
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Top 5 países</h3>
+      <h3 className="text-sm font-semibold">Top 5 países</h3>
       <p className="mt-1 text-sm text-muted-foreground">Países onde você mais faturou</p>
       <div className="mt-3 space-y-2">
         {isLoading ? <Skeleton className="h-5 w-full" /> :
@@ -1172,14 +1172,14 @@ function ExtratoFaturamentoCard({ range }: { range: { from: string; to: string }
   const { data, isLoading } = useTotals(range);
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Faturamento</h3>
+      <h3 className="text-sm font-semibold">Faturamento</h3>
       <div className="mt-4 rounded-xl bg-muted/60 p-4">
         <p className="text-sm text-muted-foreground">Bruto</p>
-        <p className="mt-1 text-lg font-bold">{isLoading ? "—" : formatBRL(data?.current.gross ?? 0)}</p>
+        <p className="mt-1 text-sm font-semibold">{isLoading ? "—" : formatBRL(data?.current.gross ?? 0)}</p>
       </div>
       <div className="mt-3 rounded-xl bg-muted/60 p-4">
         <p className="text-sm text-muted-foreground">Comissão líquida</p>
-        <p className="mt-1 text-lg font-bold text-primary">{isLoading ? "—" : formatBRL(data?.current.net ?? 0)}</p>
+        <p className="mt-1 text-sm font-semibold text-primary">{isLoading ? "—" : formatBRL(data?.current.net ?? 0)}</p>
       </div>
     </div>
   );
@@ -1233,7 +1233,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <SubTabsRow tabs={ENGAJAMENTO_TABS} active={tab} onChange={setTab} />
 
       <div className="space-y-3 border-t border-border pt-5">
-        <p className="text-sm font-bold text-foreground">Ordenar por</p>
+        <p className="text-xs font-semibold text-foreground">Ordenar por</p>
         <div className="flex flex-wrap items-center gap-2">
           {(isStories ? ORDENAR_STORIES : isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
             <Chip key={o} label={o}
@@ -1325,7 +1325,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <h3 className="text-base font-bold">Resumo</h3>
+            <h3 className="text-sm font-semibold">Resumo</h3>
             {isStories ? (
               <div className="mt-4 space-y-4">
                 <ResumoItem icon={Sparkles} label="Quantidade" value={String(storyQ.data?.totalCount ?? 0)} />
@@ -1356,7 +1356,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
             const emptyMsg = isStories ? "Sem stories no período." : isLives ? "Sem lives no período." : "Nenhuma postagem no período.";
             return (
               <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-                <h3 className="text-base font-bold">{title}</h3>
+                <h3 className="text-sm font-semibold">{title}</h3>
                 {!hasTop ? (
                   <p className="mt-6 text-sm text-muted-foreground">{emptyMsg}</p>
                 ) : isStories ? (
@@ -1415,7 +1415,7 @@ function ResumoItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
       <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-base font-bold">{value}</p>
+        <p className="text-sm font-semibold">{value}</p>
       </div>
     </div>
   );
@@ -1468,8 +1468,8 @@ function EngajamentoChart({
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <span className="text-base font-bold">{totalLabel}</span>
-          <span className="text-base font-bold">{formatBRL(totalRevenue)}</span>
+          <span className="text-sm font-semibold">{totalLabel}</span>
+          <span className="text-sm font-semibold">{formatBRL(totalRevenue)}</span>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" />{metricLabel}</span>
@@ -1524,7 +1524,7 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
         <div className="md:col-span-2 space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-xl font-bold tracking-tight">{data?.profileViews ?? 0} Visitantes</h3>
+              <h3 className="text-base font-semibold tracking-tight">{data?.profileViews ?? 0} Visitantes</h3>
             </div>
             <div className="mt-6 h-56">
               {isLoading ? <Skeleton className="h-full w-full" /> : chart.length === 0 ? (
@@ -1556,12 +1556,12 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
               <span className="text-foreground">Visitantes do perfil</span>
               <span className="text-right">{data?.profileViews ?? 0}</span>
               <span className="text-right">{data?.profileUniqueViewers ?? 0}</span>
-              <span className="text-right font-bold">{(data?.profileViews ?? 0) + (data?.profileUniqueViewers ?? 0)}</span>
+              <span className="text-right font-semibold">{(data?.profileViews ?? 0) + (data?.profileUniqueViewers ?? 0)}</span>
             </div>
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <h3 className="text-base font-bold mb-4">Principais países</h3>
+            <h3 className="text-sm font-semibold mb-4">Principais países</h3>
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 text-sm text-muted-foreground border-b border-border pb-3">
               <span>País</span>
               <span className="text-right">Visitantes</span>
@@ -1581,7 +1581,7 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
                   </span>
                   <span className="text-right">{c.visits}</span>
                   <span className="text-right">{c.users}</span>
-                  <span className="text-right font-bold">{c.visits + c.users}</span>
+                  <span className="text-right font-semibold">{c.visits + c.users}</span>
                 </div>
               ))
             )}
@@ -1590,7 +1590,7 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
 
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <h3 className="text-base font-bold">Resumo</h3>
+            <h3 className="text-sm font-semibold">Resumo</h3>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <ResumoItem icon={Users} label="Visitantes" value={String(data?.profileViews ?? 0)} />
               <ResumoItem icon={UserPlus} label="Novos assinantes" value={String(data?.subscriptionsCount ?? 0)} />
@@ -1599,7 +1599,7 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <h3 className="text-base font-bold">Faturamento por produto</h3>
+            <h3 className="text-sm font-semibold">Faturamento por produto</h3>
             {(data?.byProduct ?? []).length === 0 ? (
               <p className="mt-6 text-sm text-muted-foreground">Sem vendas no período.</p>
             ) : (
@@ -1707,7 +1707,7 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
             <div className="md:col-span-2 space-y-5">
               <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-base font-bold">
+                  <h3 className="text-sm font-semibold">
                     {totalAssinantes} Assinantes, {formatBRL(stats.data?.faturamentoPeriodo ?? 0)}
                   </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -1796,7 +1796,7 @@ function AtividadeHeatmapCard({ range }: { range: { from: string; to: string } }
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Atividade dos assinantes</h3>
+      <h3 className="text-sm font-semibold">Atividade dos assinantes</h3>
       <p className="mt-1 text-sm text-muted-foreground">Distribuição de acessos dos assinantes por dia e horário</p>
       <div className="mt-5">
         {q.isLoading ? (
@@ -1845,7 +1845,7 @@ function HorasMaisAtivasCard({ range }: { range: { from: string; to: string } })
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Horas mais ativas</h3>
+      <h3 className="text-sm font-semibold">Horas mais ativas</h3>
       <div className="mt-4 h-56">
         {q.isLoading ? <Skeleton className="h-full w-full" /> : (
           <ResponsiveContainer width="100%" height="100%">
@@ -1879,7 +1879,7 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-base font-bold">Top assinantes</h3></div>
+      <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-sm font-semibold">Top assinantes</h3></div>
       <div className="mt-3">
         <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
       </div>
@@ -1888,14 +1888,14 @@ function TopAssinantesInline({ top, loading, filtro, onFiltro, full }: {
         <div className={`mt-4 ${full ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "space-y-3"}`}>
           {top.map((t, i) => (
             <div key={t.buyerId} className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
-              <span className="font-bold text-muted-foreground w-6">#{i + 1}</span>
+              <span className="font-semibold text-muted-foreground w-6">#{i + 1}</span>
               {t.avatarUrl ? <img src={t.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> :
                 <div className="h-9 w-9 rounded-full bg-muted grid place-items-center"><Users className="h-4 w-4 text-muted-foreground" /></div>}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{t.displayName ?? t.username ?? "Usuário"}</p>
                 {t.username && <p className="text-xs text-muted-foreground truncate">@{t.username}</p>}
               </div>
-              <span className="font-bold">{formatBRL(t.gross)}</span>
+              <span className="font-semibold">{formatBRL(t.gross)}</span>
             </div>
           ))}
         </div>}
@@ -1912,7 +1912,7 @@ function TopAssinantesGastoTotal({ top, loading, filtro, onFiltro }: {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
-        <h3 className="text-sm font-bold">Filtrar por</h3>
+        <h3 className="text-xs font-semibold">Filtrar por</h3>
         <div className="mt-3">
           <CardTabsRow tabs={TOP_ASSINANTES_CHIPS} active={filtro} onChange={onFiltro} />
         </div>
@@ -1968,7 +1968,7 @@ function ResumoAssinantesCard({ stats, loading }: {
   ];
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-base font-bold">Resumo</h3>
+      <h3 className="text-sm font-semibold">Resumo</h3>
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3">
@@ -1977,7 +1977,7 @@ function ResumoAssinantesCard({ stats, loading }: {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground truncate">{label}</p>
-              <p className="text-base font-bold truncate">{value}</p>
+              <p className="text-sm font-semibold truncate">{value}</p>
             </div>
           </div>
         ))}
@@ -1991,7 +1991,7 @@ function StatBox({ label, value, loading }: { label: string; value: number | str
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-bold">{loading ? "—" : value}</p>
+      <p className="mt-1 text-sm font-semibold">{loading ? "—" : value}</p>
     </div>
   );
 }
@@ -2027,7 +2027,7 @@ function AssinantesListInline({ range }: { range: { from: string; to: string } }
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] space-y-4">
       <div>
-        <h3 className="text-sm font-bold">Filtrar por</h3>
+        <h3 className="text-xs font-semibold">Filtrar por</h3>
         <div className="mt-3">
           <CardTabsRow tabs={ASSINANTES_LIST_CHIPS} active={filter} onChange={setFilter} />
         </div>
@@ -2174,7 +2174,7 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top postagem</h3></div>
+        <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary" /><h3 className="text-sm font-semibold">Top postagem</h3></div>
         <CardMenu items={[
           { label: "Exibir estatísticas", onSelect: () => chooseAction("stats") },
           { label: "Copiar link da publicação", onSelect: () => chooseAction("copy") },
@@ -2220,7 +2220,7 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">
-                  {top.pinned && <span className="mr-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">fixado</span>}
+                  {top.pinned && <span className="mr-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">fixado</span>}
                   {top.caption || "(sem legenda)"}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -2256,10 +2256,10 @@ function TopPostagemCard({ range }: { range: { from: string; to: string } }) {
               <p className="font-medium">{top.caption || "(sem legenda)"}</p>
               <p className="text-muted-foreground text-xs">{fullDate.format(new Date(top.publishedAt as string))}</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Curtidas</p><p className="text-lg font-bold">{top.likes}</p></div>
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Comentários</p><p className="text-lg font-bold">{top.comments}</p></div>
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Mimos</p><p className="text-lg font-bold">{top.tips}</p></div>
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-lg font-bold">{formatBRL(top.revenue)}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Curtidas</p><p className="text-sm font-semibold">{top.likes}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Comentários</p><p className="text-sm font-semibold">{top.comments}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Mimos</p><p className="text-sm font-semibold">{top.tips}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-sm font-semibold">{formatBRL(top.revenue)}</p></div>
               </div>
             </div>
           )}
@@ -2288,7 +2288,7 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top Live</h3></div>
+        <div className="flex items-center gap-2"><Radio className="h-5 w-5 text-primary" /><h3 className="text-sm font-semibold">Top Live</h3></div>
         <CardMenu items={[
           { label: "Exibir estatísticas", onSelect: () => setStatsOpen(true), disabled: !top },
         ]} />
@@ -2317,8 +2317,8 @@ function TopLiveCard({ range }: { range: { from: string; to: string } }) {
               <p className="font-medium">{top.title ?? "Live"}</p>
               <p className="text-muted-foreground text-xs">{fullDate.format(new Date(top.started_at as string))}</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Views</p><p className="text-lg font-bold">{top.total_views ?? 0}</p></div>
-                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-lg font-bold">{formatBRL(top.gross_cents ?? 0)}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Views</p><p className="text-sm font-semibold">{top.total_views ?? 0}</p></div>
+                <div className="rounded-lg bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Faturamento</p><p className="text-sm font-semibold">{formatBRL(top.gross_cents ?? 0)}</p></div>
               </div>
             </div>
           )}
@@ -2345,7 +2345,7 @@ function TopAssinantesCard({ range }: { range: { from: string; to: string } }) {
   const items = q.data ?? [];
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold">Top assinantes</h3></div>
+      <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h3 className="text-sm font-semibold">Top assinantes</h3></div>
       <div className="mt-4">
         <CardTabsRow tabs={TOP_ASSIN_TABS} active={tab} onChange={setTab} />
       </div>
@@ -2354,11 +2354,11 @@ function TopAssinantesCard({ range }: { range: { from: string; to: string } }) {
           <div className="mt-4 space-y-2">
             {items.slice(0, 5).map((t, i) => (
               <div key={t.buyerId} className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
-                <span className="font-bold text-muted-foreground w-6">#{i + 1}</span>
+                <span className="font-semibold text-muted-foreground w-6">#{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{t.displayName ?? t.username ?? "Usuário"}</p>
                 </div>
-                <span className="font-bold">{formatBRL(t.gross)}</span>
+                <span className="font-semibold">{formatBRL(t.gross)}</span>
               </div>
             ))}
           </div>
@@ -2391,20 +2391,20 @@ function SequenciaPanel() {
           <p className="text-sm text-muted-foreground">Sequência atual</p>
           <div className="mt-3 flex items-center justify-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-2xl font-bold text-primary">{isLoading ? "—" : `${data?.currentStreak ?? 0} dias`}</span>
+            <span className="text-lg font-semibold text-primary">{isLoading ? "—" : `${data?.currentStreak ?? 0} dias`}</span>
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-center">
           <p className="text-sm text-muted-foreground">Sequência mais longa</p>
           <div className="mt-3 flex items-center justify-center gap-2">
             <CalendarDays className="h-6 w-6 text-primary" />
-            <span className="text-2xl font-bold">{isLoading ? "—" : `${data?.longestStreak ?? 0} dias`}</span>
+            <span className="text-lg font-semibold">{isLoading ? "—" : `${data?.longestStreak ?? 0} dias`}</span>
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <h3 className="text-base font-bold">Atividade no mês</h3>
+        <h3 className="text-sm font-semibold">Atividade no mês</h3>
         <div className="mt-4 grid grid-cols-2 gap-4">
           <StatBox label="Postagens" value={data?.monthTotals.pubs ?? 0} loading={isLoading} />
           <StatBox label="Minutos em live" value={data?.monthTotals.live ?? 0} loading={isLoading} />
@@ -2457,7 +2457,7 @@ function SuperfasPanel() {
       <div className="rounded-3xl border border-border bg-background p-5 space-y-3">
         <div className="flex items-center gap-2">
           <UserPlus className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold">Superfãs — quem te adicionou</h3>
+          <h3 className="text-sm font-semibold">Superfãs — quem te adicionou</h3>
         </div>
         <p className="text-sm text-muted-foreground">
           Outros criadores e assinantes que te adicionaram como amigo. Ótimo
@@ -2499,7 +2499,7 @@ function SuperfasPanel() {
           <ul className="divide-y divide-border">
             {rows.map((r) => (
               <li key={r.friendshipId} className="flex items-center gap-3 py-3">
-                <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-white font-bold shrink-0">
+                <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-white font-semibold shrink-0">
                   {r.avatarUrl ? (
                     <img src={r.avatarUrl} alt={r.displayName ?? r.username} className="h-full w-full object-cover" />
                   ) : (
