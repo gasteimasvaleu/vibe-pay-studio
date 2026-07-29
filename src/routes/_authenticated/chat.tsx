@@ -273,11 +273,15 @@ function ThreadRow({
   thread,
   active,
   online,
+  partnerStatus,
 }: {
   thread: ThreadListItem;
   active: boolean;
   online: boolean;
+  partnerStatus?: UserStatusKind;
 }) {
+  const showInChat = partnerStatus === "in_chat";
+  const showOnline = !showInChat && partnerStatus !== "offline" && online;
   return (
     <li>
       <Link
@@ -300,10 +304,21 @@ function ThreadRow({
               {initials(thread.partnerUsername)}
             </div>
           )}
-          {online && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background" />
-          )}
+          {showInChat ? (
+            <span
+              title="No chat"
+              className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground ring-2 ring-background grid place-items-center"
+            >
+              <MessageCircle className="h-2.5 w-2.5" strokeWidth={3} />
+            </span>
+          ) : showOnline ? (
+            <span
+              title="Online"
+              className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background"
+            />
+          ) : null}
         </div>
+
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
