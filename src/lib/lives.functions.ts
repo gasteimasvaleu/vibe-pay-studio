@@ -225,6 +225,7 @@ export const getCreatorActiveLive = createServerFn({ method: "GET" })
   .inputValidator((data: { creatorId: string }) => data)
   .handler(async ({ data }) => {
     const admin = await loadAdmin();
+    await expireStaleLives(admin, { creatorId: data.creatorId });
     const { data: live } = await admin
       .from("live_sessions")
       .select("id, title, price_cents, started_at, viewers_peak")
