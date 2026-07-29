@@ -1,56 +1,45 @@
-# Plano: Padronizar todos os menus "..." com o estilo do `PublicationOptionsMenu`
+## Problema
 
-## Objetivo
-Aplicar em todos os menus de três pontinhos (`MoreVertical` / `MoreHorizontal`) o mesmo padrão visual do popover usado em `PublicationOptionsMenu` no feed: `Popover` arredondado (`rounded-3xl`), lista interna agrupada em `rounded-2xl` com divisores, ícones à esquerda, e ação destrutiva destacada em bloco separado `bg-destructive/10`. Nada de bottom sheet — só popover, como já é hoje no feed.
+O perfil de `monetisexy` mostra badge "LIVE" e botão "ASSISTIR LIVE" verdes mesmo com nenhuma transmissão em curso. Query em `live_sessions` mostra **12 sessões travadas** com `status='live'` e `ended_at IS NULL` para esse criador, a mais recente de 27/07 (2 dias atrás). O código de `endLive` só roda quando o criador clica em "encerrar" — se ele fechar a aba, cair a rede, ou o navegador travar, a sessão fica eterna. Não existe heartbeat, `beforeunload`, `pagehide`, nem expiração no lado do leitor.
 
-## Referência visual (padrão a ser replicado)
-`src/components/feed/PublicationOptionsMenu.tsx`:
-- `PopoverContent` com `w-[340px] rounded-3xl p-4 bg-card border border-border shadow-xl` (`align="end" sideOffset={8}`).
-- Lista principal em `rounded-2xl bg-background border border-border overflow-hidden divide-y divide-border`.
-- Cada item: `flex items-center gap-4 px-4 py-3.5`, ícone `h-6 w-6 strokeWidth={1.75}`, label `text-sm font-semibold text-foreground`, hover `hover:bg-foreground/5`.
-- Bloco destrutivo separado no fim: `mt-3 rounded-2xl bg-destructive/10 hover:bg-destructive/15` com ícone/label `text-destructive`.
+## Solução
 
-## Estratégia
-1. Criar um componente compartilhado `src/components/ui/action-popover.tsx` que exporta:
-   - `ActionPopover` (wrapper de `Popover`, aceita `trigger`, `align`, `open/onOpenChange`, `widthClass`).
-   - `ActionPopoverList` (container `divide-y` arredondado).
-   - `ActionPopoverItem` (botão com ícone + label; opcional `variant="default" | "destructive"`; suporta `disabled`).
-   - `ActionPopoverDestructive` (bloco separado `mt-3` com fundo `bg-destructive/10`).
-   - Reutilizar tokens semânticos — nunca cores fixas.
-2. Refatorar `PublicationOptionsMenu` para usar o novo componente sem mudar comportamento.
-3. Migrar cada menu existente que hoje usa `DropdownMenu` (ou `Popover` ad-hoc) para `ActionPopover`, preservando 100% das ações, permissões e handlers. Ajustar tamanho de ícones/padding em contextos menores (ex.: comentários, mensagens de chat) onde as opções são poucas: usar as mesmas classes utilitárias, apenas com `widthClass` menor (`w-[280px]`) quando adequado.
+Três camadas para nunca mais deixar live fantasma:
 
-## Arquivos a migrar (um por vez, sem alterar lógica)
-- `src/components/chat/ThreadActionsMenu.tsx` — ações de conversa (Ver perfil, Silenciar, Restringir, Denunciar, Limpar, Apagar). Destrutivo: "Apagar conversa".
-- `src/components/chat/MessageActionsMenu.tsx` — ações da mensagem (Responder, Copiar, Encaminhar, Denunciar, Apagar). Destrutivo: "Apagar mensagem" (dono) / "Denunciar" (viewer).
-- `src/components/feed/CommentsSheet.tsx` — menu do comentário (Denunciar, Apagar). Destrutivo conforme dono/viewer.
-- `src/routes/_authenticated/perfil.$username.tsx` — menu do header do perfil público. Já é `Popover`; só substituir pelo componente unificado.
-- `src/routes/_authenticated/profile.$username.tsx` — variante do perfil; unificar.
-- `src/routes/_authenticated/vault.tsx` — menu por item do cofre.
-- `src/routes/_authenticated/publicacoes-agendadas.tsx` — menu por publicação agendada.
-- `src/routes/_authenticated/my-monetisex-stats.tsx` — menu do card de destaque.
-- `src/routes/_authenticated/settings.security-menu.tsx` — menu por sessão/dispositivo.
-- `src/routes/_authenticated/settings.device-management.index.tsx` — menu por dispositivo.
+1. **Heartbeat + auto-end no publisher** (`live.$liveId.transmitir.tsx`)
+2. **Expiração no lado do leitor** (funções de leitura em `lives.functions.ts`)
+3. **Cleanup one-shot** das lives travadas atuais via migração SQL
 
-## Regras de migração
-- **Não alterar** os handlers, mutations, permissões, textos ou fluxos de confirmação (`AlertDialog`) existentes.
-- Manter `align="end"` e `sideOffset={8}` como padrão.
-- Manter o gatilho atual (o botão `MoreVertical`/`MoreHorizontal` de cada tela); só trocar o conteúdo do popover.
-- Quando uma tela tinha `DropdownMenuSeparator`, mapear para a divisão natural entre `ActionPopoverList` (ações neutras) e `ActionPopoverDestructive` (ação destrutiva). Se houver mais de um grupo neutro, usar `ActionPopoverList` extra com `mt-3`.
-- Para itens com estado (ex.: "Silenciado"), preservar a label e o ícone atuais.
-- Não introduzir `window.confirm`/`window.prompt`. Confirmações continuam via `AlertDialog` já existente em cada tela.
+## Passos
 
-## Escopo fora
-- Sem mudanças de RLS, server functions, rotas, dados ou regras de negócio.
-- Sem alteração no `PublicationCard` além, eventualmente, do import do menu.
-- Componentes `breadcrumb.tsx` e `pagination.tsx` do shadcn não são menus de ações e ficam fora.
+**1. Nova server function `pingLive` em `src/lib/lives.functions.ts`**
+- Recebe `{ liveId }`, valida `creator_id === userId`, atualiza `updated_at = now()` (via `admin.update({}, ...)` para forçar o trigger, ou `set updated_at = now()`).
+- Barata, sem side effects.
 
-## Critérios de aceitação
-- Todos os menus "..." abrem com o mesmo visual do menu atual do feed (popover arredondado, itens com ícone à esquerda, ação destrutiva destacada).
-- Todas as ações continuam funcionando exatamente como antes (mesmos handlers, mesmos toasts, mesmos diálogos de confirmação).
-- Responsivo: largura fixa (`w-[340px]` ou `w-[280px]` para menus pequenos), sem estourar a viewport em mobile — o `Popover` do Radix já respeita colisão de bordas.
-- Nenhum warning novo no console; typecheck limpo.
+**2. Novo helper `expireStaleLives(admin)` em `src/lib/lives.functions.ts`**
+- Marca como `ended` (status + `ended_at = updated_at`, zera `cf_webrtc_url`) toda linha com `status='live' AND updated_at < now() - interval '2 minutes'`.
+- Chamado no início de `getCreatorActiveLive`, `getActiveLivesForCreators` e `listActiveLives`, escopado por `creator_id`/`creator_ids` quando possível.
+- Efeito: mesmo sem heartbeat (ex: sessão antiga), o próprio fetch da badge encerra o registro em 2 min.
 
-## Verificação
-- Build/typecheck automáticos.
-- Abrir cada menu no preview (feed, chat lista, chat mensagem, comentário, perfil, vault, agendadas, stats, sessões, dispositivos) e conferir visual + ação principal + ação destrutiva.
+**3. Instrumentar `live.$liveId.transmitir.tsx`**
+- `setInterval` de 15 s chamando `pingLive({ liveId })` enquanto a página estiver montada e a live estiver em `live`/`starting`.
+- Listener `pagehide` (+ fallback `beforeunload`) que dispara `endLive` via `navigator.sendBeacon` para uma rota `/api/public/live-end` OU chamada síncrona ao server fn (sendBeacon é mais confiável no fechamento da aba). Preferência: criar rota pública `src/routes/api/public/live-end.ts` que valida `liveId + token curto (HMAC do liveId+creator_id)` gerado no `startLive` e devolvido para o cliente, evitando exigir sessão no beacon.
+- Alternativa mais simples se aceitar 2 min de atraso: pular o beacon; contar só com heartbeat + expiração. Recomendo começar pela versão simples (sem rota pública), porque a camada 2 já garante limpeza automática.
+
+**4. Migração SQL de limpeza**
+- `UPDATE public.live_sessions SET status='ended', ended_at = COALESCE(ended_at, updated_at, now()), cf_webrtc_url = NULL WHERE status='live' AND updated_at < now() - interval '5 minutes';`
+- Fecha as 12 sessões travadas do monetisexy e qualquer outra semelhante.
+
+## Detalhes técnicos
+
+- `live_sessions.updated_at` já existe (visto na query) — assume-se trigger padrão de `updated_at`. Se não houver, o `pingLive` faz `update({ updated_at: new Date().toISOString() })` explicitamente.
+- `expireStaleLives` roda com `admin` (service role) — bypass de RLS ok, é operação de manutenção.
+- Janela de 2 min: heartbeat de 15 s dá 8 tentativas antes de expirar; tolera latência/pausa breve sem falso positivo.
+- Nenhuma alteração de UI. `LiveAvatarBadge` e o botão "ASSISTIR LIVE" continuam iguais — só passam a receber `null` quando a live realmente acabou.
+- Escopo restrito a lives; não mexe em Stories, chamadas de vídeo, ou pagamentos.
+
+## Arquivos afetados
+
+- `src/lib/lives.functions.ts` — adicionar `pingLive`, `expireStaleLives`, chamar expire nos 3 readers.
+- `src/routes/_authenticated/live.$liveId.transmitir.tsx` — heartbeat + `pagehide`.
+- `supabase/migrations/<timestamp>_expire_stale_lives.sql` — cleanup imediato.
