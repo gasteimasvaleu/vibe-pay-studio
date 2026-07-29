@@ -508,6 +508,11 @@ function ChatThreadView() {
     try {
       setUnlockingId(pendingAction.id);
       if (method === "WALLET") {
+  const confirmActionPayment = async (method: PaymentMethod, savedCardId: string | null) => {
+    if (!pendingAction) return;
+    try {
+      setUnlockingId(pendingAction.id);
+      if (method === "WALLET") {
         if (pendingAction.type === "call") {
           await walletPay({ data: { kind: "video_call", callId: pendingAction.id } });
         } else {
@@ -520,10 +525,21 @@ function ChatThreadView() {
         toast.success("Pagamento confirmado");
         return;
       }
+      const payload = { method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null };
       const res =
         pendingAction.type === "call"
-          ? await videoCallPayFn({ data: { callId: pendingAction.id, method } })
-          : await paidDmPayFn({ data: { requestId: pendingAction.id, method } });
+          ? await videoCallPayFn({ data: { callId: pendingAction.id, ...payload } })
+          : await paidDmPayFn({ data: { requestId: pendingAction.id, ...payload } });
+      if (res.paidImmediately) {
+        if (pendingAction.type === "paidDm") {
+          setDeliveringPaidDm({ requestId: pendingAction.id });
+        }
+        setPendingAction(null);
+        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        toast.success("Pagamento confirmado");
+        return;
+      }
       if (pendingAction.type === "paidDm") {
         setLastPaidDmRequestId(pendingAction.id);
       }
@@ -542,8 +558,6 @@ function ChatThreadView() {
       setUnlockingId(null);
     }
   };
-
-  function openPaymentForCallInvite(messageId: string, callId: string, priceCents: number) {
     setPendingAction({ type: "call", id: callId, priceCents });
   }
 
