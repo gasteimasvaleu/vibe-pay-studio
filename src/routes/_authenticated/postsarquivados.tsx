@@ -5,6 +5,7 @@ import { ArrowLeft, Archive, Loader2 } from "lucide-react";
 import { getArchivedPublications } from "@/lib/publications.functions";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { PublicationCard } from "@/components/feed/PublicationCard";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/postsarquivados")({
   head: () => ({
@@ -13,17 +14,51 @@ export const Route = createFileRoute("/_authenticated/postsarquivados")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  beforeLoad: async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) return { activeProfile: null };
+
+    const [{ data: profile }, { data: creatorProfiles }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("active_profile_id")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("creator_profiles")
+        .select("id, kind, username, display_name, avatar_url")
+        .eq("user_id", user.id),
+    ]);
+
+    const rows = (creatorProfiles ?? []) as Array<{
+      id: string;
+      kind: "paid" | "free";
+      username: string;
+      display_name: string | null;
+      avatar_url: string | null;
+    }>;
+
+    const activeProfile =
+      rows.find((row) => row.id === profile?.active_profile_id) ??
+      rows.find((row) => row.kind === "paid") ??
+      rows[0] ??
+      null;
+
+    return { activeProfile };
+  },
   component: ArchivedPostsPage,
 });
 
-const QUERY_KEY = ["archived-posts"] as const;
-
 function ArchivedPostsPage() {
   const router = useRouter();
+  const { activeProfile } = Route.useRouteContext();
   const fetchArchived = useServerFn(getArchivedPublications);
 
+  const queryKey = ["archived-posts", activeProfile?.id ?? "none"] as const;
+
   const query = useInfiniteQuery({
-    queryKey: QUERY_KEY,
+    queryKey,
     queryFn: ({ pageParam }) =>
       fetchArchived({ data: { limit: 10, cursor: pageParam ?? undefined } }),
     initialPageParam: undefined as string | undefined,
@@ -50,9 +85,16 @@ function ArchivedPostsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">
-            Posts arquivados
-          </h1>
+          <div className="flex flex-col items-center min-w-0">
+            <h1 className="text-base font-semibold text-foreground truncate">
+              Posts arquivados
+            </h1>
+            {activeProfile && (
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {activeProfile.kind === "free" ? "Perfil gratuito" : "Perfil pago"}
+              </span>
+            )}
+          </div>
           <span className="w-9" />
         </div>
       </header>
@@ -65,7 +107,7 @@ function ArchivedPostsPage() {
         ) : items.length > 0 ? (
           <>
             {items.map((item) => (
-              <PublicationCard key={item.id} item={item} queryKey={QUERY_KEY} />
+              <PublicationCard key={item.id} item={item} queryKey={queryKey} />
             ))}
             <div ref={sentinelRef} className="h-8" />
             {query.isFetchingNextPage && (
@@ -91,6 +133,15 @@ function ArchivedPostsPage() {
               Posts que você arquivar aparecerão aqui e continuarão ocultos do
               feed e do seu perfil.
             </p>
+            {activeProfile && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Exibindo posts do{" "}
+                <span className="font-medium text-foreground">
+                  {activeProfile.kind === "free" ? "perfil gratuito" : "perfil pago"}
+                </span>
+                .
+              </p>
+            )}
           </div>
         )}
       </main>
