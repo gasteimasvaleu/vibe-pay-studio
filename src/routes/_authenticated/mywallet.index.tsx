@@ -393,6 +393,31 @@ function MyWalletPage() {
                       className="h-12 rounded-md bg-muted border-0 px-5"
                     />
                   </div>
+                  <div className="grid grid-cols-[1fr_100px] gap-3">
+                    <Input
+                      inputMode="numeric"
+                      placeholder="CEP"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(formatPostalCode(e.target.value))}
+                      className="h-12 rounded-md bg-muted border-0 px-5"
+                    />
+                    <Input
+                      inputMode="numeric"
+                      placeholder="Nº"
+                      value={addressNumber}
+                      onChange={(e) =>
+                        setAddressNumber(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
+                      className="h-12 rounded-md bg-muted border-0 px-5"
+                    />
+                  </div>
+                  <Input
+                    inputMode="tel"
+                    placeholder="TELEFONE COM DDD"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
+                    className="h-12 rounded-md bg-muted border-0 px-5"
+                  />
                   <div className="flex justify-end pt-2">
                     <Button
                       onClick={() => addCardMut.mutate()}
