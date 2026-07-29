@@ -712,8 +712,7 @@ function PerfilPage() {
                 )}
 
               </nav>
-            </PopoverContent>
-          </Popover>
+          </ActionPopover>
           )}
 
         </div>
