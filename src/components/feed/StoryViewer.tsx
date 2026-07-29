@@ -328,19 +328,23 @@ export function StoryViewer({
 
           )}
 
-          {/* Tap zones */}
-          <button
-            type="button"
-            className="absolute inset-y-0 left-0 w-1/3 z-10"
-            onClick={back}
-            aria-label="Anterior"
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 w-1/3 z-10"
-            onClick={advance}
-            aria-label="Próximo"
-          />
+          {/* Tap zones — desabilitadas enquanto o story estiver bloqueado */}
+          {current.unlocked && (
+            <>
+              <button
+                type="button"
+                className="absolute inset-y-0 left-0 w-1/3 z-10"
+                onClick={back}
+                aria-label="Anterior"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 w-1/3 z-10"
+                onClick={advance}
+                aria-label="Próximo"
+              />
+            </>
+          )}
         </div>
 
         {/* Caption + reply / subscribe CTA */}
