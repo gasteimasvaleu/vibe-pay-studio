@@ -14,16 +14,7 @@ const PAID_STATUSES = ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"];
 
 export function CardCheckout({ paymentIntentId, invoiceUrl, onPaid, onCancel }: Props) {
   const [status, setStatus] = useState<string>("PENDING");
-  const [opened, setOpened] = useState(false);
   const pollStatus = useServerFn(getPaymentIntentStatus);
-
-  useEffect(() => {
-    // abre automaticamente na primeira renderização
-    if (!opened) {
-      window.open(invoiceUrl, "_blank", "noopener,noreferrer");
-      setOpened(true);
-    }
-  }, [invoiceUrl, opened]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +44,7 @@ export function CardCheckout({ paymentIntentId, invoiceUrl, onPaid, onCancel }: 
       <header>
         <h3 className="text-lg font-bold text-foreground">Pagamento com cartão</h3>
         <p className="text-sm text-muted-foreground">
-          Uma nova aba foi aberta com o checkout seguro do Asaas. Complete o pagamento por lá.
+          Abra o checkout seguro do Asaas para concluir. A tela atualiza sozinha após a confirmação.
         </p>
       </header>
 
