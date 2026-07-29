@@ -117,24 +117,24 @@ function SubscriptionPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-5">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
         {/* Card resumo */}
-        <section className="rounded-3xl bg-card p-6 md:p-8 shadow-card">
+        <section className="rounded-3xl bg-card p-5 shadow-card">
           <p className="text-sm text-muted-foreground">Assinatura Mensal</p>
-          <p className="mt-1 text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+          <p className="mt-1 text-2xl font-semibold text-foreground tracking-tight">
             {formatBRL(monthly)}
           </p>
 
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Trimestral</p>
-              <p className="mt-1 text-xl md:text-2xl font-bold text-foreground">
+              <p className="mt-1 text-base font-semibold text-foreground">
                 {formatBRL(quarterly)}
               </p>
             </div>
             <div className="border-l border-border pl-4">
               <p className="text-sm text-muted-foreground">Semestral</p>
-              <p className="mt-1 text-xl md:text-2xl font-bold text-foreground">
+              <p className="mt-1 text-base font-semibold text-foreground">
                 {formatBRL(semester)}
               </p>
             </div>
@@ -143,7 +143,7 @@ function SubscriptionPage() {
 
         {/* Mensal */}
         <div>
-          <div className="rounded-2xl bg-muted px-5 py-3">
+          <div className="rounded-2xl bg-muted px-4 py-2.5">
             <label className="text-xs text-muted-foreground">
               Assinatura Mensal
             </label>
@@ -215,7 +215,7 @@ function DiscountField({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="rounded-2xl bg-muted px-5 py-3">
+    <div className="rounded-2xl bg-muted px-4 py-2.5">
       <label className="text-xs text-muted-foreground">{label}</label>
       <div className="flex items-center gap-1">
         <Input

@@ -60,7 +60,7 @@ export function PromotionProgress({
   const pct = Math.min(100, Math.max(0, (step / totalSteps) * 100));
   return (
     <div className="mb-6">
-      <div className="h-1.5 rounded-md bg-muted overflow-hidden">
+      <div className="h-1 rounded-md bg-muted overflow-hidden">
         <div
           className="h-full bg-gradient-primary transition-all duration-300"
           style={{ width: `${pct}%` }}
@@ -80,9 +80,9 @@ export function PromotionHeader({
   compact?: boolean;
 }) {
   return (
-    <div className={compact ? "mb-5" : "mb-8"}>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-      {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
+    <div className={compact ? "mb-4" : "mb-6"}>
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">{title}</h1>
+      {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }

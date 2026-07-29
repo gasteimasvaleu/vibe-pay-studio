@@ -301,7 +301,7 @@ function BancoPage() {
                 {overviewQuery.isLoading ? (
                   <div className="mt-1 h-8 w-32 rounded bg-muted animate-pulse" />
                 ) : (
-                  <p className="text-3xl font-bold tracking-tight text-foreground">
+                  <p className="text-xl font-semibold tracking-tight text-foreground">
                     {formatBRL(c.released)}
                   </p>
                 )}

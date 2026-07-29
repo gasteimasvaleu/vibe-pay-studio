@@ -144,7 +144,7 @@ function RecarregarPage() {
               >
                 <Minus className="h-5 w-5" />
               </button>
-              <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground tabular-nums">
+              <span className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                 {currency.format(amount)}
               </span>
               <button
