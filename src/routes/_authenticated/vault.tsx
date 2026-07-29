@@ -610,8 +610,9 @@ function VaultPage() {
                 </button>
               )}
               {activeTab.kind === "category" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <ActionPopover
+                  widthClass="w-[280px]"
+                  trigger={
                     <button
                       type="button"
                       className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -619,9 +620,12 @@ function VaultPage() {
                     >
                       <MoreVertical className="h-5 w-5" />
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
+                  }
+                >
+                  <ActionPopoverList>
+                    <ActionPopoverItem
+                      icon={<Pencil className="h-5 w-5" strokeWidth={1.75} />}
+                      label="Renomear"
                       onClick={() => {
                         const name = window.prompt("Novo nome da categoria", activeTab.name);
                         if (name && name.trim() && name !== activeTab.name) {
@@ -629,21 +633,18 @@ function VaultPage() {
                           setActiveTab({ ...activeTab, name: name.trim() });
                         }
                       }}
-                    >
-                      Renomear
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => {
-                        if (window.confirm(`Excluir a categoria "${activeTab.name}"?`)) {
-                          deleteCatMut.mutate(activeTab.id);
-                        }
-                      }}
-                    >
-                      Excluir categoria
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    />
+                  </ActionPopoverList>
+                  <ActionPopoverDestructive
+                    icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+                    label="Excluir categoria"
+                    onClick={() => {
+                      if (window.confirm(`Excluir a categoria "${activeTab.name}"?`)) {
+                        deleteCatMut.mutate(activeTab.id);
+                      }
+                    }}
+                  />
+                </ActionPopover>
               )}
             </div>
           </div>
