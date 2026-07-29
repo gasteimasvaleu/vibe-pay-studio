@@ -681,6 +681,7 @@ export const getAlcance = createServerFn({ method: "GET" })
     const follows = ("data" in followRes ? followRes.data : []) ?? [];
     const subsAll = ("data" in subsAllRes ? subsAllRes.data : []) ?? [];
     const subsPeriod = ("data" in subsPeriodRes ? subsPeriodRes.data : []) ?? [];
+    const txRows = ("data" in txRes ? txRes.data : []) ?? [];
 
     const profVisitors = new Set((profViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
     const pubVisitors = new Set((pubViews as { viewer_id: string | null }[]).map(v => v.viewer_id).filter(Boolean));
