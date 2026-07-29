@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useOnlineUsers } from "@/hooks/usePresenceHeartbeat";
+import { getUsersStatus, type UserStatusKind } from "@/lib/user-status.functions";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
