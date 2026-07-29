@@ -180,13 +180,13 @@ function MyWalletPage() {
         },
       });
     },
-    onSuccess: () => {
-      toast.success("Cartão adicionado");
+    onSuccess: (res: any) => {
+      toast.success(res?.reused ? "Cartão já cadastrado — reativado na sua conta" : "Cartão adicionado");
       setOpen(false);
       resetCardForm();
       qc.invalidateQueries({ queryKey: ["saved-cards"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar cartão"),
+    onError: (e: any) => toast.error(translatePaymentError(e, "Erro ao salvar cartão")),
   });
 
   const deleteMut = useMutation({
