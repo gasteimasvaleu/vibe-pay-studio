@@ -642,6 +642,95 @@ function SubscriptionsPage() {
           )}
         </div>
       </main>
+
+      <AlertDialog
+        open={!!reactivateFor}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReactivateFor(null);
+            setChosenCard(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reativar renovação automática</AlertDialogTitle>
+            <AlertDialogDescription>
+              Escolha um cartão salvo para reativar a cobrança automática deste
+              plano ao fim do período atual.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {savedCards === null ? (
+            <p className="py-4 text-sm text-muted-foreground">
+              Carregando cartões…
+            </p>
+          ) : savedCards.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+              Você não possui cartões salvos. Adicione um cartão em{" "}
+              <button
+                type="button"
+                className="text-primary underline"
+                onClick={() => {
+                  setReactivateFor(null);
+                  navigate({ to: "/mywallet" });
+                }}
+              >
+                Minha carteira
+              </button>
+              .
+            </div>
+          ) : (
+            <div className="space-y-2 py-2">
+              {savedCards.map((c) => {
+                const active = chosenCard === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setChosenCard(c.id)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                      active
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-accent",
+                    )}
+                  >
+                    <span>
+                      {c.brand} •••• {c.last4}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {String(c.expMonth).padStart(2, "0")}/{String(c.expYear).slice(-2)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                !chosenCard ||
+                !reactivateFor ||
+                reactivateMutation.isPending
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                if (!chosenCard || !reactivateFor) return;
+                reactivateMutation.mutate({
+                  subscriptionId: reactivateFor.id,
+                  savedCardId: chosenCard,
+                });
+              }}
+            >
+              {reactivateMutation.isPending ? "Reativando…" : "Reativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
