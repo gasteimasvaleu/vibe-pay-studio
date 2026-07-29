@@ -699,6 +699,7 @@ function TransmitirPage() {
           </div>
         </div>
       </div>
+      {endDialog}
     </div>
   );
 }
