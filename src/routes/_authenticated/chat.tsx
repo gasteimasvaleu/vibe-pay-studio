@@ -81,6 +81,19 @@ function ChatLayout() {
     queryFn: () => listThreadsFn(),
   });
 
+  const getUsersStatusFn = useServerFn(getUsersStatus);
+  const partnerIds = useMemo(
+    () => Array.from(new Set(threads.map((t) => t.partnerId))),
+    [threads],
+  );
+  const { data: statuses = {} } = useQuery({
+    queryKey: ["user-status", "partners", partnerIds.join(",")],
+    queryFn: () => getUsersStatusFn({ data: { userIds: partnerIds } }),
+    enabled: partnerIds.length > 0,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMeId(data.session?.user.id ?? null));
   }, []);
