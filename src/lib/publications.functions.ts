@@ -1161,12 +1161,16 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
       const client = context.supabase;
       const currentUserId = context.userId;
 
+      const activeProfileId = await getActiveProfileIdFor(client, currentUserId);
+      if (!activeProfileId) return { items: [], nextCursor: null };
+
       let query = client
         .from("publications")
         .select(
-          "id, author_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
+          "id, author_id, creator_profile_id, caption, visibility, price_cents, challenge_cents, pinned, comments_disabled, expires_at, published_at, audio_url, archived_at, preview_url",
         )
         .eq("author_id", currentUserId)
+        .eq("creator_profile_id", activeProfileId)
         .not("archived_at", "is", null)
         .order("archived_at", { ascending: false })
         .limit(limit + 1);
