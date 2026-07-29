@@ -233,6 +233,71 @@ function RecarregarPage() {
               </div>
             </section>
 
+            {method === "CREDIT_CARD" && (
+              <section className="mt-8">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
+                  Cartão
+                </h2>
+                {cardsQuery.isLoading ? (
+                  <p className="mt-3 text-xs text-muted-foreground">Carregando cartões salvos…</p>
+                ) : savedCards.length === 0 ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    Você ainda não tem cartão salvo. Ao continuar, você usará o checkout seguro da Asaas e poderá salvar o cartão em{" "}
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2"
+                      onClick={() => router.navigate({ to: "/mywallet" })}
+                    >
+                      Minha carteira
+                    </button>{" "}
+                    para próximas recargas em 1 clique.
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {savedCards.map((c) => {
+                      const active = savedCardId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSavedCardId(active ? null : c.id)}
+                          className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                            active ? "border-primary bg-primary/5" : "border-border hover:bg-accent"
+                          }`}
+                        >
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
+                            <CreditCard className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-foreground">
+                              {c.brand ?? "Cartão"} •••• {c.last4}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {c.holderName} · {c.expMonth}/{c.expYear.slice(-2)}
+                            </span>
+                          </span>
+                          {active && <Check className="h-4 w-4 text-primary" />}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSavedCardId(null)}
+                      className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                        savedCardId === null ? "border-primary bg-primary/5" : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
+                        <Plus className="h-4 w-4" />
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">Usar novo cartão</span>
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
+
+
             <section className="mt-8">
               <h2 className="text-lg font-bold tracking-tight text-foreground">
                 Resumo
