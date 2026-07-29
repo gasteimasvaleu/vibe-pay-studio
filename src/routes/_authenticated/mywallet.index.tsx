@@ -101,6 +101,9 @@ function MyWalletPage() {
   const [cpf, setCpf] = useState("");
   const [validity, setValidity] = useState("");
   const [cvv, setCvv] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [addressNumber, setAddressNumber] = useState("");
+  const [phone, setPhone] = useState("");
 
   const formatNumber = (v: string) =>
     v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
@@ -116,6 +119,19 @@ function MyWalletPage() {
     if (d.length < 3) return d;
     return `${d.slice(0, 2)}/${d.slice(2)}`;
   };
+  const formatPostalCode = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 8);
+    if (d.length <= 5) return d;
+    return `${d.slice(0, 5)}-${d.slice(5)}`;
+  };
+  const formatPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d.length ? `(${d}` : "";
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10)
+      return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
 
   const resetCardForm = () => {
     setNumber("");
@@ -123,12 +139,17 @@ function MyWalletPage() {
     setCpf("");
     setValidity("");
     setCvv("");
+    setPostalCode("");
+    setAddressNumber("");
+    setPhone("");
   };
 
   const addCardMut = useMutation({
     mutationFn: async () => {
       const digits = number.replace(/\D/g, "");
       const cpfDigits = cpf.replace(/\D/g, "");
+      const cepDigits = postalCode.replace(/\D/g, "");
+      const phoneDigits = phone.replace(/\D/g, "");
       const [mm, yy] = validity.split("/");
       if (
         digits.length < 13 ||
@@ -140,6 +161,10 @@ function MyWalletPage() {
       ) {
         throw new Error("Preencha todos os campos corretamente");
       }
+      if (cepDigits.length !== 8) throw new Error("Informe um CEP válido (8 dígitos)");
+      if (!addressNumber.trim()) throw new Error("Informe o número do endereço");
+      if (phoneDigits.length < 10 || phoneDigits.length > 11)
+        throw new Error("Informe um telefone válido com DDD");
       const expYear = `20${yy}`;
       return tokenize({
         data: {
@@ -149,8 +174,9 @@ function MyWalletPage() {
           expiryYear: expYear,
           ccv: cvv,
           cpf: cpfDigits,
-          postalCode: "00000000",
-          addressNumber: "0",
+          postalCode: cepDigits,
+          addressNumber: addressNumber.trim(),
+          phone: phoneDigits,
         },
       });
     },
