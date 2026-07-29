@@ -72,6 +72,16 @@ async function ensureCustomerId(
     return profile.asaas_customer_id as string;
   }
 
+  // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
+  const existing = await asaas.findCustomerByCpf(cpf);
+  if (existing?.id) {
+    await supabase
+      .from("profiles")
+      .update({ asaas_customer_id: existing.id })
+      .eq("user_id", userId);
+    return existing.id;
+  }
+
   const { data: userRes } = await supabase.auth.getUser();
   const email = userRes?.user?.email ?? null;
   const customer = await asaas.createCustomer({
