@@ -671,6 +671,7 @@ function TransmitirPage() {
             <LiveDonorsPanel liveId={liveId} variant="sheet" className="text-foreground bg-card mt-3 rounded-lg" />
           </SheetContent>
         </Sheet>
+        {endDialog}
       </div>
     );
   }
