@@ -50,6 +50,8 @@ import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
 import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
 import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
+import { useIsUserOnline } from "@/hooks/useIsUserOnline";
+import { getLastSeen } from "@/lib/presence.functions";
 import { Radio } from "lucide-react";
 
 
