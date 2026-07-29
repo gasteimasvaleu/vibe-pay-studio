@@ -342,12 +342,15 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
       ? Math.round(active.reduce((a, s) => a + (s.price_cents_paid ?? 0), 0) / active.length)
       : 0;
 
-    // No banco atual não temos flag de renovação vs. novo; consideramos "renovação"
-    // uma segunda ou N-ésima assinatura do mesmo subscriber_id nesse criador.
-    const period = periodRes.data ?? [];
+    // Ignora intents PIX abandonados (status pending) — só conta assinaturas efetivamente pagas.
+    const PAID_STATUSES = new Set(["active", "canceled", "expired"]);
+    const period = (periodRes.data ?? []).filter(s => PAID_STATUSES.has(s.status as string));
+    const uniqueSubsInPeriod = new Set<string>();
     const seen = new Set<string>();
     const historyBefore = new Set(
-      all.filter(s => new Date(s.created_at as string) < new Date(data.from)).map(s => s.subscriber_id as string),
+      all
+        .filter(s => PAID_STATUSES.has(s.status as string) && new Date(s.created_at as string) < new Date(data.from))
+        .map(s => s.subscriber_id as string),
     );
     let novos = 0;
     let renovacoes = 0;
@@ -355,6 +358,7 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
 
     for (const s of period) {
       const sid = s.subscriber_id as string;
+      uniqueSubsInPeriod.add(sid);
       const isRenewal = historyBefore.has(sid) || seen.has(sid);
       seen.add(sid);
       if (isRenewal) renovacoes += 1;
@@ -375,11 +379,13 @@ export const getAssinantesStats = createServerFn({ method: "GET" })
       totalHistorico: total,
       novosPeriodo: novos,
       renovacoesPeriodo: renovacoes,
+      assinantesUnicosPeriodo: uniqueSubsInPeriod.size,
       faturamentoPeriodo: period.reduce((a, s) => a + (s.price_cents_paid ?? 0), 0),
       ticketMedio: ticketAvg,
       daily,
     };
   });
+
 
 /**
  * Ranking dos maiores assinantes por gasto no criador (no período).
