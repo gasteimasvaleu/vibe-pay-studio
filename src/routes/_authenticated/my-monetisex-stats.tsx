@@ -1593,10 +1593,28 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
             <h3 className="text-base font-bold">Resumo</h3>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <ResumoItem icon={Users} label="Visitantes" value={String(data?.profileViews ?? 0)} />
-              <ResumoItem icon={UserPlus} label="Assinaturas" value={String(data?.subscriptionsCount ?? 0)} />
-              <ResumoItem icon={DollarSign} label="Assinaturas" value={formatBRL(data?.subscriptionsRevenueCents ?? 0)} />
+              <ResumoItem icon={UserPlus} label="Novos assinantes" value={String(data?.subscriptionsCount ?? 0)} />
               <ResumoItem icon={RefreshCw} label="Renovações" value={String(data?.renewalsCount ?? 0)} />
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-base font-bold">Faturamento por produto</h3>
+            {(data?.byProduct ?? []).length === 0 ? (
+              <p className="mt-6 text-sm text-muted-foreground">Sem vendas no período.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {(data?.byProduct ?? []).map(p => (
+                  <div key={p.kind} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate text-foreground">{KIND_LABEL[p.kind] ?? p.kind}</span>
+                    <span className="flex items-center gap-3 text-muted-foreground">
+                      <span className="text-xs">{p.count}×</span>
+                      <span className="font-semibold text-foreground">{formatBRL(p.grossCents)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
