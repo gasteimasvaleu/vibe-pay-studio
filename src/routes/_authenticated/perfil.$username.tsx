@@ -762,20 +762,29 @@ function PerfilPage() {
 
           {/* Avatar */}
           <div className="absolute left-4 md:left-6 -bottom-10">
-            <LiveAvatarBadge creatorId={profile.userId}>
-              <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  profile.username.slice(0, 1).toUpperCase()
-                )}
-              </div>
-            </LiveAvatarBadge>
+            <div className="relative">
+              <LiveAvatarBadge creatorId={profile.userId}>
+                <div className="h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-background bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-3xl font-black shadow-xl shadow-purple-900/40 overflow-hidden">
+                  {profile.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    profile.username.slice(0, 1).toUpperCase()
+                  )}
+                </div>
+              </LiveAvatarBadge>
+              {isOnlineNow && (
+                <span
+                  aria-label="Online agora"
+                  className="pointer-events-none absolute bottom-1 right-1 h-4 w-4 md:h-4.5 md:w-4.5 rounded-full bg-emerald-500 ring-4 ring-background"
+                />
+              )}
+            </div>
           </div>
+
 
 
           {/* Stats */}
