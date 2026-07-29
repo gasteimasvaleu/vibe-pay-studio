@@ -6,6 +6,11 @@ type AsaasWebhookPayload = {
   payment?: {
     id: string;
     status: string;
+    value?: number;
+    netValue?: number;
+    dueDate?: string;
+    invoiceUrl?: string | null;
+    subscription?: string | null;
     externalReference?: string | null;
   };
   transfer?: {
@@ -249,18 +254,29 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           return new Response("ok", { status: 200 });
         }
 
-        // ---- Fluxo de Assinaturas ----
-        // Auto-renovação está DESATIVADA (tokenização Asaas ainda não liberada).
-        // O app não cria mais registros em /v3/subscriptions; qualquer evento
-        // SUBSCRIPTION_* que chegue aqui é de dado antigo — apenas logamos e
-        // marcamos como processado, sem alterar estado.
+        // ---- Fluxo de Assinaturas recorrentes ----
+        // Eventos SUBSCRIPTION_* refletem alterações no próprio recurso do
+        // Asaas (cancelamento, inativação). Cobranças recorrentes chegam como
+        // PAYMENT_* com `payment.subscription` preenchido — tratamos abaixo.
         const subscriptionId = payload.subscription?.id;
         if (subscriptionId && eventType.startsWith("SUBSCRIPTION_")) {
-          console.log("[asaas webhook] subscription event ignored (auto-renew disabled)", {
-            eventType,
-            subscriptionId,
-            externalRef,
-          });
+          try {
+            if (
+              eventType === "SUBSCRIPTION_DELETED" ||
+              eventType === "SUBSCRIPTION_INACTIVATED" ||
+              eventType === "SUBSCRIPTION_ENDED"
+            ) {
+              await supabaseAdmin
+                .from("subscriptions")
+                .update({
+                  auto_renew: false,
+                  cancelled_at: new Date().toISOString(),
+                })
+                .eq("asaas_subscription_id", subscriptionId);
+            }
+          } catch (e) {
+            console.error("[asaas webhook] subscription event error", e);
+          }
           await supabaseAdmin
             .from("asaas_events")
             .update({ processed_at: new Date().toISOString() })
@@ -279,12 +295,47 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
         }
 
 
-        // localiza intent
-        const { data: intent } = await supabaseAdmin
+        // localiza intent (pode não existir ainda em cobranças recorrentes)
+        let { data: intent } = await supabaseAdmin
           .from("payment_intents")
           .select("id, processed_at, metadata")
           .eq("asaas_payment_id", paymentId)
           .maybeSingle();
+
+        // Cobrança recorrente do Asaas: `payment.subscription` traz o id da
+        // recorrência. Se ainda não temos intent, criamos um novo apontando
+        // para a assinatura local — assim `applyPaidIntent` reconcilia igual.
+        const paymentSubscriptionId = payload.payment?.subscription ?? null;
+        if (!intent && paymentSubscriptionId) {
+          const { data: localSub } = await supabaseAdmin
+            .from("subscriptions")
+            .select("id, subscriber_id, plan, price_cents_paid")
+            .eq("asaas_subscription_id", paymentSubscriptionId)
+            .maybeSingle();
+          if (localSub) {
+            const { data: newIntent } = await (supabaseAdmin as any)
+              .from("payment_intents")
+              .insert({
+                provider: "asaas",
+                event_id: paymentId,
+                event_type: eventType,
+                asaas_payment_id: paymentId,
+                asaas_invoice_url: payload.payment?.invoiceUrl ?? null,
+                method: "CREDIT_CARD",
+                metadata: {
+                  referenceTable: "subscriptions",
+                  referenceId: localSub.id,
+                  buyerId: localSub.subscriber_id,
+                  amountCents: localSub.price_cents_paid,
+                  recurringCycle: true,
+                  plan: localSub.plan,
+                },
+              })
+              .select("id, processed_at, metadata")
+              .single();
+            intent = newIntent;
+          }
+        }
 
         const meta = (intent?.metadata ?? {}) as {
           referenceTable?: string;
@@ -314,9 +365,22 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           });
         }
 
-        // Renovações automáticas de assinatura: DESATIVADAS enquanto a chave
-        // Asaas não tem tokenização de cartão. Reativar aqui quando o
-        // /v3/subscriptions voltar a ser criado em `createSubscriptionPayment`.
+        // PAYMENT_OVERDUE numa assinatura recorrente = pagamento falhou.
+        // Não cancelamos a assinatura (o Asaas ainda tenta cobrar em ciclos
+        // seguintes); apenas marcamos past_due para a UI avisar o usuário.
+        if (
+          eventType === "PAYMENT_OVERDUE" &&
+          meta.referenceTable === "subscriptions" &&
+          meta.referenceId
+        ) {
+          targetStatus = null;
+          await (supabaseAdmin as any)
+            .from("subscriptions")
+            .update({ status: "past_due", provider_ref: paymentId })
+            .eq("id", meta.referenceId)
+            .neq("status", "cancelled");
+        }
+
 
 
 

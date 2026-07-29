@@ -28,13 +28,17 @@ export const Route = createFileRoute("/api/public/hooks/subscription-reminders")
         const in7 = new Date(now.getTime() + 7 * 86_400_000);
         const APP_BASE_URL = process.env.APP_BASE_URL ?? "https://monetisexy.com";
 
-        // Busca assinaturas ativas expirando em até 7 dias, sem lembrete enviado.
+        // Assinaturas expirando em até 7 dias, sem lembrete enviado.
+        // Só enviamos para quem NÃO tem renovação automática (auto_renew=false).
+        // Assinaturas com cartão salvo (auto_renew=true) são cobradas
+        // automaticamente pelo Asaas.
         const { data: rows, error } = await (supabaseAdmin as any)
           .from("subscriptions")
           .select(
             "id, subscriber_id, creator_id, plan, price_cents_paid, current_period_end",
           )
           .in("status", ["active", "cancelled"])
+          .eq("auto_renew", false)
           .gte("current_period_end", now.toISOString())
           .lte("current_period_end", in7.toISOString())
           .is("reminder_sent_at", null)
