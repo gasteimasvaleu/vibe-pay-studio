@@ -19,6 +19,12 @@ type Props = {
   /** Controle opcional para seleção de cartão salvo (cobrança 1-click). */
   savedCardId?: string | null;
   onSavedCardChange?: (id: string | null) => void;
+  /**
+   * Callback chamado após tokenização bem-sucedida de um novo cartão.
+   * Se presente, o dialog só fecha após esse callback resolver,
+   * permitindo encadear tokenização + cobrança 1-click no mesmo clique.
+   */
+  onNewCardTokenized?: (savedCardId: string) => void | Promise<void>;
 };
 
 export function PaymentMethodPicker({
