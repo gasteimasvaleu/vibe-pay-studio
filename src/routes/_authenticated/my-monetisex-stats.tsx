@@ -1235,9 +1235,14 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
       <div className="space-y-3 border-t border-border pt-5">
         <p className="text-sm font-bold text-foreground">Ordenar por</p>
         <div className="flex flex-wrap items-center gap-2">
-          {(isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
-            <Chip key={o} label={o} active={isLives ? o === ordenarLive : o === ordenarPub}
-              onClick={() => isLives ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number]) : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number])} />
+          {(isStories ? ORDENAR_STORIES : isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
+            <Chip key={o} label={o}
+              active={isStories ? o === ordenarStory : isLives ? o === ordenarLive : o === ordenarPub}
+              onClick={() => isStories
+                ? setOrdenarStory(o as (typeof ORDENAR_STORIES)[number])
+                : isLives
+                  ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number])
+                  : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number])} />
           ))}
         </div>
       </div>
