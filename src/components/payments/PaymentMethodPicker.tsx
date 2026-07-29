@@ -34,6 +34,7 @@ export function PaymentMethodPicker({
   tone = "light",
   savedCardId,
   onSavedCardChange,
+  onNewCardTokenized,
 }: Props) {
   const fetchWallet = useServerFn(getSubscriberWallet);
   const walletQuery = useQuery({
