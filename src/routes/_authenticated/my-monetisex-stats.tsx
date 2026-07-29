@@ -573,6 +573,7 @@ const KIND_LABEL: Record<string, string> = {
   video_call: "Videochamada",
   live_ticket: "Live",
   challenge_contribution: "Desafio",
+  story_unlock: "Story",
 };
 const KIND_COLOR: Record<string, string> = {
   subscription: "bg-purple-500",
@@ -582,6 +583,7 @@ const KIND_COLOR: Record<string, string> = {
   video_call: "bg-blue-500",
   live_ticket: "bg-sky-500",
   challenge_contribution: "bg-amber-500",
+  story_unlock: "bg-fuchsia-500",
 };
 
 function EarningsChartCard({ range }: { range: { from: string; to: string } }) {
@@ -899,13 +901,14 @@ function RecordeCard({ title, rows, loading }: { title: string; rows: { day: str
 /* ============================== Extratos ============================== */
 
 const EXTRATO_TABS = ["Faturamento", "Ganhos por produto"] as const;
-const PRODUTO_OPTIONS = ["Todos os produtos", "Live", "Desafio", "Chat", "Postagem", "Videochamada", "Mimo", "Assinatura"] as const;
+const PRODUTO_OPTIONS = ["Todos os produtos", "Live", "Desafio", "Chat", "Postagem", "Story", "Videochamada", "Mimo", "Assinatura"] as const;
 const PRODUTO_TO_KIND: Record<string, string | null> = {
   "Todos os produtos": null,
   "Live": "live_ticket",
   "Desafio": "challenge_contribution",
   "Chat": "chat_unlock",
   "Postagem": "publication_unlock",
+  "Story": "story_unlock",
   "Videochamada": "video_call",
   "Mimo": "tip",
   "Assinatura": "subscription",
