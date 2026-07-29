@@ -646,7 +646,7 @@ export const getAlcance = createServerFn({ method: "GET" })
       .eq("creator_profile_id", profileId);
     const ids = (pubIds ?? []).map(p => p.id as string);
 
-    const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes] = await Promise.all([
+    const [profRes, pubRes, followRes, subsAllRes, subsPeriodRes, txRes] = await Promise.all([
       supabase.from("profile_views")
         .select("viewer_id, created_at, country")
         .eq("profile_id", userId)
@@ -669,6 +669,11 @@ export const getAlcance = createServerFn({ method: "GET" })
         .eq("creator_profile_id", profileId)
         .gte("created_at", data.from).lte("created_at", data.to)
         .order("created_at", { ascending: true }),
+      supabase.from("transactions")
+        .select("kind, amount_cents_gross")
+        .eq("creator_profile_id", profileId).eq("status", "paid")
+        .in("kind", EARNING_KINDS as unknown as never[])
+        .gte("created_at", data.from).lte("created_at", data.to),
     ]);
 
     const profViews = ("data" in profRes ? profRes.data : []) ?? [];
