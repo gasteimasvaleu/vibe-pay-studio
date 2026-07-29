@@ -303,8 +303,10 @@ function PersonalPage() {
 
             <div>
               <div
-                className={`rounded-2xl bg-muted px-5 py-2 ${
-                  attempted && requiredMissing.state ? "ring-2 ring-destructive" : ""
+                className={`group rounded-2xl border transition-colors px-5 py-2 ${
+                  attempted && requiredMissing.state
+                    ? "bg-muted/60 border-destructive focus-within:ring-1 focus-within:ring-destructive/30"
+                    : "bg-muted/60 border-transparent hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
                 }`}
               >
                 <Select value={state} onValueChange={setState}>
@@ -355,14 +357,32 @@ function FieldShell({
   label,
   children,
   error,
+  disabled,
 }: {
   label: string;
   children: ReactNode;
   error?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl bg-muted px-5 py-3 ${error ? "ring-2 ring-destructive" : ""}`}>
-      <p className={`text-xs ${error ? "text-destructive" : "text-muted-foreground"}`}>{label}</p>
+    <div
+      className={`group rounded-2xl border transition-colors px-5 py-3 ${
+        error
+          ? "bg-muted/60 border-destructive focus-within:ring-1 focus-within:ring-destructive/30"
+          : disabled
+            ? "bg-muted/40 border-transparent opacity-80"
+            : "bg-muted/60 border-transparent hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
+      }`}
+    >
+      <p
+        className={`text-xs transition-colors ${
+          error
+            ? "text-destructive"
+            : "text-muted-foreground group-focus-within:text-primary"
+        }`}
+      >
+        {label}
+      </p>
       {children}
     </div>
   );
@@ -389,7 +409,7 @@ function FloatingField({
 }) {
   return (
     <div>
-      <FieldShell label={label} error={error}>
+      <FieldShell label={label} error={error} disabled={disabled}>
         <Input
           type="text"
           inputMode={inputMode}

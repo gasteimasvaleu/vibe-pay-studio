@@ -181,8 +181,8 @@ function SettingsSocialPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-3">
-        <label className="block rounded-2xl bg-muted px-5 py-3">
-          <span className="block text-xs text-muted-foreground">
+        <label className="group block rounded-2xl border border-transparent bg-muted/60 px-5 py-3 transition-colors hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+          <span className="block text-xs text-muted-foreground transition-colors group-focus-within:text-primary">
             Nome do Perfil
           </span>
           <Input
@@ -198,10 +198,10 @@ function SettingsSocialPage() {
           </p>
         )}
 
-        <label className="flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
-          <MessageCircle className="h-6 w-6 text-muted-foreground shrink-0" />
+        <label className="group flex items-center gap-3 rounded-2xl border border-transparent bg-muted/60 px-5 py-3 transition-colors hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+          <MessageCircle className="h-6 w-6 text-muted-foreground shrink-0 transition-colors group-focus-within:text-primary" />
           <div className="flex-1 min-w-0">
-            <span className="block text-xs text-muted-foreground">
+            <span className="block text-xs text-muted-foreground transition-colors group-focus-within:text-primary">
               monetisexy.com.br/(seu @)
             </span>
             <Input
