@@ -87,8 +87,10 @@ function CommentRow({
 
       <div className="flex items-center gap-1 shrink-0">
         {canDelete && (
-          <Popover>
-            <PopoverTrigger asChild>
+          <ActionPopover
+            widthClass="w-[240px]"
+            sideOffset={4}
+            trigger={
               <button
                 type="button"
                 aria-label="Opções"
@@ -96,23 +98,16 @@ function CommentRow({
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              sideOffset={4}
-              className="w-auto p-1 rounded-2xl bg-card border border-border shadow-xl"
-            >
-              <button
-                type="button"
-                onClick={() => onDelete(c.id)}
-                disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-                Excluir comentário
-              </button>
-            </PopoverContent>
-          </Popover>
+            }
+          >
+            <ActionPopoverDestructive
+              icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+              label="Excluir comentário"
+              onClick={() => onDelete(c.id)}
+              disabled={deleting}
+              className="mt-0"
+            />
+          </ActionPopover>
         )}
 
         <button
