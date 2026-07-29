@@ -2557,6 +2557,7 @@ export type Database = {
           asaas_customer_id: string
           brand: string | null
           created_at: string
+          deleted_at: string | null
           exp_month: string
           exp_year: string
           holder_name: string
@@ -2570,6 +2571,7 @@ export type Database = {
           asaas_customer_id: string
           brand?: string | null
           created_at?: string
+          deleted_at?: string | null
           exp_month: string
           exp_year: string
           holder_name: string
@@ -2583,6 +2585,7 @@ export type Database = {
           asaas_customer_id?: string
           brand?: string | null
           created_at?: string
+          deleted_at?: string | null
           exp_month?: string
           exp_year?: string
           holder_name?: string

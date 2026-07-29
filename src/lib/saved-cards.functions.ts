@@ -55,6 +55,7 @@ export const listSavedCards = createServerFn({ method: "GET" })
       .from("saved_cards")
       .select("id, brand, last4, holder_name, exp_month, exp_year, created_at")
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r: any) => ({
@@ -105,31 +106,72 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
       .update({ cpf: data.cpf })
       .eq("user_id", userId);
 
+    const last4FromInput = data.number.slice(-4);
+
+    // 1) Se o usuário já tem esse cartão (ativo ou arquivado), reaproveita o token
+    //    existente em vez de tentar tokenizar de novo no Asaas (que recusa duplicatas).
+    const { data: existing } = await supabase
+      .from("saved_cards")
+      .select("id, brand, deleted_at")
+      .eq("user_id", userId)
+      .eq("last4", last4FromInput)
+      .eq("exp_month", data.expiryMonth)
+      .eq("exp_year", data.expiryYear)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.deleted_at) {
+        await supabase
+          .from("saved_cards")
+          .update({ deleted_at: null, holder_name: data.holderName })
+          .eq("id", existing.id)
+          .eq("user_id", userId);
+      }
+      return {
+        id: existing.id as string,
+        last4: last4FromInput,
+        brand: (existing.brand as string | null) ?? null,
+        reused: true,
+      };
+    }
+
     const customerId = await ensureCustomerId(supabase, userId);
     const { data: userRes } = await supabase.auth.getUser();
     const email = userRes?.user?.email ?? "no-reply@monetisexy.app";
 
     const asaas = await loadAsaas();
-    const tokenized = await asaas.tokenizeCreditCard({
-      customerId,
-      creditCard: {
-        holderName: data.holderName,
-        number: data.number,
-        expiryMonth: data.expiryMonth,
-        expiryYear: data.expiryYear,
-        ccv: data.ccv,
-      },
-      creditCardHolderInfo: {
-        name: data.holderName,
-        email,
-        cpfCnpj: data.cpf,
-        postalCode: (data.postalCode || "00000000").replace(/\D/g, ""),
-        addressNumber: data.addressNumber || "0",
-        phone: data.phone,
-      },
-    });
+    let tokenized;
+    try {
+      tokenized = await asaas.tokenizeCreditCard({
+        customerId,
+        creditCard: {
+          holderName: data.holderName,
+          number: data.number,
+          expiryMonth: data.expiryMonth,
+          expiryYear: data.expiryYear,
+          ccv: data.ccv,
+        },
+        creditCardHolderInfo: {
+          name: data.holderName,
+          email,
+          cpfCnpj: data.cpf,
+          postalCode: (data.postalCode || "00000000").replace(/\D/g, ""),
+          addressNumber: data.addressNumber || "0",
+          phone: data.phone,
+        },
+      });
+    } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      if (/já\s+tokenizado|already\s+tokenized/i.test(msg)) {
+        // O token existe no Asaas mas não temos a referência local.
+        throw new Error("card_already_tokenized");
+      }
+      throw e;
+    }
 
-    const last4 = tokenized.creditCardNumber?.slice(-4) ?? data.number.slice(-4);
+    const last4 = tokenized.creditCardNumber?.slice(-4) ?? last4FromInput;
 
     const { data: inserted, error } = await supabase
       .from("saved_cards")
@@ -147,7 +189,12 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    return { id: inserted.id as string, last4, brand: tokenized.creditCardBrand };
+    return {
+      id: inserted.id as string,
+      last4,
+      brand: tokenized.creditCardBrand ?? null,
+      reused: false,
+    };
   });
 
 export const deleteSavedCard = createServerFn({ method: "POST" })
@@ -155,9 +202,11 @@ export const deleteSavedCard = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Soft delete: preserva o token do Asaas para que o mesmo cartão possa
+    // ser readicionado depois sem esbarrar em "cartão já tokenizado".
     const { error } = await supabase
       .from("saved_cards")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", data.id)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
