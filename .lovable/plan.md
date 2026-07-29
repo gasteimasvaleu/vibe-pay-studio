@@ -1,25 +1,40 @@
-## Problema
+## Presença global + badge "Online hoje" no perfil
 
-No paywall de story (`LockedOverlay` em `src/components/feed/StoryViewer.tsx`):
+### Backend
+- **Migração SQL**: adicionar `last_seen_at timestamptz` em `public.profiles` (index em `last_seen_at desc`). GRANT já existente cobre a coluna.
+- **Server function** `touchPresence` em `src/lib/presence.functions.ts` (auth middleware): faz `update profiles set last_seen_at = now() where id = auth.uid()`. Throttle no cliente para no máx. 1 chamada/60s.
 
-1. As **zonas de toque** (botões absolutos `left-0 w-1/3` e `right-0 w-1/3`, ambos em `z-10`) ficam por cima das laterais do card do paywall no mobile. Clicar em "Carteira" (esquerda) dispara `back()` e clicar em "Cartão" (direita) dispara `advance()` — que no último story fecha o viewer. O `stopPropagation` no `onClick` do wrapper não resolve porque os tap zones são elementos irmãos, não pais.
-2. Os cards do `PaymentMethodPicker` usam tokens claros (`bg-secondary`, `border-border`, `text-foreground`) que ficam com baixíssimo contraste sobre o fundo `bg-black/60` do overlay escuro — só o card ativo (roxo) fica visível.
+### Presença ao vivo (global)
+- Novo hook `src/hooks/usePresenceHeartbeat.ts`:
+  - Entra no canal Supabase `online-users` com `presence.key = userId` assim que o usuário autentica.
+  - Chama `touchPresence()` no mount e depois a cada 60s (via `setInterval`), e também em `visibilitychange → visible`.
+  - Em `visibilitychange → hidden` / `pagehide` / unmount: `channel.untrack()` + `removeChannel()` (fica offline instantaneamente para os outros).
+- Montar o hook uma única vez em `src/routes/_authenticated/route.tsx`, para valer em todas as rotas logadas (não só `/chat`).
+- Remover o `track()` duplicado de `src/routes/_authenticated/chat.tsx` (mantém apenas a leitura do canal para a lista de threads).
 
-## Correção
+### Leitura no perfil
+- Novo hook `src/hooks/useIsUserOnline.ts`: assina o canal `online-users` em modo leitura e retorna `boolean` para um `userId`.
+- Nova server function `getLastSeen(userId)` em `src/lib/presence.functions.ts` (pública): retorna `last_seen_at` do dono do perfil. Usada via `useQuery` na página de perfil.
 
-**`src/components/feed/StoryViewer.tsx`**
-- Elevar o `LockedOverlay` para ficar acima das tap zones: mudar o container externo do overlay para `z-20` (ou envolvê-lo em wrapper `absolute inset-0 z-20`), garantindo que os cliques nas 3 opções de pagamento nunca atinjam os botões `back`/`advance`.
-- Alternativa complementar: não renderizar as tap zones enquanto o story estiver bloqueado (`!current.unlocked && !current.is_self` → esconder `back`/`advance`), já que navegar num story pago sem desbloquear não faz sentido. Aplicar as duas mudanças.
+### UI — `src/routes/_authenticated/perfil.$username.tsx`
+- Bolinha verde (`bg-emerald-500` com `ring-4 ring-background`) sobreposta no canto inferior direito do avatar, **somente** quando `useIsUserOnline(profile.user_id) === true`.
+- Badge no cabeçalho da identidade, alinhada à direita do nome:
+  - Se online agora **ou** `last_seen_at >= início do dia local do visitante` → renderizar badge verde clara com texto **"Online hoje"** (mesmo estilo do screenshot: `bg-emerald-50 text-emerald-600 border-emerald-300/60`, variantes dark já previstas).
+  - Caso contrário: não renderizar nada (não mostrar "offline").
 
-**`src/components/payments/PaymentMethodPicker.tsx`** — variante para superfícies escuras
-- Adicionar prop opcional `tone?: "light" | "dark"` (default `"light"` — mantém aparência atual em todos os outros usos: SubscribeDialog, TipDialog, PaymentMethodDialog, recarregar).
-- Quando `tone="dark"`, aplicar classes com contraste sobre fundo preto:
-  - inativo: `border-white/15 bg-white/5 text-white hover:bg-white/10`
-  - ativo: `border-primary bg-primary/20 text-white`
-  - desabilitado: `border-white/10 bg-white/5 opacity-50`
-  - label branco, hint `text-white/70`
-- Em `StoryViewer.tsx`, passar `tone="dark"` para o `PaymentMethodPicker` dentro do `LockedOverlay`.
+### Regras / privacidade
+- Presença só é anunciada para usuários autenticados (já é o caso, canal fica no layout `_authenticated`).
+- `last_seen_at` é legível por qualquer autenticado via a server function (necessário para mostrar no perfil público logado). Não expõe timestamp bruto — a função retorna apenas o campo, o cálculo "hoje" é feito no cliente com o fuso do visitante.
 
-## Fora de escopo
+### Arquivos
+- Novo: `supabase/migrations/<timestamp>_profiles_last_seen.sql`
+- Novo: `src/lib/presence.functions.ts` (`touchPresence`, `getLastSeen`)
+- Novo: `src/hooks/usePresenceHeartbeat.ts`
+- Novo: `src/hooks/useIsUserOnline.ts`
+- Editar: `src/routes/_authenticated/route.tsx` (montar heartbeat)
+- Editar: `src/routes/_authenticated/chat.tsx` (remover `track` duplicado, manter leitura)
+- Editar: `src/routes/_authenticated/perfil.$username.tsx` (bolinha + badge)
 
-Nenhuma mudança em outras superfícies de pagamento — só o paywall do story.
+### Fora de escopo
+- Mostrar "visto por último há X min" quando offline.
+- Preferência do usuário para ocultar status online (pode virar follow-up).
