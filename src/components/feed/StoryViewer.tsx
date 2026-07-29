@@ -59,6 +59,7 @@ export function StoryViewer({
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const progressRef = useRef<number>(0);
