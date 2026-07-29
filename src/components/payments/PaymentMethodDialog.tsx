@@ -13,7 +13,7 @@ type Props = {
   title: string;
   amountCents: number;
   loading?: boolean;
-  onConfirm: (method: PaymentMethod) => void;
+  onConfirm: (method: PaymentMethod, savedCardId: string | null) => void;
 };
 
 export function PaymentMethodDialog({
@@ -25,6 +25,7 @@ export function PaymentMethodDialog({
   onConfirm,
 }: Props) {
   const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,11 +44,11 @@ export function PaymentMethodDialog({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Forma de pagamento
             </p>
-            <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} />
+            <PaymentMethodPicker value={method} onChange={setMethod} amountCents={amountCents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
           </div>
 
           <Button
-            onClick={() => onConfirm(method)}
+            onClick={() => onConfirm(method, method === "CREDIT_CARD" ? savedCardId : null)}
             disabled={loading}
             className="w-full h-11 rounded-md bg-gradient-primary text-primary-foreground"
           >

@@ -38,6 +38,7 @@ type Checkout = {
 export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
@@ -100,8 +101,14 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         return;
       }
       const res = await subscribe({
-        data: { creatorId, plan, method },
+        data: { creatorId, plan, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null },
       });
+      if (res.paidImmediately) {
+        toast.success("Assinatura ativada!");
+        void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onOpenChange(false);
+        return;
+      }
       if (method === "PIX" && (!res.pixQrCode || !res.pixCopyPaste)) {
         throw new Error("Falha ao gerar PIX");
       }
@@ -227,7 +234,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Forma de pagamento
                   </p>
-                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} />
+                  <PaymentMethodPicker value={method} onChange={setMethod} amountCents={totals[plan].cents} savedCardId={savedCardId} onSavedCardChange={setSavedCardId} />
                 </div>
 
                 <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
