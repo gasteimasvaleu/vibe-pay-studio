@@ -7,7 +7,7 @@ import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoO
 import { getLive, endLive, pingLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useDarkSurface } from "@/hooks/useDarkSurface";
+
 import { LiveChat } from "@/components/live/LiveChat";
 import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
 import { LiveOverlayTop } from "@/components/live/LiveOverlayTop";
@@ -101,7 +101,7 @@ function TransmitirPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  useDarkSurface();
+  
 
   const getLiveFn = useServerFn(getLive);
   const endFn = useServerFn(endLive);
