@@ -112,22 +112,11 @@ function ChatLayout() {
     };
   }, [queryClient, activeThreadId]);
 
-  useEffect(() => {
-    if (!meId) return;
-    // Presence tracking is done globally by usePresenceHeartbeat in the
-    // authenticated layout. Here we only read the shared `online-users`
-    // channel state to render online indicators next to threads.
-    const channel = supabase.channel("online-users");
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        setOnlineUsers(new Set(Object.keys(state)));
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [meId]);
+  // Online users vêm do canal global montado por `usePresenceHeartbeat`
+  // no layout autenticado (via `useOnlineUsers()` acima). Não abrimos um
+  // segundo canal com o mesmo tópico aqui, pois o supabase-js reutiliza a
+  // instância e lançaria "cannot add presence callbacks ... after subscribe()".
+
 
   const filteredThreads = useMemo(() => {
     let out = threads;
