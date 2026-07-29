@@ -1,64 +1,34 @@
-## Escopo
+## Diagnóstico
 
-Adicionar cobertura completa dos produtos que hoje faltam em `/my-monetisex-stats`:
+Consulta ao banco confirmou: existem **3 linhas** em `subscriptions` para `monetisexy`, mas todas do **mesmo `subscriber_id`** (`3fc0cc8a…`):
 
-1. **Filtros Top assinantes**: incluir Postagem, Story, Videochamada, Live.
-2. **Extratos › Ganhos por produto**: label/cor de Story (já feito na resposta anterior).
-3. **Nova aba "Stories" em Engajamento** com Top Story.
-4. **Resumo (Visão geral)**: breakdown por produto substituindo os 4 itens fixos de assinatura.
+| status | price | created_at |
+|---|---|---|
+| active | R$29 | 22/07 08:29 |
+| pending | R$29 | 22/07 08:20 |
+| pending | R$29 | 22/07 08:20 |
 
-## Alterações
+Ou seja: 1 assinante real + 2 intents PIX pendentes (tentativas anteriores que não foram pagas). Não é resíduo de perfil deletado — é o mesmo assinante, com PIX abandonados persistidos como `pending`.
 
-### Backend — `src/lib/stats.functions.ts`
+A função `getAssinantesStats` conta cada **linha** da tabela como novo/renovação e ainda soma `pending` no faturamento do período, inflando o card para "3 Assinantes, R$ 87,00" quando o correto é "1 Assinante, R$ 29,00".
 
-**a) `getTopAssinantes` — expandir metric union**
-```ts
-metric?: "total" | "subscription" | "tip" | "chat_unlock"
-       | "publication_unlock" | "story_unlock" | "video_call" | "live_ticket"
-```
-Substituir o if/else por filtro genérico contra `Set` de kinds válidos.
+## Correção
 
-**b) Novo `getEngajamentoStories`** (modelado como `getEngajamentoPublicacoes`, mas sem likes/comments — a tabela `stories` não tem essas métricas):
-```ts
-inputValidator: { from, to, sort?: "recent" | "revenue" | "views" | "unlocks" }
-```
-Handler:
-- `select id, caption, media_type, media_path, thumb_path, price_cents, published_at, expires_at from stories where creator_profile_id = active and published_at between from/to`
-- Agregar `story_unlocks` (soma amount_cents, contagem) e `story_views` (contagem) por `story_id` no período.
-- Retornar `items[]` com `{ id, caption, mediaType, thumbPath, priceCents, publishedAt, revenue, unlocks, views }` + `totalCount, totalRevenue, totalViews, totalUnlocks`.
-- Sorters: recent (publishedAt desc), revenue, views, unlocks.
+Em `src/lib/stats.functions.ts` → `getAssinantesStats`:
 
-**c) `getResumoStats` — adicionar breakdown por produto**
-Já lê `transactions` no período (via `historyRes`). Adicionar no retorno:
-```ts
-byProduct: {
-  subscription: { grossCents, count },
-  publication_unlock: { grossCents, count },
-  story_unlock: { grossCents, count },
-  chat_unlock: { grossCents, count },
-  video_call: { grossCents, count },
-  live_ticket: { grossCents, count },
-  tip: { grossCents, count },
-  challenge_contribution: { grossCents, count },
-}
-```
-Manter os campos antigos (`subscriptionsCount`, `subscriptionsRevenueCents`, `renewalsCount`, `profileViews`) para não quebrar consumidores existentes.
+1. Filtrar `periodRes` para considerar somente assinaturas efetivamente pagas: `status in ('active','canceled','expired')` (exclui `pending` — intents PIX que nunca fecharam). Aplicar o mesmo filtro no `historyBefore` para não classificar como "renovação" um pending anterior.
+2. Deduplicar por `subscriber_id` dentro do período ao calcular `novos` + `renovacoes`: cada assinante conta 1 vez por período (a primeira ocorrência). Se aparecer novamente, é renovação, mas o card principal deve exibir **assinantes únicos**, não linhas.
+3. Ajustar o retorno para expor `assinantesUnicosPeriodo` (novos + renovações deduplicadas) e manter `novosPeriodo`/`renovacoesPeriodo` como métricas separadas.
+4. `faturamentoPeriodo` passa a somar apenas as linhas não-`pending`.
+5. Ajustar `daily` (usado no gráfico Faturamento × Quantidade) para também refletir apenas linhas pagas.
 
-### Frontend — `src/routes/_authenticated/my-monetisex-stats.tsx`
+Em `src/routes/_authenticated/my-monetisex-stats.tsx` (AssinantesPanel, linha ~1698 e ~1711):
+- Trocar `totalAssinantes = novosPeriodo + renovacoesPeriodo` por `stats.data?.assinantesUnicosPeriodo`, para o header "3 Assinantes, R$ 87,00" mostrar assinantes distintos.
 
-**a) `TOP_ASSINANTES_CHIPS` / `TOP_METRIC_MAP`** (~L1568–1572): expandir para 8 chips (Total, Assinaturas, Postagem, Story, Chat, Videochamada, Live, Mimos). `CardTabsRow` já colapsa em dropdown no mobile.
+## Limpeza opcional (fora do escopo, só sugestão)
 
-**b) `ENGAJAMENTO_TABS`** (~L1189): adicionar `"Stories"`. Novo bloco espelhando `Publicações`:
-- Const `ORDENAR_STORIES = ["Recentes", "Faturamento", "Visualizações", "Desbloqueios"]`.
-- Mapear para sort `"recent" | "revenue" | "views" | "unlocks"`.
-- Query `getEngajamentoStories`, gated por `tab === "Stories"`.
-- Renderizar `EngajamentoChart` (mesmo componente, `metric` = campo escolhido).
-- Card lateral "Resumo": Quantidade, Visualizações, Desbloqueios, Faturamento (ícones `Sparkles`, `Eye`, `Unlock`, `DollarSign`).
-- Card lateral "Top story": mostra thumb (`thumb_path` via storage `stories`), caption, receita, views, unlocks. Link para `/story/[id]` só quando aplicável — o app não tem página dedicada de story, então o card fica apenas visual (sem CTA de "Abrir"), consistente com como um top-story faz sentido.
+Os 2 `pending` órfãos poderiam ser marcados como `expired` para higienizar o histórico, mas não é necessário para o fix da UI.
 
-**c) Card Resumo (Visão geral)** (~L1529–1539): substituir os 4 `ResumoItem` fixos por lista dinâmica renderizando cada entrada de `data.byProduct` na ordem: Assinatura, Postagem, Story, Chat, Videochamada, Live, Mimo, Desafio. Ocultar linhas com `count === 0` para não poluir. Cada linha usa `KIND_LABEL[kind]` + bolinha `KIND_COLOR[kind]` + `formatBRL(grossCents)` à direita e `count` como subtítulo. Manter `Visitantes` (não é produto) como primeira linha destacada.
+## Resposta curta ao usuário
 
-## Fora de escopo
-
-- Likes/comentários em stories (schema não tem).
-- Página pública de story individual (top-story fica só visual).
+Não é perfil deletado — são 2 tentativas de PIX abandonadas do mesmo assinante que ficaram como `pending` na tabela `subscriptions`. O card conta linha em vez de assinante único e ainda soma os pending no faturamento. O plano acima corrige as duas coisas.
