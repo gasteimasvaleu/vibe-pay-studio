@@ -154,11 +154,28 @@ export const endLive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------- Heartbeat do publisher (mantém a sessão viva) ---------- */
+export const pingLive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { liveId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const admin = await loadAdmin();
+    await admin
+      .from("live_sessions")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", data.liveId)
+      .eq("creator_id", userId)
+      .eq("status", "live");
+    return { ok: true };
+  });
+
 /* ---------- Listar lives ao vivo agora ---------- */
 export const listActiveLives = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const admin = await loadAdmin();
+    await expireStaleLives(admin);
     const { data: lives } = await admin
       .from("live_sessions")
       .select("id, creator_id, creator_profile_id, title, price_cents, cover_url, started_at, viewers_peak, total_views, likes_count")
