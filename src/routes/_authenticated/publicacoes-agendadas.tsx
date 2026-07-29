@@ -211,8 +211,9 @@ function ScheduledPostsPage() {
                     </div>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                  <ActionPopover
+                    widthClass="w-[280px]"
+                    trigger={
                       <button
                         type="button"
                         className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -220,27 +221,26 @@ function ScheduledPostsPage() {
                       >
                         <MoreVertical className="h-5 w-5" />
                       </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
-                      <DropdownMenuItem
+                    }
+                  >
+                    <ActionPopoverList>
+                      <ActionPopoverItem
+                        icon={<Play className="h-5 w-5" strokeWidth={1.75} />}
+                        label="Publicar agora"
                         onClick={() => publishMutation.mutate(item.id)}
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        Publicar agora
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openReschedule(item)}>
-                        <CalendarClock className="h-4 w-4 mr-2" />
-                        Reagendar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => confirmCancel(item.id)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Cancelar agendamento
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      />
+                      <ActionPopoverItem
+                        icon={<CalendarClock className="h-5 w-5" strokeWidth={1.75} />}
+                        label="Reagendar"
+                        onClick={() => openReschedule(item)}
+                      />
+                    </ActionPopoverList>
+                    <ActionPopoverDestructive
+                      icon={<Trash2 className="h-5 w-5" strokeWidth={1.75} />}
+                      label="Cancelar agendamento"
+                      onClick={() => confirmCancel(item.id)}
+                    />
+                  </ActionPopover>
                 </div>
               );
             })}
