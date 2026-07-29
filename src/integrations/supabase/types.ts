@@ -3089,6 +3089,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_status: {
+        Row: {
+          clear_after_at: string | null
+          created_at: string
+          status: Database["public"]["Enums"]["user_status_kind"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clear_after_at?: string | null
+          created_at?: string
+          status?: Database["public"]["Enums"]["user_status_kind"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clear_after_at?: string | null
+          created_at?: string
+          status?: Database["public"]["Enums"]["user_status_kind"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vault_categories: {
         Row: {
           created_at: string
@@ -3758,6 +3782,7 @@ export type Database = {
         | "authorized"
         | "in_analysis"
         | "partially_refunded"
+      user_status_kind: "online" | "offline" | "in_chat"
       video_call_status:
         | "requested"
         | "accepted"
@@ -3950,6 +3975,7 @@ export const Constants = {
         "in_analysis",
         "partially_refunded",
       ],
+      user_status_kind: ["online", "offline", "in_chat"],
       video_call_status: [
         "requested",
         "accepted",
