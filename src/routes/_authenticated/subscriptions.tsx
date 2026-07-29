@@ -518,9 +518,17 @@ function SubscriptionsPage() {
                               <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                                 Expirada
                               </span>
-                            ) : cancelled ? (
+                            ) : sub.status === "past_due" ? (
+                              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
+                                Pagamento pendente
+                              </span>
+                            ) : cancelled || sub.cancelledAt ? (
                               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                Cancelada
+                                Renovação cancelada
+                              </span>
+                            ) : sub.autoRenew ? (
+                              <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                                Renova automaticamente
                               </span>
                             ) : (
                               <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
@@ -545,12 +553,15 @@ function SubscriptionsPage() {
 
                         {!expired && paid && (
                           <p className="mt-2 text-xs text-muted-foreground">
-                            Renovação manual — você receberá um lembrete por e-mail
-                            7 dias antes da expiração.
+                            {sub.autoRenew
+                              ? "Cobrança automática no cartão salvo ao fim do ciclo."
+                              : sub.cancelledAt
+                                ? "Você mantém o acesso até a data de expiração."
+                                : "Renovação manual — você receberá um lembrete por e-mail 7 dias antes da expiração."}
                           </p>
                         )}
 
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           <Button
                             variant="default"
                             size="sm"
@@ -567,7 +578,60 @@ function SubscriptionsPage() {
                             <ExternalLink className="h-4 w-4" />
                             {expired ? "Renovar agora" : "Ir ao perfil"}
                           </Button>
+
+                          {!expired && paid && sub.autoRenew && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 gap-1 rounded-lg"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  Cancelar renovação
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Cancelar renovação automática?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Você mantém o acesso até{" "}
+                                    {formatDate(sub.currentPeriodEnd)}. Depois
+                                    disso a assinatura expira e nenhum novo
+                                    valor será cobrado.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      cancelMutation.mutate(sub.id)
+                                    }
+                                  >
+                                    Sim, cancelar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+
+                          {!expired &&
+                            paid &&
+                            !sub.autoRenew &&
+                            (sub.cancelledAt || sub.status === "past_due") && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 gap-1 rounded-lg"
+                                onClick={() => openReactivate(sub)}
+                              >
+                                Reativar renovação
+                              </Button>
+                            )}
                         </div>
+
 
                       </div>
                     </div>
