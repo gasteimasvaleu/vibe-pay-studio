@@ -263,37 +263,32 @@ export function PublicationOptionsMenu({
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>{children}</PopoverTrigger>
-        <PopoverContent
-          align="end"
-          sideOffset={8}
-          className="w-[340px] rounded-3xl p-4 bg-card border border-border shadow-xl"
-        >
-          <div className="rounded-2xl bg-background border border-border overflow-hidden divide-y divide-border">
-            {options.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={opt.onClick}
-                className="w-full flex items-center gap-4 px-4 py-3.5 text-left hover:bg-foreground/5 transition-colors"
-              >
-                <span className="text-foreground">{opt.icon}</span>
-                <span className="text-sm font-semibold text-foreground">{opt.label}</span>
-              </button>
-            ))}
-          </div>
+      <ActionPopover
+        open={open}
+        onOpenChange={setOpen}
+        widthClass="w-[340px]"
+        contentClassName="p-4"
+        trigger={children}
+      >
+        <ActionPopoverList>
+          {options.map((opt) => (
+            <ActionPopoverItem
+              key={opt.key}
+              icon={opt.icon}
+              label={opt.label}
+              onClick={opt.onClick}
+              className="px-4 py-3.5"
+            />
+          ))}
+        </ActionPopoverList>
 
-          <button
-            type="button"
-            onClick={handleDestructive}
-            className="mt-3 w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-destructive/10 hover:bg-destructive/15 transition-colors text-left"
-          >
-            {destructive.icon}
-            <span className="text-sm font-semibold text-destructive">{destructive.label}</span>
-          </button>
-        </PopoverContent>
-      </Popover>
+        <ActionPopoverDestructive
+          icon={destructive.icon}
+          label={destructive.label}
+          onClick={handleDestructive}
+          className="px-4 py-3.5"
+        />
+      </ActionPopover>
 
       {isOwner && (
         <EditCaptionDialog
