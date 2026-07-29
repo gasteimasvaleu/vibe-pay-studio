@@ -254,8 +254,8 @@ function SettingsDetailsPage() {
           </span>
         </button>
 
-        <div className="rounded-2xl bg-muted px-5 py-4">
-          <label className="block text-xs text-muted-foreground">
+        <div className="group rounded-2xl border border-transparent bg-muted/60 px-5 py-4 transition-colors hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+          <label className="block text-xs text-muted-foreground transition-colors group-focus-within:text-primary">
             Sobre Mim
           </label>
           <Textarea
@@ -270,8 +270,8 @@ function SettingsDetailsPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-3 rounded-2xl bg-muted px-5 py-3">
-            <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
+          <label className="group flex items-center gap-3 rounded-2xl border border-transparent bg-muted/60 px-5 py-3 transition-colors hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+            <MapPin className="h-5 w-5 text-muted-foreground shrink-0 transition-colors group-focus-within:text-primary" />
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value.slice(0, MAX_LOCATION))}

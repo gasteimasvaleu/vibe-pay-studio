@@ -217,12 +217,14 @@ function PasswordField({
   autoComplete?: string;
 }) {
   return (
-    <label className="block rounded-2xl bg-muted px-5 py-3">
+    <label className="group block rounded-2xl border border-transparent bg-muted/60 px-5 py-3 transition-colors hover:bg-muted/40 hover:border-border focus-within:bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+      <span className="block text-xs text-muted-foreground transition-colors group-focus-within:text-primary">
+        {placeholder}
+      </span>
       <Input
         type="password"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
         autoComplete={autoComplete}
         className="border-0 bg-transparent p-0 h-auto text-base text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
       />
