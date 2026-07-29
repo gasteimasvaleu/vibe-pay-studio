@@ -4,7 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Send, MessageCircle, Heart, MoreVertical, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  ActionPopover,
+  ActionPopoverDestructive,
+} from "@/components/ui/action-popover";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listComments,
