@@ -24,7 +24,7 @@ export function TopCreatorCard({ item, rank }: { item: CreatorBase; rank: number
       params={{ username: item.handle }}
       className="relative snap-start shrink-0 w-40 md:w-48 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
     >
-      <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
       <span className="absolute top-2 left-3 text-4xl font-black text-white/90 drop-shadow leading-none">{rank}</span>
       <div className="absolute bottom-2 left-3 right-3 text-white">
