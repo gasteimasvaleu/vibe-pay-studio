@@ -95,6 +95,7 @@ export const createPublication = createServerFn({ method: "POST" })
       url: m.url,
       type: m.type,
       position: index,
+      duration_seconds: m.type === "video" ? m.durationSeconds ?? null : null,
     }));
 
     const { error: mediaErr } = await context.supabase
