@@ -11,7 +11,7 @@ export function EmAltaSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 -mx-4 md:-mx-6">
       <div className="flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           {icon}
