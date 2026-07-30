@@ -1987,16 +1987,16 @@ function ResumoAssinantesCard({ stats, loading }: {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <h3 className="text-sm font-semibold">Resumo</h3>
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="mt-4 divide-y divide-border">
         {items.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center text-primary shrink-0">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
+          <div key={label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center text-primary shrink-0">
+                <Icon className="h-5 w-5" />
+              </div>
               <p className="text-xs text-muted-foreground truncate">{label}</p>
-              <p className="text-sm font-semibold truncate">{value}</p>
             </div>
+            <p className="text-sm font-semibold whitespace-nowrap">{value}</p>
           </div>
         ))}
       </div>
