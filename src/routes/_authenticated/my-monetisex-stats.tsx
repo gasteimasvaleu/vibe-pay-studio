@@ -979,9 +979,9 @@ function GanhosPorProdutoChartCard({ range }: { range: { from: string; to: strin
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         {(byProduct.data?.items ?? []).map(it => (
-          <span key={it.kind} className="inline-flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
-            <span className="text-foreground">{KIND_LABEL[it.kind] ?? it.kind}</span>
+          <span key={it.kind} className="inline-flex min-w-0 items-center gap-2">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
+            <span className="truncate text-foreground">{KIND_LABEL[it.kind] ?? it.kind}</span>
           </span>
         ))}
       </div>
