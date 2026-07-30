@@ -136,6 +136,7 @@ export function CreatorDashboard({
       isCreator
       avatarUrl={avatarUrl}
       switchBar={switchBar}
+      verified={verificationStatus === "approved"}
     >
 
       <div className="space-y-6">
