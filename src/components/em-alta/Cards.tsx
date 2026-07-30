@@ -71,26 +71,17 @@ export function PerfilGratuitoCard({ item, rank }: { item: CreatorBase; rank: nu
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="snap-start shrink-0 w-72 md:w-80 rounded-2xl overflow-hidden bg-card shadow-card border border-border"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
-      <div className="relative h-28 bg-muted">
-        <img src={item.coverUrl ?? undefined} alt="" className="h-full w-full object-cover" loading="lazy" />
-        <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-      </div>
-      <div className="relative px-4 pt-6 pb-4">
-        <img
-          src={item.avatarUrl ?? undefined}
-          alt={item.name}
-          className="absolute -top-8 left-4 h-16 w-16 rounded-full border-4 border-card object-cover"
-          loading="lazy"
-        />
-        <div className="pl-20">
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-sm text-foreground truncate">{item.name}</span>
-            {item.verified && <Verified />}
-          </div>
-          <p className="text-xs text-muted-foreground truncate">@{item.handle}</p>
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="flex items-center gap-1">
+          <span className="font-bold text-sm truncate">{item.name}</span>
+          {item.verified && <Verified />}
         </div>
+        <p className="text-xs text-white/80 truncate">@{item.handle}</p>
       </div>
     </Link>
   );
@@ -101,17 +92,17 @@ export function MimadaCard({ item, rank }: { item: CreatorBase; rank: number }) 
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="relative snap-start shrink-0 w-32 md:w-36 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
-      <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-      <span className="absolute top-2 right-2 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-      <div className="absolute bottom-2 left-2 right-2 text-white">
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      <div className="absolute bottom-3 left-3 right-3 text-white">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-xs truncate">{item.name}</span>
-          {item.verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+          <span className="font-bold text-sm truncate">{item.name}</span>
+          {item.verified && <Verified />}
         </div>
-        <p className="text-[10px] text-white/80 truncate">@{item.handle}</p>
+        <p className="text-xs text-white/80 truncate">@{item.handle}</p>
       </div>
     </Link>
   );
