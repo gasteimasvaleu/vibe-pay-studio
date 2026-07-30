@@ -921,8 +921,14 @@ function PerfilPage() {
 
 
 
+          <ContentSummaryStrip
+            userId={profile.userId}
+            creatorProfileId={profile.creatorProfileId}
+          />
+
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
+
               <button
                 type="button"
                 onClick={() => {
