@@ -1,17 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
   BadgeCheck,
   Camera,
   Check,
-  ChevronLeft,
   Clock,
   Copy,
   Loader2,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import {
@@ -140,22 +139,24 @@ function CertificarPerfil() {
   const allReady = slots.every((s) => !!s.file);
 
   return (
-    <div className="min-h-screen bg-background/90 backdrop-blur">
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    <div className="min-h-screen text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
+        <div className="relative mx-auto flex max-w-2xl items-center justify-center px-4 py-3">
+          <button
+            type="button"
+            aria-label="Voltar"
+            onClick={() => router.history.back()}
+            className="absolute left-4 h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" /> Voltar
-          </Link>
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-base font-semibold text-foreground truncate">
+            Certificar perfil
+          </h1>
         </div>
+      </header>
 
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold tracking-tight">Certificar perfil</h1>
-        </div>
-
+      <main className="mx-auto max-w-2xl px-4 pb-24 pt-4 space-y-4">
         {q.isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
@@ -307,7 +308,7 @@ function CertificarPerfil() {
             </Card>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
