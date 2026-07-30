@@ -159,91 +159,83 @@ export function PostEmAltaCard({ item, rank }: { item: CreatorBase; rank: number
 
 export function ChatBombandoCard({ item, rank }: { item: ChatItem; rank: number }) {
   return (
-    <div className="snap-start shrink-0 w-80 rounded-2xl bg-card shadow-card border border-border p-3 flex items-center gap-3">
-      <img src={item.avatarUrl ?? undefined} alt={item.name} className="h-12 w-12 rounded-full object-cover" loading="lazy" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-primary">{rankSuffix(rank)}</p>
+    <Link
+      to="/perfil/$username"
+      params={{ username: item.handle }}
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
+    >
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      {item.online && (
+        <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-black/50 text-white text-[10px] font-bold px-2 py-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Online
+        </span>
+      )}
+      <div className="absolute bottom-3 left-3 right-3 text-white">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-sm text-foreground truncate">{item.name}</span>
+          <span className="font-bold text-sm truncate">{item.name}</span>
           {item.verified && <Verified />}
         </div>
-        <p className="text-xs text-muted-foreground truncate">{item.online ? "Responde em instantes" : `${item.messages7d ?? 0} mensagens nos últimos 7 dias`}</p>
+        <p className="text-xs text-white/80 truncate">
+          {item.online ? "Responde em instantes" : `${item.messages7d ?? 0} mensagens nos últimos 7 dias`}
+        </p>
       </div>
-      <Link
-        to="/perfil/$username"
-        params={{ username: item.handle }}
-        className="text-xs font-semibold text-primary border border-primary rounded-md px-3 py-1.5 hover:bg-primary/10 transition-colors"
-      >
-        Ver perfil
-      </Link>
-    </div>
+    </Link>
   );
 }
 
 export function UmAUmCard({ item, rank }: { item: UmAUmItem; rank: number }) {
   return (
-    <div className="snap-start shrink-0 w-64 rounded-2xl bg-card shadow-card border border-border overflow-hidden">
-      <div className="relative aspect-[4/5] bg-muted">
-        <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-        <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        {item.calls != null && item.calls > 0 && (
-          <span className="absolute top-2 left-2 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 leading-tight max-w-[60%]">
-            {item.calls} {item.calls === 1 ? "chamada" : "chamadas"}
-          </span>
-        )}
-
-        <span className="absolute bottom-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
-          um a um
-        </span>
-      </div>
-      <div className="p-3 text-center space-y-2">
-        <div className="flex items-center justify-center gap-1">
-          <span className="font-bold text-sm text-foreground truncate">{item.name}</span>
+    <Link
+      to="/perfil/$username"
+      params={{ username: item.handle }}
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
+    >
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      <span className="absolute top-2 left-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
+        {item.calls != null && item.calls > 0
+          ? `${item.calls} ${item.calls === 1 ? "chamada" : "chamadas"}`
+          : "um a um"}
+      </span>
+      <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="flex items-center gap-1">
+          <span className="font-bold text-sm truncate">{item.name}</span>
           {item.verified && <Verified />}
         </div>
-        <p className="text-xs text-muted-foreground truncate">@{item.handle}</p>
-        <Link
-          to="/perfil/$username"
-          params={{ username: item.handle }}
-          className="inline-block text-xs font-semibold text-primary border border-primary rounded-md px-4 py-1.5 hover:bg-primary/10 transition-colors"
-        >
-          Ver perfil
-        </Link>
+        <p className="text-xs text-white/80 truncate">@{item.handle}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export function LiveCard({ item, rank }: { item: LiveItem; rank: number }) {
   return (
-    <div className="snap-start shrink-0 w-56 rounded-2xl bg-card shadow-card border border-border overflow-hidden">
-      <div className="relative aspect-square bg-muted">
-        <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-        <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        {item.isLive && (
-          <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1">
-            <Radio className="h-3 w-3" /> AO VIVO
-          </span>
-        )}
-      </div>
-      <div className="p-3 text-center space-y-2">
-        <div className="flex items-center justify-center gap-1">
-          <span className="font-bold text-sm text-foreground truncate">{item.name}</span>
+    <Link
+      to="/perfil/$username"
+      params={{ username: item.handle }}
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
+    >
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      {item.isLive && (
+        <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1">
+          <Radio className="h-3 w-3" /> AO VIVO
+        </span>
+      )}
+      <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="flex items-center gap-1">
+          <span className="font-bold text-sm truncate">{item.name}</span>
           {item.verified && <Verified />}
         </div>
-        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-          <Radio className="h-3 w-3 text-destructive" />
+        <p className="flex items-center gap-1 text-xs text-white/80 truncate">
+          <Radio className="h-3 w-3" />
           {item.livesLast7Days} {item.livesLast7Days === 1 ? "live" : "lives"} nos últimos 7 dias
         </p>
-
-        <Link
-          to="/perfil/$username"
-          params={{ username: item.handle }}
-          className="inline-block text-xs font-semibold text-primary border border-primary rounded-md px-4 py-1.5 hover:bg-primary/10 transition-colors"
-        >
-          Ver perfil
-        </Link>
       </div>
-    </div>
+    </Link>
   );
 }
