@@ -9,6 +9,7 @@ const mediaItemSchema = z.object({
   storagePath: z.string().min(1),
   url: z.string().url(),
   type: z.enum(["image", "video"]),
+  durationSeconds: z.number().int().min(0).max(86400).nullable().optional(),
 });
 
 const audioSchema = z
