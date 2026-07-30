@@ -26,8 +26,7 @@ export function ProfileHeaderCard({
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-  const resolvedStat =
-    stat ?? { value: 0, label: isCreator ? "Superfãs" : "Assinaturas" };
+  const resolvedStat = stat ?? (isCreator ? { value: 0, label: "Superfãs" } : undefined);
 
   return (
     <section className="rounded-2xl border bg-card shadow-[var(--shadow-card)] overflow-hidden">
@@ -77,12 +76,14 @@ export function ProfileHeaderCard({
             )}
           </div>
           <p className="text-xs text-muted-foreground">@{username}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            <span className="text-sm font-semibold text-foreground align-middle">
-              {resolvedStat.value}
-            </span>{" "}
-            <span className="align-middle">{resolvedStat.label}</span>
-          </p>
+          {resolvedStat && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              <span className="text-sm font-semibold text-foreground align-middle">
+                {resolvedStat.value}
+              </span>{" "}
+              <span className="align-middle">{resolvedStat.label}</span>
+            </p>
+          )}
         </div>
       </div>
       {footer}
