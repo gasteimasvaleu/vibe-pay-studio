@@ -2285,6 +2285,7 @@ export type Database = {
         Row: {
           created_at: string
           creator_profile_id: string | null
+          duration_seconds: number | null
           id: string
           position: number
           publication_id: string
@@ -2295,6 +2296,7 @@ export type Database = {
         Insert: {
           created_at?: string
           creator_profile_id?: string | null
+          duration_seconds?: number | null
           id?: string
           position?: number
           publication_id: string
@@ -2305,6 +2307,7 @@ export type Database = {
         Update: {
           created_at?: string
           creator_profile_id?: string | null
+          duration_seconds?: number | null
           id?: string
           position?: number
           publication_id?: string
@@ -3642,6 +3645,13 @@ export type Database = {
           photos: number
           total: number
           videos: number
+        }[]
+      }
+      creator_content_stats: {
+        Args: { _author_id: string; _creator_profile_id?: string }
+        Returns: {
+          last_post_at: string
+          video_seconds: number
         }[]
       }
       default_paid_profile: { Args: { _user_id: string }; Returns: string }
