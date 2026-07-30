@@ -106,8 +106,31 @@ type MediaItem = {
   storagePath?: string;
   publicUrl?: string;
   uploadProgress: number;
+  durationSeconds?: number;
   error?: string;
 };
+
+async function readVideoDuration(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      const done = (value?: number) => {
+        URL.revokeObjectURL(url);
+        resolve(value);
+      };
+      video.onloadedmetadata = () => {
+        const d = video.duration;
+        done(Number.isFinite(d) && d > 0 ? Math.round(d) : undefined);
+      };
+      video.onerror = () => done(undefined);
+      video.src = url;
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
 
 type AudioRecording = {
   status: "idle" | "recording" | "uploading" | "ready" | "error";
@@ -397,6 +420,18 @@ function PublisherPage() {
 
     if (newItems.length === 0) return;
     setMedia((m) => [...m, ...newItems]);
+
+    for (const { id, file } of uploadJobs) {
+      if (!file.type.startsWith("video")) continue;
+      void readVideoDuration(file).then((durationSeconds) => {
+        if (!durationSeconds) return;
+        setMedia((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, durationSeconds } : m)),
+        );
+      });
+    }
+
+
 
     for (const { id, file, path } of uploadJobs) {
       void uploadWithProgress({
@@ -831,6 +866,7 @@ function PublisherPage() {
           storagePath: m.storagePath!,
           url: m.publicUrl!,
           type: m.type,
+          durationSeconds: m.durationSeconds ?? null,
         })),
         audio:
           audio.status === "ready" && audio.storagePath && audio.publicUrl

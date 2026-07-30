@@ -48,6 +48,7 @@ import { addFriend, removeFriend, isFriend as isFriendFn } from "@/lib/friends.f
 import { muteProfile, unmuteProfile, isMuted as isMutedFn } from "@/lib/mutes.functions";
 import { setActiveCreatorProfile } from "@/lib/creator-profile.functions";
 import { FriendsStrip } from "@/components/profile/FriendsStrip";
+import { ContentSummaryStrip } from "@/components/profile/ContentSummaryStrip";
 import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
 import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
 import { useIsUserOnline } from "@/hooks/useIsUserOnline";
@@ -920,8 +921,14 @@ function PerfilPage() {
 
 
 
+          <ContentSummaryStrip
+            userId={profile.userId}
+            creatorProfileId={profile.creatorProfileId}
+          />
+
           {!isOwner && (
             <div className="grid grid-cols-2 gap-3 pt-2 pr-4 md:pr-6">
+
               <button
                 type="button"
                 onClick={() => {

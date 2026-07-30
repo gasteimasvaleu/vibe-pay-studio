@@ -9,6 +9,7 @@ const mediaItemSchema = z.object({
   storagePath: z.string().min(1),
   url: z.string().url(),
   type: z.enum(["image", "video"]),
+  durationSeconds: z.number().int().min(0).max(86400).nullable().optional(),
 });
 
 const audioSchema = z
@@ -94,6 +95,7 @@ export const createPublication = createServerFn({ method: "POST" })
       url: m.url,
       type: m.type,
       position: index,
+      duration_seconds: m.type === "video" ? m.durationSeconds ?? null : null,
     }));
 
     const { error: mediaErr } = await context.supabase
