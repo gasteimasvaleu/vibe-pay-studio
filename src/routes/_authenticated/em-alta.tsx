@@ -1,8 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { EmAltaSection } from "@/components/em-alta/EmAltaSection";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getEmAltaFeed } from "@/lib/em-alta.functions";
+import { emptyEmAltaFeed } from "@/lib/em-alta.types";
 import {
   ChatBombandoCard,
   LiveCard,
@@ -14,22 +18,16 @@ import {
   TopCreatorCard,
   UmAUmCard,
 } from "@/components/em-alta/Cards";
-import {
-  bombandoNoChat,
-  chamadaUmAUm,
-  emAltaNosPosts,
-  liveNasAlturas,
-  maisMimadas,
-  ofertas,
-  perfisGratuitos,
-  rumoAoTopo,
-  topCreators,
-} from "@/lib/em-alta.mock";
 
 export const Route = createFileRoute("/_authenticated/em-alta")({
   head: () => ({
     meta: [
       { title: "Em Alta · Monetisexy" },
+      {
+        name: "description",
+        content:
+          "Descubra quem está em alta agora: top creators, ofertas de assinatura, perfis gratuitos, lives e muito mais.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -55,66 +53,121 @@ export const Route = createFileRoute("/_authenticated/em-alta")({
 function EmAltaPage() {
   const { username, avatarUrl, isCreator } = Route.useRouteContext();
 
+  const { data, isLoading } = useQuery({
+    queryKey: ["em-alta-feed"],
+    queryFn: () => getEmAltaFeed(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const feed = data ?? emptyEmAltaFeed;
+  const isEmpty =
+    !isLoading &&
+    Object.values(feed).every((list) => !Array.isArray(list) || list.length === 0);
+
   return (
     <DashboardShell username={username} isCreator={isCreator} avatarUrl={avatarUrl}>
-      <div className="space-y-8">
-        <EmAltaSection title="Top creators">
-          {topCreators.map((item, i) => (
-            <TopCreatorCard key={item.id} item={item} rank={i + 1} />
+      {isLoading ? (
+        <div className="space-y-8">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-5 w-40" />
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1, 2, 3].map((j) => (
+                  <Skeleton key={j} className="h-52 w-40 shrink-0 rounded-2xl" />
+                ))}
+              </div>
+            </div>
           ))}
-        </EmAltaSection>
+        </div>
+      ) : isEmpty ? (
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <Sparkles className="mx-auto h-6 w-6 text-primary" />
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            Ainda não há destaques por aqui
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Assim que os criadores começarem a publicar, vender e transmitir, os
+            rankings aparecem nesta página.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {feed.topCreators.length > 0 && (
+            <EmAltaSection title="Top creators">
+              {feed.topCreators.map((item, i) => (
+                <TopCreatorCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection
-          title="Ofertas de assinatura"
-          icon={<Sparkles className="h-5 w-5 text-primary" />}
-        >
-          {ofertas.map((item) => (
-            <OfertaCard key={item.id} item={item} />
-          ))}
-        </EmAltaSection>
+          {feed.ofertas.length > 0 && (
+            <EmAltaSection
+              title="Ofertas de assinatura"
+              icon={<Sparkles className="h-5 w-5 text-primary" />}
+            >
+              {feed.ofertas.map((item) => (
+                <OfertaCard key={item.id} item={item} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Perfis gratuitos">
-          {perfisGratuitos.map((item, i) => (
-            <PerfilGratuitoCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.perfisGratuitos.length > 0 && (
+            <EmAltaSection title="Perfis gratuitos">
+              {feed.perfisGratuitos.map((item, i) => (
+                <PerfilGratuitoCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="As mais mimadas">
-          {maisMimadas.map((item, i) => (
-            <MimadaCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.maisMimadas.length > 0 && (
+            <EmAltaSection title="As mais mimadas">
+              {feed.maisMimadas.map((item, i) => (
+                <MimadaCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Rumo ao topo">
-          {rumoAoTopo.map((item, i) => (
-            <RumoAoTopoCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.rumoAoTopo.length > 0 && (
+            <EmAltaSection title="Rumo ao topo">
+              {feed.rumoAoTopo.map((item, i) => (
+                <RumoAoTopoCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Em alta nos posts">
-          {emAltaNosPosts.map((item, i) => (
-            <PostEmAltaCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.emAltaNosPosts.length > 0 && (
+            <EmAltaSection title="Em alta nos posts">
+              {feed.emAltaNosPosts.map((item, i) => (
+                <PostEmAltaCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Bombando no chat">
-          {bombandoNoChat.map((item, i) => (
-            <ChatBombandoCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.bombandoNoChat.length > 0 && (
+            <EmAltaSection title="Bombando no chat">
+              {feed.bombandoNoChat.map((item, i) => (
+                <ChatBombandoCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Chamada Um a Um">
-          {chamadaUmAUm.map((item, i) => (
-            <UmAUmCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
+          {feed.chamadaUmAUm.length > 0 && (
+            <EmAltaSection title="Chamada Um a Um">
+              {feed.chamadaUmAUm.map((item, i) => (
+                <UmAUmCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
 
-        <EmAltaSection title="Live nas alturas">
-          {liveNasAlturas.map((item, i) => (
-            <LiveCard key={item.id} item={item} rank={i + 1} />
-          ))}
-        </EmAltaSection>
-      </div>
+          {feed.liveNasAlturas.length > 0 && (
+            <EmAltaSection title="Live nas alturas">
+              {feed.liveNasAlturas.map((item, i) => (
+                <LiveCard key={item.id} item={item} rank={i + 1} />
+              ))}
+            </EmAltaSection>
+          )}
+        </div>
+      )}
     </DashboardShell>
   );
 }
