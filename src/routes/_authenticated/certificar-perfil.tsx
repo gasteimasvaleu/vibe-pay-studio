@@ -57,6 +57,7 @@ const EMPTY_SLOTS: Slot[] = [
 ];
 
 function CertificarPerfil() {
+  const router = useRouter();
   const statusFn = useServerFn(getMyVerificationStatus);
   const uploadUrlFn = useServerFn(createVerificationUploadUrl);
   const submitFn = useServerFn(submitVerificationRequest);
