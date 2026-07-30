@@ -7,6 +7,7 @@ import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoO
 import { getLive, endLive, pingLive } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 
 import { LiveChat } from "@/components/live/LiveChat";
 import { LiveDonorsPanel } from "@/components/live/LiveDonorsPanel";
@@ -101,6 +102,13 @@ function TransmitirPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  // Tela cheia no mobile: remove TopNav/BottomNav e o padding do layout.
+  useEffect(() => {
+    if (!isMobile) return;
+    openOverlay();
+    return () => closeOverlay();
+  }, [isMobile]);
   
 
   const getLiveFn = useServerFn(getLive);
@@ -656,6 +664,7 @@ function TransmitirPage() {
             broadcasterId={meta?.creator ? undefined : undefined}
             variant="overlay"
             className="h-full rounded-t-2xl"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             onViewersChange={setLiveViewers}
             headerSlot={
               <div {...drag.dragHandlers} className="touch-none cursor-row-resize flex items-center justify-center py-2 border-b border-white/15">

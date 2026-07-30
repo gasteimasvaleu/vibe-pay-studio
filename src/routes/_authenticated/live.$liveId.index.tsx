@@ -8,6 +8,7 @@ import { getLive, registerLiveView } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveTicketDialog } from "@/components/live/LiveTicketDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 
 import { WhepPlayer } from "@/components/live/WhepPlayer";
 import { LiveChat } from "@/components/live/LiveChat";
@@ -82,6 +83,14 @@ function LiveViewerPage() {
   const drag = useLiveDragChat();
   const [liveViewers, setLiveViewers] = useState<number | null>(null);
 
+  // No mobile a live ocupa a tela inteira: esconde TopNav/BottomNav e o
+  // padding-bottom do layout (que causava faixa branca abaixo do chat).
+  useEffect(() => {
+    if (!isMobile) return;
+    openOverlay();
+    return () => closeOverlay();
+  }, [isMobile]);
+
   if (!live) return <div className="min-h-screen bg-background grid place-items-center text-muted-foreground text-sm">Carregando…</div>;
 
   const viewersDisplay = liveViewers ?? live.viewersPeak;
@@ -137,7 +146,7 @@ function LiveViewerPage() {
   // ------- MOBILE -------
   if (isMobile) {
     return (
-      <div ref={drag.containerRef} className="fixed inset-0 bg-black overflow-hidden z-40">
+      <div ref={drag.containerRef} className="relative h-dvh bg-black overflow-hidden">
         <div className="absolute inset-0">
           {playerOrPaywall("cover")}
         </div>
@@ -170,6 +179,7 @@ function LiveViewerPage() {
             broadcasterId={undefined}
             variant="overlay"
             className="h-full rounded-t-2xl"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             onViewersChange={setLiveViewers}
             headerSlot={
               <div
