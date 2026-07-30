@@ -295,7 +295,10 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
         plan: r.plan as string,
         priceCents: r.price_cents_paid ?? 0,
         status: r.status as string,
-        autoRenew: r.auto_renew ?? false,
+        // Renovação automática só é real quando existe recorrência no Asaas.
+        // Assinaturas antigas (pré-tokenização) têm auto_renew=true por padrão
+        // sem nenhuma recorrência criada no gateway.
+        autoRenew: (r.auto_renew ?? false) && !!(r as any).asaas_subscription_id,
         currentPeriodEnd: (r.current_period_end as string) ?? null,
         startedAt: (r.started_at as string) ?? null,
         cancelledAt: ((r as any).cancelled_at as string) ?? null,
