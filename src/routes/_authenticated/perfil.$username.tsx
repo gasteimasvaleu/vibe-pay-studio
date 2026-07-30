@@ -73,7 +73,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     // Se não houver, cai no profiles legado.
     const { data: creatorProfile } = await supabase
       .from("creator_profiles")
-      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual")
+      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual, verified_at")
       .eq("username", params.username)
       .maybeSingle();
 
@@ -817,7 +817,12 @@ function PerfilPage() {
         <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 pl-4 md:pl-6 pr-4 md:pr-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card border border-primary/30">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-black tracking-tight text-foreground truncate">{displayName}</h2>
-            <BadgeCheck className="h-6 w-6 shrink-0 text-fuchsia-400 fill-fuchsia-400/20" />
+            {profile.verified_at && (
+              <BadgeCheck
+                className="h-6 w-6 shrink-0 text-fuchsia-400 fill-fuchsia-400/20"
+                aria-label="Perfil certificado"
+              />
+            )}
             {showOnlineToday && (
               <span className="ml-auto shrink-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-300/60 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
