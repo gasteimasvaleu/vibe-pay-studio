@@ -1,25 +1,30 @@
-## Causa
+## Objetivo
 
-A live roda dentro do layout `_authenticated` (`src/routes/_authenticated/route.tsx`), que envolve tudo em `<div className="pb-24">` e renderiza `TopNav` + `BottomNav`, a não ser que algum componente registre o modo tela cheia (`useFullscreenOverlay`). Hoje **só o `StoryViewer` chama `openOverlay()`** — nenhuma rota de live faz isso.
+Permitir que quem assiste a live envie mimos (gorjetas) ao criador, através de um botão flutuante redondo, no mesmo padrão visual do botão de voltar, alinhado à direita e logo abaixo do contador de pessoas presentes.
 
-Resultado no mobile:
-- `live.$liveId.transmitir.tsx` usa `relative h-dvh` → altura cheia **+** os `pb-24` do layout = faixa branca de ~6rem entre o input do chat e a BottomNav.
-- `live.$liveId.index.tsx` usa `fixed inset-0 z-40`, que disfarça o problema, mas ainda deixa TopNav/BottomNav montados por baixo e sujeitos a aparecer nas bordas.
+## O que será feito
 
-## Correção
+**Arquivo:** `src/routes/_authenticated/live/$liveId/index.tsx` (tela do espectador)
 
-**1. Registrar a live como overlay de tela cheia (mobile)**
-Em ambas as rotas (`live.$liveId.index.tsx` e `live.$liveId.transmitir.tsx`), adicionar um `useEffect` que chama `openOverlay()` na montagem e `closeOverlay()` no unmount quando `isMobile` for verdadeiro. Com isso o layout remove `pb-24`, `TopNav` e `BottomNav`, eliminando a faixa branca — a live já tem botão de voltar próprio e o chat encosta na borda inferior.
+1. **Botão flutuante (mobile)**
+   - Ícone de presente (`Gift`), círculo `h-9 w-9`, `rounded-full bg-black/45 backdrop-blur text-white hover:bg-black/60` — exatamente o mesmo estilo do botão "Voltar" já existente.
+   - Posicionado à direita (`right: 0.75rem`), na mesma altura vertical do botão de voltar (`top: calc(env(safe-area-inset-top) + 3.5rem)`), ou seja, imediatamente abaixo do contador de espectadores do overlay superior.
+   - `aria-label="Enviar mimo"` para acessibilidade.
 
-**2. Respeitar a safe area**
-No container mobile da live, usar `h-dvh` com `padding-bottom: env(safe-area-inset-bottom)` no bloco do chat, para o input não ficar sob a barra de gestos do iPhone.
+2. **Botão no desktop**
+   - Mesmo botão redondo, flutuante sobre o player (canto superior direito da área de vídeo, abaixo do overlay com o contador), mantendo o padrão circular.
 
-**3. Uniformizar o container mobile do viewer**
-Trocar `fixed inset-0 z-40` por `relative h-dvh` no `live.$liveId.index.tsx`, já que com o overlay ativo não é mais preciso sobrepor a navegação — mantendo as duas telas de live com o mesmo comportamento.
+3. **Diálogo de cobrança padrão**
+   - Reutilizar o componente existente `TipDialog` (`@/components/payments/TipDialog`), que já traz presets de valor, mensagem opcional e o seletor de método (PIX / cartão salvo / novo cartão / carteira).
+   - Passar `creatorId={live.creatorId}` e `creatorName={live.creator.displayName ?? live.creator.username}`.
 
-No desktop nada muda: navegação e layout permanecem como estão hoje.
+4. **Regras de exibição**
+   - O botão só aparece quando a live está no ar e o espectador tem acesso (`live.canWatch` e `status !== "ended"`), e nunca para o próprio dono (que é redirecionado para a rota de transmissão).
+
+5. **Atualização após o pagamento**
+   - Ao concluir o mimo, invalidar as queries do painel "Top apoiadores" (`LiveDonorsPanel`) e da live, para que o apoiador apareça imediatamente sem recarregar a página.
 
 ## Detalhes técnicos
 
-- `openOverlay`/`closeOverlay` de `@/hooks/useFullscreenOverlay` (contador global, seguro para múltiplos consumidores).
-- Efeito com dependência em `isMobile`, garantindo `closeOverlay()` ao sair da rota para não deixar a navegação escondida em outras páginas.
+- `TipDialog` já registra a transação como `tip` via `createTipPayment`, incluindo fluxo 1-click com cartão salvo e polling de confirmação — nenhuma mudança de backend é necessária.
+- Nenhuma migração de banco: os mimos já são gravados e o painel de doadores da live já lê essas transações.

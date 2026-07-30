@@ -3,10 +3,11 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Lock, Users as UsersIcon } from "lucide-react";
+import { ArrowLeft, Gift, Lock, Users as UsersIcon } from "lucide-react";
 import { getLive, registerLiveView } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveTicketDialog } from "@/components/live/LiveTicketDialog";
+import { TipDialog } from "@/components/payments/TipDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
 
@@ -36,6 +37,7 @@ function LiveViewerPage() {
   const registerViewFn = useServerFn(registerLiveView);
   const [ticketOpen, setTicketOpen] = useState(false);
   const [donorsOpen, setDonorsOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
   const [playbackState, setPlaybackState] = useState<"idle" | "connecting" | "waiting" | "playing" | "error">("idle");
 
 
@@ -94,6 +96,36 @@ function LiveViewerPage() {
   if (!live) return <div className="min-h-screen bg-background grid place-items-center text-muted-foreground text-sm">Carregando…</div>;
 
   const viewersDisplay = liveViewers ?? live.viewersPeak;
+
+  const canTip = live.canWatch && live.status !== "ended" && !live.isOwner;
+
+  const handleTipPaid = () => {
+    qc.invalidateQueries({ queryKey: ["live-donors", liveId] });
+    qc.invalidateQueries({ queryKey: ["live", liveId] });
+  };
+
+  const tipButton = (style?: React.CSSProperties, className?: string) =>
+    canTip ? (
+      <button
+        type="button"
+        aria-label="Enviar mimo"
+        onClick={() => setTipOpen(true)}
+        className={className ?? "absolute z-20 h-9 w-9 grid place-items-center rounded-full bg-black/45 backdrop-blur text-white hover:bg-black/60"}
+        style={style}
+      >
+        <Gift className="h-4 w-4" />
+      </button>
+    ) : null;
+
+  const tipDialog = (
+    <TipDialog
+      open={tipOpen}
+      onOpenChange={setTipOpen}
+      creatorId={live.creatorId}
+      creatorName={live.creator.displayName ?? live.creator.username}
+      onPaid={handleTipPaid}
+    />
+  );
 
   const topOverlay = (
     <LiveOverlayTop
@@ -170,6 +202,8 @@ function LiveViewerPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
 
+        {tipButton({ top: "calc(env(safe-area-inset-top) + 3.5rem)", right: "0.75rem" })}
+
         <div
           className="absolute inset-x-0 bottom-0 z-10"
           style={{ height: `${drag.chatRatio * 100}%` }}
@@ -208,6 +242,8 @@ function LiveViewerPage() {
           priceCents={live.priceCents}
           onPaid={() => refetch()}
         />
+
+        {tipDialog}
       </div>
     );
   }
@@ -229,6 +265,7 @@ function LiveViewerPage() {
         <div className="relative flex-1 bg-black rounded-lg overflow-hidden">
           {playerOrPaywall("contain")}
           {topOverlay}
+          {tipButton({ top: "3.5rem", right: "0.75rem" })}
         </div>
         <div className="w-[340px] h-full flex flex-col gap-3">
           <LiveDonorsPanel liveId={liveId} variant="card" collapsible className="shrink-0" />
@@ -244,6 +281,8 @@ function LiveViewerPage() {
         priceCents={live.priceCents}
         onPaid={() => refetch()}
       />
+
+      {tipDialog}
       </div>
     </div>
   );
