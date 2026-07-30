@@ -1,29 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
-
-const BUCKET = "profile-verification";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const [{ data: isAdmin }, { data: isMod }] = await Promise.all([
-    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-    supabase.rpc("has_role", { _user_id: userId, _role: "moderator" }),
-  ]);
-  if (!isAdmin && !isMod) throw new Error("acesso negado");
-}
-
-function safeName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 100);
-}
-
-function makeCode() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return `MTX-${out}`;
-}
+import {
+  VERIFICATION_BUCKET as BUCKET,
+  assertVerificationAdmin as assertAdmin,
+  safeVerificationName as safeName,
+  makeVerificationCode as makeCode,
+} from "@/lib/verification.server";
 
 export type VerificationState = {
   profileId: string | null;
