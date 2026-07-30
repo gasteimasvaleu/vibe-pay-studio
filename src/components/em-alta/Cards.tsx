@@ -47,11 +47,12 @@ export function OfertaCard({ item }: { item: OfertaItem }) {
     >
       <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-      {item.discountLabel && (
+      {item.discountPct != null && item.discountPct > 0 && (
         <span className="absolute top-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
-          {item.discountLabel} OFF
+          {Math.round(item.discountPct)}% OFF
         </span>
       )}
+
       <div className="absolute bottom-2 left-3 right-3 text-white">
         <div className="flex items-center gap-1">
           <span className="font-bold text-sm truncate">{item.name}</span>
