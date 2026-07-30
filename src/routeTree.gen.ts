@@ -44,6 +44,7 @@ import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
 import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedCertificarPerfilRouteImport } from './routes/_authenticated/certificar-perfil'
 import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -81,6 +82,7 @@ import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminVideocallsRouteImport } from './routes/_authenticated/admin.videocalls'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminTrophiesRouteImport } from './routes/_authenticated/admin.trophies'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
@@ -302,6 +304,12 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCertificarPerfilRoute =
+  AuthenticatedCertificarPerfilRouteImport.update({
+    id: '/certificar-perfil',
+    path: '/certificar-perfil',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
   id: '/bugreport',
   path: '/bugreport',
@@ -515,6 +523,12 @@ const AuthenticatedAdminVideocallsRoute =
   AuthenticatedAdminVideocallsRouteImport.update({
     id: '/videocalls',
     path: '/videocalls',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
+    id: '/verifications',
+    path: '/verifications',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
@@ -754,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
+  '/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -795,6 +810,7 @@ export interface FileRoutesByFullPath {
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
@@ -864,6 +880,7 @@ export interface FileRoutesByTo {
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
+  '/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
@@ -903,6 +920,7 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
@@ -971,6 +989,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
   '/_authenticated/bugreport': typeof AuthenticatedBugreportRoute
+  '/_authenticated/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -1012,6 +1031,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/admin/trophies': typeof AuthenticatedAdminTrophiesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/admin/videocalls': typeof AuthenticatedAdminVideocallsRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
@@ -1084,6 +1104,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/banco'
     | '/bugreport'
+    | '/certificar-perfil'
     | '/chat'
     | '/chat-agendamento'
     | '/chat-configuracoes'
@@ -1125,6 +1146,7 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/trophies'
     | '/admin/users'
+    | '/admin/verifications'
     | '/admin/videocalls'
     | '/admin/withdrawals'
     | '/banco/cadastrar'
@@ -1194,6 +1216,7 @@ export interface FileRouteTypes {
     | '/account-status'
     | '/banco'
     | '/bugreport'
+    | '/certificar-perfil'
     | '/chat-agendamento'
     | '/chat-configuracoes'
     | '/colecoes'
@@ -1233,6 +1256,7 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/trophies'
     | '/admin/users'
+    | '/admin/verifications'
     | '/admin/videocalls'
     | '/admin/withdrawals'
     | '/banco/cadastrar'
@@ -1300,6 +1324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/banco'
     | '/_authenticated/bugreport'
+    | '/_authenticated/certificar-perfil'
     | '/_authenticated/chat'
     | '/_authenticated/chat-agendamento'
     | '/_authenticated/chat-configuracoes'
@@ -1341,6 +1366,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/transactions'
     | '/_authenticated/admin/trophies'
     | '/_authenticated/admin/users'
+    | '/_authenticated/admin/verifications'
     | '/_authenticated/admin/videocalls'
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
@@ -1666,6 +1692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/certificar-perfil': {
+      id: '/_authenticated/certificar-perfil'
+      path: '/certificar-perfil'
+      fullPath: '/certificar-perfil'
+      preLoaderRoute: typeof AuthenticatedCertificarPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/bugreport': {
       id: '/_authenticated/bugreport'
       path: '/bugreport'
@@ -1923,6 +1956,13 @@ declare module '@tanstack/react-router' {
       path: '/videocalls'
       fullPath: '/admin/videocalls'
       preLoaderRoute: typeof AuthenticatedAdminVideocallsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
+      path: '/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/users': {
@@ -2226,6 +2266,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminTrophiesRoute: typeof AuthenticatedAdminTrophiesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRouteWithChildren
+  AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
   AuthenticatedAdminVideocallsRoute: typeof AuthenticatedAdminVideocallsRoute
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -2249,6 +2290,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
   AuthenticatedAdminTrophiesRoute: AuthenticatedAdminTrophiesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRouteWithChildren,
+  AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
   AuthenticatedAdminVideocallsRoute: AuthenticatedAdminVideocallsRoute,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -2385,6 +2427,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBancoRoute: typeof AuthenticatedBancoRouteWithChildren
   AuthenticatedBugreportRoute: typeof AuthenticatedBugreportRoute
+  AuthenticatedCertificarPerfilRoute: typeof AuthenticatedCertificarPerfilRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAgendamentoRoute: typeof AuthenticatedChatAgendamentoRoute
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
@@ -2440,6 +2483,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedBancoRoute: AuthenticatedBancoRouteWithChildren,
   AuthenticatedBugreportRoute: AuthenticatedBugreportRoute,
+  AuthenticatedCertificarPerfilRoute: AuthenticatedCertificarPerfilRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAgendamentoRoute: AuthenticatedChatAgendamentoRoute,
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,

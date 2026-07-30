@@ -11,9 +11,11 @@ export function ProfileHeaderCard({
   showProfileLink = true,
   avatarUrl,
   footer,
+  verified = false,
 }: {
   username: string;
   isCreator: boolean;
+  verified?: boolean;
   stat?: { value: number; label: string };
   levelBadge?: string;
   showProfileLink?: boolean;
@@ -70,8 +72,8 @@ export function ProfileHeaderCard({
             <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">
               {displayName}
             </h2>
-            {isCreator && (
-              <BadgeCheck className="h-4 w-4 text-primary" aria-label="Creator verificado" />
+            {verified && (
+              <BadgeCheck className="h-4 w-4 text-primary" aria-label="Perfil certificado" />
             )}
           </div>
           <p className="text-xs text-muted-foreground">@{username}</p>

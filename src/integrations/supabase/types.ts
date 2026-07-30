@@ -754,6 +754,7 @@ export type Database = {
           updated_at: string
           user_id: string
           username: string
+          verified_at: string | null
           x_handle: string | null
         }
         Insert: {
@@ -778,6 +779,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           username: string
+          verified_at?: string | null
           x_handle?: string | null
         }
         Update: {
@@ -802,6 +804,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string
+          verified_at?: string | null
           x_handle?: string | null
         }
         Relationships: []
@@ -1615,6 +1618,63 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      profile_verification_requests: {
+        Row: {
+          admin_notes: string | null
+          code: string
+          created_at: string
+          creator_profile_id: string
+          id: string
+          photo_paths: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          code: string
+          created_at?: string
+          creator_profile_id: string
+          id?: string
+          photo_paths?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          code?: string
+          created_at?: string
+          creator_profile_id?: string
+          id?: string
+          photo_paths?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_verification_requests_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_verification_requests_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_views: {
         Row: {
@@ -3726,6 +3786,7 @@ export type Database = {
           updated_at: string
           user_id: string
           username: string
+          verified_at: string | null
           x_handle: string | null
         }
         SetofOptions: {

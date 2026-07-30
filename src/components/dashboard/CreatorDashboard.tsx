@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  BadgeCheck,
   BadgePercent,
   Bookmark,
   Bug,
@@ -22,10 +23,11 @@ import {
 } from "lucide-react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveProfileView } from "@/lib/account.functions";
+import { getMyVerificationStatus } from "@/lib/verification.functions";
 import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
 import { EarningsSummary } from "./EarningsSummary";
@@ -51,6 +53,22 @@ export function CreatorDashboard({
   const router = useRouter();
   const queryClient = useQueryClient();
   const switchView = useServerFn(setActiveProfileView);
+  const verificationFn = useServerFn(getMyVerificationStatus);
+
+  const verification = useQuery({
+    queryKey: ["my-verification"],
+    queryFn: () => verificationFn(),
+    staleTime: 60_000,
+  });
+  const verificationStatus = verification.data?.status ?? "none";
+  const verificationDescription =
+    verificationStatus === "approved"
+      ? "Seu perfil já tem o selo de certificado"
+      : verificationStatus === "pending"
+        ? "Pedido em análise pela nossa equipe"
+        : verificationStatus === "rejected"
+          ? "Pedido recusado — veja o motivo e reenvie"
+          : "Solicite o selo de perfil certificado";
 
   // Perfil gratuito (vinculado ou puro) não expõe cards de assinatura paga.
   const isFreeMode = variant === "free_creator" || variant === "linked_free";
@@ -118,6 +136,7 @@ export function CreatorDashboard({
       isCreator
       avatarUrl={avatarUrl}
       switchBar={switchBar}
+      verified={verificationStatus === "approved"}
     >
 
       <div className="space-y-6">
@@ -155,6 +174,12 @@ export function CreatorDashboard({
               />
             )
           )}
+          <ActionCard
+            icon={<BadgeCheck className="h-5 w-5" />}
+            title="Certificar perfil"
+            description={verificationDescription}
+            to="/certificar-perfil"
+          />
           <ActionCard
             icon={<LineChart className="h-5 w-5" />}
             title="Meu Monetisexy"
