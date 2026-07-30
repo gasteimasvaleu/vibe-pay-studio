@@ -14,7 +14,7 @@ export const getEmAltaFeed = createServerFn({ method: "GET" })
 export const getEmAltaSection = createServerFn({ method: "GET" })
   .inputValidator((data: { section: string; offset?: number; limit?: number }) => data)
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }): Promise<unknown[]> => {
+  .handler(async ({ context, data }): Promise<Record<string, any>[]> => {
     const { supabase } = context;
     const { data: rows, error } = await (supabase as any).rpc("em_alta_section", {
       _section: data.section,
@@ -22,5 +22,5 @@ export const getEmAltaSection = createServerFn({ method: "GET" })
       _offset: data.offset ?? 0,
     });
     if (error) throw new Error(error.message);
-    return (rows ?? []) as unknown[];
+    return (rows ?? []) as Record<string, any>[];
   });
