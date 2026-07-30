@@ -1036,6 +1036,8 @@ export const logPublicationView = createServerFn({ method: "POST" })
 
 /**
  * Registra visita a um perfil.
+ * O visitante é derivado do bearer token da requisição (nunca do payload),
+ * para que o dono do perfil veja visitantes únicos reais.
  */
 export const logProfileView = createServerFn({ method: "POST" })
   .inputValidator((data: { profileId: string }) => ({ profileId: String(data.profileId) }))
@@ -1051,19 +1053,40 @@ export const logProfileView = createServerFn({ method: "POST" })
       null
     );
     const normalizedCountry = country && country.length === 2 ? country.toUpperCase() : null;
+
+    // Token do visitante (opcional: visitantes anônimos ficam com viewer_id nulo).
+    const authHeader = getRequestHeader("authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const hasToken = token.split(".").length === 3;
+
     const { createClient } = await import("@supabase/supabase-js");
     const client = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
+        ...(hasToken ? { headers: { Authorization: `Bearer ${token}` } } : {}),
         fetch: (input, init) => {
           const h = new Headers(init?.headers);
           if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          if (hasToken) h.set("Authorization", `Bearer ${token}`);
           h.set("apikey", key);
           return fetch(input, { ...init, headers: h });
         },
       },
     });
-    await client.from("profile_views").insert({ profile_id: data.profileId, viewer_id: null, country: normalizedCountry });
+
+    let viewerId: string | null = null;
+    if (hasToken) {
+      const { data: claimsData } = await client.auth.getClaims(token);
+      viewerId = (claimsData?.claims?.sub as string | undefined) ?? null;
+    }
+
+    // Não conta auto-visita.
+    if (viewerId && viewerId === data.profileId) return { ok: true, skipped: "self" as const };
+
+    const { error } = await client
+      .from("profile_views")
+      .insert({ profile_id: data.profileId, viewer_id: viewerId, country: normalizedCountry });
+    if (error) return { ok: false, error: error.message };
     return { ok: true };
   });
 
