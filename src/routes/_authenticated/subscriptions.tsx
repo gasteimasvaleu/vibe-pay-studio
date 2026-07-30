@@ -617,19 +617,18 @@ function SubscriptionsPage() {
                             </AlertDialog>
                           )}
 
-                          {!expired &&
-                            paid &&
-                            !sub.autoRenew &&
-                            (sub.cancelledAt || sub.status === "past_due") && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 gap-1 rounded-lg"
-                                onClick={() => openReactivate(sub)}
-                              >
-                                Reativar renovação
-                              </Button>
-                            )}
+                          {!expired && paid && !sub.autoRenew && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 gap-1 rounded-lg"
+                              onClick={() => openReactivate(sub)}
+                            >
+                              {sub.cancelledAt || sub.status === "past_due"
+                                ? "Reativar renovação"
+                                : "Ativar renovação automática"}
+                            </Button>
+                          )}
                         </div>
 
 
