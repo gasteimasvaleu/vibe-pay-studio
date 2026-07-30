@@ -1711,8 +1711,8 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
                     {totalAssinantes} Assinantes, {formatBRL(stats.data?.faturamentoPeriodo ?? 0)}
                   </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "#8B5CF6" }} />Faturamento</span>
-                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/70" />Quantidade</span>
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: "#8B5CF6" }} />Faturamento</span>
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/70" />Quantidade</span>
                   </div>
                 </div>
                 <div className="relative mt-6 h-72">
