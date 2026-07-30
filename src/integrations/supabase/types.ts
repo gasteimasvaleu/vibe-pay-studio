@@ -3543,6 +3543,7 @@ export type Database = {
           restrict_search_country: boolean | null
           user_id: string | null
           username: string | null
+          verified_at: string | null
         }
         Relationships: []
       }
