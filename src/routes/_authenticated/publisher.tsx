@@ -106,8 +106,31 @@ type MediaItem = {
   storagePath?: string;
   publicUrl?: string;
   uploadProgress: number;
+  durationSeconds?: number;
   error?: string;
 };
+
+async function readVideoDuration(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      const done = (value?: number) => {
+        URL.revokeObjectURL(url);
+        resolve(value);
+      };
+      video.onloadedmetadata = () => {
+        const d = video.duration;
+        done(Number.isFinite(d) && d > 0 ? Math.round(d) : undefined);
+      };
+      video.onerror = () => done(undefined);
+      video.src = url;
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
 
 type AudioRecording = {
   status: "idle" | "recording" | "uploading" | "ready" | "error";
