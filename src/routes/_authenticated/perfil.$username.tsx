@@ -1278,10 +1278,12 @@ function ActiveSubscriptionCard({
         Válida até <strong>{endDate.toLocaleDateString("pt-BR")}</strong>
         <span className="text-muted-foreground"> · {daysLeft} dia{daysLeft === 1 ? "" : "s"} restante{daysLeft === 1 ? "" : "s"}</span>
       </div>
-      <div className={`text-xs mt-1 ${nearExpiry ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-        {nearExpiry
-          ? "⚠ Expira em breve — renove manualmente para não perder o acesso."
-          : "Renovação manual — lembrete por e-mail 7 dias antes de expirar."}
+      <div className={`text-xs mt-1 ${nearExpiry && !autoRenew ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+        {autoRenew
+          ? "Cobrança automática no cartão salvo ao fim do ciclo."
+          : nearExpiry
+            ? "⚠ Expira em breve — renove manualmente para não perder o acesso."
+            : "Renovação manual — lembrete por e-mail 7 dias antes de expirar."}
       </div>
       <div className="mt-3">
         <button
