@@ -78,6 +78,7 @@ import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_a
 import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
 import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
 import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
+import { Route as AuthenticatedEmAltaSectionRouteImport } from './routes/_authenticated/em-alta.$section'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
@@ -502,6 +503,12 @@ const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
   path: '/live/$liveId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmAltaSectionRoute =
+  AuthenticatedEmAltaSectionRouteImport.update({
+    id: '/em-alta/$section',
+    path: '/em-alta/$section',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -815,6 +822,7 @@ export interface FileRoutesByFullPath {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/em-alta/$section': typeof AuthenticatedEmAltaSectionRoute
   '/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -925,6 +933,7 @@ export interface FileRoutesByTo {
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/em-alta/$section': typeof AuthenticatedEmAltaSectionRoute
   '/live/nova': typeof AuthenticatedLiveNovaRoute
   '/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
   '/mywallet/recarregar': typeof AuthenticatedMywalletRecarregarRoute
@@ -1036,6 +1045,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/banco/cadastrar': typeof AuthenticatedBancoCadastrarRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/em-alta/$section': typeof AuthenticatedEmAltaSectionRoute
   '/_authenticated/live/$liveId': typeof AuthenticatedLiveLiveIdRouteWithChildren
   '/_authenticated/live/nova': typeof AuthenticatedLiveNovaRoute
   '/_authenticated/mywallet/extrato': typeof AuthenticatedMywalletExtratoRoute
@@ -1151,6 +1161,7 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/em-alta/$section'
     | '/live/$liveId'
     | '/live/nova'
     | '/mywallet/extrato'
@@ -1261,6 +1272,7 @@ export interface FileRouteTypes {
     | '/admin/withdrawals'
     | '/banco/cadastrar'
     | '/chat/$threadId'
+    | '/em-alta/$section'
     | '/live/nova'
     | '/mywallet/extrato'
     | '/mywallet/recarregar'
@@ -1371,6 +1383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/withdrawals'
     | '/_authenticated/banco/cadastrar'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/em-alta/$section'
     | '/_authenticated/live/$liveId'
     | '/_authenticated/live/nova'
     | '/_authenticated/mywallet/extrato'
@@ -1931,6 +1944,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/em-alta/$section': {
+      id: '/_authenticated/em-alta/$section'
+      path: '/em-alta/$section'
+      fullPath: '/em-alta/$section'
+      preLoaderRoute: typeof AuthenticatedEmAltaSectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -2449,6 +2469,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
+  AuthenticatedEmAltaSectionRoute: typeof AuthenticatedEmAltaSectionRoute
   AuthenticatedLiveLiveIdRoute: typeof AuthenticatedLiveLiveIdRouteWithChildren
   AuthenticatedLiveNovaRoute: typeof AuthenticatedLiveNovaRoute
   AuthenticatedPerfilUsernameRoute: typeof AuthenticatedPerfilUsernameRoute
@@ -2506,6 +2527,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
+  AuthenticatedEmAltaSectionRoute: AuthenticatedEmAltaSectionRoute,
   AuthenticatedLiveLiveIdRoute: AuthenticatedLiveLiveIdRouteWithChildren,
   AuthenticatedLiveNovaRoute: AuthenticatedLiveNovaRoute,
   AuthenticatedPerfilUsernameRoute: AuthenticatedPerfilUsernameRoute,

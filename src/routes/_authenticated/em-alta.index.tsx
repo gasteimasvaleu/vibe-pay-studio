@@ -99,7 +99,7 @@ function EmAltaPage() {
       ) : (
         <div className="space-y-8">
           {feed.topCreators.length > 0 && (
-            <EmAltaSection title="Top creators">
+            <EmAltaSection title="Top creators" section="top-creators">
               {feed.topCreators.map((item, i) => (
                 <TopCreatorCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -108,7 +108,7 @@ function EmAltaPage() {
 
           {feed.ofertas.length > 0 && (
             <EmAltaSection
-              title="Ofertas de assinatura"
+              title="Ofertas de assinatura" section="ofertas"
               icon={<Sparkles className="h-5 w-5 text-primary" />}
             >
               {feed.ofertas.map((item) => (
@@ -118,7 +118,7 @@ function EmAltaPage() {
           )}
 
           {feed.perfisGratuitos.length > 0 && (
-            <EmAltaSection title="Perfis gratuitos">
+            <EmAltaSection title="Perfis gratuitos" section="perfis-gratuitos">
               {feed.perfisGratuitos.map((item, i) => (
                 <PerfilGratuitoCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -126,7 +126,7 @@ function EmAltaPage() {
           )}
 
           {feed.maisMimadas.length > 0 && (
-            <EmAltaSection title="As mais mimadas">
+            <EmAltaSection title="As mais mimadas" section="mais-mimadas">
               {feed.maisMimadas.map((item, i) => (
                 <MimadaCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -134,7 +134,7 @@ function EmAltaPage() {
           )}
 
           {feed.rumoAoTopo.length > 0 && (
-            <EmAltaSection title="Rumo ao topo">
+            <EmAltaSection title="Rumo ao topo" section="rumo-ao-topo">
               {feed.rumoAoTopo.map((item, i) => (
                 <RumoAoTopoCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -142,7 +142,7 @@ function EmAltaPage() {
           )}
 
           {feed.emAltaNosPosts.length > 0 && (
-            <EmAltaSection title="Em alta nos posts">
+            <EmAltaSection title="Em alta nos posts" section="posts">
               {feed.emAltaNosPosts.map((item, i) => (
                 <PostEmAltaCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -150,7 +150,7 @@ function EmAltaPage() {
           )}
 
           {feed.bombandoNoChat.length > 0 && (
-            <EmAltaSection title="Bombando no chat">
+            <EmAltaSection title="Bombando no chat" section="chat">
               {feed.bombandoNoChat.map((item, i) => (
                 <ChatBombandoCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -158,7 +158,7 @@ function EmAltaPage() {
           )}
 
           {feed.chamadaUmAUm.length > 0 && (
-            <EmAltaSection title="Chamada Um a Um">
+            <EmAltaSection title="Chamada Um a Um" section="um-a-um">
               {feed.chamadaUmAUm.map((item, i) => (
                 <UmAUmCard key={item.id} item={item} rank={i + 1} />
               ))}
@@ -166,7 +166,7 @@ function EmAltaPage() {
           )}
 
           {feed.liveNasAlturas.length > 0 && (
-            <EmAltaSection title="Live nas alturas">
+            <EmAltaSection title="Live nas alturas" section="lives">
               {feed.liveNasAlturas.map((item, i) => (
                 <LiveCard key={item.id} item={item} rank={i + 1} />
               ))}
