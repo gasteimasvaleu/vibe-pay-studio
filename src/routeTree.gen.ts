@@ -44,6 +44,7 @@ import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
 import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedCertificarPerfilRouteImport } from './routes/_authenticated/certificar-perfil'
 import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -302,6 +303,12 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCertificarPerfilRoute =
+  AuthenticatedCertificarPerfilRouteImport.update({
+    id: '/certificar-perfil',
+    path: '/certificar-perfil',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
   id: '/bugreport',
   path: '/bugreport',
@@ -754,6 +761,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
+  '/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -864,6 +872,7 @@ export interface FileRoutesByTo {
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
+  '/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
   '/colecoes': typeof AuthenticatedColecoesRoute
@@ -971,6 +980,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
   '/_authenticated/bugreport': typeof AuthenticatedBugreportRoute
+  '/_authenticated/certificar-perfil': typeof AuthenticatedCertificarPerfilRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/chat-agendamento': typeof AuthenticatedChatAgendamentoRoute
   '/_authenticated/chat-configuracoes': typeof AuthenticatedChatConfiguracoesRoute
@@ -1084,6 +1094,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/banco'
     | '/bugreport'
+    | '/certificar-perfil'
     | '/chat'
     | '/chat-agendamento'
     | '/chat-configuracoes'
@@ -1194,6 +1205,7 @@ export interface FileRouteTypes {
     | '/account-status'
     | '/banco'
     | '/bugreport'
+    | '/certificar-perfil'
     | '/chat-agendamento'
     | '/chat-configuracoes'
     | '/colecoes'
@@ -1300,6 +1312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/banco'
     | '/_authenticated/bugreport'
+    | '/_authenticated/certificar-perfil'
     | '/_authenticated/chat'
     | '/_authenticated/chat-agendamento'
     | '/_authenticated/chat-configuracoes'
@@ -1664,6 +1677,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/certificar-perfil': {
+      id: '/_authenticated/certificar-perfil'
+      path: '/certificar-perfil'
+      fullPath: '/certificar-perfil'
+      preLoaderRoute: typeof AuthenticatedCertificarPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/bugreport': {
@@ -2385,6 +2405,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBancoRoute: typeof AuthenticatedBancoRouteWithChildren
   AuthenticatedBugreportRoute: typeof AuthenticatedBugreportRoute
+  AuthenticatedCertificarPerfilRoute: typeof AuthenticatedCertificarPerfilRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedChatAgendamentoRoute: typeof AuthenticatedChatAgendamentoRoute
   AuthenticatedChatConfiguracoesRoute: typeof AuthenticatedChatConfiguracoesRoute
@@ -2440,6 +2461,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedBancoRoute: AuthenticatedBancoRouteWithChildren,
   AuthenticatedBugreportRoute: AuthenticatedBugreportRoute,
+  AuthenticatedCertificarPerfilRoute: AuthenticatedCertificarPerfilRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedChatAgendamentoRoute: AuthenticatedChatAgendamentoRoute,
   AuthenticatedChatConfiguracoesRoute: AuthenticatedChatConfiguracoesRoute,
