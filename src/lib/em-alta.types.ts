@@ -36,3 +36,33 @@ export const emptyEmAltaFeed: EmAltaFeed = {
   chamadaUmAUm: [],
   liveNasAlturas: [],
 };
+
+export type EmAltaSectionSlug =
+  | "top-creators"
+  | "ofertas"
+  | "perfis-gratuitos"
+  | "mais-mimadas"
+  | "rumo-ao-topo"
+  | "posts"
+  | "chat"
+  | "um-a-um"
+  | "lives";
+
+export const EM_ALTA_SECTIONS: Record<
+  EmAltaSectionSlug,
+  { title: string; feedKey: keyof EmAltaFeed }
+> = {
+  "top-creators": { title: "Top creators", feedKey: "topCreators" },
+  ofertas: { title: "Ofertas de assinatura", feedKey: "ofertas" },
+  "perfis-gratuitos": { title: "Perfis gratuitos", feedKey: "perfisGratuitos" },
+  "mais-mimadas": { title: "As mais mimadas", feedKey: "maisMimadas" },
+  "rumo-ao-topo": { title: "Rumo ao topo", feedKey: "rumoAoTopo" },
+  posts: { title: "Em alta nos posts", feedKey: "emAltaNosPosts" },
+  chat: { title: "Bombando no chat", feedKey: "bombandoNoChat" },
+  "um-a-um": { title: "Chamada Um a Um", feedKey: "chamadaUmAUm" },
+  lives: { title: "Live nas alturas", feedKey: "liveNasAlturas" },
+};
+
+export function isEmAltaSectionSlug(v: string): v is EmAltaSectionSlug {
+  return Object.prototype.hasOwnProperty.call(EM_ALTA_SECTIONS, v);
+}
