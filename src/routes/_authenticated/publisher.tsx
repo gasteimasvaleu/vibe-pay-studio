@@ -866,6 +866,7 @@ function PublisherPage() {
           storagePath: m.storagePath!,
           url: m.publicUrl!,
           type: m.type,
+          durationSeconds: m.durationSeconds ?? null,
         })),
         audio:
           audio.status === "ready" && audio.storagePath && audio.publicUrl
