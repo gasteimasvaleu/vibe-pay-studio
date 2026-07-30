@@ -1411,12 +1411,12 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 
 function ResumoItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold">{value}</p>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-3 first:pt-0 last:pb-0">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
+        <p className="truncate text-sm text-muted-foreground">{label}</p>
       </div>
+      <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">{value}</p>
     </div>
   );
 }
@@ -1591,7 +1591,7 @@ function AlcancePanel({ range }: { range: { from: string; to: string } }) {
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
             <h3 className="text-sm font-semibold">Resumo</h3>
-            <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="mt-4 divide-y divide-border">
               <ResumoItem icon={Users} label="Visitantes" value={String(data?.profileViews ?? 0)} />
               <ResumoItem icon={UserPlus} label="Novos assinantes" value={String(data?.subscriptionsCount ?? 0)} />
               <ResumoItem icon={RefreshCw} label="Renovações" value={String(data?.renewalsCount ?? 0)} />
