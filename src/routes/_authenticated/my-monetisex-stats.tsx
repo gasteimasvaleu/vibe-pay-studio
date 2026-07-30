@@ -1472,8 +1472,8 @@ function EngajamentoChart({
           <span className="text-sm font-semibold">{formatBRL(totalRevenue)}</span>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" />{metricLabel}</span>
-          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />Quantidade</span>
+          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />{metricLabel}</span>
+          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/60" />Quantidade</span>
         </div>
       </div>
       {loading ? (
