@@ -3655,6 +3655,7 @@ export type Database = {
         }[]
       }
       default_paid_profile: { Args: { _user_id: string }; Returns: string }
+      em_alta_feed: { Args: never; Returns: Json }
       ensure_creator_wallet: { Args: { _user_id: string }; Returns: undefined }
       ensure_subscriber_wallet: {
         Args: { _user_id: string }
