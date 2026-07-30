@@ -19,6 +19,8 @@ export function DashboardShell({
   children,
   verified = false,
   profileViews,
+  title = "Meu painel",
+  hideProfileCard = false,
 }: {
   username: string;
   isCreator: boolean;
@@ -27,6 +29,8 @@ export function DashboardShell({
   showProfileLink?: boolean;
   avatarUrl?: string | null;
   switchBar?: SwitchBar;
+  title?: string;
+  hideProfileCard?: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
