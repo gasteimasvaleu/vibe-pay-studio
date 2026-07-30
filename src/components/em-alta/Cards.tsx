@@ -138,7 +138,7 @@ export function PostEmAltaCard({ item, rank }: { item: CreatorBase; rank: number
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="relative snap-start shrink-0 w-72 md:w-80 aspect-[16/10] rounded-2xl overflow-hidden bg-muted"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
       <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
