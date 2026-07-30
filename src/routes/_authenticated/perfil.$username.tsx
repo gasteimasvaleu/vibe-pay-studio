@@ -52,6 +52,7 @@ import { LiveAvatarBadge } from "@/components/live/LiveAvatarBadge";
 import { useCreatorActiveLive } from "@/hooks/useCreatorActiveLive";
 import { useIsUserOnline } from "@/hooks/useIsUserOnline";
 import { getLastSeen } from "@/lib/presence.functions";
+import { logProfileView } from "@/lib/stats.functions";
 import { Radio } from "lucide-react";
 
 
