@@ -1358,7 +1358,7 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
                 <ResumoItem icon={DollarSign} label="Faturamento" value={formatBRL(liveQ.data?.totalRevenue ?? 0)} />
               </div>
             ) : (
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-4 space-y-4 divide-y divide-border">
                 <ResumoItem icon={ImageIcon} label="Quantidade" value={String(pubQ.data?.totalCount ?? 0)} />
                 <ResumoItem icon={DollarSign} label="Faturamento" value={formatBRL(pubQ.data?.totalRevenue ?? 0)} />
               </div>
