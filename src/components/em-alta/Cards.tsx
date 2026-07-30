@@ -233,6 +233,11 @@ export function LiveCard({ item, rank }: { item: LiveItem; rank: number }) {
       <div className="relative aspect-square bg-muted">
         <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
         <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+        {item.isLive && (
+          <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1">
+            <Radio className="h-3 w-3" /> AO VIVO
+          </span>
+        )}
       </div>
       <div className="p-3 text-center space-y-2">
         <div className="flex items-center justify-center gap-1">
@@ -241,8 +246,9 @@ export function LiveCard({ item, rank }: { item: LiveItem; rank: number }) {
         </div>
         <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
           <Radio className="h-3 w-3 text-destructive" />
-          {item.livesLast7Days} lives nos últimos 7 dias
+          {item.livesLast7Days} {item.livesLast7Days === 1 ? "live" : "lives"} nos últimos 7 dias
         </p>
+
         <Link
           to="/perfil/$username"
           params={{ username: item.handle }}
