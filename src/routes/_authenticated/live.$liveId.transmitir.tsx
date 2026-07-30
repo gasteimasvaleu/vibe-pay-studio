@@ -663,8 +663,7 @@ function TransmitirPage() {
             liveId={liveId}
             broadcasterId={meta?.creator ? undefined : undefined}
             variant="overlay"
-            className="h-full rounded-t-2xl"
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            className="h-full rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
             onViewersChange={setLiveViewers}
             headerSlot={
               <div {...drag.dragHandlers} className="touch-none cursor-row-resize flex items-center justify-center py-2 border-b border-white/15">

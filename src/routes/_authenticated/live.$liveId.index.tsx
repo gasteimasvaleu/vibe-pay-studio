@@ -178,8 +178,7 @@ function LiveViewerPage() {
             liveId={liveId}
             broadcasterId={undefined}
             variant="overlay"
-            className="h-full rounded-t-2xl"
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            className="h-full rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
             onViewersChange={setLiveViewers}
             headerSlot={
               <div
