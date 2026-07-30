@@ -636,9 +636,9 @@ function ProductTable({ range }: { range: { from: string; to: string } }) {
         <>
           {(data?.items ?? []).map(it => (
             <div key={it.kind} className="grid grid-cols-3 px-5 py-3 items-center border-b border-border/60 text-sm">
-              <span className="inline-flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
-                {KIND_LABEL[it.kind] ?? it.kind}
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
+                <span className="truncate">{KIND_LABEL[it.kind] ?? it.kind}</span>
               </span>
               <span className="text-right">{formatBRL(it.gross)}</span>
               <span className="text-right">{formatBRL(it.net)}</span>
