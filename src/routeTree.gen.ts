@@ -35,7 +35,6 @@ import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
 import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
-import { Route as AuthenticatedEmAltaRouteImport } from './routes/_authenticated/em-alta'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCriarPerfilGratuitoRouteImport } from './routes/_authenticated/criar-perfil-gratuito'
 import { Route as AuthenticatedCreatorHubRouteImport } from './routes/_authenticated/creator-hub'
@@ -50,6 +49,7 @@ import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
+import { Route as AuthenticatedEmAltaIndexRouteImport } from './routes/_authenticated/em-alta.index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedSettingsTwoFactorRouteImport } from './routes/_authenticated/settings.two-factor'
@@ -255,11 +255,6 @@ const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedEmAltaRoute = AuthenticatedEmAltaRouteImport.update({
-  id: '/em-alta',
-  path: '/em-alta',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -336,6 +331,12 @@ const AuthenticatedMywalletIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
+const AuthenticatedEmAltaIndexRoute =
+  AuthenticatedEmAltaIndexRouteImport.update({
+    id: '/em-alta/',
+    path: '/em-alta/',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
@@ -777,7 +778,6 @@ export interface FileRoutesByFullPath {
   '/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -843,6 +843,7 @@ export interface FileRoutesByFullPath {
   '/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
+  '/em-alta/': typeof AuthenticatedEmAltaIndexRoute
   '/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
@@ -888,7 +889,6 @@ export interface FileRoutesByTo {
   '/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/em-alta': typeof AuthenticatedEmAltaRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/follow': typeof AuthenticatedFollowRoute
   '/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -950,6 +950,7 @@ export interface FileRoutesByTo {
   '/settings/theme': typeof AuthenticatedSettingsThemeRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/chat': typeof AuthenticatedChatIndexRoute
+  '/em-alta': typeof AuthenticatedEmAltaIndexRoute
   '/mywallet': typeof AuthenticatedMywalletIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
@@ -998,7 +999,6 @@ export interface FileRoutesById {
   '/_authenticated/creator-hub': typeof AuthenticatedCreatorHubRoute
   '/_authenticated/criar-perfil-gratuito': typeof AuthenticatedCriarPerfilGratuitoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/em-alta': typeof AuthenticatedEmAltaRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/follow': typeof AuthenticatedFollowRoute
   '/_authenticated/my-monetisex-stats': typeof AuthenticatedMyMonetisexStatsRoute
@@ -1064,6 +1064,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/two-factor': typeof AuthenticatedSettingsTwoFactorRouteWithChildren
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/_authenticated/em-alta/': typeof AuthenticatedEmAltaIndexRoute
   '/_authenticated/mywallet/': typeof AuthenticatedMywalletIndexRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/_authenticated/chat/call/$callId': typeof AuthenticatedChatCallCallIdRoute
@@ -1113,7 +1114,6 @@ export interface FileRouteTypes {
     | '/creator-hub'
     | '/criar-perfil-gratuito'
     | '/dashboard'
-    | '/em-alta'
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
@@ -1179,6 +1179,7 @@ export interface FileRouteTypes {
     | '/settings/two-factor'
     | '/admin/'
     | '/chat/'
+    | '/em-alta/'
     | '/mywallet/'
     | '/admin/users/$userId'
     | '/chat/call/$callId'
@@ -1224,7 +1225,6 @@ export interface FileRouteTypes {
     | '/creator-hub'
     | '/criar-perfil-gratuito'
     | '/dashboard'
-    | '/em-alta'
     | '/feed'
     | '/follow'
     | '/my-monetisex-stats'
@@ -1286,6 +1286,7 @@ export interface FileRouteTypes {
     | '/settings/theme'
     | '/admin'
     | '/chat'
+    | '/em-alta'
     | '/mywallet'
     | '/admin/users/$userId'
     | '/chat/call/$callId'
@@ -1333,7 +1334,6 @@ export interface FileRouteTypes {
     | '/_authenticated/creator-hub'
     | '/_authenticated/criar-perfil-gratuito'
     | '/_authenticated/dashboard'
-    | '/_authenticated/em-alta'
     | '/_authenticated/feed'
     | '/_authenticated/follow'
     | '/_authenticated/my-monetisex-stats'
@@ -1399,6 +1399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/two-factor'
     | '/_authenticated/admin/'
     | '/_authenticated/chat/'
+    | '/_authenticated/em-alta/'
     | '/_authenticated/mywallet/'
     | '/_authenticated/admin/users/$userId'
     | '/_authenticated/chat/call/$callId'
@@ -1629,13 +1630,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/em-alta': {
-      id: '/_authenticated/em-alta'
-      path: '/em-alta'
-      fullPath: '/em-alta'
-      preLoaderRoute: typeof AuthenticatedEmAltaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -1733,6 +1727,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/mywallet/'
       preLoaderRoute: typeof AuthenticatedMywalletIndexRouteImport
       parentRoute: typeof AuthenticatedMywalletRoute
+    }
+    '/_authenticated/em-alta/': {
+      id: '/_authenticated/em-alta/'
+      path: '/em-alta'
+      fullPath: '/em-alta/'
+      preLoaderRoute: typeof AuthenticatedEmAltaIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
@@ -2436,7 +2437,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreatorHubRoute: typeof AuthenticatedCreatorHubRoute
   AuthenticatedCriarPerfilGratuitoRoute: typeof AuthenticatedCriarPerfilGratuitoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEmAltaRoute: typeof AuthenticatedEmAltaRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedFollowRoute: typeof AuthenticatedFollowRoute
   AuthenticatedMyMonetisexStatsRoute: typeof AuthenticatedMyMonetisexStatsRoute
@@ -2473,6 +2473,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsSubscriptionRoute: typeof AuthenticatedSettingsSubscriptionRoute
   AuthenticatedSettingsThemeRoute: typeof AuthenticatedSettingsThemeRoute
   AuthenticatedSettingsTwoFactorRoute: typeof AuthenticatedSettingsTwoFactorRouteWithChildren
+  AuthenticatedEmAltaIndexRoute: typeof AuthenticatedEmAltaIndexRoute
   AuthenticatedCreatorOnboardingAssinaturaRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRoute
   AuthenticatedCreatorOnboardingDocumentosRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteWithChildren
   AuthenticatedCreatorOnboardingRedesSociaisRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRoute
@@ -2492,7 +2493,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreatorHubRoute: AuthenticatedCreatorHubRoute,
   AuthenticatedCriarPerfilGratuitoRoute: AuthenticatedCriarPerfilGratuitoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEmAltaRoute: AuthenticatedEmAltaRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedFollowRoute: AuthenticatedFollowRoute,
   AuthenticatedMyMonetisexStatsRoute: AuthenticatedMyMonetisexStatsRoute,
@@ -2538,6 +2538,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsThemeRoute: AuthenticatedSettingsThemeRoute,
   AuthenticatedSettingsTwoFactorRoute:
     AuthenticatedSettingsTwoFactorRouteWithChildren,
+  AuthenticatedEmAltaIndexRoute: AuthenticatedEmAltaIndexRoute,
   AuthenticatedCreatorOnboardingAssinaturaRoute:
     AuthenticatedCreatorOnboardingAssinaturaRoute,
   AuthenticatedCreatorOnboardingDocumentosRoute:

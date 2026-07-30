@@ -19,7 +19,7 @@ import {
   UmAUmCard,
 } from "@/components/em-alta/Cards";
 
-export const Route = createFileRoute("/_authenticated/em-alta")({
+export const Route = createFileRoute("/_authenticated/em-alta/")({
   head: () => ({
     meta: [
       { title: "Em Alta · Monetisexy" },
