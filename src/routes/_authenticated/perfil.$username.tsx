@@ -124,7 +124,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("id, plan, price_cents_paid, current_period_end, started_at, auto_renew, status")
+        .select("id, plan, price_cents_paid, current_period_end, started_at, auto_renew, asaas_subscription_id, status")
         .eq("subscriber_id", user.id)
         .eq("creator_id", profile.user_id)
         .eq("status", "active")
@@ -207,7 +207,9 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
             priceCents: (activeSub.price_cents_paid as number) ?? 0,
             currentPeriodEnd: activeSub.current_period_end as string,
             startedAt: (activeSub.started_at as string) ?? null,
-            autoRenew: (activeSub.auto_renew as boolean) ?? true,
+            autoRenew:
+              !!(activeSub.auto_renew as boolean) &&
+              !!(activeSub as any).asaas_subscription_id,
           }
         : null,
       promotion,
@@ -1243,7 +1245,7 @@ function ActiveSubscriptionCard({
   plan,
   priceCents,
   currentPeriodEnd,
-  autoRenew: _autoRenew,
+  autoRenew,
   onCancel: _onCancel,
   onManage,
   format,
