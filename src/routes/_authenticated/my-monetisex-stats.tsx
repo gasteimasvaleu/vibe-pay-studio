@@ -23,6 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -1234,17 +1236,33 @@ function EngajamentoPanel({ range }: { range: { from: string; to: string } }) {
 
       <div className="space-y-3 border-t border-border pt-5">
         <p className="text-xs font-semibold text-foreground">Ordenar por</p>
-        <div className="flex flex-wrap items-center gap-2">
-          {(isStories ? ORDENAR_STORIES : isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES).map(o => (
-            <Chip key={o} label={o}
-              active={isStories ? o === ordenarStory : isLives ? o === ordenarLive : o === ordenarPub}
-              onClick={() => isStories
-                ? setOrdenarStory(o as (typeof ORDENAR_STORIES)[number])
-                : isLives
-                  ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number])
-                  : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number])} />
-          ))}
-        </div>
+        {(() => {
+          const options = (isStories ? ORDENAR_STORIES : isLives ? ORDENAR_LIVES : ORDENAR_PUBLICACOES) as readonly string[];
+          const current = isStories ? ordenarStory : isLives ? ordenarLive : ordenarPub;
+          const select = (o: string) => isStories
+            ? setOrdenarStory(o as (typeof ORDENAR_STORIES)[number])
+            : isLives
+              ? setOrdenarLive(o as (typeof ORDENAR_LIVES)[number])
+              : setOrdenarPub(o as (typeof ORDENAR_PUBLICACOES)[number]);
+          return (
+            <>
+              <div className="sm:hidden">
+                <Select value={current} onValueChange={select}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="hidden sm:flex flex-wrap items-center gap-2">
+                {options.map(o => (
+                  <Chip key={o} label={o} active={o === current} onClick={() => select(o)} />
+                ))}
+              </div>
+            </>
+          );
+        })()}
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
