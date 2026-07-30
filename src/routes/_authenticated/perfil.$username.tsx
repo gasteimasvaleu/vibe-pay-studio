@@ -344,6 +344,17 @@ function PerfilPage() {
   const [followBusy, setFollowBusy] = useState(false);
   const [subscribeBusy, setSubscribeBusy] = useState(false);
 
+  // Registra a visita ao perfil (uma vez por sessão, por perfil, e nunca para o dono).
+  const logViewFn = useServerFn(logProfileView);
+  useEffect(() => {
+    if (isOwner) return;
+    const key = `pv:${profile.userId}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch { /* storage indisponível: registra mesmo assim */ }
+    void logViewFn({ data: { profileId: profile.userId } }).catch(() => {});
+  }, [isOwner, profile.userId, logViewFn]);
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
