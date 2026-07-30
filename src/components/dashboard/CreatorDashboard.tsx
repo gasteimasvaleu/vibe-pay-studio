@@ -27,6 +27,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveProfileView } from "@/lib/account.functions";
+import { getActiveProfileViewCount } from "@/lib/dashboard-stats.functions";
 import { getMyVerificationStatus } from "@/lib/verification.functions";
 import { ActionCard } from "./ActionCard";
 import { DashboardGroup, DashboardShell } from "./DashboardShell";
@@ -54,6 +55,7 @@ export function CreatorDashboard({
   const queryClient = useQueryClient();
   const switchView = useServerFn(setActiveProfileView);
   const verificationFn = useServerFn(getMyVerificationStatus);
+  const profileViewsFn = useServerFn(getActiveProfileViewCount);
 
   const verification = useQuery({
     queryKey: ["my-verification"],
@@ -61,6 +63,11 @@ export function CreatorDashboard({
     staleTime: 60_000,
   });
   const verificationStatus = verification.data?.status ?? "none";
+  const profileViews = useQuery({
+    queryKey: ["dashboard-profile-views", username],
+    queryFn: () => profileViewsFn(),
+    staleTime: 30_000,
+  });
   const verificationDescription =
     verificationStatus === "approved"
       ? "Seu perfil já tem o selo de certificado"
@@ -137,6 +144,7 @@ export function CreatorDashboard({
       avatarUrl={avatarUrl}
       switchBar={switchBar}
       verified={verificationStatus === "approved"}
+      profileViews={profileViews.data?.count ?? 0}
     >
 
       <div className="space-y-6">

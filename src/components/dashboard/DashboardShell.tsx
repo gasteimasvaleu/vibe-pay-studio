@@ -18,10 +18,12 @@ export function DashboardShell({
   switchBar,
   children,
   verified = false,
+  profileViews,
 }: {
   username: string;
   isCreator: boolean;
   verified?: boolean;
+  profileViews?: number;
   showProfileLink?: boolean;
   avatarUrl?: string | null;
   switchBar?: SwitchBar;
@@ -59,6 +61,7 @@ export function DashboardShell({
           username={username}
           isCreator={isCreator}
           verified={verified}
+          profileViews={profileViews}
           showProfileLink={showProfileLink}
           avatarUrl={avatarUrl}
           footer={

@@ -349,13 +349,18 @@ function PerfilPage() {
   const logViewFn = useServerFn(logProfileView);
   useEffect(() => {
     if (isOwner) return;
-    const key = `pv:${profile.userId}`;
+    const key = `pv:${profile.creatorProfileId ?? profile.userId}`;
     try {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, "1");
     } catch { /* storage indisponível: registra mesmo assim */ }
-    void logViewFn({ data: { profileId: profile.userId } }).catch(() => {});
-  }, [isOwner, profile.userId, logViewFn]);
+    void logViewFn({
+      data: {
+        profileId: profile.userId,
+        creatorProfileId: profile.creatorProfileId,
+      },
+    }).catch(() => {});
+  }, [isOwner, profile.creatorProfileId, profile.userId, logViewFn]);
 
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);

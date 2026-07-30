@@ -1040,7 +1040,10 @@ export const logPublicationView = createServerFn({ method: "POST" })
  * para que o dono do perfil veja visitantes únicos reais.
  */
 export const logProfileView = createServerFn({ method: "POST" })
-  .inputValidator((data: { profileId: string }) => ({ profileId: String(data.profileId) }))
+  .inputValidator((data: { profileId: string; creatorProfileId?: string | null }) => ({
+    profileId: String(data.profileId),
+    creatorProfileId: data.creatorProfileId ? String(data.creatorProfileId) : null,
+  }))
   .handler(async ({ data }) => {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -1085,7 +1088,12 @@ export const logProfileView = createServerFn({ method: "POST" })
 
     const { error } = await client
       .from("profile_views")
-      .insert({ profile_id: data.profileId, viewer_id: viewerId, country: normalizedCountry });
+      .insert({
+        profile_id: data.profileId,
+        creator_profile_id: data.creatorProfileId,
+        viewer_id: viewerId,
+        country: normalizedCountry,
+      });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   });
