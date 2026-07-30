@@ -1680,6 +1680,7 @@ export type Database = {
         Row: {
           country: string | null
           created_at: string
+          creator_profile_id: string | null
           id: string
           profile_id: string
           viewer_id: string | null
@@ -1687,6 +1688,7 @@ export type Database = {
         Insert: {
           country?: string | null
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           profile_id: string
           viewer_id?: string | null
@@ -1694,11 +1696,27 @@ export type Database = {
         Update: {
           country?: string | null
           created_at?: string
+          creator_profile_id?: string | null
           id?: string
           profile_id?: string
           viewer_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_views_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
