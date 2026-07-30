@@ -12,7 +12,7 @@ export function EmAltaSection({
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           {icon}
           <h2 className="text-base font-bold text-foreground">{title}</h2>
@@ -25,7 +25,7 @@ export function EmAltaSection({
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-6 md:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 px-4 md:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
     </section>
