@@ -199,11 +199,12 @@ export function UmAUmCard({ item, rank }: { item: UmAUmItem; rank: number }) {
       <div className="relative aspect-[4/5] bg-muted">
         <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
         <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        {item.discountLabel && (
+        {item.calls != null && item.calls > 0 && (
           <span className="absolute top-2 left-2 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 leading-tight max-w-[60%]">
-            {item.discountLabel}
+            {item.calls} {item.calls === 1 ? "chamada" : "chamadas"}
           </span>
         )}
+
         <span className="absolute bottom-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
           um a um
         </span>
