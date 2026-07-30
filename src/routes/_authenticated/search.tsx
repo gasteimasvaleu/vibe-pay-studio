@@ -28,6 +28,7 @@ type CreatorRow = {
   avatar_url: string | null;
   cover_url: string | null;
   kyc_verified_at: string | null;
+  verified_at: string | null;
 };
 
 const PAGE_SIZE = 20;
@@ -61,7 +62,7 @@ async function fetchCreators({
   let q: any = supabase
     .from("creator_profiles_search")
     .select(
-      "id, user_id, username, display_name, avatar_url, cover_url, created_at, kyc_verified_at, country, restrict_search, restrict_search_br, restrict_search_country, restrict_mentions",
+      "id, user_id, username, display_name, avatar_url, cover_url, created_at, kyc_verified_at, verified_at, country, restrict_search, restrict_search_br, restrict_search_country, restrict_mentions",
     )
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -106,6 +107,7 @@ async function fetchCreators({
     avatar_url: r.avatar_url,
     cover_url: r.cover_url,
     kyc_verified_at: r.kyc_verified_at ?? null,
+    verified_at: r.verified_at ?? null,
   }));
   return {
     items,
@@ -218,7 +220,7 @@ function SearchPage() {
 function CreatorCard({ creator }: { creator: CreatorRow }) {
   const displayName = creator.display_name ?? creator.username;
   const initials = displayName.slice(0, 2).toUpperCase();
-  const verified = !!creator.kyc_verified_at;
+  const verified = !!creator.verified_at;
 
   return (
     <Link
