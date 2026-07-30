@@ -17,17 +17,19 @@ function rankSuffix(rank: number) {
   return `${rank}º`;
 }
 
+const CARD_W = "snap-start shrink-0 w-72 md:w-80";
+
 export function TopCreatorCard({ item, rank }: { item: CreatorBase; rank: number }) {
   return (
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="relative snap-start shrink-0 w-40 md:w-48 aspect-[3/4] rounded-2xl overflow-hidden bg-muted"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
       <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-      <span className="absolute top-2 left-3 text-4xl font-black text-white/90 drop-shadow leading-none">{rank}</span>
-      <div className="absolute bottom-2 left-3 right-3 text-white">
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      <div className="absolute bottom-3 left-3 right-3 text-white">
         <div className="flex items-center gap-1">
           <span className="font-bold text-sm truncate">{item.name}</span>
           {item.verified && <Verified />}
@@ -43,9 +45,9 @@ export function OfertaCard({ item }: { item: OfertaItem }) {
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="relative snap-start shrink-0 w-36 md:w-40 aspect-square rounded-2xl overflow-hidden bg-muted"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
-      <img src={item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       {item.discountPct != null && item.discountPct > 0 && (
         <span className="absolute top-2 right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
@@ -53,7 +55,7 @@ export function OfertaCard({ item }: { item: OfertaItem }) {
         </span>
       )}
 
-      <div className="absolute bottom-2 left-3 right-3 text-white">
+      <div className="absolute bottom-3 left-3 right-3 text-white">
         <div className="flex items-center gap-1">
           <span className="font-bold text-sm truncate">{item.name}</span>
           {item.verified && <Verified />}
