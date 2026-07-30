@@ -636,9 +636,9 @@ function ProductTable({ range }: { range: { from: string; to: string } }) {
         <>
           {(data?.items ?? []).map(it => (
             <div key={it.kind} className="grid grid-cols-3 px-5 py-3 items-center border-b border-border/60 text-sm">
-              <span className="inline-flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
-                {KIND_LABEL[it.kind] ?? it.kind}
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
+                <span className="truncate">{KIND_LABEL[it.kind] ?? it.kind}</span>
               </span>
               <span className="text-right">{formatBRL(it.gross)}</span>
               <span className="text-right">{formatBRL(it.net)}</span>
@@ -979,9 +979,9 @@ function GanhosPorProdutoChartCard({ range }: { range: { from: string; to: strin
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         {(byProduct.data?.items ?? []).map(it => (
-          <span key={it.kind} className="inline-flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
-            <span className="text-foreground">{KIND_LABEL[it.kind] ?? it.kind}</span>
+          <span key={it.kind} className="inline-flex min-w-0 items-center gap-2">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLOR[it.kind] ?? "bg-muted-foreground"}`} />
+            <span className="truncate text-foreground">{KIND_LABEL[it.kind] ?? it.kind}</span>
           </span>
         ))}
       </div>
@@ -1472,8 +1472,8 @@ function EngajamentoChart({
           <span className="text-sm font-semibold">{formatBRL(totalRevenue)}</span>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" />{metricLabel}</span>
-          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />Quantidade</span>
+          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />{metricLabel}</span>
+          <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/60" />Quantidade</span>
         </div>
       </div>
       {loading ? (
@@ -1711,8 +1711,8 @@ function AssinantesPanel({ range }: { range: { from: string; to: string } }) {
                     {totalAssinantes} Assinantes, {formatBRL(stats.data?.faturamentoPeriodo ?? 0)}
                   </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "#8B5CF6" }} />Faturamento</span>
-                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/70" />Quantidade</span>
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: "#8B5CF6" }} />Faturamento</span>
+                    <span className="inline-flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/70" />Quantidade</span>
                   </div>
                 </div>
                 <div className="relative mt-6 h-72">
