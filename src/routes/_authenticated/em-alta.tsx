@@ -65,7 +65,13 @@ function EmAltaPage() {
     Object.values(feed).every((list) => !Array.isArray(list) || list.length === 0);
 
   return (
-    <DashboardShell username={username} isCreator={isCreator} avatarUrl={avatarUrl}>
+    <DashboardShell
+      username={username}
+      isCreator={isCreator}
+      avatarUrl={avatarUrl}
+      title="Em alta"
+      hideProfileCard
+    >
       {isLoading ? (
         <div className="space-y-8">
           {[0, 1, 2].map((i) => (
