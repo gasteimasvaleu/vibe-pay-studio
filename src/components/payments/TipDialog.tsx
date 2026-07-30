@@ -22,6 +22,7 @@ type Props = {
   creatorId: string;
   creatorName?: string;
   publicationId?: string;
+  onPaid?: () => void;
 };
 
 type Checkout = {
@@ -32,7 +33,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicationId }: Props) {
+export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicationId, onPaid }: Props) {
   const [amount, setAmount] = useState(20);
   const [message, setMessage] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
@@ -86,6 +87,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         });
         toast.success("Gorjeta enviada!");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onPaid?.();
         handleClose(false);
         return;
       }
@@ -103,6 +105,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
       if (res.paidImmediately) {
         toast.success("Gorjeta enviada!");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
+        onPaid?.();
         handleClose(false);
         return;
       }
@@ -141,6 +144,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               invoiceUrl={checkout.invoiceUrl}
               onPaid={() => {
                 toast.success("Gorjeta enviada!");
+                onPaid?.();
                 handleClose(false);
               }}
               onCancel={() => handleClose(false)}
@@ -153,6 +157,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
               invoiceUrl={checkout.invoiceUrl}
               onPaid={() => {
                 toast.success("Gorjeta enviada!");
+                onPaid?.();
                 handleClose(false);
               }}
               onCancel={() => handleClose(false)}
