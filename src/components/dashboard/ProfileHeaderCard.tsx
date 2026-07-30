@@ -7,6 +7,7 @@ export function ProfileHeaderCard({
   username,
   isCreator,
   stat,
+  profileViews,
   levelBadge = "+100",
   showProfileLink = true,
   avatarUrl,
@@ -17,6 +18,7 @@ export function ProfileHeaderCard({
   isCreator: boolean;
   verified?: boolean;
   stat?: { value: number; label: string };
+  profileViews?: number;
   levelBadge?: string;
   showProfileLink?: boolean;
   avatarUrl?: string | null;
@@ -82,6 +84,16 @@ export function ProfileHeaderCard({
                 {resolvedStat.value}
               </span>{" "}
               <span className="align-middle">{resolvedStat.label}</span>
+            </p>
+          )}
+          {profileViews !== undefined && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              <span className="text-sm font-semibold text-foreground align-middle">
+                {profileViews}
+              </span>{" "}
+              <span className="align-middle">
+                {profileViews === 1 ? "visualização do perfil" : "visualizações do perfil"}
+              </span>
             </p>
           )}
         </div>
