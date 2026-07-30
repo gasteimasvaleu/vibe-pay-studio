@@ -113,27 +113,21 @@ export function RumoAoTopoCard({ item, rank }: { item: RumoItem; rank: number })
     <Link
       to="/perfil/$username"
       params={{ username: item.handle }}
-      className="snap-start shrink-0 w-80 rounded-2xl overflow-hidden bg-card shadow-card border border-border"
+      className={`relative ${CARD_W} aspect-[16/10] rounded-2xl overflow-hidden bg-muted`}
     >
-      <div className="relative h-24 bg-muted">
-        <img src={item.coverUrl ?? undefined} alt="" className="h-full w-full object-cover" loading="lazy" />
-        <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
-        <div className="absolute bottom-2 right-3 flex items-center gap-3 text-white text-xs bg-black/40 rounded-full px-2 py-1">
-          <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" />{item.photos}</span>
-          <span className="flex items-center gap-1"><Video className="h-3 w-3" />{item.videos}</span>
-        </div>
+      <img src={item.avatarUrl ?? item.coverUrl ?? undefined} alt={item.name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <span className="absolute top-2 right-3 text-white font-bold drop-shadow">{rankSuffix(rank)}</span>
+      <div className="absolute top-2 left-2 flex items-center gap-3 text-white text-[10px] bg-black/40 rounded-full px-2 py-1">
+        <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" />{item.photos}</span>
+        <span className="flex items-center gap-1"><Video className="h-3 w-3" />{item.videos}</span>
       </div>
-      <div className="relative px-4 pt-6 pb-4">
-        <img
-          src={item.avatarUrl ?? undefined}
-          alt={item.name}
-          className="absolute -top-8 left-4 h-16 w-16 rounded-full border-4 border-card object-cover"
-          loading="lazy"
-        />
-        <div className="pl-20">
-          <p className="font-bold text-sm text-foreground truncate">{item.name}</p>
-          <p className="text-xs text-muted-foreground truncate">@{item.handle}</p>
+      <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="flex items-center gap-1">
+          <span className="font-bold text-sm truncate">{item.name}</span>
+          {item.verified && <Verified />}
         </div>
+        <p className="text-xs text-white/80 truncate">@{item.handle}</p>
       </div>
     </Link>
   );
