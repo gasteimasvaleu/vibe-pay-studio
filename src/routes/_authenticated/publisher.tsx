@@ -421,6 +421,18 @@ function PublisherPage() {
     if (newItems.length === 0) return;
     setMedia((m) => [...m, ...newItems]);
 
+    for (const { id, file } of uploadJobs) {
+      if (!file.type.startsWith("video")) continue;
+      void readVideoDuration(file).then((durationSeconds) => {
+        if (!durationSeconds) return;
+        setMedia((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, durationSeconds } : m)),
+        );
+      });
+    }
+
+
+
     for (const { id, file, path } of uploadJobs) {
       void uploadWithProgress({
         file,
