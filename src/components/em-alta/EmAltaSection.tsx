@@ -25,7 +25,7 @@ export function EmAltaSection({
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 px-4 md:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 px-4 md:px-6 scroll-px-4 md:scroll-px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
     </section>
