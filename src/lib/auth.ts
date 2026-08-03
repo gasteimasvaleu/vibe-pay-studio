@@ -192,7 +192,7 @@ export async function ensureCurrentUserProfile(preferred?: {
     metadata.name ??
     "usuario";
 
-  const username = await resolveAvailableUsername(fallbackName, user.id);
+  const username = await resolveAvailableUsername(fallbackName);
   const accountType = preferred?.accountType ?? metadata.account_type ?? "subscriber";
 
   const { error } = await supabase.from("profiles").insert({
@@ -205,20 +205,24 @@ export async function ensureCurrentUserProfile(preferred?: {
     const msg = error.message.toLowerCase();
     const isDuplicate = msg.includes("duplicate") || msg.includes("unique");
     if (!isDuplicate) throw error;
-    // Corrida em `username`: recalcula e tenta uma vez mais.
-    if (msg.includes("username")) {
-      const retryUsername = await resolveAvailableUsername(fallbackName, user.id);
+    if (!msg.includes("username")) return;
+
+    // Corrida em `username`: aplica sufixos numéricos curtos até conseguir.
+    const base = normalizeBase(fallbackName);
+    for (let i = 2; i <= 99; i++) {
       const { error: retryError } = await supabase.from("profiles").insert({
         account_type: accountType,
         user_id: user.id,
-        username: retryUsername,
+        username: withNumericSuffix(base, i),
       });
-      if (retryError && !retryError.message.toLowerCase().includes("duplicate")) {
-        throw retryError;
-      }
+      if (!retryError) return;
+      const retryMsg = retryError.message.toLowerCase();
+      if (!retryMsg.includes("duplicate") && !retryMsg.includes("unique")) throw retryError;
+      if (!retryMsg.includes("username")) return;
     }
   }
 }
+
 
 function normalizeBase(value: string): string {
   const base = value
