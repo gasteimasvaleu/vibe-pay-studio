@@ -2339,6 +2339,55 @@ export type Database = {
           },
         ]
       }
+      publication_profile_mentions: {
+        Row: {
+          created_at: string
+          creator_profile_id: string
+          id: string
+          position: number
+          publication_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_profile_id: string
+          id?: string
+          position?: number
+          publication_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_profile_id?: string
+          id?: string
+          position?: number
+          publication_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_profile_mentions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_profile_mentions_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_profile_mentions_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publication_unlocks: {
         Row: {
           amount_cents: number
