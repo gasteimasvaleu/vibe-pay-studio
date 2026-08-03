@@ -17,7 +17,8 @@ export function homeForAccountType(_accountType?: AccountType | string | null) {
 }
 
 /**
- * After a successful sign-in/sign-up, sends the user to the feed.
+ * After a successful sign-in/sign-up, sends the user to the pending creator
+ * onboarding step (when there is one) or to the feed.
  */
 export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
   const { data: userData } = await supabase.auth.getUser();
@@ -25,7 +26,14 @@ export async function routeAfterAuth(navigate: ReturnType<typeof useNavigate>) {
     await navigate({ to: "/entrar" });
     return;
   }
-  await navigate({ to: "/feed" });
+  let step: string | null = null;
+  try {
+    const { resolveCreatorOnboardingStep } = await import("./onboarding-step");
+    step = await resolveCreatorOnboardingStep();
+  } catch {
+    step = null;
+  }
+  await navigate({ to: step ?? "/feed" });
 }
 
 export function getAuthErrorMessage(message: string) {
