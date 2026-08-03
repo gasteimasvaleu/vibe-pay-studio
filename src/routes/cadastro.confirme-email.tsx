@@ -61,7 +61,10 @@ function ConfirmeEmailPage() {
     const res = await checkConfirmation({ data: { email } });
     if (res.confirmed) {
       doneRef.current = true;
-      navigate({ to: "/entrar", search: { email, confirmado: true }, replace: true });
+      const loginUrl = new URL("/entrar", window.location.origin);
+      loginUrl.searchParams.set("email", email);
+      loginUrl.searchParams.set("confirmado", "true");
+      window.location.replace(loginUrl.toString());
       return true;
     }
     return false;
