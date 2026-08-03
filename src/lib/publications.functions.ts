@@ -477,7 +477,9 @@ export const getFeed = createServerFn({ method: "POST" })
         saved_by_me: savedSet.has(p.id),
         is_owner: isOwner,
         archived_at: null,
+        mentions: mentionsByPub.get(p.id) ?? [],
       };
+
 
     });
 
