@@ -3882,6 +3882,7 @@ export type Database = {
         }
       }
       resolve_active_profile: { Args: { _user_id: string }; Returns: string }
+      resolve_available_username: { Args: { desired: string }; Returns: string }
       revoke_all_other_sessions: { Args: never; Returns: number }
       revoke_session: { Args: { p_session_id: string }; Returns: undefined }
     }
