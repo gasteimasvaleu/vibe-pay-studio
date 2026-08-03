@@ -33,7 +33,6 @@ function EntrarPage() {
     const raw = sessionStorage.getItem("email-confirmation-complete");
     if (!raw) return;
 
-    sessionStorage.removeItem("email-confirmation-complete");
     try {
       const result = JSON.parse(raw) as { email?: unknown; confirmed?: unknown };
       if (result.confirmed !== true || typeof result.email !== "string") return;
