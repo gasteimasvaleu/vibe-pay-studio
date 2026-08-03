@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/cadastro/confirme-email")({
 function ConfirmeEmailPage() {
   const { email } = Route.useSearch();
   const navigate = useNavigate();
+  const checkConfirmation = useServerFn(checkEmailConfirmed);
 
   const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
@@ -48,22 +50,29 @@ function ConfirmeEmailPage() {
   const detectConfirmation = useCallback(async (): Promise<boolean> => {
     if (doneRef.current) return true;
 
+    const emailFromUrl = new URLSearchParams(window.location.search).get("email");
+    const confirmationEmail = email ?? emailFromUrl ?? undefined;
+
+    if (confirmationEmail) {
+      const res = await checkConfirmation({ data: { email: confirmationEmail } });
+      if (res.confirmed) {
+        doneRef.current = true;
+        window.location.replace(
+          `/entrar?email=${encodeURIComponent(confirmationEmail)}&confirmado=true`,
+        );
+        return true;
+      }
+      return false;
+    }
+
     const { data } = await supabase.auth.getUser();
     if (data.user?.email_confirmed_at || data.user?.confirmed_at) {
       doneRef.current = true;
       await routeAfterAuth(navigate);
       return true;
     }
-
-    if (!email) return false;
-    const res = await checkEmailConfirmed({ data: { email } });
-    if (res.confirmed) {
-      doneRef.current = true;
-      navigate({ to: "/entrar", search: { email, confirmado: true }, replace: true });
-      return true;
-    }
     return false;
-  }, [email, navigate]);
+  }, [checkConfirmation, email, navigate]);
 
   // Verificação automática enquanto a página estiver aberta (até ~5 min).
   useEffect(() => {

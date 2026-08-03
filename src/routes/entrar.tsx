@@ -5,7 +5,7 @@ import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle 
 
 const searchSchema = z.object({
   email: z.string().email().optional(),
-  confirmado: z.boolean().optional(),
+  confirmado: z.coerce.boolean().optional(),
 });
 
 export const Route = createFileRoute("/entrar")({
@@ -27,7 +27,6 @@ function EntrarPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
