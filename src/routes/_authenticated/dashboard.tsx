@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorDashboard } from "@/components/dashboard/CreatorDashboard";
 import { SubscriberDashboard } from "@/components/dashboard/SubscriberDashboard";
 import { isCreatorLike, type AccountType } from "@/lib/auth";
+import { creatorOnboardingStepFrom } from "@/lib/onboarding-step";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
