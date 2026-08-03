@@ -69,7 +69,7 @@ function EntrarPage() {
         <div className="w-full max-w-md">
           <Link to="/" className="block text-center mb-8">
             <span className="text-2xl font-black tracking-tight">
-              monet<span className="text-gradient-primary">isex</span>
+              moneti<span className="text-gradient-primary">sexy.</span>
             </span>
           </Link>
           <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
