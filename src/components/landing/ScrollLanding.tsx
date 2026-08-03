@@ -91,16 +91,16 @@ export function ScrollLanding() {
 
         {/* Foreground: LoginCard + HeroCard */}
         <div className="absolute inset-0 flex items-center justify-center pt-16 pointer-events-none">
-          <div className="grid grid-cols-2 gap-12 max-w-7xl w-full px-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 max-w-7xl w-full px-8 items-stretch">
             <motion.div
               style={{ opacity: loginOpacity, x: loginX }}
-              className="pointer-events-auto h-full"
+              className="pointer-events-auto h-full order-2 md:order-1"
             >
               <LoginCard />
             </motion.div>
             <motion.div
               style={{ opacity: heroOpacity, x: heroX }}
-              className="pointer-events-auto h-full"
+              className="pointer-events-auto h-full order-1 md:order-2"
             >
               <HeroCard fullHeight />
             </motion.div>
