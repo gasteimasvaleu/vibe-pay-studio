@@ -72,7 +72,7 @@ function EntrarPage() {
               moneti<span className="text-gradient-primary">sexy.</span>
             </span>
           </Link>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
             <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
               <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
@@ -141,8 +141,8 @@ function EntrarPage() {
               </p>
             </div>
 
-            <div className="hidden md:block rounded-3xl border border-border bg-surface overflow-hidden">
-              <div className="relative w-full aspect-[9/16]">
+            <div className="hidden md:flex rounded-3xl border border-border bg-surface overflow-hidden h-full flex-col">
+              <div className="relative flex-1 min-h-0">
                 <video
                   src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/02178465912133300000000000000000000ffffc0a8b2417262a0.mp4"
                   autoPlay
