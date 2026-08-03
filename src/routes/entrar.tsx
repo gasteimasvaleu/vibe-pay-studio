@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
@@ -27,7 +27,22 @@ function EntrarPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmedAfterRedirect, setConfirmedAfterRedirect] = useState(false);
 
+  useEffect(() => {
+    const raw = sessionStorage.getItem("email-confirmation-complete");
+    if (!raw) return;
+
+    sessionStorage.removeItem("email-confirmation-complete");
+    try {
+      const result = JSON.parse(raw) as { email?: unknown; confirmed?: unknown };
+      if (result.confirmed !== true || typeof result.email !== "string") return;
+      setEmail(result.email);
+      setConfirmedAfterRedirect(true);
+    } catch {
+      // Ignora um valor inválido e mantém o login no estado padrão.
+    }
+  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -76,7 +91,7 @@ function EntrarPage() {
           <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
             <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
-            {search.confirmado && (
+            {(search.confirmado || confirmedAfterRedirect) && (
               <p
                 role="status"
                 className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
