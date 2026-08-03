@@ -129,8 +129,36 @@ export const createPublication = createServerFn({ method: "POST" })
       }
     }
 
+    // Perfis referenciados (apenas admin)
+    const mentionIds = Array.from(new Set(data.mentionProfileIds ?? []));
+    if (mentionIds.length > 0) {
+      const { data: isAdmin } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+      if (!isAdmin) {
+        await context.supabase.from("publications").delete().eq("id", pub.id);
+        throw new Error("Apenas administradores podem referenciar perfis");
+      }
+      const { error: mentionErr } = await context.supabase
+        .from("publication_profile_mentions")
+        .insert(
+          mentionIds.map((id, index) => ({
+            publication_id: pub.id,
+            creator_profile_id: id,
+            position: index,
+          })),
+        );
+      if (mentionErr) {
+        await context.supabase.from("publications").delete().eq("id", pub.id);
+        throw new Error(mentionErr.message);
+      }
+    }
+
     return { ok: true as const, publicationId: pub.id };
   });
+
+
 
 
 const deleteDraftSchema = z.object({ storagePath: z.string().min(1) });
