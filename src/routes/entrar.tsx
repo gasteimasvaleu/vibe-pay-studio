@@ -66,78 +66,93 @@ function EntrarPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-5xl">
           <Link to="/" className="block text-center mb-8">
             <span className="text-2xl font-black tracking-tight">
               moneti<span className="text-gradient-primary">sexy.</span>
             </span>
           </Link>
-          <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
-            {search.confirmado && (
-              <p
-                role="status"
-                className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
-              >
-                E-mail confirmado! Faça login para continuar.
-              </p>
-            )}
-
-            <form onSubmit={onSubmit} className="mt-8 space-y-4">
-              <Field
-                label="E-mail"
-                type="email"
-                placeholder="voce@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <Field
-                label="Senha"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <div className="text-right">
-                <a href="#" className="text-xs text-primary hover:underline">
-                  Esqueci minha senha
-                </a>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-60"
-              >
-                {loading ? "Entrando..." : "Entrar"}
-              </button>
-              {errorMsg && (
-                <p role="alert" className="text-sm text-red-500">
-                  {errorMsg}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
+              {search.confirmado && (
+                <p
+                  role="status"
+                  className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
+                >
+                  E-mail confirmado! Faça login para continuar.
                 </p>
               )}
-            </form>
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs label-caps text-muted-foreground">ou</span>
-              <div className="flex-1 h-px bg-border" />
+
+              <form onSubmit={onSubmit} className="mt-8 space-y-4">
+                <Field
+                  label="E-mail"
+                  type="email"
+                  placeholder="voce@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Field
+                  label="Senha"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <div className="text-right">
+                  <a href="#" className="text-xs text-primary hover:underline">
+                    Esqueci minha senha
+                  </a>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity disabled:opacity-60"
+                >
+                  {loading ? "Entrando..." : "Entrar"}
+                </button>
+                {errorMsg && (
+                  <p role="alert" className="text-sm text-red-500">
+                    {errorMsg}
+                  </p>
+                )}
+              </form>
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs label-caps text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  disabled={googleLoading}
+                  onClick={handleGoogle}
+                  className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
+                >
+                  {googleLoading ? "Redirecionando..." : "Continuar com Google"}
+                </button>
+              </div>
+              <p className="mt-8 text-center text-sm text-muted-foreground">
+                Não tem conta?{" "}
+                <Link to="/cadastro" className="text-primary hover:underline font-semibold">
+                  Cadastre-se
+                </Link>
+              </p>
             </div>
-            <div className="space-y-3">
-              <button
-                type="button"
-                disabled={googleLoading}
-                onClick={handleGoogle}
-                className="w-full py-3 rounded-md border border-border hover:border-foreground bg-background font-medium text-sm transition-colors disabled:opacity-60"
-              >
-                {googleLoading ? "Redirecionando..." : "Continuar com Google"}
-              </button>
+
+            <div className="hidden md:block rounded-3xl border border-border bg-surface overflow-hidden">
+              <div className="relative w-full aspect-[9/16]">
+                <video
+                  src="https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/02178465912133300000000000000000000ffffc0a8b2417262a0.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
             </div>
-            <p className="mt-8 text-center text-sm text-muted-foreground">
-              Não tem conta?{" "}
-              <Link to="/cadastro" className="text-primary hover:underline font-semibold">
-                Cadastre-se
-              </Link>
-            </p>
           </div>
         </div>
       </div>
