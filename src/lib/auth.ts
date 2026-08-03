@@ -232,37 +232,23 @@ function normalizeBase(value: string): string {
   return base.length >= 3 ? base : "usuario";
 }
 
-async function isUsernameTaken(username: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
-  if (error) {
-    // Em caso de erro na checagem, assume ocupado para forçar sufixo — mais seguro.
-    return true;
-  }
-  return !!data;
-}
-
-async function resolveAvailableUsername(value: string, userId: string): Promise<string> {
+async function resolveAvailableUsername(value: string): Promise<string> {
   const base = normalizeBase(value);
 
-  if (!(await isUsernameTaken(base))) {
+  const { data, error } = await supabase.rpc("resolve_available_username", {
+    desired: base,
+  });
+
+  if (error || typeof data !== "string" || data.length < 3) {
+    // Nunca "assume ocupado": tenta o nome limpo e deixa o banco decidir.
     return base;
   }
 
-  for (let i = 2; i <= 9; i++) {
-    const suffix = `_${i}`;
-    const truncated = base.slice(0, 30 - suffix.length);
-    const candidate = `${truncated}${suffix}`;
-    if (!(await isUsernameTaken(candidate))) {
-      return candidate;
-    }
-  }
-
-  // Último recurso: sufixo com pedaço do userId, garante unicidade quase certa.
-  const idSuffix = `_${userId.slice(0, 8)}`;
-  const truncated = base.slice(0, 30 - idSuffix.length);
-  return `${truncated}${idSuffix}`;
+  return data;
 }
+
+function withNumericSuffix(base: string, index: number): string {
+  const suffix = `_${index}`;
+  return `${base.slice(0, 30 - suffix.length)}${suffix}`;
+}
+
