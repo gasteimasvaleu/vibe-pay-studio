@@ -50,11 +50,14 @@ function ConfirmeEmailPage() {
   const detectConfirmation = useCallback(async (): Promise<boolean> => {
     if (doneRef.current) return true;
 
-    const { data } = await supabase.auth.getUser();
-    if (data.user?.email_confirmed_at || data.user?.confirmed_at) {
-      doneRef.current = true;
-      await routeAfterAuth(navigate);
-      return true;
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.email_confirmed_at || data.user?.confirmed_at) {
+        doneRef.current = true;
+        await routeAfterAuth(navigate);
+        return true;
+      }
     }
 
     if (!email) return false;
