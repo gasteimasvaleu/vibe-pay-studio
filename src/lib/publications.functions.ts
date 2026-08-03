@@ -359,6 +359,47 @@ export const getFeed = createServerFn({ method: "POST" })
     ]);
     void profileRows;
 
+    // Perfis referenciados pelo admin em cada publicação
+    const mentionsByPub = new Map<string, MentionedProfile[]>();
+    {
+      const { data: mentionRows } = await client
+        .from("publication_profile_mentions")
+        .select("publication_id, creator_profile_id, position")
+        .in("publication_id", ids)
+        .order("position", { ascending: true });
+      const mentionProfileIds = Array.from(
+        new Set((mentionRows ?? []).map((m: any) => m.creator_profile_id as string)),
+      );
+      if (mentionProfileIds.length > 0) {
+        const { data: mentionProfiles } = await (client as any)
+          .from("creator_profiles_search")
+          .select("id, user_id, username, display_name, avatar_url, cover_url, verified_at")
+          .in("id", mentionProfileIds);
+        const byId = new Map<string, MentionedProfile>(
+          ((mentionProfiles ?? []) as any[]).map((r) => [
+            r.id as string,
+            {
+              id: r.id,
+              user_id: r.user_id,
+              username: r.username,
+              display_name: r.display_name ?? null,
+              avatar_url: r.avatar_url ?? null,
+              cover_url: r.cover_url ?? null,
+              verified: !!r.verified_at,
+            },
+          ]),
+        );
+        (mentionRows ?? []).forEach((m: any) => {
+          const prof = byId.get(m.creator_profile_id);
+          if (!prof) return;
+          const arr = mentionsByPub.get(m.publication_id) ?? [];
+          arr.push(prof);
+          mentionsByPub.set(m.publication_id, arr);
+        });
+      }
+    }
+
+
     const identityMaps = await resolveCreatorIdentities(client, {
       creatorProfileIds: page.map((p) => (p as { creator_profile_id: string | null }).creator_profile_id),
       userIds: authorIds,
