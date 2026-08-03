@@ -1,28 +1,46 @@
-## Objetivo
+# Posts do admin no feed + menções de perfis na publicação
 
-Cada botão `>` dos carrosséis de `/em-alta` abre uma página dedicada da seção, com scroll infinito, usando exatamente os mesmos cards/elementos do carrossel.
+## 1. Postagens do admin visíveis para todos
 
-## Como fica
+Hoje o feed só mostra publicações do próprio usuário e de quem ele segue. Vamos incluir sempre as publicações do administrador (caioroobb@gmail.com / Monetisexy), mesmo sem seguir.
 
-- Rota nova: `/em-alta/{secao}` (ex.: `/em-alta/top-creators`, `/em-alta/ofertas`, `/em-alta/perfis-gratuitos`, `/em-alta/mais-mimadas`, `/em-alta/rumo-ao-topo`, `/em-alta/posts`, `/em-alta/chat`, `/em-alta/um-a-um`, `/em-alta/lives`).
-- Cabeçalho enxuto igual ao atual (`DashboardShell` com botão voltar, sem card de perfil), título = nome da seção.
-- Em vez de carrossel horizontal, os mesmos cards em grade que quebra linha (mesmos componentes de `Cards.tsx`, mesmos tamanhos), carregando mais itens conforme o usuário rola.
-- Skeletons iguais aos da página principal enquanto carrega; estado vazio quando a seção não tem itens.
+- No feed, além dos autores seguidos, incluir automaticamente os user_ids que têm papel `admin`.
+- Regras de bloqueio/ocultar publicação continuam valendo (posts ocultados pelo usuário seguem ocultos).
+- Publicações pagas do admin continuam com o cadeado normal.
 
-## Backend
+## 2. Referenciar perfis na publicação (só admin)
 
-Hoje o `em_alta_feed()` devolve todas as seções juntas com `LIMIT 12` fixo — não dá para paginar. Será criada uma função nova `em_alta_section(_section text, _limit int, _offset int)` que reaproveita exatamente a mesma lógica de ranking/filtros de cada seção (mesmos períodos de 7/30/90 dias, mesmas junções), aplicando `LIMIT/OFFSET` e ordenação estável. O `em_alta_feed()` atual permanece intacto para a página principal.
+No fluxo de criação de post (`/publisher`), aparece uma nova seção **apenas para admins**: "Referenciar perfis".
 
-## Frontend
+- Campo de busca por @usuário (usa a mesma busca da página /busca, perfis pagos e gratuitos).
+- Admin seleciona um ou mais perfis; cada um vira um "chip" removível antes de publicar.
+- Perfis com "não aparecer em menções" ativado não são sugeridos.
 
-1. `src/lib/em-alta.functions.ts`: nova server function `getEmAltaSection({ section, offset, limit })` protegida pelo mesmo middleware de auth.
-2. `src/lib/em-alta.types.ts`: mapa de seções (slug → título, tipo de card) usado tanto pela página principal quanto pelas páginas dedicadas.
-3. Estrutura de rotas: `em-alta.tsx` vira layout com `<Outlet />`; a página atual passa para `em-alta.index.tsx`; nova `em-alta.$section.tsx` renderiza a lista paginada com `useInfiniteQuery` + o hook já existente `useInfiniteScrollSentinel`.
-4. `EmAltaSection.tsx`: o botão `>` vira `<Link to="/em-alta/$section">` (mantendo o mesmo visual e o `aria-label`).
+## 3. Como a referência aparece no feed
+
+Abaixo da legenda da publicação, é renderizado um card por perfil referenciado, com o mesmo visual da página de busca:
+
+```text
++------------------------------------------+
+|  [banner de capa]                    (⋮) |
+| (avatar)  nomedeexibicao  ✔               |
+|           @usuario                        |
++------------------------------------------+
+```
+
+- Banner = capa do perfil, avatar circular sobreposto, nome + selo de verificado + @usuário.
+- Clicar no card abre o perfil.
+- Botão de três pontos verticais (⋮) abre o popover padrão do app com:
+  - @usuario (abre o perfil)
+  - Chat (abre conversa com o perfil)
+  - Compartilhar (copia/compartilha o link do perfil)
+  - Denunciar perfil (fluxo de denúncia já existente)
 
 ## Detalhes técnicos
 
-- Paginação por offset (páginas de 24 itens); `hasNextPage` = a última página veio cheia.
-- Ordenações recebem desempate por `id` para evitar itens repetidos entre páginas.
-- Cards mantêm as classes atuais (inclusive `snap-start shrink-0`), apenas o contêiner muda de carrossel para `flex flex-wrap` — nenhum ajuste de layout interno dos cards.
-- `head()` próprio por rota (título da seção, `noindex`, como já é feito em `/em-alta`).
+- Migração: nova tabela `publication_profile_mentions` (publication_id, creator_profile_id, position) com GRANTs e RLS — leitura para quem pode ler a publicação, escrita apenas por admin (`has_role(auth.uid(),'admin')`).
+- `getFeed` em `src/lib/publications.functions.ts`: adicionar user_ids de admin à lista `allowedAuthors` e carregar as menções (join com `creator_profiles_search` para banner/avatar/verificado), retornando `mentions[]` em `FeedItem`.
+- `createPublication`: aceitar `mentionProfileIds`, validando papel admin no servidor antes de inserir.
+- Novo componente `src/components/feed/MentionedProfileCard.tsx` reutilizando o layout do `CreatorCard` de `search.tsx`, com `ActionPopover` já existente para o menu ⋮.
+- `PublicationCard.tsx`: renderizar a lista de menções logo abaixo da legenda.
+- `publisher.tsx`: seletor de perfis exibido só quando `getMyRoles` indicar admin.
