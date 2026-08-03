@@ -36,7 +36,7 @@ export function Footer() {
                   ["Imprensa", "#"],
                   ["Contato", "/contato"],
                   ["Uso da Marca", "#"],
-                  ["Ajuda & FAQ", "#"],
+                  ["Ajuda & FAQ", "https://help.monetisexy.com", "_blank"],
                 ]}
               />
               <FooterCol
@@ -73,19 +73,24 @@ export function Footer() {
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
+function FooterCol({ title, links }: { title: string; links: [string, string, string?][] }) {
   return (
     <div>
       <h4 className="label-caps text-card-foreground mb-4">{title}</h4>
       <ul className="space-y-3">
-        {links.map(([label, href]) => (
+        {links.map(([label, href, target]) => (
           <li key={label}>
             {href.startsWith("/") ? (
               <Link to={href} className="text-sm text-card-foreground/80 hover:text-primary transition-colors">
                 {label}
               </Link>
             ) : (
-              <a href={href} className="text-sm text-card-foreground/80 hover:text-primary transition-colors">
+              <a
+                href={href}
+                target={target}
+                rel={target === "_blank" ? "noopener noreferrer" : undefined}
+                className="text-sm text-card-foreground/80 hover:text-primary transition-colors"
+              >
                 {label}
               </a>
             )}
