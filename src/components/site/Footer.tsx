@@ -36,7 +36,7 @@ export function Footer() {
                   ["Imprensa", "#"],
                   ["Contato", "/contato"],
                   ["Uso da Marca", "#"],
-                  ["Ajuda & FAQ", "#"],
+                  ["Ajuda & FAQ", "https://help.monetisexy.com", "_blank"],
                 ]}
               />
               <FooterCol
