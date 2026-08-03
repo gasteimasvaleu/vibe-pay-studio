@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorDashboard } from "@/components/dashboard/CreatorDashboard";
 import { SubscriberDashboard } from "@/components/dashboard/SubscriberDashboard";
 import { isCreatorLike, type AccountType } from "@/lib/auth";
+import { creatorOnboardingStepFrom } from "@/lib/onboarding-step";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -54,27 +55,25 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const freeAvatarUrl = free?.avatar_url ?? profile?.free_avatar_url ?? profile?.avatar_url ?? null;
     const avatarUrl = active?.avatar_url ?? (inFreeMode ? freeAvatarUrl : creatorAvatarUrl);
 
-    // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
-    if (accountType === "creator" && !profile?.onboarding_completed_at) {
-      const hasPrice = (paid?.price_monthly ?? profile?.price_monthly) != null;
-      const kyc = profile?.kyc_status ?? "not_started";
-      if (kyc === "processing") {
-        throw redirect({ to: "/creator/onboarding/documentos/verificando" });
-      }
-      if (kyc === "requires_input" || (hasPrice && kyc === "not_started")) {
-        throw redirect({ to: "/creator/onboarding/documentos" });
-      }
-      if (!hasPrice) {
-        throw redirect({ to: "/creator/onboarding/assinatura" });
-      }
-    }
-
     const hasSocials =
       !!profile?.instagram_handle ||
       !!profile?.tiktok_handle ||
       !!profile?.x_handle;
     const hasPrice = (paid?.price_monthly ?? profile?.price_monthly) != null;
     const kyc = profile?.kyc_status ?? "not_started";
+
+    // Creator pago meio-cadastrado: manda pro próximo passo do onboarding.
+    const pendingStep = creatorOnboardingStepFrom({
+      accountType,
+      onboardingCompletedAt: profile?.onboarding_completed_at,
+      hasPrice,
+      hasSocials,
+      kycStatus: kyc,
+    });
+    if (pendingStep) {
+      throw redirect({ to: pendingStep });
+    }
+
     let creatorNextStep: string = "/creator/onboarding/redes-sociais";
     if (kyc === "processing") {
       creatorNextStep = "/creator/onboarding/documentos/verificando";
