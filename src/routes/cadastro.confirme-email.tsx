@@ -54,11 +54,9 @@ function ConfirmeEmailPage() {
       const res = await checkConfirmation({ data: { email } });
       if (res.confirmed) {
         doneRef.current = true;
-        sessionStorage.setItem(
-          "email-confirmation-complete",
-          JSON.stringify({ email, confirmed: true }),
+        window.location.replace(
+          `/entrar?email=${encodeURIComponent(email)}&confirmado=true`,
         );
-        window.location.replace("/entrar");
         return true;
       }
       return false;
