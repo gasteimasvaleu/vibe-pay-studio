@@ -3727,6 +3727,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_confirmed: { Args: { _email: string }; Returns: boolean }
       is_muted: { Args: { _muter: string; _target: string }; Returns: boolean }
       is_restricted: {
         Args: { _creator: string; _subscriber: string }

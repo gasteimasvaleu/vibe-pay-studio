@@ -1,8 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { z } from "zod";
 import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
+const searchSchema = z.object({
+  email: z.string().email().optional(),
+  confirmado: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/entrar")({
+  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Entrar · Monetisexy" },
@@ -14,11 +21,13 @@ export const Route = createFileRoute("/entrar")({
 
 function EntrarPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,6 +76,15 @@ function EntrarPage() {
           <div className="rounded-3xl border border-border bg-surface p-8 md:p-10">
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Entrar</h1>
             <p className="mt-2 text-sm text-muted-foreground">Bem-vindo de volta.</p>
+            {search.confirmado && (
+              <p
+                role="status"
+                className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary"
+              >
+                E-mail confirmado! Faça login para continuar.
+              </p>
+            )}
+
             <form onSubmit={onSubmit} className="mt-8 space-y-4">
               <Field
                 label="E-mail"
