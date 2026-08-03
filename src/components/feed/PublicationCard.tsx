@@ -24,6 +24,8 @@ import {
   type FeedItem,
 } from "@/lib/publications.functions";
 import { PublicationOptionsMenu } from "./PublicationOptionsMenu";
+import { MentionedProfileCard } from "./MentionedProfileCard";
+
 import { showTopBanner } from "@/components/ui/top-banner";
 
 function formatRelativeTime(iso: string): string {
