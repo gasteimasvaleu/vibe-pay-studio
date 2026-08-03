@@ -5,7 +5,7 @@ import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle 
 
 const searchSchema = z.object({
   email: z.string().email().optional(),
-  confirmado: z.boolean().optional(),
+  confirmado: z.literal("1").optional(),
 });
 
 export const Route = createFileRoute("/entrar")({
