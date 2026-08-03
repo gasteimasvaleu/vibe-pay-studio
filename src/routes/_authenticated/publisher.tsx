@@ -1,4 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { MentionPicker } from "@/components/publisher/MentionPicker";
+import { getMyRoles } from "@/lib/admin-dashboard.functions";
+import type { MentionedProfile } from "@/lib/publications.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -324,6 +327,15 @@ function PublisherPage() {
   const [vaultPickerOpen, setVaultPickerOpen] = useState(false);
   const [vaultPickerTarget, setVaultPickerTarget] = useState<"media" | "preview">("media");
   const [cameraOpen, setCameraOpen] = useState<null | { target: "media" | "preview" }>(null);
+  const [mentions, setMentions] = useState<MentionedProfile[]>([]);
+
+  const rolesFn = useServerFn(getMyRoles);
+  const rolesQ = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn(),
+    staleTime: 60_000,
+  });
+  const isAdmin = rolesQ.data?.isAdmin ?? false;
 
 
   const createFn = useServerFn(createPublication);
@@ -862,6 +874,7 @@ function PublisherPage() {
         scheduledAt: toggles.schedule.at,
         commentsDisabled: toggles.commentsDisabled,
         pinned: toggles.pinnedToTop,
+        mentionProfileIds: isAdmin ? mentions.map((m) => m.id) : undefined,
         media: readyMedia.map((m) => ({
           storagePath: m.storagePath!,
           url: m.publicUrl!,
@@ -1012,6 +1025,11 @@ function PublisherPage() {
             preview={preview}
             onEditPreview={openPreviewSheet}
             onEditPrice={() => setPaidOpen(true)}
+            mentionSlot={
+              isAdmin ? (
+                <MentionPicker selected={mentions} onChange={setMentions} />
+              ) : null
+            }
           />
         )}
       </main>
@@ -1444,6 +1462,7 @@ function StepCompose({
   preview,
   onEditPreview,
   onEditPrice,
+  mentionSlot,
 }: {
   media: MediaItem[];
   caption: string;
@@ -1464,6 +1483,7 @@ function StepCompose({
   preview: PreviewMedia | null;
   onEditPreview: () => void;
   onEditPrice: () => void;
+  mentionSlot?: React.ReactNode;
 }) {
   const first = media[0];
   const sensors = useSensors(
@@ -1563,6 +1583,8 @@ function StepCompose({
         placeholder="Escreva uma legenda..."
         className="min-h-32 bg-muted/60 border-border resize-none"
       />
+
+      {mentionSlot}
 
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
