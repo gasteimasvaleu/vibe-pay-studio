@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/site/Layout";
 import { getAuthErrorMessage, routeAfterAuth } from "@/lib/auth";
+import { checkEmailConfirmed } from "@/lib/auth-confirm.functions";
 
 const searchSchema = z.object({
   email: z.string().email().optional(),
@@ -30,6 +31,7 @@ function ConfirmeEmailPage() {
   const [cooldown, setCooldown] = useState(0);
   const [info, setInfo] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const doneRef = useRef(false);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -37,38 +39,68 @@ function ConfirmeEmailPage() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Ao montar, verifica se o usuário já confirmou o e-mail (ex: abriu o link em outra aba).
+  /**
+   * Retorna true se a confirmação foi detectada (e a navegação já foi disparada).
+   * 1) Sessão local (link aberto neste mesmo navegador) → entra direto no app.
+   * 2) Sem sessão (link aberto no celular) → consulta pelo e-mail no servidor
+   *    e manda para o login com o e-mail preenchido.
+   */
+  const detectConfirmation = useCallback(async (): Promise<boolean> => {
+    if (doneRef.current) return true;
+
+    const { data } = await supabase.auth.getUser();
+    if (data.user?.email_confirmed_at || data.user?.confirmed_at) {
+      doneRef.current = true;
+      await routeAfterAuth(navigate);
+      return true;
+    }
+
+    if (!email) return false;
+    const res = await checkEmailConfirmed({ data: { email } });
+    if (res.confirmed) {
+      doneRef.current = true;
+      navigate({ to: "/entrar", search: { email, confirmado: true }, replace: true });
+      return true;
+    }
+    return false;
+  }, [email, navigate]);
+
+  // Verificação automática enquanto a página estiver aberta (até ~5 min).
   useEffect(() => {
     let mounted = true;
-    const check = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!mounted || !data.user) return;
-      if (data.user.email_confirmed_at || data.user.confirmed_at) {
-        console.info("[confirme-email] e-mail já confirmado ao montar → routeAfterAuth");
-        await routeAfterAuth(navigate);
+    let elapsed = 0;
+    const tick = async () => {
+      if (!mounted || document.hidden) return;
+      try {
+        await detectConfirmation();
+      } catch {
+        /* silencioso */
       }
     };
-    check();
+    void tick();
+    const id = setInterval(() => {
+      elapsed += 5000;
+      if (elapsed > 5 * 60_000 || doneRef.current) {
+        clearInterval(id);
+        return;
+      }
+      void tick();
+    }, 5000);
     return () => {
       mounted = false;
+      clearInterval(id);
     };
-  }, [navigate]);
+  }, [detectConfirmation]);
 
   const handleAlreadyConfirmed = async () => {
     setErrorMsg(null);
     setInfo(null);
     setChecking(true);
     try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        setInfo("Ainda não detectamos a confirmação. Tente novamente em instantes.");
-        return;
-      }
-      if (!data.user.email_confirmed_at && !data.user.confirmed_at) {
+      const ok = await detectConfirmation();
+      if (!ok) {
         setInfo("Ainda não detectamos a confirmação. Abra o link do e-mail e tente novamente.");
-        return;
       }
-      await routeAfterAuth(navigate);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? getAuthErrorMessage(err.message) : "Não foi possível verificar.",
@@ -77,6 +109,7 @@ function ConfirmeEmailPage() {
       setChecking(false);
     }
   };
+
 
   const handleResend = async () => {
     if (!email) {
