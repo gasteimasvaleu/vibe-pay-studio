@@ -207,7 +207,19 @@ export type FeedItem = {
   saved_by_me: boolean;
   is_owner: boolean;
   archived_at: string | null;
+  mentions?: MentionedProfile[];
 };
+
+export type MentionedProfile = {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  cover_url: string | null;
+  verified: boolean;
+};
+
 
 
 
