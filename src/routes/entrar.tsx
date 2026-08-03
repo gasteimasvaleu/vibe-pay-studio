@@ -1,8 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { z } from "zod";
 import { getAuthErrorMessage, routeAfterAuth, signInWithEmail, signInWithGoogle } from "@/lib/auth";
 
+const searchSchema = z.object({
+  email: z.string().email().optional(),
+  confirmado: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/entrar")({
+  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Entrar · Monetisexy" },
@@ -14,11 +21,13 @@ export const Route = createFileRoute("/entrar")({
 
 function EntrarPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
