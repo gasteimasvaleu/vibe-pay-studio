@@ -23,11 +23,11 @@ function HomePage() {
           style={{ background: "var(--gradient-radial)" }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 gap-8">
-          <div className="animate-fade-in">
-            <LoginCard />
-          </div>
           <div>
             <HeroCard />
+          </div>
+          <div className="animate-fade-in">
+            <LoginCard />
           </div>
         </div>
       </section>
