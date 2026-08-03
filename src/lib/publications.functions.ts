@@ -42,7 +42,9 @@ const createPublicationSchema = z.object({
   media: z.array(mediaItemSchema).min(1).max(10),
   audio: audioSchema,
   preview: previewSchema,
+  mentionProfileIds: z.array(z.string().uuid()).max(12).optional(),
 });
+
 
 
 export const createPublication = createServerFn({ method: "POST" })
