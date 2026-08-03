@@ -34,16 +34,7 @@ function VeriffConcluidoPage() {
             esta janela — vamos te avisar no app assim que estiver tudo pronto.
           </p>
 
-          <div className="mt-10 w-full max-w-sm flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                window.close();
-              }}
-              className="w-full px-8 py-3 rounded-md bg-gradient-to-r from-fuchsia-500 via-purple-500 to-fuchsia-400 text-white font-semibold shadow-glow hover:opacity-90 transition"
-            >
-              Fechar esta janela
-            </button>
+          <div className="mt-10 w-full max-w-sm">
             <button
               type="button"
               onClick={() => navigate({ to: "/dashboard" })}
