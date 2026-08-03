@@ -50,12 +50,15 @@ function ConfirmeEmailPage() {
   const detectConfirmation = useCallback(async (): Promise<boolean> => {
     if (doneRef.current) return true;
 
-    if (email) {
-      const res = await checkConfirmation({ data: { email } });
+    const emailFromUrl = new URLSearchParams(window.location.search).get("email");
+    const confirmationEmail = email ?? emailFromUrl ?? undefined;
+
+    if (confirmationEmail) {
+      const res = await checkConfirmation({ data: { email: confirmationEmail } });
       if (res.confirmed) {
         doneRef.current = true;
         window.location.replace(
-          `/entrar?email=${encodeURIComponent(email)}&confirmado=true`,
+          `/entrar?email=${encodeURIComponent(confirmationEmail)}&confirmado=true`,
         );
         return true;
       }
