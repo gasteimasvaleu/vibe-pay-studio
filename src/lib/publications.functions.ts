@@ -237,14 +237,18 @@ export const getFeed = createServerFn({ method: "POST" })
     const client = context.supabase;
     const currentUserId = context.userId;
 
-    const { data: follows, error: followsErr } = await client
-      .from("follows")
-      .select("followee_id")
-      .eq("follower_id", currentUserId);
+    const [{ data: follows, error: followsErr }, { data: adminIds }] = await Promise.all([
+      client.from("follows").select("followee_id").eq("follower_id", currentUserId),
+      client.rpc("admin_user_ids"),
+    ]);
     if (followsErr) throw new Error(followsErr.message);
+    const adminAuthorIds = ((adminIds ?? []) as unknown as Array<string | { admin_user_ids: string }>)
+      .map((r) => (typeof r === "string" ? r : r.admin_user_ids))
+      .filter(Boolean);
     const allowedAuthors = Array.from(
-      new Set([currentUserId, ...(follows ?? []).map((f) => f.followee_id)]),
+      new Set([currentUserId, ...(follows ?? []).map((f) => f.followee_id), ...adminAuthorIds]),
     );
+
 
 
     let query = client
