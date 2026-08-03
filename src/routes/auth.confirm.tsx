@@ -46,8 +46,18 @@ function ConfirmPage() {
         setStatus("error");
         return;
       }
-      const target = next && next.startsWith("/") ? next : "/feed";
-      navigate({ to: target, replace: true });
+      if (next && next.startsWith("/")) {
+        navigate({ to: next, replace: true });
+        return;
+      }
+      let step: string | null = null;
+      try {
+        const { resolveCreatorOnboardingStep } = await import("@/lib/onboarding-step");
+        step = await resolveCreatorOnboardingStep();
+      } catch {
+        step = null;
+      }
+      navigate({ to: step ?? "/feed", replace: true });
     })();
     return () => {
       cancelled = true;
