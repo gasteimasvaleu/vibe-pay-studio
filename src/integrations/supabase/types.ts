@@ -3640,6 +3640,7 @@ export type Database = {
           tx_count: number
         }[]
       }
+      admin_user_ids: { Args: never; Returns: string[] }
       admin_wallets_snapshot: {
         Args: never
         Returns: {

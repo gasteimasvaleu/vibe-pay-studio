@@ -24,6 +24,8 @@ import {
   type FeedItem,
 } from "@/lib/publications.functions";
 import { PublicationOptionsMenu } from "./PublicationOptionsMenu";
+import { MentionedProfileCard } from "./MentionedProfileCard";
+
 import { showTopBanner } from "@/components/ui/top-banner";
 
 function formatRelativeTime(iso: string): string {
@@ -283,7 +285,16 @@ export function PublicationCard({
           {item.caption}
         </p>
       )}
+
+      {item.mentions && item.mentions.length > 0 && (
+        <div className="px-4 pb-4 space-y-3">
+          {item.mentions.map((m) => (
+            <MentionedProfileCard key={m.id} profile={m} />
+          ))}
+        </div>
+      )}
     </article>
+
   );
 }
 
