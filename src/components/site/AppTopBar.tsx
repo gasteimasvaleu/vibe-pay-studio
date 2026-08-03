@@ -45,7 +45,7 @@ export function AppTopBar() {
     <header className="sticky top-0 z-30 border-b border-border backdrop-blur-md bg-background/80">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
         <Link to="/feed" className="text-lg font-black tracking-tight text-foreground">
-          monet<span className="text-gradient-primary">isex</span>
+          moneti<span className="text-gradient-primary">sexy.</span>
         </Link>
         <div className="hidden md:flex flex-1 max-w-md mx-6">
           <label className="relative w-full">
