@@ -6,7 +6,7 @@ const schema = z.object({ email: z.string().email().max(320) });
 // Limite simples em memória (janela curta) para reduzir enumeração/abuso.
 const hits = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 30;
+const MAX_PER_WINDOW = 40;
 
 function rateLimited(key: string) {
   const now = Date.now();
@@ -31,20 +31,16 @@ export const checkEmailConfirmed = createServerFn({ method: "POST" })
 
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      // listUsers suporta filtro por e-mail no Supabase Auth Admin API.
-      const { data: res, error } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 200,
+      const { data: res, error } = await supabaseAdmin.rpc("is_email_confirmed", {
+        _email: email,
       });
-      if (error) return { confirmed: false };
-      const user = (res?.users ?? []).find(
-        (u) => (u.email ?? "").toLowerCase() === email,
-      );
-      if (!user) return { confirmed: false };
-      return {
-        confirmed: Boolean(user.email_confirmed_at ?? user.confirmed_at),
-      };
-    } catch {
+      if (error) {
+        console.error("[checkEmailConfirmed]", error.message);
+        return { confirmed: false };
+      }
+      return { confirmed: Boolean(res) };
+    } catch (err) {
+      console.error("[checkEmailConfirmed] threw", err);
       return { confirmed: false };
     }
   });
