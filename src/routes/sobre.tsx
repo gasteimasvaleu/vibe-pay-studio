@@ -1,178 +1,223 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/Layout";
-import { ArrowRight, Target, Zap, Lock, Bot, Globe2, CreditCard } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Repeat,
+  Lock,
+  MessageSquare,
+  Radio,
+  Target,
+  Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/sobre")({
   head: () => ({
     meta: [
-      { title: "Sobre · Monetisexy" },
-      { name: "description", content: "A história da Monetisexy: a maior plataforma de creator economy da América Latina." },
-      { property: "og:title", content: "Sobre · Monetisexy" },
-      { property: "og:description", content: "Criadores no controle. Comunidade de verdade." },
+      { title: "Sobre a Monetisexy · Plataforma brasileira para criadores" },
+      {
+        name: "description",
+        content:
+          "A Monetisexy é uma plataforma brasileira de assinatura para criadores: pagamento em reais, repasse via Pix e 85% da venda para quem cria.",
+      },
+      { property: "og:title", content: "Sobre a Monetisexy" },
+      {
+        property: "og:description",
+        content:
+          "Plataforma brasileira de assinatura para criadores: Pix nativo, suporte em português e 85% de repasse.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SobrePage,
 });
 
-const timeline = [
-  { year: "2020", title: "O começo", desc: "Nasce em plena pandemia com uma missão: dar aos criadores brasileiros um lugar próprio, com pagamento em Pix e suporte em português." },
-  { year: "2022", title: "Expansão nacional", desc: "Chegamos a 250 mil criadores e milhões de fãs ativos, virando referência de creator economy no país." },
-  { year: "2024", title: "América Latina", desc: "Lançamento em espanhol, presença em México, Argentina e Colômbia." },
-  { year: "2026", title: "Hoje", desc: "Mais de 750 mil criadores, 10 milhões de fãs e a maior plataforma do gênero na região." },
+const monetizacao = [
+  {
+    icon: Repeat,
+    title: "Assinaturas",
+    desc: "Mensal, trimestral ou semestral, com desconto configurável nos planos mais longos.",
+  },
+  {
+    icon: Lock,
+    title: "Conteúdo avulso",
+    desc: "Posts pagos e Stories pagos vendidos individualmente, dentro ou fora da assinatura.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Chat monetizado",
+    desc: "Mídia paga, chamadas de vídeo e mensagens em massa segmentadas.",
+  },
+  {
+    icon: Radio,
+    title: "Lives",
+    desc: "Transmissões com ingresso e recebimento de Mimos em tempo real.",
+  },
+  {
+    icon: Target,
+    title: "Desafio",
+    desc: "Meta coletiva que a comunidade financia junto para desbloquear conteúdo exclusivo.",
+  },
+  {
+    icon: Users,
+    title: "Indicação e Afiliados",
+    desc: "Programas para quem quer expandir o alcance do próprio perfil.",
+  },
 ];
 
-const stats = [
-  { value: "+10M", label: "Fãs ativos" },
-  { value: "+750K", label: "Criadores cadastrados" },
-  { value: "LATAM", label: "Em expansão" },
-];
-
-const testimonials = [
-  { handle: "@gabisaleh", name: "Gabi Saleh", quote: "Poucas profissões me permitem ter o estilo de vida que eu tenho hoje." },
-  { handle: "@erickdiaz", name: "Erick Diaz", quote: "Sou 100% focado aqui pelo fato de valorizarem o criador de conteúdo." },
-  { handle: "@marimattos", name: "Mari Mattos", quote: "Me permitiu ter liberdade geográfica, viajar e conhecer novos lugares." },
-];
-
-const features = [
-  { icon: Target, title: "Você fica com 80%", desc: "Sem surpresas, sem taxas escondidas." },
-  { icon: Zap, title: "Pix em até 24h", desc: "Saldo disponível, saque imediato." },
-  { icon: Lock, title: "Conteúdo protegido", desc: "DRM integrado e marca d'água." },
-  { icon: Bot, title: "IA pessoal", desc: "Análise de dados e oportunidades." },
-  { icon: Globe2, title: "América Latina", desc: "Maior plataforma da região." },
-  { icon: CreditCard, title: "Pagamentos completos", desc: "Pix, cartão, boleto e mais." },
+const seguranca = [
+  "Todo criador passa por verificação de identidade antes de publicar ou receber pagamentos.",
+  "Conteúdo pago é protegido tecnicamente contra cópia não autorizada.",
+  "Autenticação em dois fatores disponível para qualquer conta.",
+  "Canal de denúncia ativo em toda a plataforma, com resposta prioritária.",
 ];
 
 function SobrePage() {
   return (
     <SiteLayout>
-      <section className="py-24 md:py-32 border-b border-border">
+      {/* Hero */}
+      <section className="py-20 md:py-28 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <span className="label-caps text-primary">Nossa história</span>
+          <span className="label-caps text-primary">Quem somos</span>
           <h1 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-            A história da <span className="text-gradient-primary">Monetisexy</span>
+            Sobre a <span className="text-gradient-primary">Monetisexy</span>
           </h1>
-          <p className="mt-8 text-lg text-muted-foreground max-w-2xl">
-            Construímos a infraestrutura que coloca os criadores no controle. Sem algoritmos, sem intermediários — conexão direta com a sua comunidade.
+          <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl">
+            A Monetisexy é uma plataforma brasileira de assinatura para criadores de
+            conteúdo. Conectamos quem cria com quem quer apoiar e consumir esse conteúdo —
+            de forma direta, sem intermediário burocrático, com pagamento em reais e
+            repasse via Pix.
           </p>
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="py-24">
+      {/* Por que existimos */}
+      <section className="py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative border-l border-border pl-8 md:pl-12 space-y-16">
-            {timeline.map((t) => (
-              <div key={t.year} className="relative">
-                <span className="absolute -left-10 md:-left-14 top-1 w-4 h-4 rounded-md bg-gradient-primary shadow-glow" />
-                <div className="text-sm label-caps text-primary">{t.year}</div>
-                <h3 className="mt-2 text-lg font-black tracking-tight">{t.title}</h3>
-                <p className="mt-3 text-muted-foreground text-lg">{t.desc}</p>
-              </div>
-            ))}
+          <span className="label-caps text-primary">Por que existimos</span>
+          <h2 className="mt-4 text-xl md:text-2xl font-black tracking-tight">
+            Feita do zero para o criador brasileiro
+          </h2>
+          <div className="mt-6 space-y-5 text-base text-muted-foreground">
+            <p>
+              Criar conteúdo online virou profissão para milhares de pessoas no Brasil —
+              mas boa parte das ferramentas disponíveis foi pensada para outros países,
+              com outra moeda, outro sistema bancário e outro idioma.
+            </p>
+            <p>
+              A Monetisexy nasceu para resolver isso: uma plataforma pensada do zero para o
+              criador brasileiro, com suporte em português, Pix nativo e sem as taxas de
+              conversão de moeda e IOF que penalizam quem recebe em plataformas
+              estrangeiras.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="bg-surface border-y border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <div className="text-3xl font-black tracking-tight">{s.value}</div>
-              <div className="mt-2 text-sm label-caps text-muted-foreground">{s.label}</div>
+      {/* Como funciona */}
+      <section className="py-16 md:py-20 bg-surface border-y border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <span className="label-caps text-primary">Como funciona</span>
+            <h2 className="mt-4 text-xl md:text-2xl font-black tracking-tight">
+              Você define o preço e o formato
+            </h2>
+            <p className="mt-4 text-base text-muted-foreground">
+              Todo criador define seu próprio preço de assinatura e o formato do seu
+              conteúdo. Além da assinatura, a Monetisexy oferece várias formas de
+              monetização que o criador pode combinar do jeito que fizer sentido para o seu
+              público.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {monetizacao.map((m) => (
+              <div
+                key={m.title}
+                className="p-5 rounded-2xl bg-background border border-border"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                  <m.icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-base font-black tracking-tight mb-1.5">{m.title}</h3>
+                <p className="text-sm text-muted-foreground">{m.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 p-6 md:p-8 rounded-2xl bg-background border border-primary/30">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+              <div className="text-3xl md:text-4xl font-black tracking-tight text-gradient-primary shrink-0">
+                85%
+              </div>
+              <p className="text-sm md:text-base text-muted-foreground">
+                De cada venda, o criador fica com 85% — a Monetisexy retém 15% para manter
+                e evoluir a plataforma. Sem taxa escondida, sem letra miúda.
+              </p>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Mission */}
-      <section className="py-24">
+      {/* Segurança */}
+      <section className="py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <span className="label-caps text-primary">Nossa missão</span>
-          <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-            Criadores no controle.<br />Comunidade de verdade.
+          <span className="label-caps text-primary">Segurança em primeiro lugar</span>
+          <h2 className="mt-4 text-xl md:text-2xl font-black tracking-tight">
+            Levamos a sério a confiança de quem usa a Monetisexy
           </h2>
-          <div className="mt-8 space-y-6 text-lg text-muted-foreground">
+          <ul className="mt-8 space-y-4">
+            {seguranca.map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-base text-muted-foreground">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Para quem é */}
+      <section className="py-16 md:py-20 bg-surface border-y border-border">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <span className="label-caps text-primary">Para quem é a Monetisexy</span>
+          <div className="mt-6 space-y-5 text-base text-muted-foreground">
             <p>
-              Acreditamos que quem cria deve ficar com a maior parte do que fatura — e ter total autonomia sobre o próprio trabalho. Por isso construímos uma plataforma onde o criador é dono do relacionamento com seus fãs.
+              Para quem cria e quer ser pago de forma justa e transparente por isso.
             </p>
             <p>
-              Sem algoritmos decidindo quem vê o quê. Sem intermediários entre você e sua audiência. Só ferramentas de qualidade, pagamentos rápidos em Pix e proteção real do seu conteúdo.
+              Para quem consome e quer apoiar diretamente os criadores que acompanha, com a
+              segurança de saber com quem está lidando. Simples assim.
             </p>
           </div>
           <Link
             to="/como-funciona"
             className="mt-8 inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all"
           >
-            Veja seu potencial como criador <ArrowRight className="w-4 h-4" />
+            Veja como funciona na prática <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="label-caps text-primary">Depoimentos</span>
-            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-              Vozes da comunidade
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <figure key={t.handle} className="p-6 rounded-2xl bg-background border border-border">
-                <blockquote className="text-base">"{t.quote}"</blockquote>
-                <figcaption className="mt-6 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-md bg-gradient-primary flex items-center justify-center text-sm font-bold">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.handle}</div>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="label-caps text-primary">Diferenciais</span>
-            <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
-              O que nos torna únicos
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => (
-              <div key={f.title} className="p-8 rounded-2xl bg-surface border border-border">
-                <div className="w-12 h-12 rounded-xl bg-gradient-primary/10 border border-primary/20 flex items-center justify-center mb-5">
-                  <f.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-black tracking-tight mb-2">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl p-12 md:p-20 text-center overflow-hidden border border-primary/30 bg-surface">
-            <div className="absolute inset-0 opacity-40" style={{ background: "var(--gradient-radial)" }} />
+      <section className="py-16 md:py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-3xl p-10 md:p-16 text-center overflow-hidden border border-primary/30 bg-surface">
+            <div
+              className="absolute inset-0 opacity-40"
+              style={{ background: "var(--gradient-radial)" }}
+            />
             <div className="relative">
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight">Faça parte</h2>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">
-                Junte-se aos criadores que já estão faturando com autonomia.
+              <h2 className="text-xl md:text-2xl font-black tracking-tight">
+                Comece agora
+              </h2>
+              <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto">
+                Crie sua conta gratuita e descubra o que a Monetisexy pode fazer por você.
               </p>
               <Link
                 to="/cadastro"
-                className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
+                className="mt-8 inline-flex items-center gap-2 px-8 h-11 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
               >
                 Criar minha conta grátis <ArrowRight className="w-4 h-4" />
               </Link>
