@@ -217,6 +217,7 @@ function ChatThreadView() {
   const sendFn = useServerFn(sendMessage);
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const callInviteFn = useServerFn(createCallInvite);
   const cancelCallInviteFn = useServerFn(cancelCallInvite);
