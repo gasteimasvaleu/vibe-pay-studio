@@ -167,7 +167,9 @@ function FeedPage() {
       });
       if (res.paidImmediately) {
         setPending(null);
-        toast.success("Publicação desbloqueada!");
+        toast.loading("Confirmando pagamento...", { id: "feed-unlock" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Publicação desbloqueada!", { id: "feed-unlock" });
         await refreshUnlocked(item.id);
         return;
       }
