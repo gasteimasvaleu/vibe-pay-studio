@@ -525,8 +525,10 @@ function PerfilPage() {
       });
       if (res.paidImmediately) {
         setPending(null);
-        toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        toast.loading("Confirmando pagamento...", { id: "pub-unlock" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Publicação desbloqueada!", { id: "pub-unlock" });
+        await queryClient.invalidateQueries({ queryKey: pubsQueryKey });
         void queryClient.invalidateQueries({ queryKey: ["feed"] });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         return;
