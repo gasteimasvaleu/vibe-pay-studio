@@ -1,65 +1,52 @@
-# Configurar Login com Google no Supabase
+# Corrigir login com Google (redirecionamento para localhost:3000)
 
-## Contexto
-O usuário já criou as credenciais OAuth no Google Cloud Console (Client ID: `monetisex`, Client Secret: `Caiaco15...`) e precisa saber o que inserir no Supabase para ativar o login com Google.
+## O que está acontecendo
 
-## Passos
+Depois do consentimento do Google, o Supabase devolveu o usuário para
+`localhost:3000/#access_token=...`. O Safari não consegue abrir esse endereço
+porque não existe nenhum servidor rodando nessa porta na sua máquina.
 
-### 1. No Google Cloud Console — confirmar origens e redirect
-Antes de colar as credenciais no Supabase, verifique se estes valores estão configurados no cliente OAuth Web que gerou o Client ID `monetisex`:
+Isso **não é um bug do código do app**. O app já pede o retorno para o próprio
+domínio (`window.location.origin`). Quando o endereço pedido não está na lista
+de permissões do Supabase, ele ignora o pedido e usa a **Site URL** do projeto —
+que hoje está configurada como `http://localhost:3000`.
 
-**Origens JavaScript autorizadas (Authorized JavaScript origins):**
-```
-https://monetisexy.com
-https://www.monetisexy.com
-https://vibe-pay-studio.lovable.app
-https://project--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app
-http://localhost:8080
-```
+## Correção (configuração no Supabase, sem alteração de código)
 
-**URLs de redirecionamento autorizadas (Authorized redirect URIs):**
-```
+No painel do Supabase, em **Authentication → URL Configuration**:
+
+1. **Site URL**: trocar `http://localhost:3000` por
+   `https://monetisexy.com`
+2. **Redirect URLs**: incluir todas as origens usadas:
+   - `https://monetisexy.com/**`
+   - `https://www.monetisexy.com/**`
+   - `https://vibe-pay-studio.lovable.app/**`
+   - `https://id-preview--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app/**`
+   - `http://localhost:8080/**` (porta real do ambiente de desenvolvimento)
+
+No **Google Cloud Console**, no cliente OAuth, confirmar que em
+**URLs de redirecionamento autorizadas** existe exatamente:
+
+```text
 https://zyoxtptkmhugxmdzmptd.supabase.co/auth/v1/callback
 ```
 
-> O redirect URI acima é o callback padrão do Supabase Auth. Se o dashboard do Supabase mostrar um valor diferente em Authentication → Providers → Google, use exatamente o valor do Supabase.
+E remover qualquer entrada apontando para `localhost:3000`.
 
-### 2. No Supabase — inserir as credenciais do Google
-Acesse o dashboard do Supabase do projeto `zyoxtptkmhugxmdzmptd`:
-https://supabase.com/dashboard/project/zyoxtptkmhugxmdzmptd/auth/providers
+## Detalhes técnicos
 
-Na seção **Google**, preencha:
+- `signInWithGoogle` em `src/lib/auth.ts` usa
+  `redirectTo: window.location.origin`, o que está correto.
+- O Supabase só honra `redirectTo` se a URL casar com a allowlist de
+  **Redirect URLs**; caso contrário cai na **Site URL**.
+- O padrão `/**` cobre qualquer caminho dentro do domínio (inclusive o retorno
+  com hash de tokens).
 
-| Campo no Supabase | Valor a colocar |
-|-------------------|-----------------|
-| **Client ID (for OAuth)** | `monetisex` |
-| **Client Secret (for OAuth)** | `Caiaco15...` (cole o valor completo, não a versão encurtada) |
-| **Authorized redirect URI** | `https://zyoxtptkmhugxmdzmptd.supabase.co/auth/v1/callback` (geralmente é exibido somente leitura pelo Supabase) |
+## Verificação
 
-Depois de preencher, clique em **Save**.
+Depois de salvar as configurações: abrir `/entrar`, clicar em
+"Continuar com Google" e confirmar que o retorno acontece no domínio do app e a
+sessão é criada (usuário cai no feed/onboarding).
 
-### 3. No Supabase — configurar URL Configuration
-Ainda no dashboard do Supabase, vá em **Authentication → URL Configuration** e certifique-se de que:
-
-- **Site URL** está como o domínio principal do app, por exemplo:
-  ```
-  https://monetisexy.com
-  ```
-- **Redirect URLs** inclui os domínios usados pelo app:
-  ```
-  https://monetisexy.com/*
-  https://www.monetisexy.com/*
-  https://vibe-pay-studio.lovable.app/*
-  https://project--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app/*
-  http://localhost:8080/*
-  ```
-
-### 4. Verificar no app
-O app já usa o helper `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })` em `src/lib/auth.ts` e `src/components/site/LoginCard.tsx`. Após salvar as credenciais no Supabase, o fluxo de "Entrar com Google" deve funcionar nos ambientes listados acima.
-
-## Resultado esperado
-Após a configuração, o botão "Entrar com Google" no `/entrar` e no card de login da landing page deve redirecionar o usuário para o consentimento do Google e, em seguida, autenticá-lo no app.
-
-## Links úteis
-- SQL Editor: https://supabase.com/dashboard/project/zyoxtptkmhugxmdzmptd/sql/new
-- Authentication providers: https://supabase.com/dashboard/project/zyoxtptkmhugxmdzmptd/auth/providers
+Nenhum arquivo do projeto precisa ser alterado. Se após o ajuste o problema
+persistir, investigo o fluxo no código.
