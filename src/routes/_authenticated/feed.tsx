@@ -1,6 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  useSuspenseQuery,
+  queryOptions,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -21,6 +27,10 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 import { ChallengeContributeSheet } from "@/components/payments/ChallengeContributeSheet";
+import {
+  getFeedWelcomeSeen,
+  markFeedWelcomeSeen,
+} from "@/lib/feed-welcome.functions";
 
 
 
