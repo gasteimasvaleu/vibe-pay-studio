@@ -217,9 +217,9 @@ function SobrePage() {
               </p>
               <Link
                 to="/cadastro"
-                className="mt-8 inline-flex items-center gap-2 px-8 h-11 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
+                className="mt-8 inline-flex items-center gap-2 px-6 md:px-8 h-11 rounded-md bg-gradient-primary font-semibold shadow-glow hover:opacity-90 transition-opacity"
               >
-                Criar minha conta grátis <ArrowRight className="w-4 h-4" />
+                Criar minha conta <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
