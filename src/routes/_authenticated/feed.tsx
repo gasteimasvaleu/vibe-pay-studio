@@ -20,6 +20,7 @@ import { createUnlockPayment } from "@/lib/payments.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { refreshAfterPayment } from "@/lib/refresh-after-payment";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { PublicationCard } from "@/components/feed/PublicationCard";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { PaymentModal, type CheckoutData, type PaymentMethod } from "@/components/payments/PaymentModal";
@@ -74,6 +75,7 @@ function FeedPage() {
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const markWelcome = useServerFn(markFeedWelcomeSeen);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
@@ -165,7 +167,9 @@ function FeedPage() {
       });
       if (res.paidImmediately) {
         setPending(null);
-        toast.success("Publicação desbloqueada!");
+        toast.loading("Confirmando pagamento...", { id: "feed-unlock" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Publicação desbloqueada!", { id: "feed-unlock" });
         await refreshUnlocked(item.id);
         return;
       }

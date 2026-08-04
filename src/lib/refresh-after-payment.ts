@@ -18,8 +18,8 @@ export async function refreshAfterPayment(
     delayMs?: number;
   },
 ): Promise<boolean> {
-  const attempts = opts?.attempts ?? 5;
-  const delayMs = opts?.delayMs ?? 1200;
+  const attempts = opts?.attempts ?? 8;
+  const delayMs = opts?.delayMs ?? 1500;
 
   for (let i = 0; i < attempts; i++) {
     await Promise.all(

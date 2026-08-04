@@ -10,6 +10,7 @@ import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createLiveTicketPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { PAYMENT_MIN_GROSS_CENTS, formatMinimum, translatePaymentError } from "@/lib/payment-limits";
 
@@ -38,6 +39,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTicket = useServerFn(createLiveTicketPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
@@ -85,6 +87,9 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
       const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
       const res = await createTicket({ data: { liveId, method, savedCardId: cardId } });
       if (res.paidImmediately) {
+        toast.loading("Confirmando pagamento...", { id: "live-ticket" });
+        await waitForSettled(res.paymentIntentId);
+        toast.dismiss("live-ticket");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         finish();
         return;

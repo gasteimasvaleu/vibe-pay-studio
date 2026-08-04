@@ -41,6 +41,7 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { getUserPublications, type FeedItem } from "@/lib/publications.functions";
 import { createUnlockPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { followCreator, unfollowCreator, subscribeFree } from "@/lib/monetization.functions";
@@ -366,6 +367,7 @@ function PerfilPage() {
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
@@ -523,8 +525,10 @@ function PerfilPage() {
       });
       if (res.paidImmediately) {
         setPending(null);
-        toast.success("Publicação desbloqueada!");
-        void queryClient.invalidateQueries({ queryKey: pubsQueryKey });
+        toast.loading("Confirmando pagamento...", { id: "pub-unlock" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Publicação desbloqueada!", { id: "pub-unlock" });
+        await queryClient.invalidateQueries({ queryKey: pubsQueryKey });
         void queryClient.invalidateQueries({ queryKey: ["feed"] });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         return;

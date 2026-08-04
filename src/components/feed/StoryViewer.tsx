@@ -14,6 +14,7 @@ import {
 import { sendStoryReply } from "@/lib/chat.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { createStoryUnlockPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
@@ -52,6 +53,7 @@ export function StoryViewer({
   const removeStory = useServerFn(deleteStory);
   const replyToStory = useServerFn(sendStoryReply);
   const createStoryPayment = useServerFn(createStoryUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
@@ -177,7 +179,9 @@ export function StoryViewer({
           data: { storyId: current.id, method: selectedMethod, savedCardId: cardId },
         });
         if (res.paidImmediately) {
-          toast.success("Story desbloqueado!");
+          toast.loading("Confirmando pagamento...", { id: "story-unlock" });
+          await waitForSettled(res.paymentIntentId);
+          toast.success("Story desbloqueado!", { id: "story-unlock" });
           await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
           await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
           onChanged();

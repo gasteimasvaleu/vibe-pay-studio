@@ -13,7 +13,7 @@ type Props = {
 const PAID_STATUSES = ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"];
 const FAILED_STATUSES = ["REFUSED", "REFUNDED", "CHARGEBACK_REQUESTED", "CHARGEBACK_DISPUTE", "AWAITING_CHARGEBACK_REVERSAL"];
 
-type Phase = "processing" | "confirming" | "done" | "error";
+type Phase = "processing" | "confirming" | "releasing" | "done" | "error";
 
 export function CardProcessingStep({ paymentIntentId, onPaid, onCancel }: Props) {
   const [phase, setPhase] = useState<Phase>("processing");
@@ -27,8 +27,14 @@ export function CardProcessingStep({ paymentIntentId, onPaid, onCancel }: Props)
       attempts++;
       try {
         const res = await pollStatus({ data: { paymentIntentId } });
-        if (cancelled) return;
+        if (cancelled) return false;
         if (PAID_STATUSES.includes(res.status)) {
+          // O cartão foi aprovado, mas o conteúdo só é liberado quando o
+          // servidor conclui a reconciliação (processedAt).
+          if (!res.processedAt) {
+            setPhase("releasing");
+            return false;
+          }
           setPhase("done");
           setTimeout(() => onPaid?.(), 800);
           return true;
@@ -69,6 +75,7 @@ export function CardProcessingStep({ paymentIntentId, onPaid, onCancel }: Props)
   const steps: Array<{ key: Phase; label: string }> = [
     { key: "processing", label: "Processando cartão" },
     { key: "confirming", label: "Confirmando com o banco" },
+    { key: "releasing", label: "Liberando conteúdo" },
     { key: "done", label: "Pagamento aprovado" },
   ];
 
@@ -76,10 +83,12 @@ export function CardProcessingStep({ paymentIntentId, onPaid, onCancel }: Props)
     phase === "error"
       ? -1
       : phase === "done"
-        ? 2
-        : phase === "confirming"
-          ? 1
-          : 0;
+        ? 3
+        : phase === "releasing"
+          ? 2
+          : phase === "confirming"
+            ? 1
+            : 0;
 
   return (
     <div className="space-y-5 rounded-2xl border bg-card p-6 shadow-card">

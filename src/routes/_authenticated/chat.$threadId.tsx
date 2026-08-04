@@ -22,6 +22,7 @@ import {
   markPaidDmDelivered,
 } from "@/lib/chat-monetization.functions";
 import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
@@ -216,6 +217,7 @@ function ChatThreadView() {
   const sendFn = useServerFn(sendMessage);
   const markReadFn = useServerFn(markThreadRead);
   const unlockFn = useServerFn(createChatUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const callInviteFn = useServerFn(createCallInvite);
   const cancelCallInviteFn = useServerFn(cancelCallInvite);
@@ -429,9 +431,11 @@ function ChatThreadView() {
       const res = await unlockFn({ data: { messageId, method, savedCardId: method === "CREDIT_CARD" ? savedCardId : null } });
       if (res.paidImmediately) {
         setPendingMsg(null);
-        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        toast.loading("Confirmando pagamento...", { id: "chat-unlock" });
+        await waitForSettled(res.paymentIntentId);
+        await queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
         queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-        toast.success("Mensagem desbloqueada");
+        toast.success("Mensagem desbloqueada", { id: "chat-unlock" });
         return;
       }
       setPendingMsg(null);
@@ -526,13 +530,15 @@ function ChatThreadView() {
           ? await videoCallPayFn({ data: { callId: pendingAction.id, ...payload } })
           : await paidDmPayFn({ data: { requestId: pendingAction.id, ...payload } });
       if (res.paidImmediately) {
+        setPendingAction(null);
+        toast.loading("Confirmando pagamento...", { id: "chat-action-pay" });
+        await waitForSettled(res.paymentIntentId);
         if (pendingAction.type === "paidDm") {
           setDeliveringPaidDm({ requestId: pendingAction.id });
         }
-        setPendingAction(null);
-        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        await queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
         queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-        toast.success("Pagamento confirmado");
+        toast.success("Pagamento confirmado", { id: "chat-action-pay" });
         return;
       }
       if (pendingAction.type === "paidDm") {

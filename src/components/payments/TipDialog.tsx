@@ -10,6 +10,7 @@ import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createTipPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { PAYMENT_MIN_GROSS_CENTS, formatMinimum, translatePaymentError } from "@/lib/payment-limits";
 
@@ -41,6 +42,7 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTip = useServerFn(createTipPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
@@ -103,7 +105,9 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         },
       });
       if (res.paidImmediately) {
-        toast.success("Gorjeta enviada!");
+        toast.loading("Confirmando pagamento...", { id: "tip-pay" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Gorjeta enviada!", { id: "tip-pay" });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onPaid?.();
         handleClose(false);

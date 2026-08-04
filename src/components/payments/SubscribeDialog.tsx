@@ -11,6 +11,7 @@ import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 
@@ -42,6 +43,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
@@ -105,7 +107,9 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         data: { creatorId, plan, method, savedCardId: cardId },
       });
       if (res.paidImmediately) {
-        toast.success("Assinatura ativada!");
+        toast.loading("Confirmando pagamento...", { id: "subscribe-pay" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Assinatura ativada!", { id: "subscribe-pay" });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onOpenChange(false);
         return;
