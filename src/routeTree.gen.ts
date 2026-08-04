@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CadastroIndexRouteImport } from './routes/cadastro.index'
 import { Route as CadastroConfirmeEmailRouteImport } from './routes/cadastro.confirme-email'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
@@ -190,6 +191,11 @@ const CadastroConfirmeEmailRoute = CadastroConfirmeEmailRouteImport.update({
 const AuthConfirmRoute = AuthConfirmRouteImport.update({
   id: '/auth/confirm',
   path: '/auth/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
@@ -797,6 +803,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthenticatedSearchRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/vault': typeof AuthenticatedVaultRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
@@ -908,6 +915,7 @@ export interface FileRoutesByTo {
   '/search': typeof AuthenticatedSearchRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/vault': typeof AuthenticatedVaultRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro': typeof CadastroIndexRoute
@@ -1020,6 +1028,7 @@ export interface FileRoutesById {
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
@@ -1136,6 +1145,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscriptions'
     | '/vault'
+    | '/auth/callback'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro/'
@@ -1247,6 +1257,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscriptions'
     | '/vault'
+    | '/auth/callback'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro'
@@ -1358,6 +1369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/search'
     | '/_authenticated/subscriptions'
     | '/_authenticated/vault'
+    | '/auth/callback'
     | '/auth/confirm'
     | '/cadastro/confirme-email'
     | '/cadastro/'
@@ -1449,6 +1461,7 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
   TermosEPoliticasRoute: typeof TermosEPoliticasRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
   CadastroIndexRoute: typeof CadastroIndexRoute
@@ -1557,6 +1570,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/confirm'
       fullPath: '/auth/confirm'
       preLoaderRoute: typeof AuthConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/vault': {
@@ -2584,6 +2604,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
   TermosEPoliticasRoute: TermosEPoliticasRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
   CadastroIndexRoute: CadastroIndexRoute,
@@ -2597,13 +2618,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
