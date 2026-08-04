@@ -1,6 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  useSuspenseQuery,
+  queryOptions,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -21,9 +27,19 @@ import { PaymentMethodDialog } from "@/components/payments/PaymentMethodDialog";
 import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 import { TipDialog } from "@/components/payments/TipDialog";
 import { ChallengeContributeSheet } from "@/components/payments/ChallengeContributeSheet";
+import {
+  getFeedWelcomeSeen,
+  markFeedWelcomeSeen,
+} from "@/lib/feed-welcome.functions";
 
 
 
+
+const welcomeQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feed-welcome-seen"],
+    queryFn: () => getFeedWelcomeSeen(),
+  });
 
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
@@ -48,6 +64,8 @@ export const Route = createFileRoute("/_authenticated/feed")({
       avatarUrl: (profile?.avatar_url as string | null) ?? null,
     };
   },
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(welcomeQueryOptions()),
   component: FeedPage,
 });
 
@@ -57,6 +75,7 @@ function FeedPage() {
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const markWelcome = useServerFn(markFeedWelcomeSeen);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [paidItemId, setPaidItemId] = useState<string | null>(null);
@@ -68,7 +87,17 @@ function FeedPage() {
   const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
   const [challengeTier, setChallengeTier] = useState<number | null>(null);
 
+  const { data: welcomeData } = useSuspenseQuery(welcomeQueryOptions());
+  const welcomeSeen = welcomeData?.seen ?? true;
 
+  const dismissWelcome = async () => {
+    try {
+      await markWelcome();
+      await queryClient.invalidateQueries({ queryKey: ["feed-welcome-seen"] });
+    } catch (e: any) {
+      toast.error("Erro ao salvar preferência. Tente novamente.");
+    }
+  };
 
   const feedQuery = useInfiniteQuery({
     queryKey: ["feed"],
@@ -76,6 +105,7 @@ function FeedPage() {
       fetchFeed({ data: { limit: 20, cursor: pageParam ?? undefined } }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: welcomeSeen,
   });
 
   const feedItems = feedQuery.data?.pages.flatMap((p) => p.items) ?? [];
@@ -169,6 +199,73 @@ function FeedPage() {
 
 
 
+  const welcomeSteps = [
+    {
+      subtitle: "Passo 1",
+      title: "Você chegou!",
+      description:
+        "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar.",
+      src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622024885_9b463187_1784622025991_241a55cc.png",
+    },
+    {
+      subtitle: "Passo 2",
+      title: "Em Alta",
+      description:
+        "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais.",
+      src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622105669_f17e2279_1784622106666_13d91818.png",
+    },
+    {
+      subtitle: "Passo 3",
+      title: "Conheça o Mural",
+      description:
+        "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais.",
+      src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622441232_336327f6_1784622442736_9e654942.png",
+    },
+    {
+      subtitle: "Passo 4",
+      title: "Se interessou?",
+      description:
+        "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles.",
+      src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622583046_6307d7aa_1784622584052_e08a8ea3.png",
+    },
+    {
+      subtitle: "Passo 5",
+      title: "Assinou?",
+      description:
+        "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador.",
+      src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622801840_727ff900_1784622802895_bfe312fe.png",
+    },
+  ];
+
+  if (!welcomeSeen) {
+    return (
+      <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
+        <div className="absolute inset-0 bg-background" />
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{ background: "var(--gradient-radial)" }}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
+
+        <main className="relative z-10 flex min-h-screen items-center justify-center px-4 md:px-6 py-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="w-full max-w-5xl rounded-3xl border border-border bg-card backdrop-blur-md p-4 md:p-6"
+          >
+            <CircularSteps
+              steps={welcomeSteps}
+              onDismiss={dismissWelcome}
+              showDoneButton
+              onDone={dismissWelcome}
+            />
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen text-white overflow-hidden bg-[#0b0518]">
       <div className="absolute inset-0 bg-background" />
@@ -179,86 +276,46 @@ function FeedPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
+        {/* Stories */}
+        <StoriesCarousel
+          currentUserId={userId}
+          currentUsername={username}
+          currentAvatarUrl={avatarUrl}
+          canPublish={accountType === "creator" || accountType === "free_creator"}
+        />
 
-
-
-
-          {/* Stories */}
-          <StoriesCarousel
-            currentUserId={userId}
-            currentUsername={username}
-            currentAvatarUrl={avatarUrl}
-            canPublish={accountType === "creator" || accountType === "free_creator"}
-          />
-
-          {/* Feed items */}
-          {feedQuery.isLoading ? (
-            <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
-              Carregando publicações...
-            </div>
-          ) : feedItems.length > 0 ? (
-            <div className="space-y-4">
-              {feedItems.map((item) => (
-                <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} onChallengeTierSelect={handleChallengeTierSelect} />
-              ))}
-              <div ref={sentinelRef} className="h-8" />
-              {feedQuery.isFetchingNextPage && (
-                <div className="flex justify-center py-4 text-white/60">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              )}
-              {!feedQuery.hasNextPage && (
-                <p className="text-center text-xs text-white/40 py-4">Você chegou ao fim do feed.</p>
-              )}
-            </div>
-          ) : (
-            <motion.section
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="rounded-3xl border border-border bg-card backdrop-blur-md p-4 md:p-6"
-            >
-              <CircularSteps
-                steps={[
-                  {
-                    subtitle: "Passo 1",
-                    title: "Você chegou!",
-                    description:
-                      "Aqui você tem acesso direto aos criadores que mais gosta, com conteúdos que você não encontra em nenhum outro lugar.",
-                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622024885_9b463187_1784622025991_241a55cc.png",
-                  },
-                  {
-                    subtitle: "Passo 2",
-                    title: "Em Alta",
-                    description:
-                      "Descubra novos creators e veja como eles mais interagem: chamadas de vídeo, chats, posts no feed, mimos e muito mais.",
-                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622105669_f17e2279_1784622106666_13d91818.png",
-                  },
-                  {
-                    subtitle: "Passo 3",
-                    title: "Conheça o Mural",
-                    description:
-                      "O mural é seu espaço para explorar e encontrar creators que combinam com você. Lifestyle, dia a dia, estética, posts inspiradores e muito mais.",
-                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622441232_336327f6_1784622442736_9e654942.png",
-                  },
-                  {
-                    subtitle: "Passo 4",
-                    title: "Se interessou?",
-                    description:
-                      "Assine perfis gratuitos e comece a ter uma experiência mais próxima do creator. Descubra conteúdos, interaja e veja como é estar por dentro do mundo deles.",
-                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622583046_6307d7aa_1784622584052_e08a8ea3.png",
-                  },
-                  {
-                    subtitle: "Passo 5",
-                    title: "Assinou?",
-                    description:
-                      "Aqui você pode conversar pelo chat, desbloquear posts exclusivos e até realizar a Chamada Um a Um com o criador.",
-                    src: "https://zyoxtptkmhugxmdzmptd.supabase.co/storage/v1/object/public/criativos/openart-image_1784622801840_727ff900_1784622802895_bfe312fe.png",
-                  },
-                ]}
-              />
-            </motion.section>
-          )}
+        {/* Feed items */}
+        {feedQuery.isLoading ? (
+          <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+            Carregando publicações...
+          </div>
+        ) : feedItems.length > 0 ? (
+          <div className="space-y-4">
+            {feedItems.map((item) => (
+              <PublicationCard key={item.id} item={item} onUnlock={handleUnlock} onComment={setCommentsFor} onTip={setTipFor} onChallengeTierSelect={handleChallengeTierSelect} />
+            ))}
+            <div ref={sentinelRef} className="h-8" />
+            {feedQuery.isFetchingNextPage && (
+              <div className="flex justify-center py-4 text-white/60">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            )}
+            {!feedQuery.hasNextPage && (
+              <p className="text-center text-xs text-white/40 py-4">Você chegou ao fim do feed.</p>
+            )}
+          </div>
+        ) : (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-3xl border border-border bg-card backdrop-blur-md p-8 text-center"
+          >
+            <p className="text-white/70 text-sm">
+              Nenhuma publicação por enquanto. Siga creators para ver mais conteúdo.
+            </p>
+          </motion.section>
+        )}
       </main>
 
       <PaymentMethodDialog
@@ -352,12 +409,6 @@ function FeedPage() {
           void queryClient.invalidateQueries({ queryKey: ["feed"] });
         }}
       />
-
-
-
     </div>
   );
 }
-
-
-

@@ -6,8 +6,9 @@ import {
   useCallback,
   type CSSProperties,
 } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export interface Step {
   title: string;
@@ -36,6 +37,9 @@ interface CircularStepsProps {
   autoplay?: boolean;
   colors?: Colors;
   fontSizes?: FontSizes;
+  onDismiss?: () => void;
+  showDoneButton?: boolean;
+  onDone?: () => void;
 }
 
 function calculateGap(width: number) {
@@ -53,6 +57,9 @@ export function CircularSteps({
   autoplay = true,
   colors = {},
   fontSizes = {},
+  onDismiss,
+  showDoneButton,
+  onDone,
 }: CircularStepsProps) {
   const colorTitle = colors.title ?? "var(--foreground)";
   const colorSubtitle = colors.subtitle ?? "var(--primary)";
@@ -76,6 +83,7 @@ export function CircularSteps({
 
   const stepsLength = useMemo(() => steps.length, [steps]);
   const activeStep = useMemo(() => steps[activeIndex], [activeIndex, steps]);
+  const isLast = useMemo(() => activeIndex === stepsLength - 1, [activeIndex, stepsLength]);
 
   useEffect(() => {
     function handleResize() {
@@ -156,7 +164,17 @@ export function CircularSteps({
 
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Fechar boas-vindas"
+          className="absolute right-0 top-0 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
       <div className="grid gap-4 md:gap-6 md:grid-cols-2 md:items-center">
         {/* Images */}
         <div
@@ -265,6 +283,18 @@ export function CircularSteps({
               <ArrowRight className="h-5 w-5" />
             </button>
           </div>
+
+          {showDoneButton && isLast && onDone && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                onClick={onDone}
+                className="rounded-full px-8"
+              >
+                Concluir
+              </Button>
+            </div>
+          )}
 
         </div>
       </div>
