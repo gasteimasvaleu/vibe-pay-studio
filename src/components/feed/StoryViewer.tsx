@@ -14,6 +14,7 @@ import {
 import { sendStoryReply } from "@/lib/chat.functions";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { createStoryUnlockPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { Button } from "@/components/ui/button";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
