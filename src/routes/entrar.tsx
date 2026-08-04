@@ -51,7 +51,6 @@ function EntrarPage() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      navigate({ to: "/" });
     } catch (err) {
       setErrorMsg(
         err instanceof Error
