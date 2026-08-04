@@ -44,18 +44,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  listMySubscriptions,
   cancelSubscription,
   reactivateSubscription,
   type MySubscription,
 } from "@/lib/monetization.functions";
 import { listSavedCards, type SavedCardDTO } from "@/lib/saved-cards.functions";
+import { subscriptionsQueryOptions } from "@/lib/subscriptions.queries";
 import { toast } from "sonner";
-
-const subscriptionsQueryOptions = queryOptions({
-  queryKey: ["mySubscriptions"],
-  queryFn: () => listMySubscriptions(),
-});
 
 export const Route = createFileRoute("/_authenticated/subscriptions")({
   head: () => ({
