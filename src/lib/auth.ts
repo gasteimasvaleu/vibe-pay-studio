@@ -90,7 +90,7 @@ export async function signInWithGoogle(preferred?: {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}/auth/callback`,
       queryParams: preferred?.accountType
         ? { account_type: preferred.accountType }
         : undefined,
