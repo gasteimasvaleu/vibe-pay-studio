@@ -19,9 +19,11 @@ usuário para o destino correto — o mesmo comportamento do login por e-mail.
    - Aguarda a sessão via `supabase.auth.getSession()` e um listener de
      `onAuthStateChange` (o token vem no hash da URL e o cliente processa de
      forma assíncrona).
-   - Com sessão: chama `ensureCurrentUserProfile()` (cria o profile do usuário
-     Google no primeiro acesso) e depois `resolveCreatorOnboardingStep()`,
-     navegando para o passo pendente ou `/feed`.
+   - Com sessão: chama `ensureCurrentUserProfile()` (cria o profile no primeiro
+     acesso, com `account_type = 'subscriber'` — que é o padrão do helper
+     quando não há preferência explícita, ou seja, quem entra pelo Google nasce
+     como assinante) e depois `resolveCreatorOnboardingStep()`, navegando para
+     o passo pendente ou `/feed`.
    - Sem sessão após o timeout: volta para `/entrar` com mensagem de erro.
    - Enquanto isso, mostra um estado de carregamento simples ("Entrando...").
 
