@@ -530,13 +530,15 @@ function ChatThreadView() {
           ? await videoCallPayFn({ data: { callId: pendingAction.id, ...payload } })
           : await paidDmPayFn({ data: { requestId: pendingAction.id, ...payload } });
       if (res.paidImmediately) {
+        setPendingAction(null);
+        toast.loading("Confirmando pagamento...", { id: "chat-action-pay" });
+        await waitForSettled(res.paymentIntentId);
         if (pendingAction.type === "paidDm") {
           setDeliveringPaidDm({ requestId: pendingAction.id });
         }
-        setPendingAction(null);
-        queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
+        await queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
         queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
-        toast.success("Pagamento confirmado");
+        toast.success("Pagamento confirmado", { id: "chat-action-pay" });
         return;
       }
       if (pendingAction.type === "paidDm") {
