@@ -105,7 +105,9 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
         },
       });
       if (res.paidImmediately) {
-        toast.success("Gorjeta enviada!");
+        toast.loading("Confirmando pagamento...", { id: "tip-pay" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Gorjeta enviada!", { id: "tip-pay" });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onPaid?.();
         handleClose(false);
