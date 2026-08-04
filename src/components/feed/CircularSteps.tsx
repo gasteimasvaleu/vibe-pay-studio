@@ -37,6 +37,9 @@ interface CircularStepsProps {
   autoplay?: boolean;
   colors?: Colors;
   fontSizes?: FontSizes;
+  onDismiss?: () => void;
+  showDoneButton?: boolean;
+  onDone?: () => void;
 }
 
 function calculateGap(width: number) {
