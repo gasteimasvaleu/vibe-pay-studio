@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listMySubscribers } from "@/lib/monetization.functions";
 
-const subscribersQueryOptions = queryOptions({
+export const subscribersQueryOptions = queryOptions({
   queryKey: ["mySubscribers"],
   queryFn: () => listMySubscribers(),
 });

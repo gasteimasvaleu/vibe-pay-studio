@@ -137,7 +137,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   };
 }
 
-const profileQueryOptions = (username: string) => ({
+export const profileQueryOptions = (username: string) => ({
   queryKey: ["profile-page", username] as const,
   queryFn: () => fetchProfileByUsername(username),
 });
