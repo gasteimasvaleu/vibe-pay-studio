@@ -107,7 +107,9 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
         data: { creatorId, plan, method, savedCardId: cardId },
       });
       if (res.paidImmediately) {
-        toast.success("Assinatura ativada!");
+        toast.loading("Confirmando pagamento...", { id: "subscribe-pay" });
+        await waitForSettled(res.paymentIntentId);
+        toast.success("Assinatura ativada!", { id: "subscribe-pay" });
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onOpenChange(false);
         return;
