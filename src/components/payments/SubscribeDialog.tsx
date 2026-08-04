@@ -11,6 +11,7 @@ import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscriptionPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 
