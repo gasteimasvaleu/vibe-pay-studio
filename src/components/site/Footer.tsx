@@ -42,7 +42,7 @@ export function Footer() {
               <FooterCol
                 title="Criador"
                 links={[
-                  ["Blog", "#"],
+                  ["Blog", "https://blog.monetisexy.com", "_blank"],
                   ["Como Funciona", "/como-funciona"],
                   ["Parcerias", "#"],
                   ["Agências", "#"],
