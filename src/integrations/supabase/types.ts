@@ -1753,6 +1753,7 @@ export type Database = {
           discount_semiannual: number
           display_name: string | null
           emails_enabled: boolean
+          feed_welcome_seen_at: string | null
           free_avatar_url: string | null
           free_display_name: string | null
           free_profile_enabled: boolean
@@ -1823,6 +1824,7 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           emails_enabled?: boolean
+          feed_welcome_seen_at?: string | null
           free_avatar_url?: string | null
           free_display_name?: string | null
           free_profile_enabled?: boolean
@@ -1893,6 +1895,7 @@ export type Database = {
           discount_semiannual?: number
           display_name?: string | null
           emails_enabled?: boolean
+          feed_welcome_seen_at?: string | null
           free_avatar_url?: string | null
           free_display_name?: string | null
           free_profile_enabled?: boolean
