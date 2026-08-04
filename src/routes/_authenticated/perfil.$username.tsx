@@ -367,6 +367,7 @@ function PerfilPage() {
   const queryClient = useQueryClient();
   const fetchUserPubs = useServerFn(getUserPublications);
   const unlockFn = useServerFn(createUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const followFn = useServerFn(followCreator);
   const unfollowFn = useServerFn(unfollowCreator);
