@@ -283,6 +283,18 @@ export function CircularSteps({
             </button>
           </div>
 
+          {showDoneButton && isLast && onDone && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                onClick={onDone}
+                className="rounded-full px-8"
+              >
+                Concluir
+              </Button>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
