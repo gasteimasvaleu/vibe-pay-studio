@@ -130,7 +130,7 @@ function CenterPost() {
       <span className="h-12 w-12 -mt-6 grid place-items-center rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 shadow-lg shadow-fuchsia-500/40 ring-4 ring-black/70">
         <Plus className="h-6 w-6 text-white" />
       </span>
-      <span className="text-[11px] font-medium leading-none -mt-1">Postar</span>
+      <span className="text-[11px] font-medium leading-none mt-0.5">Postar</span>
     </Link>
   );
 }
