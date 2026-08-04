@@ -35,6 +35,12 @@ import {
 
 
 
+const welcomeQueryOptions = () =>
+  queryOptions({
+    queryKey: ["feed-welcome-seen"],
+    queryFn: () => getFeedWelcomeSeen(),
+  });
+
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
     meta: [
@@ -58,6 +64,8 @@ export const Route = createFileRoute("/_authenticated/feed")({
       avatarUrl: (profile?.avatar_url as string | null) ?? null,
     };
   },
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(welcomeQueryOptions()),
   component: FeedPage,
 });
 
