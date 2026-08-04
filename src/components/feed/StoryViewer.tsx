@@ -53,6 +53,7 @@ export function StoryViewer({
   const removeStory = useServerFn(deleteStory);
   const replyToStory = useServerFn(sendStoryReply);
   const createStoryPayment = useServerFn(createStoryUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
 
   const [index, setIndex] = useState(0);
   const [unlocking, setUnlocking] = useState(false);
