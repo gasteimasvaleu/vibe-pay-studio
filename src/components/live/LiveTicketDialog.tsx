@@ -87,6 +87,9 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
       const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
       const res = await createTicket({ data: { liveId, method, savedCardId: cardId } });
       if (res.paidImmediately) {
+        toast.loading("Confirmando pagamento...", { id: "live-ticket" });
+        await waitForSettled(res.paymentIntentId);
+        toast.dismiss("live-ticket");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         finish();
         return;
