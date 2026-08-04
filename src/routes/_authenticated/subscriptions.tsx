@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  queryOptions,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
