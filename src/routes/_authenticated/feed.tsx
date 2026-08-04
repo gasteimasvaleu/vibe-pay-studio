@@ -35,7 +35,7 @@ import {
 
 
 
-const welcomeQueryOptions = () =>
+export const welcomeQueryOptions = () =>
   queryOptions({
     queryKey: ["feed-welcome-seen"],
     queryFn: () => getFeedWelcomeSeen(),

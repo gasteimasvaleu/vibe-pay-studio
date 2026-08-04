@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const promotionsQueryOptions = queryOptions({
+export const promotionsQueryOptions = queryOptions({
   queryKey: ["my-promotions"],
   queryFn: () => listMyPromotions(),
 });
