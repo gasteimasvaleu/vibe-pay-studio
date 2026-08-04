@@ -22,6 +22,7 @@ import {
   markPaidDmDelivered,
 } from "@/lib/chat-monetization.functions";
 import { createChatUnlockPayment, createVideoCallPayment, createPaidDmPayment } from "@/lib/payments.functions";
+import { useWaitForPaymentSettled } from "@/lib/wait-for-payment";
 import { payWithWallet } from "@/lib/wallet-pay.functions";
 import { translatePaymentError } from "@/lib/payment-limits";
 import { ChatComposer, type ComposerSendPayload } from "@/components/chat/ChatComposer";
