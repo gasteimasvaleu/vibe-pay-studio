@@ -179,7 +179,9 @@ export function StoryViewer({
           data: { storyId: current.id, method: selectedMethod, savedCardId: cardId },
         });
         if (res.paidImmediately) {
-          toast.success("Story desbloqueado!");
+          toast.loading("Confirmando pagamento...", { id: "story-unlock" });
+          await waitForSettled(res.paymentIntentId);
+          toast.success("Story desbloqueado!", { id: "story-unlock" });
           await qc.invalidateQueries({ queryKey: ["creator-stories", creatorId] });
           await qc.invalidateQueries({ queryKey: ["subscriber-wallet"] });
           onChanged();
