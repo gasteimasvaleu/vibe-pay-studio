@@ -1,52 +1,54 @@
-# Corrigir login com Google (redirecionamento para localhost:3000)
+# Google login deve levar ao feed/onboarding, não à página inicial
 
 ## O que está acontecendo
 
-Depois do consentimento do Google, o Supabase devolveu o usuário para
-`localhost:3000/#access_token=...`. O Safari não consegue abrir esse endereço
-porque não existe nenhum servidor rodando nessa porta na sua máquina.
+`signInWithGoogle` em `src/lib/auth.ts` pede o retorno para
+`window.location.origin`, ou seja, a raiz `/` — a landing page. Depois do
+consentimento, o Google devolve o usuário exatamente ali, e nada no app decide
+para onde ele deveria ir de fato.
 
-Isso **não é um bug do código do app**. O app já pede o retorno para o próprio
-domínio (`window.location.origin`). Quando o endereço pedido não está na lista
-de permissões do Supabase, ele ignora o pedido e usa a **Site URL** do projeto —
-que hoje está configurada como `http://localhost:3000`.
+O `navigate({ to: "/" })` que existe no botão em `src/routes/entrar.tsx` nunca
+chega a rodar: a página já foi embora para o Google antes disso.
 
-## Correção (configuração no Supabase, sem alteração de código)
+## O que muda
 
-No painel do Supabase, em **Authentication → URL Configuration**:
+Criar uma rota pública de retorno de OAuth que confirma a sessão e encaminha o
+usuário para o destino correto — o mesmo comportamento do login por e-mail.
 
-1. **Site URL**: trocar `http://localhost:3000` por
-   `https://monetisexy.com`
-2. **Redirect URLs**: incluir todas as origens usadas:
-   - `https://monetisexy.com/**`
-   - `https://www.monetisexy.com/**`
-   - `https://vibe-pay-studio.lovable.app/**`
-   - `https://id-preview--ccce3d77-bfc0-456e-8651-bd8cd55716dd.lovable.app/**`
-   - `http://localhost:8080/**` (porta real do ambiente de desenvolvimento)
+1. **Nova rota `src/routes/auth.callback.tsx`** (pública, `noindex`):
+   - Aguarda a sessão via `supabase.auth.getSession()` e um listener de
+     `onAuthStateChange` (o token vem no hash da URL e o cliente processa de
+     forma assíncrona).
+   - Com sessão: chama `ensureCurrentUserProfile()` (cria o profile do usuário
+     Google no primeiro acesso) e depois `resolveCreatorOnboardingStep()`,
+     navegando para o passo pendente ou `/feed`.
+   - Sem sessão após o timeout: volta para `/entrar` com mensagem de erro.
+   - Enquanto isso, mostra um estado de carregamento simples ("Entrando...").
 
-No **Google Cloud Console**, no cliente OAuth, confirmar que em
-**URLs de redirecionamento autorizadas** existe exatamente:
+2. **`src/lib/auth.ts`**: `signInWithGoogle` passa a usar
+   `redirectTo: ${window.location.origin}/auth/callback`.
 
-```text
-https://zyoxtptkmhugxmdzmptd.supabase.co/auth/v1/callback
-```
+3. **`src/routes/entrar.tsx`** e **`src/components/site/LoginCard.tsx`**:
+   remover o `navigate({ to: "/" })` após `signInWithGoogle` (código morto que
+   só confunde) e manter o estado de "Redirecionando...".
 
-E remover qualquer entrada apontando para `localhost:3000`.
+## Configuração necessária no Supabase
+
+Em **Authentication → URL Configuration → Redirect URLs**, os padrões `/**` já
+cadastrados cobrem `/auth/callback`. Nada mais a alterar.
 
 ## Detalhes técnicos
 
-- `signInWithGoogle` em `src/lib/auth.ts` usa
-  `redirectTo: window.location.origin`, o que está correto.
-- O Supabase só honra `redirectTo` se a URL casar com a allowlist de
-  **Redirect URLs**; caso contrário cai na **Site URL**.
-- O padrão `/**` cobre qualquer caminho dentro do domínio (inclusive o retorno
-  com hash de tokens).
+- A rota é pública e fora de `_authenticated`: no instante do retorno o gate
+  ainda poderia não enxergar a sessão e causar bounce para `/entrar`.
+- O redirecionamento só acontece depois que a sessão está confirmada, evitando
+  a corrida com o `beforeLoad` do subtree protegido.
+- Reaproveita `ensureCurrentUserProfile` e `resolveCreatorOnboardingStep`, já
+  usados no login por e-mail e na confirmação de e-mail — nenhuma regra nova de
+  negócio, schema ou RLS.
 
 ## Verificação
 
-Depois de salvar as configurações: abrir `/entrar`, clicar em
-"Continuar com Google" e confirmar que o retorno acontece no domínio do app e a
-sessão é criada (usuário cai no feed/onboarding).
-
-Nenhum arquivo do projeto precisa ser alterado. Se após o ajuste o problema
-persistir, investigo o fluxo no código.
+Login com Google a partir de `/entrar` e da landing: após escolher a conta, o
+usuário deve cair em `/feed` (ou no passo pendente de onboarding, se for
+creator incompleto), nunca na página inicial deslogada.
