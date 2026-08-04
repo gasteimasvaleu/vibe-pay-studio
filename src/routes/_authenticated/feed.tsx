@@ -75,6 +75,7 @@ function FeedPage() {
   const queryClient = useQueryClient();
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const markWelcome = useServerFn(markFeedWelcomeSeen);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
