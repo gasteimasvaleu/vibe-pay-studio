@@ -83,6 +83,7 @@ export function CircularSteps({
 
   const stepsLength = useMemo(() => steps.length, [steps]);
   const activeStep = useMemo(() => steps[activeIndex], [activeIndex, steps]);
+  const isLast = useMemo(() => activeIndex === stepsLength - 1, [activeIndex, stepsLength]);
 
   useEffect(() => {
     function handleResize() {
