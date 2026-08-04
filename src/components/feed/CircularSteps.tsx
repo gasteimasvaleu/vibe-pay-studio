@@ -57,6 +57,9 @@ export function CircularSteps({
   autoplay = true,
   colors = {},
   fontSizes = {},
+  onDismiss,
+  showDoneButton,
+  onDone,
 }: CircularStepsProps) {
   const colorTitle = colors.title ?? "var(--foreground)";
   const colorSubtitle = colors.subtitle ?? "var(--primary)";
