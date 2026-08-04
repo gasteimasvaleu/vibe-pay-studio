@@ -43,6 +43,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const subscribe = useServerFn(createSubscriptionPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
