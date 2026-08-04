@@ -75,6 +75,8 @@ function FeedPage() {
   const fetchFeed = useServerFn(getFeed);
   const unlock = useServerFn(createUnlockPayment);
   const walletPay = useServerFn(payWithWallet);
+  const fetchWelcome = useServerFn(getFeedWelcomeSeen);
+  const markWelcome = useServerFn(markFeedWelcomeSeen);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [paidItemId, setPaidItemId] = useState<string | null>(null);
@@ -86,7 +88,17 @@ function FeedPage() {
   const [challengeFor, setChallengeFor] = useState<FeedItem | null>(null);
   const [challengeTier, setChallengeTier] = useState<number | null>(null);
 
+  const { data: welcomeData } = useSuspenseQuery(welcomeQueryOptions());
+  const welcomeSeen = welcomeData?.seen ?? true;
 
+  const dismissWelcome = async () => {
+    try {
+      await markWelcome();
+      await queryClient.invalidateQueries({ queryKey: ["feed-welcome-seen"] });
+    } catch (e: any) {
+      toast.error("Erro ao salvar preferência. Tente novamente.");
+    }
+  };
 
   const feedQuery = useInfiniteQuery({
     queryKey: ["feed"],
@@ -94,6 +106,7 @@ function FeedPage() {
       fetchFeed({ data: { limit: 20, cursor: pageParam ?? undefined } }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: welcomeSeen,
   });
 
   const feedItems = feedQuery.data?.pages.flatMap((p) => p.items) ?? [];
