@@ -39,6 +39,7 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTicket = useServerFn(createLiveTicketPayment);
+  const waitForSettled = useWaitForPaymentSettled();
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
