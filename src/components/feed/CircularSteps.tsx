@@ -163,7 +163,17 @@ export function CircularSteps({
 
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Fechar boas-vindas"
+          className="absolute right-0 top-0 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
       <div className="grid gap-4 md:gap-6 md:grid-cols-2 md:items-center">
         {/* Images */}
         <div
