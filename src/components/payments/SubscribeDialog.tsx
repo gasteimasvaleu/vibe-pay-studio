@@ -110,7 +110,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorProfileI
     setLoading(true);
     try {
       if (method === "WALLET") {
-        await walletPay({ data: { kind: "subscription", creatorId, plan } });
+        await walletPay({ data: { kind: "subscription", creatorId, plan, creatorProfileId } });
         toast.success("Assinatura ativada!");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onOpenChange(false);
@@ -118,8 +118,9 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorProfileI
       }
       const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
       const res = await subscribe({
-        data: { creatorId, plan, method, savedCardId: cardId },
+        data: { creatorId, creatorProfileId: creatorProfileId ?? null, plan, method, savedCardId: cardId },
       });
+
       if (res.paidImmediately) {
         toast.loading("Confirmando pagamento...", { id: "subscribe-pay" });
         await waitForSettled(res.paymentIntentId);
