@@ -6,7 +6,6 @@ import { Loader2, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/payments/PixCheckout";
-import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createLiveTicketPayment } from "@/lib/payments.functions";
@@ -128,23 +127,14 @@ export function LiveTicketDialog({ open, onOpenChange, liveId, creatorName, pric
           Escolha a forma de pagamento para liberar o acesso à live.
         </DialogDescription>
         {checkout ? (
-          checkout.method === "CREDIT_CARD" && checkout.invoiceUrl ? (
-            <CardCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              invoiceUrl={checkout.invoiceUrl}
-              onPaid={finish}
-              onCancel={() => handleClose(false)}
-            />
-          ) : (
-            <PixCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              pixQrCode={checkout.pixQrCode ?? ""}
-              pixCopyPaste={checkout.pixCopyPaste ?? ""}
-              invoiceUrl={checkout.invoiceUrl ?? null}
-              onPaid={finish}
-              onCancel={() => handleClose(false)}
-            />
-          )
+          <PixCheckout
+            paymentIntentId={checkout.paymentIntentId}
+            pixQrCode={checkout.pixQrCode ?? ""}
+            pixCopyPaste={checkout.pixCopyPaste ?? ""}
+            invoiceUrl={checkout.invoiceUrl ?? null}
+            onPaid={finish}
+            onCancel={() => handleClose(false)}
+          />
         ) : (
           <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
             <header className="flex items-start gap-3">

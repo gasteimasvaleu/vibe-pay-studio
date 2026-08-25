@@ -170,7 +170,7 @@ function AdminUserDetail() {
         </div>
         <div className="flex flex-col gap-2">
           <Link
-            to="/$username"
+            to="/perfil/$username"
             params={{ username: p.username }}
             className="text-xs px-3 py-1.5 rounded-md border border-border text-center hover:bg-muted"
           >

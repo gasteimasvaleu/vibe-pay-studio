@@ -45,11 +45,10 @@ function providerForMethod(method: Method): "asaas_pix" | "asaas_card" {
   return method === "PIX" ? "asaas_pix" : "asaas_card";
 }
 
-// Asaas billingType para o /payments. Como a conta ainda não tem tokenização
-// liberada para compras, cartão sempre vai via checkout hospedado — enviamos
-// UNDEFINED para receber invoiceUrl que aceita cartão. PIX permanece direto.
-function asaasBillingTypeForMethod(method: Method): "PIX" | "UNDEFINED" {
-  return method === "PIX" ? "PIX" : "UNDEFINED";
+// Asaas billingType para o /payments. Cartão SEMPRE exige um cartão salvo
+// (creditCardToken) — não abrimos checkout hospedado. PIX permanece direto.
+function asaasBillingTypeForMethod(method: Method): "PIX" | "CREDIT_CARD" {
+  return method === "PIX" ? "PIX" : "CREDIT_CARD";
 }
 
 async function ensureCustomerId(
@@ -176,7 +175,8 @@ function buildCardArgs(card: CardInput | undefined) {
  * - Se `savedCardId` for informado (e method === CREDIT_CARD), busca o token
  *   salvo do usuário e retorna `{ creditCardToken }` + billingType CREDIT_CARD
  *   para cobrança 1-click.
- * - Caso contrário, delega ao `buildCardArgs(card)` (novo cartão / PIX).
+ * - Cartão sem `savedCardId` não é permitido: o app exige que o usuário
+ *   tokenize/salve o cartão primeiro (UX própria, sem checkout externo).
  */
 async function resolveCardArgs(
   supabase: any,
@@ -185,15 +185,14 @@ async function resolveCardArgs(
   opts: { card?: CardInput; savedCardId?: string | null },
 ): Promise<{
   args: Record<string, unknown>;
-  billingType: "PIX" | "UNDEFINED" | "CREDIT_CARD";
+  billingType: "PIX" | "CREDIT_CARD";
   useSavedCard: boolean;
 }> {
-  if (method !== "CREDIT_CARD" || !opts.savedCardId) {
-    return {
-      args: buildCardArgs(opts.card),
-      billingType: asaasBillingTypeForMethod(method),
-      useSavedCard: false,
-    };
+  if (method !== "CREDIT_CARD") {
+    return { args: {}, billingType: "PIX", useSavedCard: false };
+  }
+  if (!opts.savedCardId) {
+    throw new Error("card_token_required");
   }
   const { data: card, error } = await supabase
     .from("saved_cards")

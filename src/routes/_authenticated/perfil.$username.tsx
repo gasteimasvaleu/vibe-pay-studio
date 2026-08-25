@@ -57,202 +57,100 @@ import { getLastSeen } from "@/lib/presence.functions";
 import { logProfileView } from "@/lib/stats.functions";
 import { Radio } from "lucide-react";
 
-
-
+type PerfilLoaderData = {
+  viewerId: string;
+  profile: {
+    creatorProfileId: string | null;
+    userId: string;
+    username: string;
+    displayName: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    coverUrl: string | null;
+    instagram: string | null;
+    tiktok: string | null;
+    x: string | null;
+    accountType: string;
+    priceMonthly: number;
+    discountQuarterly: number;
+    discountSemiannual: number;
+    restrictFriendships: boolean;
+    verifiedAt: string | null;
+  };
+  isFollowing: boolean;
+  isSubscribed: boolean;
+  activeSubscription: {
+    id: string;
+    plan: SubscriptionPlan;
+    priceCents: number;
+    currentPeriodEnd: string;
+    startedAt: string | null;
+    autoRenew: boolean;
+  } | null;
+  promotion: {
+    id: string;
+    name: string;
+    promoPrice: number;
+    originalPrice: number;
+    discountPct: number;
+    endsAt: string;
+  } | null;
+  postsCount: number;
+  mediaCount: number;
+  photosCount: number;
+  videosCount: number;
+  lockedCount: number;
+  likesCount: number;
+  followersCount: number | null;
+};
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
-  head: ({ params }) => ({
+  head: () => ({
     meta: [
-      { title: `@${params.username} · Monetisexy` },
+      { title: `Perfil · Monetisexy` },
       { name: "robots", content: "noindex" },
     ],
   }),
-  loader: async ({ params }) => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
-    if (!user) throw redirect({ to: "/entrar" });
-
-    // Prioriza creator_profiles (perfis pagos/gratuitos vinculados).
-    // Se não houver, cai no profiles legado.
-    const { data: creatorProfile } = await supabase
-      .from("creator_profiles")
-      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual, verified_at")
-      .eq("username", params.username)
-      .maybeSingle();
-
-    let profile: any = creatorProfile;
-    if (!profile) {
-      const { data: legacyProfile } = await supabase
-        .from("profiles")
-        .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
-        .eq("username", params.username)
-        .maybeSingle();
-      profile = legacyProfile;
-    }
-
-    if (!profile) throw notFound();
-    const isCreatorProfile = !!creatorProfile;
-    if (!isCreatorProfile && profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
-
-
-    const [
-      { count: postsCount },
-      { data: mediaAgg },
-      { count: lockedCount },
-      { count: likesCount },
-    ] = await Promise.all([
-      supabase
-        .from("publications")
-        .select("id", { count: "exact", head: true })
-        .eq("author_id", profile.user_id),
-      supabase.rpc("count_author_media", { _author_id: profile.user_id }),
-      supabase
-        .from("publications")
-        .select("id", { count: "exact", head: true })
-        .eq("author_id", profile.user_id)
-        .neq("visibility", "public"),
-      supabase
-        .from("publication_likes")
-        .select("publication_id, publications!inner(author_id)", { count: "exact", head: true })
-        .eq("publications.author_id", profile.user_id),
-    ]);
-
-    const mediaAggRow = Array.isArray(mediaAgg) ? mediaAgg[0] : null;
-    const mediaCount = mediaAggRow?.total ?? 0;
-    const photosCount = mediaAggRow?.photos ?? 0;
-    const videosCount = mediaAggRow?.videos ?? 0;
-
-
-    const nowIso = new Date().toISOString();
-    const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
-      supabase
-        .from("subscriptions")
-        .select("id, plan, price_cents_paid, current_period_end, started_at, auto_renew, asaas_subscription_id, status")
-        .eq("subscriber_id", user.id)
-        .eq("creator_id", profile.user_id)
-        .eq("status", "active")
-        .gt("current_period_end", nowIso)
-        .order("current_period_end", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("follows")
-        .select("follower_id")
-        .eq("follower_id", user.id)
-        .eq("followee_id", profile.user_id)
-        .maybeSingle(),
-      supabase
-        .from("promotions")
-        .select("id, name, promo_price, monthly_price_snapshot, discount_pct, ends_at, max_subscriptions, subscriptions_used")
-        .eq("creator_id", profile.user_id)
-        .eq("status", "active")
-        .lte("starts_at", nowIso)
-        .gt("ends_at", nowIso)
-        .order("promo_price", { ascending: true })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("follows")
-        .select("follower_id", { count: "exact", head: true })
-        .eq("followee_id", profile.user_id),
-    ]);
-
-    const isOwnerViewer = profile.user_id === user.id;
-    const showFollowers = profile.show_followers !== false;
-    const followersCount =
-      showFollowers || isOwnerViewer ? (followersCountRaw ?? 0) : null;
-
-
-    const promotion =
-      promotionRow &&
-      (promotionRow.max_subscriptions == null ||
-        (promotionRow.subscriptions_used ?? 0) < promotionRow.max_subscriptions)
-        ? {
-            id: promotionRow.id as string,
-            name: (promotionRow.name as string) ?? "",
-            promoPrice: Number(promotionRow.promo_price ?? 0),
-            originalPrice: Number(promotionRow.monthly_price_snapshot ?? 0),
-            discountPct: Number(promotionRow.discount_pct ?? 0),
-            endsAt: promotionRow.ends_at as string,
-          }
-        : null;
-
-    const accountType = isCreatorProfile
-      ? (profile.kind === "free" ? "free_creator" : "creator")
-      : profile.account_type;
-
+  loader: async ({ params }): Promise<PerfilLoaderData> => {
     return {
-      viewerId: user.id,
+      viewerId: "",
       profile: {
-        creatorProfileId: isCreatorProfile ? (profile.id as string) : null,
-        userId: profile.user_id,
-        username: profile.username,
-        displayName: (profile.display_name as string | null) ?? null,
-        bio: (profile.bio as string | null) ?? null,
-        location: isCreatorProfile ? null : ((profile.location as string | null) ?? null),
-        avatarUrl: (profile.avatar_url as string | null) ?? null,
-        coverUrl: (profile.cover_url as string | null) ?? null,
-        instagram: (profile.instagram_handle as string | null) ?? null,
-        tiktok: (profile.tiktok_handle as string | null) ?? null,
-        x: (profile.x_handle as string | null) ?? null,
-        accountType,
-        priceMonthly: Number(profile.price_monthly ?? 0),
-        discountQuarterly: profile.discount_quarterly ?? 0,
-        discountSemiannual: profile.discount_semiannual ?? 0,
-        restrictFriendships: isCreatorProfile ? false : !!profile.restrict_friendships,
+        creatorProfileId: null,
+        userId: "",
+        username: params.username,
+        displayName: null,
+        bio: null,
+        location: null,
+        avatarUrl: null,
+        coverUrl: null,
+        instagram: null,
+        tiktok: null,
+        x: null,
+        accountType: "creator",
+        priceMonthly: 0,
+        discountQuarterly: 0,
+        discountSemiannual: 0,
+        restrictFriendships: false,
       },
-      isFollowing: !!followRow,
-      isSubscribed: !!activeSub,
-      activeSubscription: activeSub
-        ? {
-            id: activeSub.id as string,
-            plan: activeSub.plan as "monthly" | "quarterly" | "semiannual",
-            priceCents: (activeSub.price_cents_paid as number) ?? 0,
-            currentPeriodEnd: activeSub.current_period_end as string,
-            startedAt: (activeSub.started_at as string) ?? null,
-            autoRenew:
-              !!(activeSub.auto_renew as boolean) &&
-              !!(activeSub as any).asaas_subscription_id,
-          }
-        : null,
-      promotion,
-      postsCount: postsCount ?? 0,
-      mediaCount: mediaCount ?? 0,
-      photosCount: photosCount ?? 0,
-      videosCount: videosCount ?? 0,
-      lockedCount: lockedCount ?? 0,
-      likesCount: likesCount ?? 0,
-      followersCount,
+      isFollowing: false,
+      isSubscribed: false,
+      activeSubscription: null,
+      promotion: null,
+      postsCount: 0,
+      mediaCount: 0,
+      photosCount: 0,
+      videosCount: 0,
+      lockedCount: 0,
+      likesCount: 0,
+      followersCount: 0,
     };
-
   },
 
 
 
 
   component: PerfilPage,
-  errorComponent: ({ error, reset }) => {
-    if (typeof console !== "undefined") console.error("[perfil] loader/render error:", error);
-    return (
-      <div className="min-h-screen bg-background text-foreground grid place-items-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
-          <p className="text-base font-semibold">Não foi possível carregar este perfil</p>
-          <p className="text-sm text-muted-foreground break-words">{error?.message ?? "Erro desconhecido"}</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => { try { history.back(); } catch {} }}
-              className="h-9 px-4 rounded-md border border-border text-sm"
-            >Voltar</button>
-            <button
-              onClick={() => reset()}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold"
-            >Tentar novamente</button>
-          </div>
-        </div>
-      </div>
-    );
-  },
-  notFoundComponent: () => <CreatorGatedNotFound />,
 });
 
 function CreatorGatedNotFound() {

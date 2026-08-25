@@ -21,7 +21,7 @@ export function LiveOverlayTop({ username, displayName, avatarUrl, viewers, stat
       )}
     >
       <Link
-        to="/u/$username"
+        to="/perfil/$username"
         params={{ username }}
         className="pointer-events-auto flex items-center gap-2 bg-black/45 backdrop-blur rounded-full pl-1 pr-3 py-1"
       >

@@ -68,5 +68,9 @@ export function translatePaymentError(err: unknown, fallback = "Erro ao processa
     return "Este cartão já está cadastrado em uma conta com o mesmo CPF. Selecione-o na lista de cartões salvos ou pague com PIX.";
   }
 
+  if (raw === "card_token_required") {
+    return "Adicione e salve um cartão para pagar com cartão. Não utilizamos checkout externo.";
+  }
+
   return raw || fallback;
 }
