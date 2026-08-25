@@ -13,6 +13,8 @@ export type WalletPayInput = {
   callId?: string;
   requestId?: string;
   liveId?: string;
+  creatorProfileId?: string;
+
 };
 
 
