@@ -738,7 +738,7 @@ function PerfilPage() {
         <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 pl-4 md:pl-6 pr-4 md:pr-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card border border-primary/30">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-black tracking-tight text-foreground truncate">{displayName}</h2>
-            {profile.verified_at && (
+            {profile.verifiedAt && (
               <BadgeCheck
                 className="h-6 w-6 shrink-0 text-fuchsia-400 fill-fuchsia-400/20"
                 aria-label="Perfil certificado"
