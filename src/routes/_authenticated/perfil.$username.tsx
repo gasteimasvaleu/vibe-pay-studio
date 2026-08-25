@@ -57,26 +57,71 @@ import { getLastSeen } from "@/lib/presence.functions";
 import { logProfileView } from "@/lib/stats.functions";
 import { Radio } from "lucide-react";
 
-
-
+type PerfilLoaderData = {
+  viewerId: string;
+  profile: {
+    creatorProfileId: string | null;
+    userId: string;
+    username: string;
+    displayName: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    coverUrl: string | null;
+    instagram: string | null;
+    tiktok: string | null;
+    x: string | null;
+    accountType: string;
+    priceMonthly: number;
+    discountQuarterly: number;
+    discountSemiannual: number;
+    restrictFriendships: boolean;
+    verifiedAt: string | null;
+  };
+  isFollowing: boolean;
+  isSubscribed: boolean;
+  activeSubscription: {
+    id: string;
+    plan: SubscriptionPlan;
+    priceCents: number;
+    currentPeriodEnd: string;
+    startedAt: string | null;
+    autoRenew: boolean;
+  } | null;
+  promotion: {
+    id: string;
+    name: string;
+    promoPrice: number;
+    originalPrice: number;
+    discountPct: number;
+    endsAt: string;
+  } | null;
+  postsCount: number;
+  mediaCount: number;
+  photosCount: number;
+  videosCount: number;
+  lockedCount: number;
+  likesCount: number;
+  followersCount: number | null;
+};
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
-  head: ({ params }) => ({
+  head: () => ({
     meta: [
-      { title: `@${params.username} · Monetisexy` },
+      { title: `Perfil · Monetisexy` },
       { name: "robots", content: "noindex" },
     ],
   }),
-  loader: async ({ params }) => {
+  loader: async ({ params }): Promise<PerfilLoaderData> => {
     const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
 
-    // Prioriza creator_profiles (perfis pagos/gratuitos vinculados).
-    // Se não houver, cai no profiles legado.
     const { data: creatorProfile } = await supabase
       .from("creator_profiles")
-      .select("id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual, verified_at")
+      .select(
+        "id, user_id, kind, username, display_name, bio, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, price_monthly, discount_quarterly, discount_semiannual, verified_at",
+      )
       .eq("username", params.username)
       .maybeSingle();
 
@@ -84,7 +129,9 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     if (!profile) {
       const { data: legacyProfile } = await supabase
         .from("profiles")
-        .select("user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships")
+        .select(
+          "user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships",
+        )
         .eq("username", params.username)
         .maybeSingle();
       profile = legacyProfile;
@@ -93,7 +140,6 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     if (!profile) throw notFound();
     const isCreatorProfile = !!creatorProfile;
     if (!isCreatorProfile && profile.account_type !== "creator" && profile.account_type !== "free_creator") throw notFound();
-
 
     const [
       { count: postsCount },
@@ -121,7 +167,6 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const mediaCount = mediaAggRow?.total ?? 0;
     const photosCount = mediaAggRow?.photos ?? 0;
     const videosCount = mediaAggRow?.videos ?? 0;
-
 
     const nowIso = new Date().toISOString();
     const [{ data: activeSub }, { data: followRow }, { data: promotionRow }, { count: followersCountRaw }] = await Promise.all([
@@ -162,7 +207,6 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     const followersCount =
       showFollowers || isOwnerViewer ? (followersCountRaw ?? 0) : null;
 
-
     const promotion =
       promotionRow &&
       (promotionRow.max_subscriptions == null ||
@@ -200,13 +244,14 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: profile.discount_quarterly ?? 0,
         discountSemiannual: profile.discount_semiannual ?? 0,
         restrictFriendships: isCreatorProfile ? false : !!profile.restrict_friendships,
+        verifiedAt: isCreatorProfile ? ((profile.verified_at as string | null) ?? null) : null,
       },
       isFollowing: !!followRow,
       isSubscribed: !!activeSub,
       activeSubscription: activeSub
         ? {
             id: activeSub.id as string,
-            plan: activeSub.plan as "monthly" | "quarterly" | "semiannual",
+            plan: activeSub.plan as SubscriptionPlan,
             priceCents: (activeSub.price_cents_paid as number) ?? 0,
             currentPeriodEnd: activeSub.current_period_end as string,
             startedAt: (activeSub.started_at as string) ?? null,
@@ -224,35 +269,12 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
       likesCount: likesCount ?? 0,
       followersCount,
     };
-
   },
 
 
 
 
   component: PerfilPage,
-  errorComponent: ({ error, reset }) => {
-    if (typeof console !== "undefined") console.error("[perfil] loader/render error:", error);
-    return (
-      <div className="min-h-screen bg-background text-foreground grid place-items-center p-6">
-        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
-          <p className="text-base font-semibold">Não foi possível carregar este perfil</p>
-          <p className="text-sm text-muted-foreground break-words">{error?.message ?? "Erro desconhecido"}</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => { try { history.back(); } catch {} }}
-              className="h-9 px-4 rounded-md border border-border text-sm"
-            >Voltar</button>
-            <button
-              onClick={() => reset()}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold"
-            >Tentar novamente</button>
-          </div>
-        </div>
-      </div>
-    );
-  },
-  notFoundComponent: () => <CreatorGatedNotFound />,
 });
 
 function CreatorGatedNotFound() {
@@ -839,7 +861,7 @@ function PerfilPage() {
         <div className="-mt-8 md:-mt-10 pt-12 md:pt-14 pb-4 md:pb-6 pl-4 md:pl-6 pr-4 md:pr-6 space-y-3 bg-card rounded-3xl rounded-t-none shadow-card border border-primary/30">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-black tracking-tight text-foreground truncate">{displayName}</h2>
-            {profile.verified_at && (
+            {profile.verifiedAt && (
               <BadgeCheck
                 className="h-6 w-6 shrink-0 text-fuchsia-400 fill-fuchsia-400/20"
                 aria-label="Perfil certificado"

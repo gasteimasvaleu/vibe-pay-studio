@@ -6,7 +6,6 @@ import { Loader2, Minus, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/payments/PixCheckout";
-import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createTipPayment } from "@/lib/payments.functions";
@@ -142,31 +141,18 @@ export function TipDialog({ open, onOpenChange, creatorId, creatorName, publicat
           Envie uma gorjeta ao criador via PIX ou cartão
         </DialogDescription>
         {checkout ? (
-          checkout.method === "CREDIT_CARD" && checkout.invoiceUrl ? (
-            <CardCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              invoiceUrl={checkout.invoiceUrl}
-              onPaid={() => {
-                toast.success("Gorjeta enviada!");
-                onPaid?.();
-                handleClose(false);
-              }}
-              onCancel={() => handleClose(false)}
-            />
-          ) : (
-            <PixCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              pixQrCode={checkout.pixQrCode ?? ""}
-              pixCopyPaste={checkout.pixCopyPaste ?? ""}
-              invoiceUrl={checkout.invoiceUrl}
-              onPaid={() => {
-                toast.success("Gorjeta enviada!");
-                onPaid?.();
-                handleClose(false);
-              }}
-              onCancel={() => handleClose(false)}
-            />
-          )
+          <PixCheckout
+            paymentIntentId={checkout.paymentIntentId}
+            pixQrCode={checkout.pixQrCode ?? ""}
+            pixCopyPaste={checkout.pixCopyPaste ?? ""}
+            invoiceUrl={checkout.invoiceUrl}
+            onPaid={() => {
+              toast.success("Gorjeta enviada!");
+              onPaid?.();
+              handleClose(false);
+            }}
+            onCancel={() => handleClose(false)}
+          />
         ) : (
           <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
             <header>

@@ -6,7 +6,6 @@ import { Loader2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/payments/PixCheckout";
-import { CardCheckout } from "@/components/payments/CardCheckout";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,29 +152,17 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
           Escolha o plano de assinatura e a forma de pagamento
         </DialogDescription>
         {checkout ? (
-          checkout.method === "CREDIT_CARD" && checkout.invoiceUrl ? (
-            <CardCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              invoiceUrl={checkout.invoiceUrl}
-              onPaid={() => {
-                toast.success("Assinatura ativada!");
-                onOpenChange(false);
-              }}
-              onCancel={() => onOpenChange(false)}
-            />
-          ) : (
-            <PixCheckout
-              paymentIntentId={checkout.paymentIntentId}
-              pixQrCode={checkout.pixQrCode ?? ""}
-              pixCopyPaste={checkout.pixCopyPaste ?? ""}
-              invoiceUrl={checkout.invoiceUrl}
-              onPaid={() => {
-                toast.success("Assinatura ativada!");
-                onOpenChange(false);
-              }}
-              onCancel={() => onOpenChange(false)}
-            />
-          )
+          <PixCheckout
+            paymentIntentId={checkout.paymentIntentId}
+            pixQrCode={checkout.pixQrCode ?? ""}
+            pixCopyPaste={checkout.pixCopyPaste ?? ""}
+            invoiceUrl={checkout.invoiceUrl}
+            onPaid={() => {
+              toast.success("Assinatura ativada!");
+              onOpenChange(false);
+            }}
+            onCancel={() => onOpenChange(false)}
+          />
         ) : (
           <div className="rounded-2xl bg-card p-6 space-y-5 shadow-card">
             <header>
