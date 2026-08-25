@@ -106,9 +106,9 @@ type PerfilLoaderData = {
 };
 
 export const Route = createFileRoute("/_authenticated/perfil/$username")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
-      { title: `Perfil · Monetisexy` },
+      { title: `@${params.username} · Monetisexy` },
       { name: "robots", content: "noindex" },
     ],
   }),
