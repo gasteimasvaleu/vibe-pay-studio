@@ -680,6 +680,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       creatorId: string;
+      creatorProfileId?: string | null;
       plan: "monthly" | "quarterly" | "semiannual";
       method: Method;
       card?: CardInput;
@@ -690,23 +691,58 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     if (data.creatorId === userId) throw new Error("não pode assinar seu próprio perfil");
 
+    // Preço vem sempre do perfil pago em creator_profiles (fonte de verdade)
+    let pricing: {
+      price_monthly: number | null;
+      discount_quarterly: number | null;
+      discount_semiannual: number | null;
+    } | null = null;
+
+    if (data.creatorProfileId) {
+      const { data: cp } = await supabase
+        .from("creator_profiles")
+        .select("price_monthly, discount_quarterly, discount_semiannual")
+        .eq("id", data.creatorProfileId)
+        .eq("user_id", data.creatorId)
+        .maybeSingle();
+      pricing = cp ?? null;
+    }
+    if (!pricing?.price_monthly) {
+      const { data: cp } = await supabase
+        .from("creator_profiles")
+        .select("price_monthly, discount_quarterly, discount_semiannual")
+        .eq("user_id", data.creatorId)
+        .eq("kind", "paid")
+        .maybeSingle();
+      pricing = cp ?? pricing;
+    }
+
     const { data: creator, error } = await supabase
       .from("profiles")
       .select("price_monthly, discount_quarterly, discount_semiannual, asaas_wallet_id")
       .eq("user_id", data.creatorId)
       .single();
-    if (error || !creator?.price_monthly) throw new Error("criador sem plano configurado");
+    if (error) throw new Error("criador sem plano configurado");
+    if (!pricing?.price_monthly) {
+      pricing = {
+        price_monthly: creator.price_monthly as number | null,
+        discount_quarterly: creator.discount_quarterly,
+        discount_semiannual: creator.discount_semiannual,
+      };
+    }
+    if (!pricing?.price_monthly) throw new Error("criador sem plano configurado");
     if (!creator.asaas_wallet_id) throw new Error("criador ainda não configurou recebimento");
 
     const months = PLAN_MONTHS[data.plan];
-    const grossCents = Number(creator.price_monthly) * 100 * months;
+    const grossCents = Number(pricing.price_monthly) * 100 * months;
     const discount =
       data.plan === "quarterly"
-        ? creator.discount_quarterly
+        ? pricing.discount_quarterly
         : data.plan === "semiannual"
-          ? creator.discount_semiannual
+          ? pricing.discount_semiannual
           : 0;
     let amountCents = Math.round(grossCents * (1 - (discount ?? 0) / 100));
+
     let promotionId: string | null = null;
 
     // Apply active promotion only for monthly plan
