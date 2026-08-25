@@ -20,13 +20,12 @@ Reescrever o gatilho para respeitar o nome escolhido:
 
 Na prática o gatilho passa a reaproveitar a lógica de `resolve_available_username`, evitando duas regras diferentes.
 
-## Login com Google depois
+## Compatibilidade com o login com Google
 
-O mesmo gatilho continua atendendo o cadastro social:
-- Google não envia `username`; ele envia `user_name`/`email`. A base vira o trecho antes do `@` (ex.: `gasteimasvaleu`), normalizado, sem sufixo se estiver livre.
-- `account_type` continua vindo dos metadados quando existir, com fallback `subscriber`.
-- O perfil continua sendo criado com `on conflict (user_id) do nothing`, então o fluxo de OAuth (`/auth/callback` + `ensureCurrentUserProfile`) não duplica nada e não sobrescreve o @ já criado.
-- Se um usuário Google cair num nome já ocupado, recebe `nome_2` em vez de hash — legível e ainda único.
+Não existe cadastro por Google — só login. Ainda assim, quem já tem conta criada por e-mail e depois entra com Google mantém o mesmo perfil e o mesmo @ (o vínculo é pelo e-mail/ID da conta; o gatilho só roda na criação, com `on conflict (user_id) do nothing`).
+
+Como salvaguarda, se por qualquer caminho uma conta nascer sem `username` nos metadados (ex.: primeiro acesso via Google), o gatilho usa o trecho antes do `@` do e-mail como base — normalizado e sem hash, com `_2`, `_3` apenas em colisão real.
+
 
 ## Detalhes técnicos
 
