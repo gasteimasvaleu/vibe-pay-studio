@@ -22,10 +22,12 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   creatorId: string;
+  creatorProfileId?: string;
   creatorName?: string;
   initialPlan?: Plan;
   onCpfRequired?: () => void;
 };
+
 
 type Checkout = {
   paymentIntentId: string;
