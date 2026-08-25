@@ -37,7 +37,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
+export function SubscribeDialog({ open, onOpenChange, creatorId, creatorProfileId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [savedCardId, setSavedCardId] = useState<string | null>(null);
@@ -48,19 +48,32 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
+  // Fonte de verdade do preço: creator_profiles (perfil pago). O campo legado
+  // em `profiles` é mantido em sincronia pelo banco, mas não é lido aqui.
   const priceQuery = useQuery({
-    queryKey: ["creator-price", creatorId],
+    queryKey: ["creator-price", creatorProfileId ?? creatorId],
     enabled: open,
     queryFn: async () => {
+      if (creatorProfileId) {
+        const { data, error } = await supabase
+          .from("creator_profiles")
+          .select("price_monthly, discount_quarterly, discount_semiannual")
+          .eq("id", creatorProfileId)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (data) return data;
+      }
       const { data, error } = await supabase
-        .from("profiles")
+        .from("creator_profiles")
         .select("price_monthly, discount_quarterly, discount_semiannual")
         .eq("user_id", creatorId)
-        .single();
+        .eq("kind", "paid")
+        .maybeSingle();
       if (error) throw new Error(error.message);
-      return data;
+      return data ?? { price_monthly: 0, discount_quarterly: 0, discount_semiannual: 0 };
     },
   });
+
 
   useEffect(() => {
     if (open) {
