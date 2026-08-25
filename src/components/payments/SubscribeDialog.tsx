@@ -22,10 +22,12 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   creatorId: string;
+  creatorProfileId?: string;
   creatorName?: string;
   initialPlan?: Plan;
   onCpfRequired?: () => void;
 };
+
 
 type Checkout = {
   paymentIntentId: string;
@@ -35,7 +37,7 @@ type Checkout = {
   invoiceUrl?: string | null;
 };
 
-export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
+export function SubscribeDialog({ open, onOpenChange, creatorId, creatorProfileId, creatorName, initialPlan = "monthly", onCpfRequired }: Props) {
   const [plan, setPlan] = useState<Plan>("monthly");
   const [method, setMethod] = useState<PaymentMethod>("PIX");
   const [savedCardId, setSavedCardId] = useState<string | null>(null);
@@ -46,19 +48,32 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
   const walletPay = useServerFn(payWithWallet);
   const queryClient = useQueryClient();
 
+  // Fonte de verdade do preço: creator_profiles (perfil pago). O campo legado
+  // em `profiles` é mantido em sincronia pelo banco, mas não é lido aqui.
   const priceQuery = useQuery({
-    queryKey: ["creator-price", creatorId],
+    queryKey: ["creator-price", creatorProfileId ?? creatorId],
     enabled: open,
     queryFn: async () => {
+      if (creatorProfileId) {
+        const { data, error } = await supabase
+          .from("creator_profiles")
+          .select("price_monthly, discount_quarterly, discount_semiannual")
+          .eq("id", creatorProfileId)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (data) return data;
+      }
       const { data, error } = await supabase
-        .from("profiles")
+        .from("creator_profiles")
         .select("price_monthly, discount_quarterly, discount_semiannual")
         .eq("user_id", creatorId)
-        .single();
+        .eq("kind", "paid")
+        .maybeSingle();
       if (error) throw new Error(error.message);
-      return data;
+      return data ?? { price_monthly: 0, discount_quarterly: 0, discount_semiannual: 0 };
     },
   });
+
 
   useEffect(() => {
     if (open) {
@@ -95,7 +110,7 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
     setLoading(true);
     try {
       if (method === "WALLET") {
-        await walletPay({ data: { kind: "subscription", creatorId, plan } });
+        await walletPay({ data: { kind: "subscription", creatorId, plan, creatorProfileId } });
         toast.success("Assinatura ativada!");
         void queryClient.invalidateQueries({ queryKey: ["subscriber-wallet"] });
         onOpenChange(false);
@@ -103,8 +118,9 @@ export function SubscribeDialog({ open, onOpenChange, creatorId, creatorName, in
       }
       const cardId = method === "CREDIT_CARD" ? (overrideCardId ?? savedCardId) : null;
       const res = await subscribe({
-        data: { creatorId, plan, method, savedCardId: cardId },
+        data: { creatorId, creatorProfileId: creatorProfileId ?? null, plan, method, savedCardId: cardId },
       });
+
       if (res.paidImmediately) {
         toast.loading("Confirmando pagamento...", { id: "subscribe-pay" });
         await waitForSettled(res.paymentIntentId);

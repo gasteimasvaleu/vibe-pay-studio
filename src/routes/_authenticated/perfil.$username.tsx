@@ -1164,6 +1164,8 @@ function PerfilPage() {
             open={subscribeOpen}
             onOpenChange={setSubscribeOpen}
             creatorId={profile.userId}
+            creatorProfileId={profile.creatorProfileId ?? undefined}
+
             creatorName={displayName}
             initialPlan={selectedPlan}
             onCpfRequired={() => setCpfPromptForSubscription(true)}

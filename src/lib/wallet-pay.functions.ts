@@ -13,6 +13,8 @@ export type WalletPayInput = {
   callId?: string;
   requestId?: string;
   liveId?: string;
+  creatorProfileId?: string;
+
 };
 
 
@@ -54,6 +56,8 @@ export const payWithWallet = createServerFn({ method: "POST" })
       _call_id: data.callId ?? undefined,
       _request_id: data.requestId ?? undefined,
       _live_id: data.liveId ?? undefined,
+      _creator_profile_id: data.creatorProfileId ?? undefined,
+
     });
 
 
