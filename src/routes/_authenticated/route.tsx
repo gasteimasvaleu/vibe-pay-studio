@@ -24,7 +24,15 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.session?.user) {
       throw redirect({ to: "/entrar" });
     }
-    return { user: data.session.user };
+    // A sessão local pode estar morta no servidor (session_not_found).
+    // Validamos com getUser() para não renderizar a área logada sem token,
+    // o que quebraria todas as server functions protegidas.
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      await supabase.auth.signOut().catch(() => null);
+      throw redirect({ to: "/entrar" });
+    }
+    return { user: userData.user };
   },
   component: AuthenticatedLayout,
 });
