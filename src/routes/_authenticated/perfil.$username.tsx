@@ -132,6 +132,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
         discountQuarterly: 0,
         discountSemiannual: 0,
         restrictFriendships: false,
+        verifiedAt: null,
       },
       isFollowing: false,
       isSubscribed: false,
