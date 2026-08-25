@@ -290,7 +290,7 @@ function FeedPage() {
 
         {/* Feed items */}
         {feedQuery.isLoading ? (
-          <div className="rounded-3xl border border-white/10 bg-card/[0.04] backdrop-blur-md p-8 text-center text-white/70 text-sm">
+          <div className="rounded-3xl border border-border bg-card backdrop-blur-md p-8 text-center text-muted-foreground text-sm">
             Carregando publicações...
           </div>
         ) : feedItems.length > 0 ? (
@@ -300,12 +300,12 @@ function FeedPage() {
             ))}
             <div ref={sentinelRef} className="h-8" />
             {feedQuery.isFetchingNextPage && (
-              <div className="flex justify-center py-4 text-white/60">
+              <div className="flex justify-center py-4 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             )}
             {!feedQuery.hasNextPage && (
-              <p className="text-center text-xs text-white/40 py-4">Você chegou ao fim do feed.</p>
+              <p className="text-center text-xs text-muted-foreground py-4">Você chegou ao fim do feed.</p>
             )}
           </div>
         ) : (
@@ -315,7 +315,7 @@ function FeedPage() {
             transition={{ delay: 0.05 }}
             className="rounded-3xl border border-border bg-card backdrop-blur-md p-8 text-center"
           >
-            <p className="text-white/70 text-sm">
+            <p className="text-muted-foreground text-sm">
               Nenhuma publicação por enquanto. Siga creators para ver mais conteúdo.
             </p>
           </motion.section>
