@@ -1,34 +1,36 @@
-# Plano: deixar claro que saque está aguardando autorização da Asaas
+# Plano: mostrar ao creator o andamento real do saque PIX
+
+## Resposta rápida
+
+Sim, dá para saber. A Asaas já envia avisos automáticos para o app quando a transferência muda de estado (criada, autorizada, em processamento no banco, concluída, falhou ou cancelada), e o app já recebe e grava esses avisos. Ou seja: quando você autoriza o PIX no painel Asaas, o app fica sabendo sozinho, sem você precisar avisar nada.
+
+O que falta é apenas **mostrar isso de forma clara** para o creator.
 
 ## O que será feito
 
-Ajustar a experiência do saque para que o creator veja, de forma clara, que o PIX já foi solicitado e está aguardando a autorização manual no painel Asaas. Também deixar o status do saque mais preciso no banco e no painel do creator.
-
-## Como ficará para o usuário
-
-- Ao solicitar saque, o creator vê uma mensagem como:  
-  _"Saque de R$ X,XX solicitado. A transferência PIX está aguardando autorização no painel Asaas e será enviada em breve."_
-- Na lista de saques do Meu Banco, saques nesse estado aparecem com status "Aguardando autorização Asaas" (em vez de apenas "Processando" ou "Solicitado").
-- O admin (você) continua autorizando normalmente no painel Asaas; o app só passa a refletir esse estado de forma mais transparente.
+1. Ao solicitar o saque, a mensagem passa a dizer que o PIX foi solicitado e está aguardando autorização, em vez de sugerir que já foi enviado.
+2. Na lista de saques do Meu Banco, cada saque mostra um estado legível e atualizado:
+   - Aguardando autorização
+   - Autorizado, em processamento no banco
+   - Em análise
+   - Concluído
+   - Falhou / Cancelado
+3. A lista se atualiza sozinha enquanto houver um saque em andamento, para o creator ver a mudança sem recarregar a página.
+4. Data de conclusão exibida quando o saque é finalizado.
 
 ## Onde mexer
 
-- `src/lib/payouts.functions.ts`
-  - Quando a transferência Asaas retorna `PENDING`, gravar o status no banco como algo que indique "aguardando autorização Asaas".
-  - Garantir que o retorno da função inclua essa informação para o frontend.
-- `src/components/banco/SacarDialog.tsx`
-  - Atualizar a mensagem de sucesso para deixar explícito que o PIX está aguardando autorização da Asaas.
-- `src/routes/_authenticated/banco.tsx`
-  - Na lista de saques, mostrar o novo status traduzido quando a transferência está pendente de autorização Asaas.
-  - Opcionalmente, mostrar um tooltip/linha explicando o que falta acontecer.
+- `src/components/banco/SacarDialog.tsx` — texto da mensagem de sucesso.
+- `src/routes/_authenticated/banco.tsx` — rótulos e cores dos estados na lista de saques; atualização automática enquanto houver saque em andamento.
+- `src/lib/finance.functions.ts` — garantir que a consulta dos saques devolva os campos de estado e data de conclusão usados na tela.
 
-## Dados e regras
+## Detalhes técnicos
 
-- O status atual no banco é `requested`. A proposta é manter `requested` como status interno, mas adicionar um campo novo ou usar metadados para indicar que a transferência Asaas já foi criada e está `PENDING`.
-- Alternativa simples: usar `provider_ref` preenchido + `status = requested` para inferir "PIX criado na Asaas, aguardando autorização".
-- Nenhuma mudança na lógica de saldo: o valor continua sendo debitado no momento do saque, como já acontece hoje.
+- O webhook em `src/routes/api/public/webhooks/asaas.ts` já mapeia os eventos de transferência para os status internos (`requested`, `approved`, `in_review`, `paid`, `failed`, `rejected`) e casa o evento pelo identificador da transferência. Nenhuma mudança de integração é necessária.
+- `requestWithdrawal` em `src/lib/payouts.functions.ts` continua criando a transferência; o polling curto existente permanece como está.
+- Nenhuma mudança na lógica de saldo: o valor continua debitado no momento do saque.
 
 ## Fora do escopo
 
-- Não criaremos uma tela de aprovação interna no app; a autorização continua sendo feita diretamente no painel Asaas.
-- Não alteraremos a integração com a API da Asaas, apenas a mensagem e o status exibidos.
+- Não haverá tela de aprovação interna no app; a autorização segue no painel Asaas.
+- Nenhuma alteração na integração com a API da Asaas.
