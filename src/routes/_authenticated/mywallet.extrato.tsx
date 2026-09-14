@@ -129,7 +129,13 @@ function ExtratoPage() {
   const [pagOpen, setPagOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
+  const [showHidden, setShowHidden] = useState(false);
+  const sel = useSelection();
+  const qc = useQueryClient();
+
   const listTx = useServerFn(listSubscriberTransactions);
+  const runHide = useServerFn(hideTransactions);
+  const runUnhide = useServerFn(unhideTransactions);
 
   const filters = useMemo(() => {
     const from = range?.from ? new Date(range.from) : null;
@@ -143,8 +149,9 @@ function ExtratoPage() {
       from: from ? from.toISOString() : undefined,
       to: to ? to.toISOString() : undefined,
       limit: 100,
+      includeHidden: showHidden,
     };
-  }, [tipoItem, tipoPagamento, status, range]);
+  }, [tipoItem, tipoPagamento, status, range, showHidden]);
 
   const txQ = useQuery({
     queryKey: ["subscriber-transactions", filters],
@@ -152,6 +159,26 @@ function ExtratoPage() {
   });
 
   const transactions = txQ.data ?? [];
+
+  const hideMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHide({ data: { ids } }) : runUnhide({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Itens ocultados" : "Itens restaurados");
+      sel.exit();
+      qc.invalidateQueries({ queryKey: ["subscriber-transactions"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
+  });
+
+  const allSelectedHidden =
+    sel.ids.length > 0 &&
+    sel.ids.every((id) =>
+      transactions.some((t: any) => t.id === id && t.hidden),
+    );
 
   const renderOptions = (
     opts: string[],
