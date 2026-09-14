@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ArrowLeft, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import type { DateRange } from "react-day-picker";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -13,7 +14,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { listSubscriberTransactions } from "@/lib/finance.functions";
+import {
+  hideTransactions,
+  listSubscriberTransactions,
+  unhideTransactions,
+} from "@/lib/finance.functions";
+import {
+  SelectionActionBar,
+  SelectionCheckbox,
+  SelectionHeader,
+  useSelection,
+} from "@/components/finance/SelectableList";
 
 export const Route = createFileRoute("/_authenticated/mywallet/extrato")({
   head: () => ({
