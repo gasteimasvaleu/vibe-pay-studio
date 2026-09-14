@@ -199,16 +199,38 @@ export const getCreatorEarningsSummary = createServerFn({ method: "GET" })
 /**
  * Extrato paginado do criador (do perfil ativo).
  */
+async function hiddenTransactionIds(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("transaction_hides")
+    .select("transaction_id")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return new Set<string>((data ?? []).map((r: any) => r.transaction_id));
+}
+
+async function hiddenWithdrawalIds(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("withdrawal_hides")
+    .select("withdrawal_id")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return new Set<string>((data ?? []).map((r: any) => r.withdrawal_id));
+}
+
 export const listCreatorTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { limit?: number; offset?: number }) => ({
-    limit: Math.min(Math.max(data.limit ?? 50, 1), 200),
-    offset: Math.max(data.offset ?? 0, 0),
-  }))
+  .inputValidator(
+    (data: { limit?: number; offset?: number; includeHidden?: boolean }) => ({
+      limit: Math.min(Math.max(data.limit ?? 50, 1), 200),
+      offset: Math.max(data.offset ?? 0, 0),
+      includeHidden: !!data.includeHidden,
+    }),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const profileId = await getActiveProfileIdFor(supabase, userId);
     if (!profileId) return [];
+    const hidden = await hiddenTransactionIds(supabase, userId);
     const { data: rows, error } = await supabase
       .from("transactions")
       .select(
@@ -219,7 +241,11 @@ export const listCreatorTransactions = createServerFn({ method: "GET" })
       .range(data.offset, data.offset + data.limit - 1);
 
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const list = (rows ?? []).map((r: any) => ({
+      ...r,
+      hidden: hidden.has(r.id),
+    }));
+    return data.includeHidden ? list : list.filter((r: any) => !r.hidden);
   });
 
 /**
@@ -227,11 +253,15 @@ export const listCreatorTransactions = createServerFn({ method: "GET" })
  */
 export const listCreatorWithdrawals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data?: { includeHidden?: boolean }) => ({
+    includeHidden: !!data?.includeHidden,
+  }))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const profileId = await getActiveProfileIdFor(supabase, userId);
     if (!profileId) return [];
-    const { data, error } = await supabase
+    const hidden = await hiddenWithdrawalIds(supabase, userId);
+    const { data: rows, error } = await supabase
       .from("withdrawals")
       .select(
         "id, amount_cents, fee_cents, net_cents, status, pix_key, is_first_withdrawal, requested_at, processed_at, rejection_reason",
@@ -240,7 +270,76 @@ export const listCreatorWithdrawals = createServerFn({ method: "GET" })
       .order("requested_at", { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const list = (rows ?? []).map((r: any) => ({
+      ...r,
+      hidden: hidden.has(r.id),
+    }));
+    return data.includeHidden ? list : list.filter((r: any) => !r.hidden);
+  });
+
+/**
+ * Ocultar / restaurar itens do extrato e de saques (só para o próprio usuário).
+ */
+const idsValidator = (data: { ids: string[] }) => ({
+  ids: (data?.ids ?? []).filter(Boolean).slice(0, 500),
+});
+
+export const hideTransactions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(idsValidator)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.ids.length === 0) return { ok: true, count: 0 };
+    const { error } = await supabase.from("transaction_hides").upsert(
+      data.ids.map((id) => ({ user_id: userId, transaction_id: id })),
+      { onConflict: "user_id,transaction_id" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
+  });
+
+export const unhideTransactions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(idsValidator)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.ids.length === 0) return { ok: true, count: 0 };
+    const { error } = await supabase
+      .from("transaction_hides")
+      .delete()
+      .eq("user_id", userId)
+      .in("transaction_id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
+  });
+
+export const hideWithdrawals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(idsValidator)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.ids.length === 0) return { ok: true, count: 0 };
+    const { error } = await supabase.from("withdrawal_hides").upsert(
+      data.ids.map((id) => ({ user_id: userId, withdrawal_id: id })),
+      { onConflict: "user_id,withdrawal_id" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
+  });
+
+export const unhideWithdrawals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(idsValidator)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.ids.length === 0) return { ok: true, count: 0 };
+    const { error } = await supabase
+      .from("withdrawal_hides")
+      .delete()
+      .eq("user_id", userId)
+      .in("withdrawal_id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
   });
 
 /**
