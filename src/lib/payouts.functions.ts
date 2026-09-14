@@ -73,11 +73,17 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         .select("released_cents")
         .eq("user_id", userId)
         .single(),
-      supabase
-        .from("withdrawals")
-        .select("amount_cents")
-        .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any),
+      (activeProfileId
+        ? supabase
+            .from("withdrawals")
+            .select("amount_cents")
+            .eq("creator_profile_id", activeProfileId)
+            .in("status", ["requested", "paid"] as any)
+        : supabase
+            .from("withdrawals")
+            .select("amount_cents")
+            .eq("creator_id", userId)
+            .in("status", ["requested", "paid"] as any)),
     ]);
     const wallet = walletRes.data;
     const wErr = walletRes.error;
