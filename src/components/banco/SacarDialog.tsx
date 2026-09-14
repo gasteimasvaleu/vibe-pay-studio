@@ -108,15 +108,19 @@ export function SacarDialog({
     onSuccess: async (res: any) => {
       const withdrawnAmountCents = amountCents;
       const previousReleasedCents = saldoLiberadoCents;
-      const statusMsg =
-        res?.status === "paid"
-          ? "Saque concluído"
-          : res?.status === "rejected" || res?.status === "failed"
-            ? "Saque não pôde ser concluído"
-            : "Saque solicitado";
-      toast.success(statusMsg, {
-        description: `${formatBRL(amountCents)} enviado via PIX.`,
-      });
+      const isDone = res?.status === "paid";
+      const failed = res?.status === "rejected" || res?.status === "failed";
+      const statusMsg = isDone
+        ? "Saque concluído"
+        : failed
+          ? "Saque não pôde ser concluído"
+          : "Saque solicitado";
+      const description = isDone
+        ? `${formatBRL(amountCents)} enviado via PIX.`
+        : failed
+          ? `Não foi possível enviar ${formatBRL(amountCents)} via PIX.`
+          : `${formatBRL(amountCents)} solicitado. A transferência PIX está aguardando autorização e será enviada em breve — o status é atualizado automaticamente na lista de saques.`;
+      toast.success(statusMsg, { description });
       onOpenChange(false);
       await onWithdrawalSuccess?.({
         amountCents: withdrawnAmountCents,
