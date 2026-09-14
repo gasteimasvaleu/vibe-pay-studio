@@ -544,6 +544,16 @@ function BancoPage() {
                 setWdShowHidden((v) => !v);
               }}
             />
+            {(withdrawalsQuery.data ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-border bg-accent/40 p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-primary shrink-0" />
+                <p className="text-sm text-foreground">
+                  {wdShowHidden
+                    ? "Nenhum saque por aqui"
+                    : "Nenhum saque visível"}
+                </p>
+              </div>
+            ) : null}
             <ul className="space-y-2">
               {(withdrawalsQuery.data ?? []).map((w) => {
                 const statusLabel =
