@@ -152,6 +152,16 @@ function BancoPage() {
   const withdrawalsQuery = useQuery({
     queryKey: ["bancoWithdrawals", wdShowHidden],
     queryFn: () => fetchWithdrawals({ data: { includeHidden: wdShowHidden } }),
+    // Enquanto houver saque em andamento, atualiza sozinho para refletir
+    // a autorização feita no painel Asaas (recebida via webhook).
+    refetchInterval: (q) => {
+      const rows = (q.state.data as any[]) ?? [];
+      const pending = rows.some((w) =>
+        ["requested", "approved", "in_review"].includes(String(w?.status)),
+      );
+      return pending ? 15_000 : false;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const txMutation = useMutation({
@@ -556,25 +566,42 @@ function BancoPage() {
             ) : null}
             <ul className="space-y-2">
               {(withdrawalsQuery.data ?? []).map((w) => {
+                const st = String(w.status);
                 const statusLabel =
-                  w.status === "paid"
+                  st === "paid"
                     ? "Concluído"
-                    : w.status === "requested"
-                      ? "Solicitado"
-                      : w.status === "rejected"
-                        ? "Rejeitado"
-                        : w.status === "failed"
-                          ? "Falhou"
-                          : (w.status as string);
+                    : st === "requested"
+                      ? "Aguardando autorização"
+                      : st === "approved"
+                        ? "Autorizado · em processamento"
+                        : st === "in_review"
+                          ? "Em análise"
+                          : st === "rejected"
+                            ? "Cancelado"
+                            : st === "failed"
+                              ? "Falhou"
+                              : st;
                 const statusColor =
-                  w.status === "paid"
+                  st === "paid"
                     ? "bg-emerald-100 text-emerald-800"
-                    : w.status === "requested"
+                    : st === "requested" || st === "in_review"
                       ? "bg-amber-100 text-amber-800"
-                      : "bg-red-100 text-red-800";
+                      : st === "approved"
+                        ? "bg-sky-100 text-sky-800"
+                        : "bg-red-100 text-red-800";
+                const statusHint =
+                  st === "requested"
+                    ? "Aguardando autorização da transferência. Assim que for liberada, o status muda aqui automaticamente."
+                    : st === "approved"
+                      ? "Transferência autorizada e em processamento no banco."
+                      : null;
                 const when = w.requested_at
                   ? dateFmt.format(new Date(w.requested_at))
                   : "";
+                const doneWhen =
+                  st === "paid" && (w as any).processed_at
+                    ? dateFmt.format(new Date((w as any).processed_at))
+                    : null;
                 const isHidden = !!(w as any).hidden;
                 return (
                   <li
@@ -612,6 +639,15 @@ function BancoPage() {
                         {when}
                         {w.pix_key ? ` · ${w.pix_key}` : ""}
                       </p>
+                      {doneWhen ? (
+                        <p className="text-xs text-muted-foreground">
+                          Concluído em {doneWhen}
+                        </p>
+                      ) : statusHint ? (
+                        <p className="text-xs text-muted-foreground">
+                          {statusHint}
+                        </p>
+                      ) : null}
                       {w.rejection_reason ? (
                         <p className="text-xs text-red-700 mt-0.5">
                           {w.rejection_reason}
