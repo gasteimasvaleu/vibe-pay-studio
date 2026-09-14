@@ -64,17 +64,26 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       throw new Error(`valor mínimo de saque: R$ ${(WITHDRAWAL_MIN_CENTS / 100).toFixed(2)}`);
     if (!data.pixKey?.trim()) throw new Error("chave pix obrigatória");
 
+    const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
+
     const [walletRes, activeWithdrawalsRes] = await Promise.all([
       supabase
         .from("creator_wallets")
         .select("released_cents")
         .eq("user_id", userId)
         .single(),
-      supabase
-        .from("withdrawals")
-        .select("amount_cents")
-        .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any),
+      (activeProfileId
+        ? supabase
+            .from("withdrawals")
+            .select("amount_cents")
+            .eq("creator_profile_id", activeProfileId)
+            .in("status", ["requested", "paid"] as any)
+        : supabase
+            .from("withdrawals")
+            .select("amount_cents")
+            .eq("creator_id", userId)
+            .in("status", ["requested", "paid"] as any)),
     ]);
     const wallet = walletRes.data;
     const wErr = walletRes.error;
@@ -109,6 +118,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .from("withdrawals")
       .insert({
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         amount_cents: amount,
         fee_cents: 0,
         net_cents: amount,
