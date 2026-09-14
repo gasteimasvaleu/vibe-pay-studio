@@ -124,6 +124,15 @@ function BancoPage() {
   const fetchTransactions = useServerFn(listCreatorTransactions);
   const fetchWithdrawals = useServerFn(listCreatorWithdrawals);
   const runCancel = useServerFn(cancelWithdrawal);
+  const runHideTx = useServerFn(hideTransactions);
+  const runUnhideTx = useServerFn(unhideTransactions);
+  const runHideWd = useServerFn(hideWithdrawals);
+  const runUnhideWd = useServerFn(unhideWithdrawals);
+
+  const txSel = useSelection();
+  const wdSel = useSelection();
+  const [txShowHidden, setTxShowHidden] = useState(false);
+  const [wdShowHidden, setWdShowHidden] = useState(false);
 
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
@@ -134,12 +143,43 @@ function BancoPage() {
     queryFn: () => fetchOverview(),
   });
   const txQuery = useQuery({
-    queryKey: ["bancoTransactions"],
-    queryFn: () => fetchTransactions({ data: { limit: 20 } }),
+    queryKey: ["bancoTransactions", txShowHidden],
+    queryFn: () =>
+      fetchTransactions({
+        data: { limit: 20, includeHidden: txShowHidden },
+      }),
   });
   const withdrawalsQuery = useQuery({
-    queryKey: ["bancoWithdrawals"],
-    queryFn: () => fetchWithdrawals(),
+    queryKey: ["bancoWithdrawals", wdShowHidden],
+    queryFn: () => fetchWithdrawals({ data: { includeHidden: wdShowHidden } }),
+  });
+
+  const txMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHideTx({ data: { ids } }) : runUnhideTx({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Itens ocultados" : "Itens restaurados");
+      txSel.exit();
+      qc.invalidateQueries({ queryKey: ["bancoTransactions"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
+  });
+
+  const wdMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHideWd({ data: { ids } }) : runUnhideWd({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Saques ocultados" : "Saques restaurados");
+      wdSel.exit();
+      qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
   });
 
   const status = statusQuery.data;
