@@ -390,9 +390,24 @@ function BancoPage() {
 
         {/* Extrato */}
         <section className="space-y-3">
-          <h2 className="text-lg font-bold tracking-tight text-foreground">
-            Extrato
-          </h2>
+          <SelectionHeader
+            title="Extrato"
+            active={txSel.active}
+            count={txSel.ids.length}
+            allCount={(txQuery.data ?? []).length}
+            showingHidden={txShowHidden}
+            onToggleActive={() =>
+              txSel.active ? txSel.exit() : txSel.setActive(true)
+            }
+            onSelectAll={() =>
+              txSel.setAll((txQuery.data ?? []).map((t: any) => t.id))
+            }
+            onClearSelection={txSel.clear}
+            onToggleHidden={() => {
+              txSel.exit();
+              setTxShowHidden((v) => !v);
+            }}
+          />
           {txQuery.isLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((i) => (
