@@ -42,11 +42,21 @@ import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 import { getCreatorPayoutStatus } from "@/lib/payments.functions";
 import {
   getCreatorBancoOverview,
+  hideTransactions,
+  hideWithdrawals,
   listCreatorTransactions,
   listCreatorWithdrawals,
+  unhideTransactions,
+  unhideWithdrawals,
 } from "@/lib/finance.functions";
 import { cancelWithdrawal } from "@/lib/payouts.functions";
 import { SacarDialog } from "@/components/banco/SacarDialog";
+import {
+  SelectionActionBar,
+  SelectionCheckbox,
+  SelectionHeader,
+  useSelection,
+} from "@/components/finance/SelectableList";
 import { toast } from "sonner";
 
 const BRL = new Intl.NumberFormat("pt-BR", {
