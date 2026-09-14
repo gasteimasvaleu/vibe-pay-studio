@@ -42,11 +42,21 @@ import { CadastrarBancoForm } from "@/components/banco/CadastrarBancoForm";
 import { getCreatorPayoutStatus } from "@/lib/payments.functions";
 import {
   getCreatorBancoOverview,
+  hideTransactions,
+  hideWithdrawals,
   listCreatorTransactions,
   listCreatorWithdrawals,
+  unhideTransactions,
+  unhideWithdrawals,
 } from "@/lib/finance.functions";
 import { cancelWithdrawal } from "@/lib/payouts.functions";
 import { SacarDialog } from "@/components/banco/SacarDialog";
+import {
+  SelectionActionBar,
+  SelectionCheckbox,
+  SelectionHeader,
+  useSelection,
+} from "@/components/finance/SelectableList";
 import { toast } from "sonner";
 
 const BRL = new Intl.NumberFormat("pt-BR", {
@@ -114,6 +124,15 @@ function BancoPage() {
   const fetchTransactions = useServerFn(listCreatorTransactions);
   const fetchWithdrawals = useServerFn(listCreatorWithdrawals);
   const runCancel = useServerFn(cancelWithdrawal);
+  const runHideTx = useServerFn(hideTransactions);
+  const runUnhideTx = useServerFn(unhideTransactions);
+  const runHideWd = useServerFn(hideWithdrawals);
+  const runUnhideWd = useServerFn(unhideWithdrawals);
+
+  const txSel = useSelection();
+  const wdSel = useSelection();
+  const [txShowHidden, setTxShowHidden] = useState(false);
+  const [wdShowHidden, setWdShowHidden] = useState(false);
 
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
@@ -124,12 +143,43 @@ function BancoPage() {
     queryFn: () => fetchOverview(),
   });
   const txQuery = useQuery({
-    queryKey: ["bancoTransactions"],
-    queryFn: () => fetchTransactions({ data: { limit: 20 } }),
+    queryKey: ["bancoTransactions", txShowHidden],
+    queryFn: () =>
+      fetchTransactions({
+        data: { limit: 20, includeHidden: txShowHidden },
+      }),
   });
   const withdrawalsQuery = useQuery({
-    queryKey: ["bancoWithdrawals"],
-    queryFn: () => fetchWithdrawals(),
+    queryKey: ["bancoWithdrawals", wdShowHidden],
+    queryFn: () => fetchWithdrawals({ data: { includeHidden: wdShowHidden } }),
+  });
+
+  const txMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHideTx({ data: { ids } }) : runUnhideTx({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Itens ocultados" : "Itens restaurados");
+      txSel.exit();
+      qc.invalidateQueries({ queryKey: ["bancoTransactions"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
+  });
+
+  const wdMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHideWd({ data: { ids } }) : runUnhideWd({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Saques ocultados" : "Saques restaurados");
+      wdSel.exit();
+      qc.invalidateQueries({ queryKey: ["bancoWithdrawals"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
   });
 
   const status = statusQuery.data;
@@ -340,9 +390,24 @@ function BancoPage() {
 
         {/* Extrato */}
         <section className="space-y-3">
-          <h2 className="text-lg font-bold tracking-tight text-foreground">
-            Extrato
-          </h2>
+          <SelectionHeader
+            title="Extrato"
+            active={txSel.active}
+            count={txSel.ids.length}
+            allCount={(txQuery.data ?? []).length}
+            showingHidden={txShowHidden}
+            onToggleActive={() =>
+              txSel.active ? txSel.exit() : txSel.setActive(true)
+            }
+            onSelectAll={() =>
+              txSel.setAll((txQuery.data ?? []).map((t: any) => t.id))
+            }
+            onClearSelection={txSel.clear}
+            onToggleHidden={() => {
+              txSel.exit();
+              setTxShowHidden((v) => !v);
+            }}
+          />
           {txQuery.isLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((i) => (
@@ -371,11 +436,20 @@ function BancoPage() {
                   ? PAYMENT_LABEL[t.payment_method] ?? t.payment_method
                   : null;
                 const isPaid = t.status === "paid";
+                const isHidden = !!(t as any).hidden;
                 return (
                   <li
                     key={t.id}
-                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                    className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)] ${
+                      isHidden ? "opacity-60" : ""
+                    }`}
                   >
+                    {txSel.active ? (
+                      <SelectionCheckbox
+                        checked={txSel.selected.has(t.id)}
+                        onChange={() => txSel.toggle(t.id)}
+                      />
+                    ) : null}
                     <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
                       <Icon className="h-5 w-5" />
                     </div>
@@ -392,6 +466,11 @@ function BancoPage() {
                         {t.is_international ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
                             Internacional
+                          </span>
+                        ) : null}
+                        {isHidden ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-accent text-muted-foreground rounded-full px-2 py-0.5">
+                            Oculto
                           </span>
                         ) : null}
                         {!isPaid ? (
@@ -415,14 +494,66 @@ function BancoPage() {
               })}
             </ul>
           )}
+
+          {txSel.active ? (
+            <SelectionActionBar
+              count={txSel.ids.length}
+              busy={txMutation.isPending}
+              mode={
+                txSel.ids.length > 0 &&
+                txSel.ids.every((id) =>
+                  (txQuery.data ?? []).some(
+                    (t: any) => t.id === id && t.hidden,
+                  ),
+                )
+                  ? "restore"
+                  : "hide"
+              }
+              onConfirm={() => {
+                const hide = !txSel.ids.every((id) =>
+                  (txQuery.data ?? []).some(
+                    (t: any) => t.id === id && t.hidden,
+                  ),
+                );
+                txMutation.mutate({ ids: txSel.ids, hide });
+              }}
+            />
+          ) : null}
         </section>
 
         {/* Saques */}
-        {(withdrawalsQuery.data ?? []).length > 0 ? (
+        {!withdrawalsQuery.isLoading ? (
           <section className="space-y-3">
-            <h2 className="text-lg font-bold tracking-tight text-foreground">
-              Saques
-            </h2>
+            <SelectionHeader
+              title="Saques"
+              active={wdSel.active}
+              count={wdSel.ids.length}
+              allCount={(withdrawalsQuery.data ?? []).length}
+              showingHidden={wdShowHidden}
+              onToggleActive={() =>
+                wdSel.active ? wdSel.exit() : wdSel.setActive(true)
+              }
+              onSelectAll={() =>
+                wdSel.setAll(
+                  (withdrawalsQuery.data ?? []).map((w: any) => w.id),
+                )
+              }
+              onClearSelection={wdSel.clear}
+              onToggleHidden={() => {
+                wdSel.exit();
+                setWdShowHidden((v) => !v);
+              }}
+            />
+            {(withdrawalsQuery.data ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-border bg-accent/40 p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-primary shrink-0" />
+                <p className="text-sm text-foreground">
+                  {wdShowHidden
+                    ? "Nenhum saque por aqui"
+                    : "Nenhum saque visível"}
+                </p>
+              </div>
+            ) : null}
             <ul className="space-y-2">
               {(withdrawalsQuery.data ?? []).map((w) => {
                 const statusLabel =
@@ -444,11 +575,20 @@ function BancoPage() {
                 const when = w.requested_at
                   ? dateFmt.format(new Date(w.requested_at))
                   : "";
+                const isHidden = !!(w as any).hidden;
                 return (
                   <li
                     key={w.id}
-                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                    className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)] ${
+                      isHidden ? "opacity-60" : ""
+                    }`}
                   >
+                    {wdSel.active ? (
+                      <SelectionCheckbox
+                        checked={wdSel.selected.has(w.id)}
+                        onChange={() => wdSel.toggle(w.id)}
+                      />
+                    ) : null}
                     <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
                       <Banknote className="h-5 w-5" />
                     </div>
@@ -462,6 +602,11 @@ function BancoPage() {
                         >
                           {statusLabel}
                         </span>
+                        {isHidden ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-accent text-muted-foreground rounded-full px-2 py-0.5">
+                            Oculto
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {when}
@@ -500,6 +645,31 @@ function BancoPage() {
                 );
               })}
             </ul>
+
+            {wdSel.active ? (
+              <SelectionActionBar
+                count={wdSel.ids.length}
+                busy={wdMutation.isPending}
+                mode={
+                  wdSel.ids.length > 0 &&
+                  wdSel.ids.every((id) =>
+                    (withdrawalsQuery.data ?? []).some(
+                      (w: any) => w.id === id && w.hidden,
+                    ),
+                  )
+                    ? "restore"
+                    : "hide"
+                }
+                onConfirm={() => {
+                  const hide = !wdSel.ids.every((id) =>
+                    (withdrawalsQuery.data ?? []).some(
+                      (w: any) => w.id === id && w.hidden,
+                    ),
+                  );
+                  wdMutation.mutate({ ids: wdSel.ids, hide });
+                }}
+              />
+            ) : null}
           </section>
         ) : null}
 

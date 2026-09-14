@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ArrowLeft, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import type { DateRange } from "react-day-picker";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -13,7 +14,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { listSubscriberTransactions } from "@/lib/finance.functions";
+import {
+  hideTransactions,
+  listSubscriberTransactions,
+  unhideTransactions,
+} from "@/lib/finance.functions";
+import {
+  SelectionActionBar,
+  SelectionCheckbox,
+  SelectionHeader,
+  useSelection,
+} from "@/components/finance/SelectableList";
 
 export const Route = createFileRoute("/_authenticated/mywallet/extrato")({
   head: () => ({
@@ -118,7 +129,13 @@ function ExtratoPage() {
   const [pagOpen, setPagOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
+  const [showHidden, setShowHidden] = useState(false);
+  const sel = useSelection();
+  const qc = useQueryClient();
+
   const listTx = useServerFn(listSubscriberTransactions);
+  const runHide = useServerFn(hideTransactions);
+  const runUnhide = useServerFn(unhideTransactions);
 
   const filters = useMemo(() => {
     const from = range?.from ? new Date(range.from) : null;
@@ -132,8 +149,9 @@ function ExtratoPage() {
       from: from ? from.toISOString() : undefined,
       to: to ? to.toISOString() : undefined,
       limit: 100,
+      includeHidden: showHidden,
     };
-  }, [tipoItem, tipoPagamento, status, range]);
+  }, [tipoItem, tipoPagamento, status, range, showHidden]);
 
   const txQ = useQuery({
     queryKey: ["subscriber-transactions", filters],
@@ -141,6 +159,26 @@ function ExtratoPage() {
   });
 
   const transactions = txQ.data ?? [];
+
+  const hideMutation = useMutation({
+    mutationFn: ({ ids, hide }: { ids: string[]; hide: boolean }) =>
+      hide ? runHide({ data: { ids } }) : runUnhide({ data: { ids } }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.hide ? "Itens ocultados" : "Itens restaurados");
+      sel.exit();
+      qc.invalidateQueries({ queryKey: ["subscriber-transactions"] });
+    },
+    onError: (err: any) =>
+      toast.error("Não foi possível atualizar a lista", {
+        description: String(err?.message ?? "erro desconhecido"),
+      }),
+  });
+
+  const allSelectedHidden =
+    sel.ids.length > 0 &&
+    sel.ids.every((id) =>
+      transactions.some((t: any) => t.id === id && t.hidden),
+    );
 
   const renderOptions = (
     opts: string[],
@@ -283,6 +321,21 @@ function ExtratoPage() {
           </Popover>
         </div>
 
+        <SelectionHeader
+          title="Transações"
+          active={sel.active}
+          count={sel.ids.length}
+          allCount={transactions.length}
+          showingHidden={showHidden}
+          onToggleActive={() => (sel.active ? sel.exit() : sel.setActive(true))}
+          onSelectAll={() => sel.setAll(transactions.map((t: any) => t.id))}
+          onClearSelection={sel.clear}
+          onToggleHidden={() => {
+            sel.exit();
+            setShowHidden((v) => !v);
+          }}
+        />
+
         {txQ.isLoading ? (
           <p className="text-center text-sm text-muted-foreground py-16">
             Carregando…
@@ -295,30 +348,47 @@ function ExtratoPage() {
           <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
             {transactions.map((tx) => {
               const isCredit = CREDIT_KINDS.has(tx.kind);
+              const isHidden = !!(tx as any).hidden;
               return (
                 <li
                   key={tx.id}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
+                  className={cn(
+                    "flex items-center justify-between gap-4 px-4 py-3",
+                    isHidden && "opacity-60",
+                  )}
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {KIND_LABEL[tx.kind] ?? tx.kind}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
-                      {tx.payment_method
-                        ? ` · ${PAYMENT_LABEL[tx.payment_method] ?? tx.payment_method}`
-                        : ""}
-                      {" · "}
-                      <span
-                        className={cn(
-                          "font-semibold",
-                          STATUS_CLASS[tx.status] ?? "text-muted-foreground",
-                        )}
-                      >
-                        {STATUS_LABEL[tx.status] ?? tx.status}
-                      </span>
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {sel.active ? (
+                      <SelectionCheckbox
+                        checked={sel.selected.has(tx.id)}
+                        onChange={() => sel.toggle(tx.id)}
+                      />
+                    ) : null}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {KIND_LABEL[tx.kind] ?? tx.kind}
+                        {isHidden ? (
+                          <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Oculto
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
+                        {tx.payment_method
+                          ? ` · ${PAYMENT_LABEL[tx.payment_method] ?? tx.payment_method}`
+                          : ""}
+                        {" · "}
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            STATUS_CLASS[tx.status] ?? "text-muted-foreground",
+                          )}
+                        >
+                          {STATUS_LABEL[tx.status] ?? tx.status}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                   <span
                     className={cn(
@@ -334,6 +404,20 @@ function ExtratoPage() {
             })}
           </ul>
         )}
+
+        {sel.active ? (
+          <SelectionActionBar
+            count={sel.ids.length}
+            busy={hideMutation.isPending}
+            mode={allSelectedHidden ? "restore" : "hide"}
+            onConfirm={() =>
+              hideMutation.mutate({
+                ids: sel.ids,
+                hide: !allSelectedHidden,
+              })
+            }
+          />
+        ) : null}
       </main>
     </div>
   );
