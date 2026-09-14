@@ -152,6 +152,16 @@ function BancoPage() {
   const withdrawalsQuery = useQuery({
     queryKey: ["bancoWithdrawals", wdShowHidden],
     queryFn: () => fetchWithdrawals({ data: { includeHidden: wdShowHidden } }),
+    // Enquanto houver saque em andamento, atualiza sozinho para refletir
+    // a autorização feita no painel Asaas (recebida via webhook).
+    refetchInterval: (q) => {
+      const rows = (q.state.data as any[]) ?? [];
+      const pending = rows.some((w) =>
+        ["requested", "approved", "in_review"].includes(String(w?.status)),
+      );
+      return pending ? 15_000 : false;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const txMutation = useMutation({
