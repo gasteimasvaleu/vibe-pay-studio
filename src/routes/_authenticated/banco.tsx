@@ -436,11 +436,20 @@ function BancoPage() {
                   ? PAYMENT_LABEL[t.payment_method] ?? t.payment_method
                   : null;
                 const isPaid = t.status === "paid";
+                const isHidden = !!(t as any).hidden;
                 return (
                   <li
                     key={t.id}
-                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                    className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)] ${
+                      isHidden ? "opacity-60" : ""
+                    }`}
                   >
+                    {txSel.active ? (
+                      <SelectionCheckbox
+                        checked={txSel.selected.has(t.id)}
+                        onChange={() => txSel.toggle(t.id)}
+                      />
+                    ) : null}
                     <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
                       <Icon className="h-5 w-5" />
                     </div>
@@ -457,6 +466,11 @@ function BancoPage() {
                         {t.is_international ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
                             Internacional
+                          </span>
+                        ) : null}
+                        {isHidden ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-accent text-muted-foreground rounded-full px-2 py-0.5">
+                            Oculto
                           </span>
                         ) : null}
                         {!isPaid ? (
@@ -480,6 +494,31 @@ function BancoPage() {
               })}
             </ul>
           )}
+
+          {txSel.active ? (
+            <SelectionActionBar
+              count={txSel.ids.length}
+              busy={txMutation.isPending}
+              mode={
+                txSel.ids.length > 0 &&
+                txSel.ids.every((id) =>
+                  (txQuery.data ?? []).some(
+                    (t: any) => t.id === id && t.hidden,
+                  ),
+                )
+                  ? "restore"
+                  : "hide"
+              }
+              onConfirm={() => {
+                const hide = !txSel.ids.every((id) =>
+                  (txQuery.data ?? []).some(
+                    (t: any) => t.id === id && t.hidden,
+                  ),
+                );
+                txMutation.mutate({ ids: txSel.ids, hide });
+              }}
+            />
+          ) : null}
         </section>
 
         {/* Saques */}
