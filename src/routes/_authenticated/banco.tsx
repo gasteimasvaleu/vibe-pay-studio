@@ -522,11 +522,28 @@ function BancoPage() {
         </section>
 
         {/* Saques */}
-        {(withdrawalsQuery.data ?? []).length > 0 ? (
+        {(withdrawalsQuery.data ?? []).length > 0 || wdShowHidden ? (
           <section className="space-y-3">
-            <h2 className="text-lg font-bold tracking-tight text-foreground">
-              Saques
-            </h2>
+            <SelectionHeader
+              title="Saques"
+              active={wdSel.active}
+              count={wdSel.ids.length}
+              allCount={(withdrawalsQuery.data ?? []).length}
+              showingHidden={wdShowHidden}
+              onToggleActive={() =>
+                wdSel.active ? wdSel.exit() : wdSel.setActive(true)
+              }
+              onSelectAll={() =>
+                wdSel.setAll(
+                  (withdrawalsQuery.data ?? []).map((w: any) => w.id),
+                )
+              }
+              onClearSelection={wdSel.clear}
+              onToggleHidden={() => {
+                wdSel.exit();
+                setWdShowHidden((v) => !v);
+              }}
+            />
             <ul className="space-y-2">
               {(withdrawalsQuery.data ?? []).map((w) => {
                 const statusLabel =
@@ -548,11 +565,20 @@ function BancoPage() {
                 const when = w.requested_at
                   ? dateFmt.format(new Date(w.requested_at))
                   : "";
+                const isHidden = !!(w as any).hidden;
                 return (
                   <li
                     key={w.id}
-                    className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)]"
+                    className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3 shadow-[var(--shadow-card)] ${
+                      isHidden ? "opacity-60" : ""
+                    }`}
                   >
+                    {wdSel.active ? (
+                      <SelectionCheckbox
+                        checked={wdSel.selected.has(w.id)}
+                        onChange={() => wdSel.toggle(w.id)}
+                      />
+                    ) : null}
                     <div className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary shrink-0">
                       <Banknote className="h-5 w-5" />
                     </div>
@@ -566,6 +592,11 @@ function BancoPage() {
                         >
                           {statusLabel}
                         </span>
+                        {isHidden ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-accent text-muted-foreground rounded-full px-2 py-0.5">
+                            Oculto
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {when}
@@ -604,6 +635,31 @@ function BancoPage() {
                 );
               })}
             </ul>
+
+            {wdSel.active ? (
+              <SelectionActionBar
+                count={wdSel.ids.length}
+                busy={wdMutation.isPending}
+                mode={
+                  wdSel.ids.length > 0 &&
+                  wdSel.ids.every((id) =>
+                    (withdrawalsQuery.data ?? []).some(
+                      (w: any) => w.id === id && w.hidden,
+                    ),
+                  )
+                    ? "restore"
+                    : "hide"
+                }
+                onConfirm={() => {
+                  const hide = !wdSel.ids.every((id) =>
+                    (withdrawalsQuery.data ?? []).some(
+                      (w: any) => w.id === id && w.hidden,
+                    ),
+                  );
+                  wdMutation.mutate({ ids: wdSel.ids, hide });
+                }}
+              />
+            ) : null}
           </section>
         ) : null}
 
