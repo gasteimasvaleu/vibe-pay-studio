@@ -522,7 +522,7 @@ function BancoPage() {
         </section>
 
         {/* Saques */}
-        {(withdrawalsQuery.data ?? []).length > 0 || wdShowHidden ? (
+        {!withdrawalsQuery.isLoading ? (
           <section className="space-y-3">
             <SelectionHeader
               title="Saques"
