@@ -118,6 +118,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .from("withdrawals")
       .insert({
         creator_id: userId,
+        creator_profile_id: activeProfileId,
         amount_cents: amount,
         fee_cents: 0,
         net_cents: amount,
