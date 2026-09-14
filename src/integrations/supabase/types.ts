@@ -3072,6 +3072,35 @@ export type Database = {
           },
         ]
       }
+      transaction_hides: {
+        Row: {
+          created_at: string
+          id: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_hides_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           access_until: string | null
@@ -3507,6 +3536,35 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      withdrawal_hides: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          withdrawal_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          withdrawal_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          withdrawal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_hides_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawals"
             referencedColumns: ["id"]
           },
         ]
