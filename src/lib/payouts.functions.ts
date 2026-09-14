@@ -64,6 +64,9 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       throw new Error(`valor mínimo de saque: R$ ${(WITHDRAWAL_MIN_CENTS / 100).toFixed(2)}`);
     if (!data.pixKey?.trim()) throw new Error("chave pix obrigatória");
 
+    const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
+    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
+
     const [walletRes, activeWithdrawalsRes] = await Promise.all([
       supabase
         .from("creator_wallets")
