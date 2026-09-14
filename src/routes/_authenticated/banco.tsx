@@ -639,6 +639,15 @@ function BancoPage() {
                         {when}
                         {w.pix_key ? ` · ${w.pix_key}` : ""}
                       </p>
+                      {doneWhen ? (
+                        <p className="text-xs text-muted-foreground">
+                          Concluído em {doneWhen}
+                        </p>
+                      ) : statusHint ? (
+                        <p className="text-xs text-muted-foreground">
+                          {statusHint}
+                        </p>
+                      ) : null}
                       {w.rejection_reason ? (
                         <p className="text-xs text-red-700 mt-0.5">
                           {w.rejection_reason}
