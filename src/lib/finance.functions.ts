@@ -357,6 +357,7 @@ export const listSubscriberTransactions = createServerFn({ method: "GET" })
             statuses?: string[];
             from?: string;
             to?: string;
+            includeHidden?: boolean;
           }
         | undefined,
     ) => ({
@@ -366,6 +367,7 @@ export const listSubscriberTransactions = createServerFn({ method: "GET" })
       statuses: data?.statuses?.filter(Boolean) ?? [],
       from: data?.from ?? null,
       to: data?.to ?? null,
+      includeHidden: !!data?.includeHidden,
     }),
   )
   .handler(async ({ context, data }) => {
@@ -384,7 +386,14 @@ export const listSubscriberTransactions = createServerFn({ method: "GET" })
     if (data.from) q = q.gte("created_at", data.from);
     if (data.to) q = q.lte("created_at", data.to);
 
-    const { data: rows, error } = await q;
+    const [{ data: rows, error }, hidden] = await Promise.all([
+      q,
+      hiddenTransactionIds(supabase, userId),
+    ]);
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const list = (rows ?? []).map((r: any) => ({
+      ...r,
+      hidden: hidden.has(r.id),
+    }));
+    return data.includeHidden ? list : list.filter((r: any) => !r.hidden);
   });
