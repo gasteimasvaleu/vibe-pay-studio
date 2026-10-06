@@ -741,19 +741,21 @@ function BancoPage() {
                 Integração com o Asaas
               </h2>
               <p className="text-sm text-muted-foreground">
-                Usamos o Asaas como processador de pagamentos. Para receber, você
-                precisa de uma conta lá — o repasse cai direto na sua carteira
-                Asaas via split.
+                {isPixMode
+                  ? "Usamos o Asaas para processar os pagamentos dos seus fãs. No seu modo de recebimento, o saldo fica no app e o saque sai pela sua chave PIX — você não precisa de conta Asaas."
+                  : "Usamos o Asaas como processador de pagamentos. Para receber, você precisa de uma conta lá — o repasse cai direto na sua carteira Asaas via split."}
               </p>
-              <a
-                href="https://www.asaas.com/registrar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-              >
-                Criar conta no Asaas
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              {!isPixMode && (
+                <a
+                  href="https://www.asaas.com/registrar"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  Criar conta no Asaas
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           </div>
 
