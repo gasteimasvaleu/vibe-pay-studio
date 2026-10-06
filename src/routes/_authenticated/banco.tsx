@@ -791,6 +791,7 @@ function BancoPage() {
             </AccordionItem>
 
             {!isPixMode && (
+              <>
               <AccordionItem value="wallet">
               <AccordionTrigger className="text-sm font-semibold">
                 O que é o Wallet ID e como pegar?
@@ -848,6 +849,7 @@ function BancoPage() {
                 </p>
               </AccordionContent>
             </AccordionItem>
+              </>
             )}
 
             <AccordionItem value="fees">
