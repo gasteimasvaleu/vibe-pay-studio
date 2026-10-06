@@ -107,7 +107,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   errorComponent: ({ error }) => (
     <div className="min-h-screen bg-background text-white grid place-items-center p-6">
       <p className="text-sm text-white/70">
-        Não foi possível carregar seu painel: {error.message}
+        Não foi possível carregar seu painel: {(error as Error).message}
       </p>
     </div>
   ),

@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/promotions")({
   },
   errorComponent: ({ error }) => (
     <div className="min-h-screen bg-background text-foreground grid place-items-center p-6">
-      <p className="text-sm text-muted-foreground">{error.message}</p>
+      <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
     </div>
   ),
   component: PromotionsListPage,
