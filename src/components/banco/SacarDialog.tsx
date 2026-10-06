@@ -32,7 +32,7 @@ export const PIX_TYPE_LABEL: Record<string, string> = {
   aleatoria: "Chave aleatória",
 };
 
-function maskPix(key: string, type?: string | null) {
+export function maskPix(key: string, type?: string | null) {
   if (!key) return "";
   if (type === "cpf" || type === "cnpj") {
     return key.replace(/^(\d{3})(\d+)(\d{2})$/, "$1.***.***-$3");
@@ -53,6 +53,7 @@ interface Props {
   saldoLiberadoCents: number;
   pixKey: string | null;
   pixKeyType: string | null;
+  payoutMode?: "pix" | "asaas_split" | null;
   onWithdrawalSuccess?: (args: {
     amountCents: number;
     previousReleasedCents: number;
@@ -67,6 +68,7 @@ export function SacarDialog({
   saldoLiberadoCents,
   pixKey,
   pixKeyType,
+  payoutMode,
   onWithdrawalSuccess,
 }: Props) {
   const qc = useQueryClient();
@@ -167,7 +169,10 @@ export function SacarDialog({
               placeholder="0,00"
             />
             <p className="text-xs text-muted-foreground">
-              Mínimo {formatBRL(MIN_CENTS)}. Transferência via PIX pela Asaas.
+              Mínimo {formatBRL(MIN_CENTS)}.{" "}
+              {payoutMode === "pix"
+                ? "O envio é feito pela plataforma até a sua chave PIX."
+                : "Transferência via PIX pela Asaas."}
             </p>
           </div>
 
