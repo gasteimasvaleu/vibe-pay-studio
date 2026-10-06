@@ -848,6 +848,7 @@ function BancoPage() {
                 </p>
               </AccordionContent>
             </AccordionItem>
+            )}
 
             <AccordionItem value="fees">
               <AccordionTrigger className="text-sm font-semibold">
