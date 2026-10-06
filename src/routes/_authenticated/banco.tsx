@@ -762,23 +762,36 @@ function BancoPage() {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="why">
               <AccordionTrigger className="text-sm font-semibold">
-                Por que preciso de uma conta Asaas?
+                {isPixMode
+                  ? "Preciso ter conta no Asaas?"
+                  : "Por que preciso de uma conta Asaas?"}
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground space-y-2">
-                <p>
-                  O Asaas é o gateway que processa PIX e cartão dos seus fãs.
-                  Toda venda é liquidada diretamente na sua carteira Asaas
-                  através de um split automático — a plataforma retém apenas a
-                  comissão e o restante é seu.
-                </p>
-                <p>
-                  Sem uma conta Asaas cadastrada, não conseguimos enviar os
-                  valores das vendas para você.
-                </p>
+                {isPixMode ? (
+                  <p>
+                    Não. No modo &quot;Só PIX&quot;, o Asaas processa o pagamento
+                    dos seus fãs e o seu saldo fica retido no app. Quando você
+                    saca, a plataforma envia o valor direto para a sua chave PIX.
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      O Asaas é o gateway que processa PIX e cartão dos seus fãs.
+                      Toda venda é liquidada diretamente na sua carteira Asaas
+                      através de um split automático — a plataforma retém apenas a
+                      comissão e o restante é seu.
+                    </p>
+                    <p>
+                      Sem uma conta Asaas cadastrada, não conseguimos enviar os
+                      valores das vendas para você.
+                    </p>
+                  </>
+                )}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="wallet">
+            {!isPixMode && (
+              <AccordionItem value="wallet">
               <AccordionTrigger className="text-sm font-semibold">
                 O que é o Wallet ID e como pegar?
               </AccordionTrigger>
