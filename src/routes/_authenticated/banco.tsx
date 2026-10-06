@@ -50,7 +50,7 @@ import {
   unhideWithdrawals,
 } from "@/lib/finance.functions";
 import { cancelWithdrawal } from "@/lib/payouts.functions";
-import { SacarDialog } from "@/components/banco/SacarDialog";
+import { SacarDialog, maskPix } from "@/components/banco/SacarDialog";
 import {
   SelectionActionBar,
   SelectionCheckbox,
@@ -199,6 +199,11 @@ function BancoPage() {
   const payoutAccount = status?.payoutAccount ?? null;
   const pixKey: string | null = (payoutAccount as any)?.pix_key ?? null;
   const pixKeyType: string | null = (payoutAccount as any)?.pix_key_type ?? null;
+  const payoutMode = status?.payoutMode ?? null;
+  const isPixMode = payoutMode === "pix";
+  // "Só PIX": o saldo fica no app e o saque sai pela chave PIX — não exige conta Asaas.
+  const payoutConfigured = !!pixKey && (isPixMode || walletActive);
+  const canAutoWithdraw = !!pixKey && (isPixMode || hasApiKey);
 
   const overview = overviewQuery.data;
   const nationalReleased = overview?.national.releasedCents ?? 0;
@@ -289,9 +294,9 @@ function BancoPage() {
 
   function withdrawDisabledReason(released: number): string | null {
     if (!kycVerified) return "Conclua a verificação de identidade";
-    if (!walletActive) return "Configure seu recebimento primeiro";
-    if (!hasApiKey) return "Cadastre sua API Key Asaas para sacar";
-    if (!pixKey) return "Cadastre uma chave PIX em Dados bancários";
+    if (!payoutConfigured) return "Configure seu recebimento primeiro";
+    if (!isPixMode && !hasApiKey)
+      return "Cadastre sua API Key Asaas para sacar";
     if (released < 5000) return "Saldo mínimo para saque: R$ 50,00";
     return null;
   }
@@ -718,6 +723,7 @@ function BancoPage() {
           }
           pixKey={pixKey}
           pixKeyType={pixKeyType}
+          payoutMode={payoutMode}
           onWithdrawalSuccess={refreshAfterWithdrawal}
         />
 
@@ -735,42 +741,58 @@ function BancoPage() {
                 Integração com o Asaas
               </h2>
               <p className="text-sm text-muted-foreground">
-                Usamos o Asaas como processador de pagamentos. Para receber, você
-                precisa de uma conta lá — o repasse cai direto na sua carteira
-                Asaas via split.
+                {isPixMode
+                  ? "Usamos o Asaas para processar os pagamentos dos seus fãs. No seu modo de recebimento, o saldo fica no app e o saque sai pela sua chave PIX — você não precisa de conta Asaas."
+                  : "Usamos o Asaas como processador de pagamentos. Para receber, você precisa de uma conta lá — o repasse cai direto na sua carteira Asaas via split."}
               </p>
-              <a
-                href="https://www.asaas.com/registrar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-              >
-                Criar conta no Asaas
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              {!isPixMode && (
+                <a
+                  href="https://www.asaas.com/registrar"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  Criar conta no Asaas
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="why">
               <AccordionTrigger className="text-sm font-semibold">
-                Por que preciso de uma conta Asaas?
+                {isPixMode
+                  ? "Preciso ter conta no Asaas?"
+                  : "Por que preciso de uma conta Asaas?"}
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground space-y-2">
-                <p>
-                  O Asaas é o gateway que processa PIX e cartão dos seus fãs.
-                  Toda venda é liquidada diretamente na sua carteira Asaas
-                  através de um split automático — a plataforma retém apenas a
-                  comissão e o restante é seu.
-                </p>
-                <p>
-                  Sem uma conta Asaas cadastrada, não conseguimos enviar os
-                  valores das vendas para você.
-                </p>
+                {isPixMode ? (
+                  <p>
+                    Não. No modo &quot;Só PIX&quot;, o Asaas processa o pagamento
+                    dos seus fãs e o seu saldo fica retido no app. Quando você
+                    saca, a plataforma envia o valor direto para a sua chave PIX.
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      O Asaas é o gateway que processa PIX e cartão dos seus fãs.
+                      Toda venda é liquidada diretamente na sua carteira Asaas
+                      através de um split automático — a plataforma retém apenas a
+                      comissão e o restante é seu.
+                    </p>
+                    <p>
+                      Sem uma conta Asaas cadastrada, não conseguimos enviar os
+                      valores das vendas para você.
+                    </p>
+                  </>
+                )}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="wallet">
+            {!isPixMode && (
+              <>
+              <AccordionItem value="wallet">
               <AccordionTrigger className="text-sm font-semibold">
                 O que é o Wallet ID e como pegar?
               </AccordionTrigger>
@@ -827,6 +849,8 @@ function BancoPage() {
                 </p>
               </AccordionContent>
             </AccordionItem>
+              </>
+            )}
 
             <AccordionItem value="fees">
               <AccordionTrigger className="text-sm font-semibold">
@@ -922,7 +946,7 @@ function BancoPage() {
               </Link>
             </div>
           </section>
-        ) : !walletActive ? (
+        ) : !payoutConfigured ? (
           <section className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -951,12 +975,26 @@ function BancoPage() {
                 {status?.accountStatus ? ` · ${status.accountStatus}` : ""}
               </p>
             </div>
-            <p className="text-xs text-emerald-900/80 break-all">
-              Wallet ID: {status?.walletId}
-            </p>
-            <p className="text-xs text-emerald-900/80">
-              Saque automático: {status?.hasApiKey ? "ativado" : "não ativado"}
-            </p>
+            {isPixMode ? (
+              <>
+                <p className="text-xs text-emerald-900/80 break-all">
+                  Chave PIX: {pixKey ? maskPix(pixKey, pixKeyType) : "—"}
+                </p>
+                <p className="text-xs text-emerald-900/80">
+                  Seu saldo fica no app e o saque é enviado pela plataforma.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-emerald-900/80 break-all">
+                  Wallet ID: {status?.walletId}
+                </p>
+                <p className="text-xs text-emerald-900/80">
+                  Saque automático:{" "}
+                  {canAutoWithdraw ? "ativado" : "não ativado"}
+                </p>
+              </>
+            )}
           </section>
         )}
 
@@ -1126,6 +1164,7 @@ function BancoPage() {
               kycVerified={kycVerified}
               walletId={status?.walletId ?? ""}
               hasApiKey={status?.hasApiKey ?? false}
+              payoutMode={payoutMode}
               initial={payoutAccount ? mapPayout(payoutAccount) : null}
             />
 
