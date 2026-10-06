@@ -50,7 +50,7 @@ import {
   unhideWithdrawals,
 } from "@/lib/finance.functions";
 import { cancelWithdrawal } from "@/lib/payouts.functions";
-import { SacarDialog } from "@/components/banco/SacarDialog";
+import { SacarDialog, maskPix } from "@/components/banco/SacarDialog";
 import {
   SelectionActionBar,
   SelectionCheckbox,
@@ -199,6 +199,11 @@ function BancoPage() {
   const payoutAccount = status?.payoutAccount ?? null;
   const pixKey: string | null = (payoutAccount as any)?.pix_key ?? null;
   const pixKeyType: string | null = (payoutAccount as any)?.pix_key_type ?? null;
+  const payoutMode = status?.payoutMode ?? null;
+  const isPixMode = payoutMode === "pix";
+  // "Só PIX": o saldo fica no app e o saque sai pela chave PIX — não exige conta Asaas.
+  const payoutConfigured = !!pixKey && (isPixMode || walletActive);
+  const canAutoWithdraw = !!pixKey && (isPixMode || hasApiKey);
 
   const overview = overviewQuery.data;
   const nationalReleased = overview?.national.releasedCents ?? 0;
@@ -289,9 +294,9 @@ function BancoPage() {
 
   function withdrawDisabledReason(released: number): string | null {
     if (!kycVerified) return "Conclua a verificação de identidade";
-    if (!walletActive) return "Configure seu recebimento primeiro";
-    if (!hasApiKey) return "Cadastre sua API Key Asaas para sacar";
-    if (!pixKey) return "Cadastre uma chave PIX em Dados bancários";
+    if (!payoutConfigured) return "Configure seu recebimento primeiro";
+    if (!isPixMode && !hasApiKey)
+      return "Cadastre sua API Key Asaas para sacar";
     if (released < 5000) return "Saldo mínimo para saque: R$ 50,00";
     return null;
   }
@@ -718,6 +723,7 @@ function BancoPage() {
           }
           pixKey={pixKey}
           pixKeyType={pixKeyType}
+          payoutMode={payoutMode}
           onWithdrawalSuccess={refreshAfterWithdrawal}
         />
 
@@ -922,7 +928,7 @@ function BancoPage() {
               </Link>
             </div>
           </section>
-        ) : !walletActive ? (
+        ) : !payoutConfigured ? (
           <section className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -951,12 +957,26 @@ function BancoPage() {
                 {status?.accountStatus ? ` · ${status.accountStatus}` : ""}
               </p>
             </div>
-            <p className="text-xs text-emerald-900/80 break-all">
-              Wallet ID: {status?.walletId}
-            </p>
-            <p className="text-xs text-emerald-900/80">
-              Saque automático: {status?.hasApiKey ? "ativado" : "não ativado"}
-            </p>
+            {isPixMode ? (
+              <>
+                <p className="text-xs text-emerald-900/80 break-all">
+                  Chave PIX: {pixKey ? maskPix(pixKey, pixKeyType) : "—"}
+                </p>
+                <p className="text-xs text-emerald-900/80">
+                  Seu saldo fica no app e o saque é enviado pela plataforma.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-emerald-900/80 break-all">
+                  Wallet ID: {status?.walletId}
+                </p>
+                <p className="text-xs text-emerald-900/80">
+                  Saque automático:{" "}
+                  {canAutoWithdraw ? "ativado" : "não ativado"}
+                </p>
+              </>
+            )}
           </section>
         )}
 
@@ -1126,6 +1146,7 @@ function BancoPage() {
               kycVerified={kycVerified}
               walletId={status?.walletId ?? ""}
               hasApiKey={status?.hasApiKey ?? false}
+              payoutMode={payoutMode}
               initial={payoutAccount ? mapPayout(payoutAccount) : null}
             />
 
