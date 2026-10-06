@@ -112,9 +112,12 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
 
     const { data: profile, error: pErr } = await (supabase as any)
       .from("profiles")
-      .select("asaas_api_key_encrypted")
+      .select("asaas_api_key_encrypted, cpf")
       .eq("user_id", userId)
       .single();
+    if (isPixMode && !profile?.cpf) {
+      throw new Error("CPF não encontrado no seu cadastro. Conclua a verificação de identidade.");
+    }
     if (!isPixMode && (pErr || !profile?.asaas_api_key_encrypted)) {
       throw new Error(
         "Você precisa cadastrar sua API key Asaas em Meu Banco para sacar automaticamente. Sem ela, faça o saque direto no painel Asaas.",
@@ -151,6 +154,21 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         externalReference: row.id,
         description: "Saque Monetisexy",
       });
+
+      // Modo Só PIX: a chave precisa ser do mesmo CPF da verificação.
+      if (isPixMode) {
+        const match = asaas.docMatches(transfer.bankAccount?.cpfCnpj, String(profile.cpf));
+        if (match === false) {
+          try {
+            await asaas.cancelTransfer(apiKey, transfer.id);
+          } catch {
+            /* se já não puder cancelar, o admin vê como falha */
+          }
+          throw new Error(
+            "A chave PIX informada não está no seu CPF. Cadastre uma chave PIX no seu nome em Meu Banco.",
+          );
+        }
+      }
 
       let finalStatus = transfer.status;
       if (transfer.status === "PENDING") {

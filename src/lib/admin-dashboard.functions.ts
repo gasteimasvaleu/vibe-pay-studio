@@ -352,7 +352,72 @@ export const listAdminWithdrawals = createServerFn({ method: "GET" })
         .in("user_id", ids);
       (p ?? []).forEach((r: any) => (profs[r.user_id] = r));
     }
-    return (rows ?? []).map((r: any) => ({ ...r, creator: profs[r.creator_id] ?? null }));
+    const modes: Record<string, string> = {};
+    if (ids.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: pa } = await (supabaseAdmin as any)
+        .from("payout_accounts")
+        .select("user_id, payout_mode")
+        .in("user_id", ids);
+      (pa ?? []).forEach((r: any) => (modes[r.user_id] = r.payout_mode));
+    }
+    return (rows ?? []).map((r: any) => ({
+      ...r,
+      creator: profs[r.creator_id] ?? null,
+      payout_mode: modes[r.creator_id] ?? "asaas_split",
+    }));
+  });
+
+/** Resumo do modo "Só PIX": quanto a plataforma guarda/deve aos creators. */
+export const getAdminPixPayoutSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as any;
+    const { data: pa, error } = await admin
+      .from("payout_accounts")
+      .select("user_id")
+      .eq("payout_mode", "pix");
+    if (error) throw new Error(error.message);
+    const ids: string[] = (pa ?? []).map((r: any) => r.user_id);
+    if (ids.length === 0)
+      return { creators: 0, releasedOwedCents: 0, pendingOwedCents: 0, pendingWithdrawalsCents: 0, pendingWithdrawalsCount: 0 };
+    const [{ data: wallets }, { data: wds }] = await Promise.all([
+      admin
+        .from("creator_wallets")
+        .select("user_id, released_cents, pending_national_cents, pending_international_cents")
+        .in("user_id", ids),
+      admin
+        .from("withdrawals")
+        .select("creator_id, amount_cents, status")
+        .in("creator_id", ids)
+        .in("status", ["requested", "approved", "in_review", "paid"]),
+    ]);
+    let released = 0;
+    let pending = 0;
+    (wallets ?? []).forEach((w: any) => {
+      released += Number(w.released_cents ?? 0);
+      pending += Number(w.pending_national_cents ?? 0) + Number(w.pending_international_cents ?? 0);
+    });
+    let withdrawn = 0;
+    let pendingW = 0;
+    let pendingCount = 0;
+    (wds ?? []).forEach((w: any) => {
+      withdrawn += Number(w.amount_cents ?? 0);
+      if (w.status !== "paid") {
+        pendingW += Number(w.amount_cents ?? 0);
+        pendingCount += 1;
+      }
+    });
+    return {
+      creators: ids.length,
+      releasedOwedCents: Math.max(released - withdrawn, 0) + pendingW,
+      pendingOwedCents: pending,
+      pendingWithdrawalsCents: pendingW,
+      pendingWithdrawalsCount: pendingCount,
+    };
   });
 
 // ---------- Reports (fila completa com dados hidratados) ----------
