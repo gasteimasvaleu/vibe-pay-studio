@@ -10,6 +10,12 @@ Manter o split para quem já tem conta Asaas (mais seguro: o dinheiro do creator
 - No modo PIX, o saldo dele aparece no Meu Banco da mesma forma (liberado / a liberar).
 - No saque, a plataforma envia o PIX da conta dela para a chave dele. Status iguais aos de hoje ("Aguardando autorização" → "Concluído").
 
+## Simplificar "Cadastrar Dados Bancários"
+- Remover Banco, Tipo de conta, Agência e Número da conta: hoje são só guardados e nunca usados no saque.
+- Manter só **Tipo de chave PIX + Chave PIX**: é para onde o dinheiro vai (a conta do creator em qualquer banco).
+- Campos de Wallet ID e API key Asaas aparecem apenas no modo "Conta Asaas".
+- Validar que o Wallet ID tem formato de ID (hoje aceita e-mail por engano).
+
 ## Regras
 - Chave PIX precisa ser do mesmo CPF do KYC (contra fraude).
 - Mesmo prazo de liberação e saque mínimo de hoje.
