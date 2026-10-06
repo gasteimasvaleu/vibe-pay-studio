@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { listAdminWithdrawals } from "@/lib/admin-dashboard.functions";
+import { listAdminWithdrawals, getAdminPixPayoutSummary } from "@/lib/admin-dashboard.functions";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
@@ -30,6 +30,10 @@ function AdminWithdrawals() {
     queryFn: () => fetchFn({ data: { status, limit: 200 } }),
     staleTime: 15_000,
   });
+  const sumFn = useServerFn(getAdminPixPayoutSummary);
+  const sum = useQuery({ queryKey: ["admin-pix-summary"], queryFn: () => sumFn(), staleTime: 15_000 });
+  const [modeFilter, setModeFilter] = useState<"" | "pix" | "asaas_split">("");
+  const rows = (q.data ?? []).filter((w: any) => !modeFilter || w.payout_mode === modeFilter);
 
   return (
     <div className="space-y-4">
@@ -48,9 +52,41 @@ function AdminWithdrawals() {
           </button>
         ))}
       </div>
+      <div className="flex gap-1">
+        {([["", "Todos os modos"], ["pix", "Só PIX"], ["asaas_split", "Conta Asaas"]] as const).map(([v, l]) => (
+          <button
+            key={v}
+            onClick={() => setModeFilter(v)}
+            className={`px-3 py-1 text-xs rounded-full border ${
+              modeFilter === v
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        {[
+          ["Creators no modo Só PIX", sum.data ? String(sum.data.creators) : "—"],
+          ["Liberado que a plataforma deve", sum.data ? brl(sum.data.releasedOwedCents) : "—"],
+          ["A liberar (ainda em prazo)", sum.data ? brl(sum.data.pendingOwedCents) : "—"],
+          [
+            "Saques Só PIX pendentes",
+            sum.data ? `${brl(sum.data.pendingWithdrawalsCents)} · ${sum.data.pendingWithdrawalsCount}` : "—",
+          ],
+        ].map(([l, v]) => (
+          <Card key={l} className="p-3">
+            <p className="text-xs text-muted-foreground">{l}</p>
+            <p className="text-base font-semibold text-foreground mt-1">{v}</p>
+          </Card>
+        ))}
+      </div>
       <p className="text-xs text-muted-foreground">
-        Os saques são processados automaticamente via wallet ID (integração Asaas). Esta tela é
-        somente para monitoramento.
+        Saques "Só PIX" saem da conta Asaas da plataforma; mantenha saldo suficiente para cobri-los.
+        Saques "Conta Asaas" saem da conta do próprio creator.
       </p>
 
       <Card className="overflow-hidden">
@@ -60,7 +96,7 @@ function AdminWithdrawals() {
           </div>
         ) : q.error || !q.data ? (
           <div className="p-6 text-destructive text-sm">Erro.</div>
-        ) : q.data.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground">Nenhum saque.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -78,13 +114,16 @@ function AdminWithdrawals() {
                 </tr>
               </thead>
               <tbody>
-                {q.data.map((w: any) => (
+                {rows.map((w: any) => (
                   <tr key={w.id} className="border-t border-border">
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(w.requested_at ?? w.created_at).toLocaleString("pt-BR")}
                     </td>
                     <td className="px-3 py-2">
                       {w.creator ? `@${w.creator.username}` : w.creator_id.slice(0, 8)}
+                      <div className="text-[10px] text-muted-foreground">
+                        {w.payout_mode === "pix" ? "Só PIX" : "Conta Asaas"}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-xs">
                       <div>{w.pix_key_type}</div>

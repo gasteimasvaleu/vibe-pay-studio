@@ -482,7 +482,24 @@ export type AsaasTransfer = {
   pixAddressKey?: string;
   failReason?: string | null;
   externalReference?: string | null;
+  bankAccount?: { cpfCnpj?: string | null; ownerName?: string | null } | null;
 };
+
+export async function cancelTransfer(apiKey: string, transferId: string): Promise<void> {
+  await asaasFetch(`/transfers/${transferId}/cancel`, { method: "POST" }, apiKey);
+}
+
+/** Compara o CPF/CNPJ (possivelmente mascarado com *) do dono da chave com o esperado. */
+export function docMatches(ownerDoc: string | null | undefined, expected: string): boolean | null {
+  if (!ownerDoc) return null;
+  const o = ownerDoc.replace(/[^0-9*]/g, "");
+  const e = expected.replace(/\D/g, "");
+  if (o.length !== e.length) return null;
+  for (let i = 0; i < o.length; i++) {
+    if (o[i] !== "*" && o[i] !== e[i]) return false;
+  }
+  return true;
+}
 
 export async function createPixTransfer(
   apiKey: string,
