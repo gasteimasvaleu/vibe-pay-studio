@@ -136,7 +136,15 @@ export const saveBuyerCpf = createServerFn({ method: "POST" })
 async function getCreatorWallet(
   supabase: any,
   creatorId: string,
-): Promise<string> {
+): Promise<string | null> {
+  // Modo "Só PIX": sem split — 100% entra na conta da plataforma.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: pa } = await (supabaseAdmin as any)
+    .from("payout_accounts")
+    .select("payout_mode")
+    .eq("user_id", creatorId)
+    .maybeSingle();
+  if (pa?.payout_mode === "pix") return null;
   const { data, error } = await supabase
     .from("profiles")
     .select("asaas_wallet_id")
@@ -1283,15 +1291,12 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
 
 
 
-// ---------------- Payout setup (conta Asaas própria + dados bancários) ----------------
+// ---------------- Payout setup (modo Asaas split ou Só PIX) ----------------
 
 type PayoutSetupInput = {
-  walletId: string;
+  payoutMode: "asaas_split" | "pix";
+  walletId?: string;
   apiKey?: string;
-  bankName: string;
-  accountType: "corrente" | "poupanca";
-  agency: string;
-  accountNumber: string;
   pixKeyType: "cpf" | "cnpj" | "email" | "telefone" | "aleatoria";
   pixKey: string;
 };
@@ -1302,90 +1307,103 @@ const UUID_REGEX =
 export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: PayoutSetupInput) => {
-    const required: Array<[keyof PayoutSetupInput, string]> = [
-      ["walletId", "Wallet ID Asaas"],
-      ["bankName", "banco"],
-      ["accountType", "tipo de conta"],
-      ["agency", "agência"],
-      ["accountNumber", "número da conta"],
-      ["pixKeyType", "tipo de chave Pix"],
-      ["pixKey", "chave Pix"],
-    ];
-    for (const [k, label] of required) {
-      const v = (data as any)[k];
-      if (!v || String(v).trim().length === 0) {
-        throw new Error(`Informe ${label}`);
-      }
-    }
-    if (!UUID_REGEX.test(data.walletId.trim())) {
-      throw new Error("Wallet ID inválido. Deve ser um UUID válido.");
+    if (data.payoutMode !== "asaas_split" && data.payoutMode !== "pix")
+      throw new Error("Escolha como deseja receber");
+    if (!data.pixKeyType) throw new Error("Informe o tipo de chave Pix");
+    if (!data.pixKey?.trim()) throw new Error("Informe a chave Pix");
+    if (data.payoutMode === "asaas_split") {
+      if (!data.walletId?.trim()) throw new Error("Informe o Wallet ID Asaas");
+      if (!UUID_REGEX.test(data.walletId.trim()))
+        throw new Error(
+          "Wallet ID inválido. Ele tem o formato 00000000-0000-0000-0000-000000000000 (não é o e-mail).",
+        );
     }
     return data;
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: profile, error: profErr } = await supabase
+    const { data: profile, error: profErr } = await (supabase as any)
       .from("profiles")
-      .select("kyc_status")
+      .select("kyc_status, cpf")
       .eq("user_id", userId)
       .single();
     if (profErr || !profile) throw new Error("perfil não encontrado");
-
     if (profile.kyc_status !== "verified") {
-      throw new Error(
-        "Verifique sua identidade antes de configurar o recebimento",
-      );
+      throw new Error("Verifique sua identidade antes de configurar o recebimento");
     }
 
-    const walletId = data.walletId.trim();
-    let encryptedApiKey: string | null = null;
+    const pixKey = data.pixKey.trim();
+    const onlyDigits = (v: string) => v.replace(/\D/g, "");
+    if (data.payoutMode === "pix" && data.pixKeyType === "cpf" && profile.cpf) {
+      if (onlyDigits(pixKey) !== onlyDigits(String(profile.cpf)))
+        throw new Error("A chave PIX CPF precisa ser o mesmo CPF da sua verificação");
+    }
 
-    if (data.apiKey?.trim()) {
-      const asaas = await loadAsaas();
-      const recovered = await asaas.getWalletForApiKey(data.apiKey.trim());
-      if (recovered.walletId.toLowerCase() !== walletId.toLowerCase()) {
-        throw new Error("A API key informada não pertence ao Wallet ID");
+    // Troca de modo só com saldo zerado
+    const { data: current } = await (supabase as any)
+      .from("payout_accounts")
+      .select("payout_mode")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (current && current.payout_mode !== data.payoutMode) {
+      const { data: w } = await supabase
+        .from("creator_wallets")
+        .select("released_cents, pending_national_cents, pending_international_cents")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const total =
+        ((w as any)?.released_cents ?? 0) +
+        ((w as any)?.pending_national_cents ?? 0) +
+        ((w as any)?.pending_international_cents ?? 0);
+      const { data: wds } = await supabase
+        .from("withdrawals")
+        .select("amount_cents")
+        .eq("creator_id", userId)
+        .in("status", ["requested", "paid"] as any);
+      const withdrawn = (wds ?? []).reduce((a, r) => a + (r.amount_cents ?? 0), 0);
+      if (total - withdrawn > 0)
+        throw new Error("Para trocar o modo de recebimento, saque todo o seu saldo antes.");
+    }
+
+    let hasApiKey = false;
+    if (data.payoutMode === "asaas_split") {
+      const walletId = data.walletId!.trim();
+      const updatePayload: any = {
+        asaas_wallet_id: walletId,
+        asaas_account_status: "ACTIVE",
+        asaas_account_id: null,
+      };
+      if (data.apiKey?.trim()) {
+        const asaas = await loadAsaas();
+        const recovered = await asaas.getWalletForApiKey(data.apiKey.trim());
+        if (recovered.walletId.toLowerCase() !== walletId.toLowerCase()) {
+          throw new Error("A API key informada não pertence ao Wallet ID");
+        }
+        updatePayload.asaas_api_key_encrypted = asaas.encryptApiKey(data.apiKey.trim());
+        hasApiKey = true;
       }
-      encryptedApiKey = asaas.encryptApiKey(data.apiKey.trim());
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update(updatePayload)
+        .eq("user_id", userId);
+      if (updErr) throw new Error(updErr.message);
     }
-
-    const updatePayload: any = {
-      asaas_wallet_id: walletId,
-      asaas_account_status: "ACTIVE",
-      asaas_account_id: null,
-    };
-    if (encryptedApiKey) {
-      updatePayload.asaas_api_key_encrypted = encryptedApiKey;
-    }
-
-    const { error: updErr } = await supabase
-      .from("profiles")
-      .update(updatePayload)
-      .eq("user_id", userId);
-    if (updErr) throw new Error(updErr.message);
 
     const { error: payoutErr } = await (supabase as any)
       .from("payout_accounts")
       .upsert(
         {
           user_id: userId,
-          bank_name: data.bankName,
-          account_type: data.accountType,
-          agency: data.agency,
-          account_number: data.accountNumber,
+          payout_mode: data.payoutMode,
           pix_key_type: data.pixKeyType,
-          pix_key: data.pixKey,
+          pix_key: pixKey,
         },
         { onConflict: "user_id" },
       );
     if (payoutErr) throw new Error(payoutErr.message);
 
-    return {
-      walletId,
-      accountStatus: "ACTIVE",
-      hasApiKey: !!encryptedApiKey,
-    };
+    return { payoutMode: data.payoutMode, hasApiKey };
   });
 
 export const getCreatorPayoutStatus = createServerFn({ method: "GET" })
@@ -1402,7 +1420,7 @@ export const getCreatorPayoutStatus = createServerFn({ method: "GET" })
     const { data: payout } = await (supabase as any)
       .from("payout_accounts")
       .select(
-        "bank_name, account_type, agency, account_number, pix_key_type, pix_key",
+        "payout_mode, bank_name, account_type, agency, account_number, pix_key_type, pix_key",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -1411,6 +1429,10 @@ export const getCreatorPayoutStatus = createServerFn({ method: "GET" })
       walletId: (profile?.asaas_wallet_id as string | null) ?? null,
       accountStatus: (profile?.asaas_account_status as string | null) ?? null,
       hasApiKey: !!(profile?.asaas_api_key_encrypted as string | undefined),
+      payoutMode: ((payout?.payout_mode as string | undefined) ?? null) as
+        | "asaas_split"
+        | "pix"
+        | null,
       payoutAccount: payout ?? null,
     };
   });
