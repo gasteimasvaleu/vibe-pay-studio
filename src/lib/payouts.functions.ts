@@ -103,12 +103,19 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     if (availableReleasedCents < amount)
       throw new Error("saldo liberado insuficiente");
 
+    const { data: pa } = await (supabase as any)
+      .from("payout_accounts")
+      .select("payout_mode")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const isPixMode = pa?.payout_mode === "pix";
+
     const { data: profile, error: pErr } = await (supabase as any)
       .from("profiles")
       .select("asaas_api_key_encrypted")
       .eq("user_id", userId)
       .single();
-    if (pErr || !profile?.asaas_api_key_encrypted) {
+    if (!isPixMode && (pErr || !profile?.asaas_api_key_encrypted)) {
       throw new Error(
         "Você precisa cadastrar sua API key Asaas em Meu Banco para sacar automaticamente. Sem ela, faça o saque direto no painel Asaas.",
       );
@@ -126,7 +133,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         pix_key_type: data.pixKeyType ?? null,
         status: "requested",
         is_first_withdrawal: false,
-        provider: "asaas",
+        provider: isPixMode ? "asaas_platform" : "asaas",
       })
       .select("id, amount_cents, fee_cents, net_cents, status, is_first_withdrawal, requested_at")
       .single();
@@ -134,7 +141,9 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
 
     try {
       const asaas = await loadAsaas();
-      const apiKey = asaas.decryptApiKey(profile.asaas_api_key_encrypted as string);
+      const apiKey = isPixMode
+        ? asaas.getPlatformApiKey()
+        : asaas.decryptApiKey(profile.asaas_api_key_encrypted as string);
       const transfer = await asaas.createPixTransfer(apiKey, {
         value: centsToBrl(amount),
         pixAddressKey: data.pixKey.trim(),
