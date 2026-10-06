@@ -1513,39 +1513,42 @@ export type Database = {
       }
       payout_accounts: {
         Row: {
-          account_number: string
-          account_type: string
-          agency: string
-          bank_name: string
+          account_number: string | null
+          account_type: string | null
+          agency: string | null
+          bank_name: string | null
           created_at: string
           creator_profile_id: string | null
           id: string
+          payout_mode: string
           pix_key: string
           pix_key_type: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          account_number: string
-          account_type: string
-          agency: string
-          bank_name: string
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name?: string | null
           created_at?: string
           creator_profile_id?: string | null
           id?: string
+          payout_mode?: string
           pix_key: string
           pix_key_type: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          account_number?: string
-          account_type?: string
-          agency?: string
-          bank_name?: string
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name?: string | null
           created_at?: string
           creator_profile_id?: string | null
           id?: string
+          payout_mode?: string
           pix_key?: string
           pix_key_type?: string
           updated_at?: string

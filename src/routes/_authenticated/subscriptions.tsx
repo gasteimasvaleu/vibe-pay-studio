@@ -63,7 +63,7 @@ export const Route = createFileRoute("/_authenticated/subscriptions")({
   pendingComponent: SubscriptionsPending,
   errorComponent: ({ error }) => (
     <div className="p-8 text-center text-sm text-destructive" role="alert">
-      Erro ao carregar assinaturas: {error.message}
+      Erro ao carregar assinaturas: {(error as Error).message}
     </div>
   ),
   notFoundComponent: () => (

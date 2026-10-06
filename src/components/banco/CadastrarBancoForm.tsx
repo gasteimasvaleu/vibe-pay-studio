@@ -2,17 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-  Building2,
-  CreditCard,
-  Diamond,
-  Eye,
-  EyeOff,
-  Hash,
-  Landmark,
-  QrCode,
-  Wallet,
-} from "lucide-react";
+import { Diamond, Eye, EyeOff, Hash, QrCode, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,19 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { saveCreatorPayoutSetup } from "@/lib/payments.functions";
-
-const BANCOS = [
-  "Banco do Brasil",
-  "Bradesco",
-  "Caixa Econômica",
-  "Itaú",
-  "Nubank",
-  "Santander",
-  "Inter",
-  "C6 Bank",
-  "PicPay",
-  "Mercado Pago",
-];
+import { cn } from "@/lib/utils";
 
 const PIX_PLACEHOLDERS: Record<string, string> = {
   cpf: "Digite seu CPF",
@@ -47,19 +25,15 @@ const PIX_PLACEHOLDERS: Record<string, string> = {
   aleatoria: "Digite a chave aleatória",
 };
 
+type Mode = "pix" | "asaas_split";
+
 interface CadastrarBancoFormProps {
   onClose: () => void;
   kycVerified: boolean;
   walletId?: string;
   hasApiKey?: boolean;
-  initial?: {
-    bankName?: string;
-    accountType?: string;
-    agency?: string;
-    accountNumber?: string;
-    pixKeyType?: string;
-    pixKey?: string;
-  } | null;
+  payoutMode?: Mode | null;
+  initial?: { pixKeyType?: string; pixKey?: string } | null;
 }
 
 export function CadastrarBancoForm({
@@ -67,21 +41,17 @@ export function CadastrarBancoForm({
   kycVerified,
   walletId: initialWalletId = "",
   hasApiKey: initialHasApiKey = false,
+  payoutMode,
   initial,
 }: CadastrarBancoFormProps) {
-  // Conta Asaas
+  const [mode, setMode] = useState<Mode>(
+    payoutMode ?? (initialWalletId ? "asaas_split" : "pix"),
+  );
   const [walletId, setWalletId] = useState(initialWalletId);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-
-  // Banco / PIX
-  const [banco, setBanco] = useState(initial?.bankName ?? "");
-  const [tipoConta, setTipoConta] = useState(initial?.accountType ?? "");
-  const [agencia, setAgencia] = useState(initial?.agency ?? "");
-  const [conta, setConta] = useState(initial?.accountNumber ?? "");
   const [tipoPix, setTipoPix] = useState(initial?.pixKeyType ?? "");
   const [chavePix, setChavePix] = useState(initial?.pixKey ?? "");
-
   const [loading, setLoading] = useState(false);
   const savePayout = useServerFn(saveCreatorPayoutSetup);
   const queryClient = useQueryClient();
@@ -96,12 +66,9 @@ export function CadastrarBancoForm({
     try {
       await savePayout({
         data: {
-          walletId,
-          apiKey: apiKey || undefined,
-          bankName: banco,
-          accountType: tipoConta as "corrente" | "poupanca",
-          agency: agencia,
-          accountNumber: conta,
+          payoutMode: mode,
+          walletId: mode === "asaas_split" ? walletId : undefined,
+          apiKey: mode === "asaas_split" ? apiKey || undefined : undefined,
           pixKeyType: tipoPix as any,
           pixKey: chavePix,
         },
@@ -119,11 +86,10 @@ export function CadastrarBancoForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {!kycVerified && (
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-2xl border border-border bg-accent/40 p-4 text-sm text-foreground">
           <p className="font-semibold">Verificação de identidade pendente</p>
-          <p className="mt-1">
-            Para receber pagamentos você precisa concluir a verificação de
-            identidade.
+          <p className="mt-1 text-muted-foreground">
+            Para receber pagamentos você precisa concluir a verificação de identidade.
           </p>
           <Link
             to="/creator/onboarding/documentos"
@@ -134,117 +100,80 @@ export function CadastrarBancoForm({
         </div>
       )}
 
-      {/* Conta Asaas */}
-      <section className="space-y-4">
-        <h3 className="text-sm font-bold text-foreground">Conta Asaas</h3>
-
-        <IconField
-          icon={<Wallet className="h-4 w-4" />}
-          label="Wallet ID Asaas"
-          value={walletId}
-          onChange={setWalletId}
-          placeholder="00000000-0000-0000-0000-000000000000"
-        />
-
-        <div className="space-y-2">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            API key Asaas (opcional)
-          </Label>
-          <div className="relative">
-            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-            <Input
-              type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Sua chave de API Asaas"
-              className="pl-9 pr-10 h-12 rounded-md"
-            />
-            <button
-              type="button"
-              onClick={() => setShowApiKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={showApiKey ? "Ocultar API key" : "Mostrar API key"}
-            >
-              {showApiKey ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            A API key é necessária apenas se você quiser que o app faça saques
-            Pix automaticamente. Você encontra em Minha Conta → Integrações/API
-            no painel Asaas.
-          </p>
-          {initialHasApiKey && !apiKey && (
-            <p className="text-xs text-emerald-600">
-              API key já cadastrada. Deixe em branco para manter a atual.
-            </p>
-          )}
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Como você quer receber?</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ModeCard
+            active={mode === "pix"}
+            onClick={() => setMode("pix")}
+            title="Chave PIX"
+            desc="Mais simples. Seu saldo fica no app e você saca para sua chave PIX."
+          />
+          <ModeCard
+            active={mode === "asaas_split"}
+            onClick={() => setMode("asaas_split")}
+            title="Conta Asaas"
+            desc="Sua parte cai direto na sua conta Asaas a cada venda."
+          />
         </div>
       </section>
 
-      {/* Conta bancária */}
+      {mode === "asaas_split" && (
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-foreground">Conta Asaas</h3>
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Wallet ID Asaas <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={walletId}
+                onChange={(e) => setWalletId(e.target.value)}
+                placeholder="00000000-0000-0000-0000-000000000000"
+                className="pl-9 h-12 rounded-md"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              É um código (não o e-mail). No painel Asaas: Minha Conta → Integrações → Wallet ID.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              API key Asaas
+            </Label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Sua chave de API Asaas"
+                className="pl-9 pr-10 h-12 rounded-md"
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showApiKey ? "Ocultar API key" : "Mostrar API key"}
+              >
+                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Necessária para sacar pelo app. Sem ela, faça o saque no painel Asaas.
+            </p>
+            {initialHasApiKey && !apiKey && (
+              <p className="text-xs text-primary">
+                API key já cadastrada. Deixe em branco para manter a atual.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="space-y-4">
-        <h3 className="text-sm font-bold text-foreground">Conta bancária</h3>
-
-        <div className="space-y-2">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            Banco <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-            <Select value={banco} onValueChange={setBanco}>
-              <SelectTrigger className="pl-9 h-12 rounded-md">
-                <SelectValue placeholder="Banco" />
-              </SelectTrigger>
-              <SelectContent>
-                {BANCOS.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            Tipo de conta <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-            <Select value={tipoConta} onValueChange={setTipoConta}>
-              <SelectTrigger className="pl-9 h-12 rounded-md">
-                <SelectValue placeholder="Tipo de conta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="corrente">Conta corrente</SelectItem>
-                <SelectItem value="poupanca">Conta poupança</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <IconField
-          icon={<Building2 className="h-4 w-4" />}
-          label="Agência"
-          value={agencia}
-          onChange={setAgencia}
-          placeholder="Agência"
-          inputMode="numeric"
-        />
-
-        <IconField
-          icon={<Hash className="h-4 w-4" />}
-          label="Número da conta (com dígito)"
-          value={conta}
-          onChange={setConta}
-          placeholder="Número da conta (com dígito)"
-        />
-
+        <h3 className="text-sm font-bold text-foreground">Chave PIX para saque</h3>
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">
             Tipo de chave Pix <span className="text-destructive">*</span>
@@ -271,7 +200,6 @@ export function CadastrarBancoForm({
             </Select>
           </div>
         </div>
-
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">
             Chave Pix <span className="text-destructive">*</span>
@@ -281,26 +209,19 @@ export function CadastrarBancoForm({
             <Input
               value={chavePix}
               onChange={(e) => setChavePix(e.target.value)}
-              placeholder={
-                tipoPix
-                  ? PIX_PLACEHOLDERS[tipoPix]
-                  : "Selecione o tipo de chave pix"
-              }
+              placeholder={tipoPix ? PIX_PLACEHOLDERS[tipoPix] : "Selecione o tipo de chave pix"}
               disabled={!tipoPix}
               className="pl-9 h-12 rounded-md"
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            A chave precisa estar no seu nome (mesmo CPF da verificação). Pode ser de qualquer banco.
+          </p>
         </div>
       </section>
 
       <div className="grid grid-cols-2 gap-4 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-md"
-          onClick={onClose}
-          disabled={loading}
-        >
+        <Button type="button" variant="outline" className="rounded-md" onClick={onClose} disabled={loading}>
           Voltar
         </Button>
         <Button
@@ -315,41 +236,28 @@ export function CadastrarBancoForm({
   );
 }
 
-function IconField({
-  icon,
-  label,
-  value,
-  onChange,
-  placeholder,
-  type,
-  inputMode,
+function ModeCard({
+  active,
+  onClick,
+  title,
+  desc,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  type?: string;
-  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  desc: string;
 }) {
   return (
-    <div className="space-y-2">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label} <span className="text-destructive">*</span>
-      </Label>
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-          {icon}
-        </span>
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          type={type}
-          inputMode={inputMode}
-          className="pl-9 h-12 rounded-md"
-        />
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border p-3 text-left transition-colors",
+        active ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40",
+      )}
+    >
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+    </button>
   );
 }

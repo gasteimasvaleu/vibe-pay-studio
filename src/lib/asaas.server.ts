@@ -73,6 +73,10 @@ export function computeCreatorNetCents(
   return { platformFeeCents, gatewayFeeCents, netCreatorCents };
 }
 
+export function getPlatformApiKey(): string {
+  return getApiKey();
+}
+
 function getApiKey(): string {
   const key = process.env.ASAAS_API_KEY;
   if (!key) throw new Error("ASAAS_API_KEY não configurada");

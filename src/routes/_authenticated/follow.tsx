@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/follow")({
   pendingComponent: FollowPending,
   errorComponent: ({ error }) => (
     <div className="p-8 text-center text-sm text-destructive" role="alert">
-      Erro ao carregar assinantes: {error.message}
+      Erro ao carregar assinantes: {(error as Error).message}
     </div>
   ),
   notFoundComponent: () => (
