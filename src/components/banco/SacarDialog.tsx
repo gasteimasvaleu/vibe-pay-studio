@@ -24,7 +24,7 @@ const formatBRL = (cents: number) => BRL.format((cents ?? 0) / 100);
 
 const MIN_CENTS = 5000; // R$ 50,00 (mín. do server)
 
-const PIX_TYPE_LABEL: Record<string, string> = {
+export const PIX_TYPE_LABEL: Record<string, string> = {
   cpf: "CPF",
   cnpj: "CNPJ",
   email: "E-mail",
