@@ -9,159 +9,128 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
-import { Route as SobreRouteImport } from './routes/sobre'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
-import { Route as EntrarRouteImport } from './routes/entrar'
-import { Route as DmcaRouteImport } from './routes/dmca'
-import { Route as ContatoRouteImport } from './routes/contato'
-import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
-import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
+import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
+import { Route as ContatoRouteImport } from './routes/contato'
+import { Route as DmcaRouteImport } from './routes/dmca'
+import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
+import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
+import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
+import { Route as AuthenticatedCertificarPerfilRouteImport } from './routes/_authenticated/certificar-perfil'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
+import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
+import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
+import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
+import { Route as AuthenticatedCreatorHubRouteImport } from './routes/_authenticated/creator-hub'
+import { Route as AuthenticatedCriarPerfilGratuitoRouteImport } from './routes/_authenticated/criar-perfil-gratuito'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
+import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
+import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticated/mywallet'
+import { Route as AuthenticatedPostsarquivadosRouteImport } from './routes/_authenticated/postsarquivados'
+import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
+import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
+import { Route as AuthenticatedPublicacoesAgendadasRouteImport } from './routes/_authenticated/publicacoes-agendadas'
+import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
+import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as CadastroIndexRouteImport } from './routes/cadastro.index'
 import { Route as CadastroConfirmeEmailRouteImport } from './routes/cadastro.confirme-email'
-import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
-import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
-import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
-import { Route as AuthenticatedPublisherRouteImport } from './routes/_authenticated/publisher'
-import { Route as AuthenticatedPublicacoesAgendadasRouteImport } from './routes/_authenticated/publicacoes-agendadas'
-import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
-import { Route as AuthenticatedPromotionRouteImport } from './routes/_authenticated/promotion'
-import { Route as AuthenticatedPostsarquivadosRouteImport } from './routes/_authenticated/postsarquivados'
-import { Route as AuthenticatedMywalletRouteImport } from './routes/_authenticated/mywallet'
-import { Route as AuthenticatedMyMonetisexStatsRouteImport } from './routes/_authenticated/my-monetisex-stats'
-import { Route as AuthenticatedFollowRouteImport } from './routes/_authenticated/follow'
-import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCriarPerfilGratuitoRouteImport } from './routes/_authenticated/criar-perfil-gratuito'
-import { Route as AuthenticatedCreatorHubRouteImport } from './routes/_authenticated/creator-hub'
-import { Route as AuthenticatedContentLeakReportRouteImport } from './routes/_authenticated/content-leak-report'
-import { Route as AuthenticatedColecoesRouteImport } from './routes/_authenticated/colecoes'
-import { Route as AuthenticatedChatConfiguracoesRouteImport } from './routes/_authenticated/chat-configuracoes'
-import { Route as AuthenticatedChatAgendamentoRouteImport } from './routes/_authenticated/chat-agendamento'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedCertificarPerfilRouteImport } from './routes/_authenticated/certificar-perfil'
-import { Route as AuthenticatedBugreportRouteImport } from './routes/_authenticated/bugreport'
-import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
-import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
-import { Route as AuthenticatedEmAltaIndexRouteImport } from './routes/_authenticated/em-alta.index'
-import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedSettingsTwoFactorRouteImport } from './routes/_authenticated/settings.two-factor'
-import { Route as AuthenticatedSettingsThemeRouteImport } from './routes/_authenticated/settings.theme'
-import { Route as AuthenticatedSettingsSubscriptionRouteImport } from './routes/_authenticated/settings.subscription'
-import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_authenticated/settings.social-media'
-import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
-import { Route as AuthenticatedSettingsSecurityMenuRouteImport } from './routes/_authenticated/settings.security-menu'
-import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings.security'
-import { Route as AuthenticatedSettingsRestrictionsRouteImport } from './routes/_authenticated/settings.restrictions'
-import { Route as AuthenticatedSettingsPrivacyOptionsRouteImport } from './routes/_authenticated/settings.privacy-options'
-import { Route as AuthenticatedSettingsPrivacyMailRouteImport } from './routes/_authenticated/settings.privacy-mail'
-import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_authenticated/settings.privacy'
-import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
-import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
-import { Route as AuthenticatedSettingsMutedRouteImport } from './routes/_authenticated/settings.muted'
-import { Route as AuthenticatedSettingsLanguageRouteImport } from './routes/_authenticated/settings.language'
-import { Route as AuthenticatedSettingsDeviceManagementRouteImport } from './routes/_authenticated/settings.device-management'
-import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
-import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
-import { Route as AuthenticatedSettingsChatSettingsRouteImport } from './routes/_authenticated/settings.chat-settings'
-import { Route as AuthenticatedSettingsChangePasswordRouteImport } from './routes/_authenticated/settings.change-password'
-import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile.$username'
-import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
-import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
-import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
-import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
-import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
-import { Route as AuthenticatedEmAltaSectionRouteImport } from './routes/_authenticated/em-alta.$section'
-import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
-import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
-import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
-import { Route as AuthenticatedAdminVideocallsRouteImport } from './routes/_authenticated/admin.videocalls'
-import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAdminTrophiesRouteImport } from './routes/_authenticated/admin.trophies'
-import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
-import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
-import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin.stories'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
-import { Route as AuthenticatedAdminRefundsRouteImport } from './routes/_authenticated/admin.refunds'
-import { Route as AuthenticatedAdminPromotionsRouteImport } from './routes/_authenticated/admin.promotions'
-import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
-import { Route as AuthenticatedAdminLivesRouteImport } from './routes/_authenticated/admin.lives'
-import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
-import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
-import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
-import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
-import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
-import { Route as AuthenticatedAdminBroadcastsRouteImport } from './routes/_authenticated/admin.broadcasts'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
-import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
-import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
-import { Route as AuthenticatedLiveLiveIdIndexRouteImport } from './routes/_authenticated/live.$liveId.index'
-import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
-import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
-import { Route as ApiPublicHooksSubscriptionRemindersRouteImport } from './routes/api/public/hooks/subscription-reminders'
-import { Route as ApiPublicHooksDispatchBroadcastsRouteImport } from './routes/api/public/hooks/dispatch-broadcasts'
-import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth/email-hook'
-import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
-import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
-import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
-import { Route as AuthenticatedLiveLiveIdTransmitirRouteImport } from './routes/_authenticated/live.$liveId.transmitir'
-import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
-import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
-import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
-import { Route as AuthenticatedChatCallCallIdRouteImport } from './routes/_authenticated/chat.call.$callId'
+import { Route as AuthenticatedAdminBroadcastsRouteImport } from './routes/_authenticated/admin.broadcasts'
+import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
+import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
+import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
+import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
+import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
+import { Route as AuthenticatedAdminLivesRouteImport } from './routes/_authenticated/admin.lives'
+import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as AuthenticatedAdminPromotionsRouteImport } from './routes/_authenticated/admin.promotions'
+import { Route as AuthenticatedAdminRefundsRouteImport } from './routes/_authenticated/admin.refunds'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin.stories'
+import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
+import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin.transactions'
+import { Route as AuthenticatedAdminTrophiesRouteImport } from './routes/_authenticated/admin.trophies'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
+import { Route as AuthenticatedAdminVideocallsRouteImport } from './routes/_authenticated/admin.videocalls'
+import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
+import { Route as AuthenticatedBancoCadastrarRouteImport } from './routes/_authenticated/banco.cadastrar'
+import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
+import { Route as AuthenticatedEmAltaIndexRouteImport } from './routes/_authenticated/em-alta.index'
+import { Route as AuthenticatedEmAltaSectionRouteImport } from './routes/_authenticated/em-alta.$section'
+import { Route as AuthenticatedLiveLiveIdRouteImport } from './routes/_authenticated/live.$liveId'
+import { Route as AuthenticatedLiveNovaRouteImport } from './routes/_authenticated/live.nova'
+import { Route as AuthenticatedMywalletIndexRouteImport } from './routes/_authenticated/mywallet.index'
+import { Route as AuthenticatedMywalletExtratoRouteImport } from './routes/_authenticated/mywallet.extrato'
+import { Route as AuthenticatedMywalletRecarregarRouteImport } from './routes/_authenticated/mywallet.recarregar'
+import { Route as AuthenticatedPerfilUsernameRouteImport } from './routes/_authenticated/perfil.$username'
+import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile.$username'
+import { Route as AuthenticatedSettingsChangePasswordRouteImport } from './routes/_authenticated/settings.change-password'
+import { Route as AuthenticatedSettingsChatSettingsRouteImport } from './routes/_authenticated/settings.chat-settings'
+import { Route as AuthenticatedSettingsCreatorRouteImport } from './routes/_authenticated/settings.creator'
+import { Route as AuthenticatedSettingsDetailsRouteImport } from './routes/_authenticated/settings.details'
+import { Route as AuthenticatedSettingsDeviceManagementRouteImport } from './routes/_authenticated/settings.device-management'
+import { Route as AuthenticatedSettingsLanguageRouteImport } from './routes/_authenticated/settings.language'
+import { Route as AuthenticatedSettingsMutedRouteImport } from './routes/_authenticated/settings.muted'
+import { Route as AuthenticatedSettingsMyprofileRouteImport } from './routes/_authenticated/settings.myprofile'
+import { Route as AuthenticatedSettingsPersonalRouteImport } from './routes/_authenticated/settings.personal'
+import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_authenticated/settings.privacy'
+import { Route as AuthenticatedSettingsPrivacyMailRouteImport } from './routes/_authenticated/settings.privacy-mail'
+import { Route as AuthenticatedSettingsPrivacyOptionsRouteImport } from './routes/_authenticated/settings.privacy-options'
+import { Route as AuthenticatedSettingsRestrictionsRouteImport } from './routes/_authenticated/settings.restrictions'
+import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings.security'
+import { Route as AuthenticatedSettingsSecurityMenuRouteImport } from './routes/_authenticated/settings.security-menu'
+import { Route as AuthenticatedSettingsSocialRouteImport } from './routes/_authenticated/settings.social'
+import { Route as AuthenticatedSettingsSocialMediaRouteImport } from './routes/_authenticated/settings.social-media'
+import { Route as AuthenticatedSettingsSubscriptionRouteImport } from './routes/_authenticated/settings.subscription'
+import { Route as AuthenticatedSettingsThemeRouteImport } from './routes/_authenticated/settings.theme'
+import { Route as AuthenticatedSettingsTwoFactorRouteImport } from './routes/_authenticated/settings.two-factor'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
+import { Route as AuthenticatedChatCallCallIdRouteImport } from './routes/_authenticated/chat.call.$callId'
+import { Route as AuthenticatedCreatorOnboardingAssinaturaRouteImport } from './routes/_authenticated/creator.onboarding.assinatura'
+import { Route as AuthenticatedCreatorOnboardingDocumentosRouteImport } from './routes/_authenticated/creator.onboarding.documentos'
+import { Route as AuthenticatedCreatorOnboardingRedesSociaisRouteImport } from './routes/_authenticated/creator.onboarding.redes-sociais'
+import { Route as AuthenticatedLiveLiveIdIndexRouteImport } from './routes/_authenticated/live.$liveId.index'
+import { Route as AuthenticatedLiveLiveIdTransmitirRouteImport } from './routes/_authenticated/live.$liveId.transmitir'
+import { Route as AuthenticatedSettingsDeviceManagementIndexRouteImport } from './routes/_authenticated/settings.device-management.index'
+import { Route as AuthenticatedSettingsDeviceManagementRemovedRouteImport } from './routes/_authenticated/settings.device-management.removed'
+import { Route as AuthenticatedSettingsTwoFactorIndexRouteImport } from './routes/_authenticated/settings.two-factor.index'
+import { Route as AuthenticatedSettingsTwoFactorSetupRouteImport } from './routes/_authenticated/settings.two-factor.setup'
+import { Route as AuthenticatedSettingsTwoFactorVerifyRouteImport } from './routes/_authenticated/settings.two-factor.verify'
+import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth/email-hook'
+import { Route as ApiPublicHooksDispatchBroadcastsRouteImport } from './routes/api/public/hooks/dispatch-broadcasts'
+import { Route as ApiPublicHooksSubscriptionRemindersRouteImport } from './routes/api/public/hooks/subscription-reminders'
+import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
+import { Route as ApiPublicWebhooksVeriffDecisionRouteImport } from './routes/api/public/webhooks/veriff-decision'
 import { Route as AuthenticatedCreatorOnboardingDocumentosIndexRouteImport } from './routes/_authenticated/creator.onboarding.documentos.index'
-import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
-import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
 import { Route as AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.aprovado'
+import { Route as AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.veriff-concluido'
+import { Route as AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport } from './routes/_authenticated/creator.onboarding.documentos.verificando'
 
-const TermosEPoliticasRoute = TermosEPoliticasRouteImport.update({
-  id: '/termos-e-politicas',
-  path: '/termos-e-politicas',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SobreRoute = SobreRouteImport.update({
-  id: '/sobre',
-  path: '/sobre',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: '/privacidade',
-  path: '/privacidade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
-  id: '/politicadereclamacoes',
-  path: '/politicadereclamacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EntrarRoute = EntrarRouteImport.update({
-  id: '/entrar',
-  path: '/entrar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DmcaRoute = DmcaRouteImport.update({
-  id: '/dmca',
-  path: '/dmca',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContatoRoute = ContatoRouteImport.update({
-  id: '/contato',
-  path: '/contato',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
-  id: '/como-funciona',
-  path: '/como-funciona',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CentroESegurancaRoute = CentroESegurancaRouteImport.update({
@@ -169,13 +138,189 @@ const CentroESegurancaRoute = CentroESegurancaRouteImport.update({
   path: '/centro-e-seguranca',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
+  id: '/como-funciona',
+  path: '/como-funciona',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DmcaRoute = DmcaRouteImport.update({
+  id: '/dmca',
+  path: '/dmca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
+  id: '/politicadereclamacoes',
+  path: '/politicadereclamacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreRoute = SobreRouteImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosEPoliticasRoute = TermosEPoliticasRouteImport.update({
+  id: '/termos-e-politicas',
+  path: '/termos-e-politicas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountStatusRoute =
+  AuthenticatedAccountStatusRouteImport.update({
+    id: '/account-status',
+    path: '/account-status',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBancoRoute = AuthenticatedBancoRouteImport.update({
+  id: '/banco',
+  path: '/banco',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
+  id: '/bugreport',
+  path: '/bugreport',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCertificarPerfilRoute =
+  AuthenticatedCertificarPerfilRouteImport.update({
+    id: '/certificar-perfil',
+    path: '/certificar-perfil',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatAgendamentoRoute =
+  AuthenticatedChatAgendamentoRouteImport.update({
+    id: '/chat-agendamento',
+    path: '/chat-agendamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedChatConfiguracoesRoute =
+  AuthenticatedChatConfiguracoesRouteImport.update({
+    id: '/chat-configuracoes',
+    path: '/chat-configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedColecoesRoute = AuthenticatedColecoesRouteImport.update({
+  id: '/colecoes',
+  path: '/colecoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedContentLeakReportRoute =
+  AuthenticatedContentLeakReportRouteImport.update({
+    id: '/content-leak-report',
+    path: '/content-leak-report',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCreatorHubRoute = AuthenticatedCreatorHubRouteImport.update({
+  id: '/creator-hub',
+  path: '/creator-hub',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCriarPerfilGratuitoRoute =
+  AuthenticatedCriarPerfilGratuitoRouteImport.update({
+    id: '/criar-perfil-gratuito',
+    path: '/criar-perfil-gratuito',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFollowRoute = AuthenticatedFollowRouteImport.update({
+  id: '/follow',
+  path: '/follow',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMyMonetisexStatsRoute =
+  AuthenticatedMyMonetisexStatsRouteImport.update({
+    id: '/my-monetisex-stats',
+    path: '/my-monetisex-stats',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMywalletRoute = AuthenticatedMywalletRouteImport.update({
+  id: '/mywallet',
+  path: '/mywallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPostsarquivadosRoute =
+  AuthenticatedPostsarquivadosRouteImport.update({
+    id: '/postsarquivados',
+    path: '/postsarquivados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPromotionRoute = AuthenticatedPromotionRouteImport.update({
+  id: '/promotion',
+  path: '/promotion',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPromotionsRoute = AuthenticatedPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPublicacoesAgendadasRoute =
+  AuthenticatedPublicacoesAgendadasRouteImport.update({
+    id: '/publicacoes-agendadas',
+    path: '/publicacoes-agendadas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPublisherRoute = AuthenticatedPublisherRouteImport.update({
+  id: '/publisher',
+  path: '/publisher',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSubscriptionsRoute =
+  AuthenticatedSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CadastroIndexRoute = CadastroIndexRouteImport.update({
@@ -188,447 +333,14 @@ const CadastroConfirmeEmailRoute = CadastroConfirmeEmailRouteImport.update({
   path: '/cadastro/confirme-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthConfirmRoute = AuthConfirmRouteImport.update({
-  id: '/auth/confirm',
-  path: '/auth/confirm',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
-  id: '/vault',
-  path: '/vault',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSubscriptionsRoute =
-  AuthenticatedSubscriptionsRouteImport.update({
-    id: '/subscriptions',
-    path: '/subscriptions',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPublisherRoute = AuthenticatedPublisherRouteImport.update({
-  id: '/publisher',
-  path: '/publisher',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPublicacoesAgendadasRoute =
-  AuthenticatedPublicacoesAgendadasRouteImport.update({
-    id: '/publicacoes-agendadas',
-    path: '/publicacoes-agendadas',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPromotionsRoute = AuthenticatedPromotionsRouteImport.update({
-  id: '/promotions',
-  path: '/promotions',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPromotionRoute = AuthenticatedPromotionRouteImport.update({
-  id: '/promotion',
-  path: '/promotion',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPostsarquivadosRoute =
-  AuthenticatedPostsarquivadosRouteImport.update({
-    id: '/postsarquivados',
-    path: '/postsarquivados',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMywalletRoute = AuthenticatedMywalletRouteImport.update({
-  id: '/mywallet',
-  path: '/mywallet',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMyMonetisexStatsRoute =
-  AuthenticatedMyMonetisexStatsRouteImport.update({
-    id: '/my-monetisex-stats',
-    path: '/my-monetisex-stats',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFollowRoute = AuthenticatedFollowRouteImport.update({
-  id: '/follow',
-  path: '/follow',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCriarPerfilGratuitoRoute =
-  AuthenticatedCriarPerfilGratuitoRouteImport.update({
-    id: '/criar-perfil-gratuito',
-    path: '/criar-perfil-gratuito',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCreatorHubRoute = AuthenticatedCreatorHubRouteImport.update({
-  id: '/creator-hub',
-  path: '/creator-hub',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedContentLeakReportRoute =
-  AuthenticatedContentLeakReportRouteImport.update({
-    id: '/content-leak-report',
-    path: '/content-leak-report',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedColecoesRoute = AuthenticatedColecoesRouteImport.update({
-  id: '/colecoes',
-  path: '/colecoes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedChatConfiguracoesRoute =
-  AuthenticatedChatConfiguracoesRouteImport.update({
-    id: '/chat-configuracoes',
-    path: '/chat-configuracoes',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedChatAgendamentoRoute =
-  AuthenticatedChatAgendamentoRouteImport.update({
-    id: '/chat-agendamento',
-    path: '/chat-agendamento',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCertificarPerfilRoute =
-  AuthenticatedCertificarPerfilRouteImport.update({
-    id: '/certificar-perfil',
-    path: '/certificar-perfil',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedBugreportRoute = AuthenticatedBugreportRouteImport.update({
-  id: '/bugreport',
-  path: '/bugreport',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBancoRoute = AuthenticatedBancoRouteImport.update({
-  id: '/banco',
-  path: '/banco',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAccountStatusRoute =
-  AuthenticatedAccountStatusRouteImport.update({
-    id: '/account-status',
-    path: '/account-status',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMywalletIndexRoute =
-  AuthenticatedMywalletIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedMywalletRoute,
-  } as any)
-const AuthenticatedEmAltaIndexRoute =
-  AuthenticatedEmAltaIndexRouteImport.update({
-    id: '/em-alta/',
-    path: '/em-alta/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedChatRoute,
-} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedSettingsTwoFactorRoute =
-  AuthenticatedSettingsTwoFactorRouteImport.update({
-    id: '/settings/two-factor',
-    path: '/settings/two-factor',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsThemeRoute =
-  AuthenticatedSettingsThemeRouteImport.update({
-    id: '/settings/theme',
-    path: '/settings/theme',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSubscriptionRoute =
-  AuthenticatedSettingsSubscriptionRouteImport.update({
-    id: '/settings/subscription',
-    path: '/settings/subscription',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSocialMediaRoute =
-  AuthenticatedSettingsSocialMediaRouteImport.update({
-    id: '/settings/social-media',
-    path: '/settings/social-media',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSocialRoute =
-  AuthenticatedSettingsSocialRouteImport.update({
-    id: '/settings/social',
-    path: '/settings/social',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSecurityMenuRoute =
-  AuthenticatedSettingsSecurityMenuRouteImport.update({
-    id: '/settings/security-menu',
-    path: '/settings/security-menu',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSecurityRoute =
-  AuthenticatedSettingsSecurityRouteImport.update({
-    id: '/settings/security',
-    path: '/settings/security',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsRestrictionsRoute =
-  AuthenticatedSettingsRestrictionsRouteImport.update({
-    id: '/settings/restrictions',
-    path: '/settings/restrictions',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsPrivacyOptionsRoute =
-  AuthenticatedSettingsPrivacyOptionsRouteImport.update({
-    id: '/settings/privacy-options',
-    path: '/settings/privacy-options',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsPrivacyMailRoute =
-  AuthenticatedSettingsPrivacyMailRouteImport.update({
-    id: '/settings/privacy-mail',
-    path: '/settings/privacy-mail',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsPrivacyRoute =
-  AuthenticatedSettingsPrivacyRouteImport.update({
-    id: '/settings/privacy',
-    path: '/settings/privacy',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsPersonalRoute =
-  AuthenticatedSettingsPersonalRouteImport.update({
-    id: '/settings/personal',
-    path: '/settings/personal',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsMyprofileRoute =
-  AuthenticatedSettingsMyprofileRouteImport.update({
-    id: '/settings/myprofile',
-    path: '/settings/myprofile',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsMutedRoute =
-  AuthenticatedSettingsMutedRouteImport.update({
-    id: '/settings/muted',
-    path: '/settings/muted',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsLanguageRoute =
-  AuthenticatedSettingsLanguageRouteImport.update({
-    id: '/settings/language',
-    path: '/settings/language',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsDeviceManagementRoute =
-  AuthenticatedSettingsDeviceManagementRouteImport.update({
-    id: '/settings/device-management',
-    path: '/settings/device-management',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsDetailsRoute =
-  AuthenticatedSettingsDetailsRouteImport.update({
-    id: '/settings/details',
-    path: '/settings/details',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsCreatorRoute =
-  AuthenticatedSettingsCreatorRouteImport.update({
-    id: '/settings/creator',
-    path: '/settings/creator',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsChatSettingsRoute =
-  AuthenticatedSettingsChatSettingsRouteImport.update({
-    id: '/settings/chat-settings',
-    path: '/settings/chat-settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsChangePasswordRoute =
-  AuthenticatedSettingsChangePasswordRouteImport.update({
-    id: '/settings/change-password',
-    path: '/settings/change-password',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedProfileUsernameRoute =
-  AuthenticatedProfileUsernameRouteImport.update({
-    id: '/profile/$username',
-    path: '/profile/$username',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerfilUsernameRoute =
-  AuthenticatedPerfilUsernameRouteImport.update({
-    id: '/perfil/$username',
-    path: '/perfil/$username',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMywalletRecarregarRoute =
-  AuthenticatedMywalletRecarregarRouteImport.update({
-    id: '/recarregar',
-    path: '/recarregar',
-    getParentRoute: () => AuthenticatedMywalletRoute,
-  } as any)
-const AuthenticatedMywalletExtratoRoute =
-  AuthenticatedMywalletExtratoRouteImport.update({
-    id: '/extrato',
-    path: '/extrato',
-    getParentRoute: () => AuthenticatedMywalletRoute,
-  } as any)
-const AuthenticatedLiveNovaRoute = AuthenticatedLiveNovaRouteImport.update({
-  id: '/live/nova',
-  path: '/live/nova',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
-  id: '/live/$liveId',
-  path: '/live/$liveId',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEmAltaSectionRoute =
-  AuthenticatedEmAltaSectionRouteImport.update({
-    id: '/em-alta/$section',
-    path: '/em-alta/$section',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedChatThreadIdRoute =
-  AuthenticatedChatThreadIdRouteImport.update({
-    id: '/$threadId',
-    path: '/$threadId',
-    getParentRoute: () => AuthenticatedChatRoute,
-  } as any)
-const AuthenticatedBancoCadastrarRoute =
-  AuthenticatedBancoCadastrarRouteImport.update({
-    id: '/cadastrar',
-    path: '/cadastrar',
-    getParentRoute: () => AuthenticatedBancoRoute,
-  } as any)
-const AuthenticatedAdminWithdrawalsRoute =
-  AuthenticatedAdminWithdrawalsRouteImport.update({
-    id: '/withdrawals',
-    path: '/withdrawals',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminVideocallsRoute =
-  AuthenticatedAdminVideocallsRouteImport.update({
-    id: '/videocalls',
-    path: '/videocalls',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminVerificationsRoute =
-  AuthenticatedAdminVerificationsRouteImport.update({
-    id: '/verifications',
-    path: '/verifications',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminTrophiesRoute =
-  AuthenticatedAdminTrophiesRouteImport.update({
-    id: '/trophies',
-    path: '/trophies',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminTransactionsRoute =
-  AuthenticatedAdminTransactionsRouteImport.update({
-    id: '/transactions',
-    path: '/transactions',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminSubscriptionsRoute =
-  AuthenticatedAdminSubscriptionsRouteImport.update({
-    id: '/subscriptions',
-    path: '/subscriptions',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminStoriesRoute =
-  AuthenticatedAdminStoriesRouteImport.update({
-    id: '/stories',
-    path: '/stories',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminRefundsRoute =
-  AuthenticatedAdminRefundsRouteImport.update({
-    id: '/refunds',
-    path: '/refunds',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPromotionsRoute =
-  AuthenticatedAdminPromotionsRouteImport.update({
-    id: '/promotions',
-    path: '/promotions',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminModerationRoute =
-  AuthenticatedAdminModerationRouteImport.update({
-    id: '/moderation',
-    path: '/moderation',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminLivesRoute = AuthenticatedAdminLivesRouteImport.update({
-  id: '/lives',
-  path: '/lives',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminLeaksRoute = AuthenticatedAdminLeaksRouteImport.update({
-  id: '/leaks',
-  path: '/leaks',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminFinanceRoute =
-  AuthenticatedAdminFinanceRouteImport.update({
-    id: '/finance',
-    path: '/finance',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminEmailsRoute =
-  AuthenticatedAdminEmailsRouteImport.update({
-    id: '/emails',
-    path: '/emails',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminContactsRoute =
-  AuthenticatedAdminContactsRouteImport.update({
-    id: '/contacts',
-    path: '/contacts',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
-  id: '/bugs',
-  path: '/bugs',
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAdminBroadcastsRoute =
@@ -637,85 +349,315 @@ const AuthenticatedAdminBroadcastsRoute =
     path: '/broadcasts',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
+const AuthenticatedAdminBugsRoute = AuthenticatedAdminBugsRouteImport.update({
+  id: '/bugs',
+  path: '/bugs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedSettingsTwoFactorIndexRoute =
-  AuthenticatedSettingsTwoFactorIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+const AuthenticatedAdminContactsRoute =
+  AuthenticatedAdminContactsRouteImport.update({
+    id: '/contacts',
+    path: '/contacts',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedSettingsDeviceManagementIndexRoute =
-  AuthenticatedSettingsDeviceManagementIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+const AuthenticatedAdminEmailsRoute =
+  AuthenticatedAdminEmailsRouteImport.update({
+    id: '/emails',
+    path: '/emails',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedLiveLiveIdIndexRoute =
-  AuthenticatedLiveLiveIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
+const AuthenticatedAdminFinanceRoute =
+  AuthenticatedAdminFinanceRouteImport.update({
+    id: '/finance',
+    path: '/finance',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const ApiPublicWebhooksVeriffDecisionRoute =
-  ApiPublicWebhooksVeriffDecisionRouteImport.update({
-    id: '/api/public/webhooks/veriff-decision',
-    path: '/api/public/webhooks/veriff-decision',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
-  id: '/api/public/webhooks/asaas',
-  path: '/api/public/webhooks/asaas',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminLeaksRoute = AuthenticatedAdminLeaksRouteImport.update({
+  id: '/leaks',
+  path: '/leaks',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const ApiPublicHooksSubscriptionRemindersRoute =
-  ApiPublicHooksSubscriptionRemindersRouteImport.update({
-    id: '/api/public/hooks/subscription-reminders',
-    path: '/api/public/hooks/subscription-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksDispatchBroadcastsRoute =
-  ApiPublicHooksDispatchBroadcastsRouteImport.update({
-    id: '/api/public/hooks/dispatch-broadcasts',
-    path: '/api/public/hooks/dispatch-broadcasts',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
-  id: '/api/public/auth/email-hook',
-  path: '/api/public/auth/email-hook',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminLivesRoute = AuthenticatedAdminLivesRouteImport.update({
+  id: '/lives',
+  path: '/lives',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedSettingsTwoFactorVerifyRoute =
-  AuthenticatedSettingsTwoFactorVerifyRouteImport.update({
-    id: '/verify',
-    path: '/verify',
-    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+const AuthenticatedAdminModerationRoute =
+  AuthenticatedAdminModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedSettingsTwoFactorSetupRoute =
-  AuthenticatedSettingsTwoFactorSetupRouteImport.update({
-    id: '/setup',
-    path: '/setup',
-    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+const AuthenticatedAdminPromotionsRoute =
+  AuthenticatedAdminPromotionsRouteImport.update({
+    id: '/promotions',
+    path: '/promotions',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedSettingsDeviceManagementRemovedRoute =
-  AuthenticatedSettingsDeviceManagementRemovedRouteImport.update({
-    id: '/removed',
-    path: '/removed',
-    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+const AuthenticatedAdminRefundsRoute =
+  AuthenticatedAdminRefundsRouteImport.update({
+    id: '/refunds',
+    path: '/refunds',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedLiveLiveIdTransmitirRoute =
-  AuthenticatedLiveLiveIdTransmitirRouteImport.update({
-    id: '/transmitir',
-    path: '/transmitir',
-    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedCreatorOnboardingRedesSociaisRoute =
-  AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
-    id: '/creator/onboarding/redes-sociais',
-    path: '/creator/onboarding/redes-sociais',
+const AuthenticatedAdminStoriesRoute =
+  AuthenticatedAdminStoriesRouteImport.update({
+    id: '/stories',
+    path: '/stories',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSubscriptionsRoute =
+  AuthenticatedAdminSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTransactionsRoute =
+  AuthenticatedAdminTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTrophiesRoute =
+  AuthenticatedAdminTrophiesRouteImport.update({
+    id: '/trophies',
+    path: '/trophies',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
+    id: '/verifications',
+    path: '/verifications',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminVideocallsRoute =
+  AuthenticatedAdminVideocallsRouteImport.update({
+    id: '/videocalls',
+    path: '/videocalls',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminWithdrawalsRoute =
+  AuthenticatedAdminWithdrawalsRouteImport.update({
+    id: '/withdrawals',
+    path: '/withdrawals',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedBancoCadastrarRoute =
+  AuthenticatedBancoCadastrarRouteImport.update({
+    id: '/cadastrar',
+    path: '/cadastrar',
+    getParentRoute: () => AuthenticatedBancoRoute,
+  } as any)
+const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedChatRoute,
+} as any)
+const AuthenticatedChatThreadIdRoute =
+  AuthenticatedChatThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedEmAltaIndexRoute =
+  AuthenticatedEmAltaIndexRouteImport.update({
+    id: '/em-alta/',
+    path: '/em-alta/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEmAltaSectionRoute =
+  AuthenticatedEmAltaSectionRouteImport.update({
+    id: '/em-alta/$section',
+    path: '/em-alta/$section',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLiveLiveIdRoute = AuthenticatedLiveLiveIdRouteImport.update({
+  id: '/live/$liveId',
+  path: '/live/$liveId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLiveNovaRoute = AuthenticatedLiveNovaRouteImport.update({
+  id: '/live/nova',
+  path: '/live/nova',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMywalletIndexRoute =
+  AuthenticatedMywalletIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
+const AuthenticatedMywalletExtratoRoute =
+  AuthenticatedMywalletExtratoRouteImport.update({
+    id: '/extrato',
+    path: '/extrato',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
+const AuthenticatedMywalletRecarregarRoute =
+  AuthenticatedMywalletRecarregarRouteImport.update({
+    id: '/recarregar',
+    path: '/recarregar',
+    getParentRoute: () => AuthenticatedMywalletRoute,
+  } as any)
+const AuthenticatedPerfilUsernameRoute =
+  AuthenticatedPerfilUsernameRouteImport.update({
+    id: '/perfil/$username',
+    path: '/perfil/$username',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileUsernameRoute =
+  AuthenticatedProfileUsernameRouteImport.update({
+    id: '/profile/$username',
+    path: '/profile/$username',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsChangePasswordRoute =
+  AuthenticatedSettingsChangePasswordRouteImport.update({
+    id: '/settings/change-password',
+    path: '/settings/change-password',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsChatSettingsRoute =
+  AuthenticatedSettingsChatSettingsRouteImport.update({
+    id: '/settings/chat-settings',
+    path: '/settings/chat-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsCreatorRoute =
+  AuthenticatedSettingsCreatorRouteImport.update({
+    id: '/settings/creator',
+    path: '/settings/creator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsDetailsRoute =
+  AuthenticatedSettingsDetailsRouteImport.update({
+    id: '/settings/details',
+    path: '/settings/details',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsDeviceManagementRoute =
+  AuthenticatedSettingsDeviceManagementRouteImport.update({
+    id: '/settings/device-management',
+    path: '/settings/device-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsLanguageRoute =
+  AuthenticatedSettingsLanguageRouteImport.update({
+    id: '/settings/language',
+    path: '/settings/language',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsMutedRoute =
+  AuthenticatedSettingsMutedRouteImport.update({
+    id: '/settings/muted',
+    path: '/settings/muted',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsMyprofileRoute =
+  AuthenticatedSettingsMyprofileRouteImport.update({
+    id: '/settings/myprofile',
+    path: '/settings/myprofile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsPersonalRoute =
+  AuthenticatedSettingsPersonalRouteImport.update({
+    id: '/settings/personal',
+    path: '/settings/personal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsPrivacyRoute =
+  AuthenticatedSettingsPrivacyRouteImport.update({
+    id: '/settings/privacy',
+    path: '/settings/privacy',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsPrivacyMailRoute =
+  AuthenticatedSettingsPrivacyMailRouteImport.update({
+    id: '/settings/privacy-mail',
+    path: '/settings/privacy-mail',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsPrivacyOptionsRoute =
+  AuthenticatedSettingsPrivacyOptionsRouteImport.update({
+    id: '/settings/privacy-options',
+    path: '/settings/privacy-options',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsRestrictionsRoute =
+  AuthenticatedSettingsRestrictionsRouteImport.update({
+    id: '/settings/restrictions',
+    path: '/settings/restrictions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSecurityRoute =
+  AuthenticatedSettingsSecurityRouteImport.update({
+    id: '/settings/security',
+    path: '/settings/security',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSecurityMenuRoute =
+  AuthenticatedSettingsSecurityMenuRouteImport.update({
+    id: '/settings/security-menu',
+    path: '/settings/security-menu',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSocialRoute =
+  AuthenticatedSettingsSocialRouteImport.update({
+    id: '/settings/social',
+    path: '/settings/social',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSocialMediaRoute =
+  AuthenticatedSettingsSocialMediaRouteImport.update({
+    id: '/settings/social-media',
+    path: '/settings/social-media',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSubscriptionRoute =
+  AuthenticatedSettingsSubscriptionRouteImport.update({
+    id: '/settings/subscription',
+    path: '/settings/subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsThemeRoute =
+  AuthenticatedSettingsThemeRouteImport.update({
+    id: '/settings/theme',
+    path: '/settings/theme',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsTwoFactorRoute =
+  AuthenticatedSettingsTwoFactorRouteImport.update({
+    id: '/settings/two-factor',
+    path: '/settings/two-factor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUsersUserIdRoute =
+  AuthenticatedAdminUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedAdminUsersRoute,
+  } as any)
+const AuthenticatedChatCallCallIdRoute =
+  AuthenticatedChatCallCallIdRouteImport.update({
+    id: '/call/$callId',
+    path: '/call/$callId',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedCreatorOnboardingAssinaturaRoute =
+  AuthenticatedCreatorOnboardingAssinaturaRouteImport.update({
+    id: '/creator/onboarding/assinatura',
+    path: '/creator/onboarding/assinatura',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCreatorOnboardingDocumentosRoute =
@@ -724,23 +666,81 @@ const AuthenticatedCreatorOnboardingDocumentosRoute =
     path: '/creator/onboarding/documentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCreatorOnboardingAssinaturaRoute =
-  AuthenticatedCreatorOnboardingAssinaturaRouteImport.update({
-    id: '/creator/onboarding/assinatura',
-    path: '/creator/onboarding/assinatura',
+const AuthenticatedCreatorOnboardingRedesSociaisRoute =
+  AuthenticatedCreatorOnboardingRedesSociaisRouteImport.update({
+    id: '/creator/onboarding/redes-sociais',
+    path: '/creator/onboarding/redes-sociais',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedChatCallCallIdRoute =
-  AuthenticatedChatCallCallIdRouteImport.update({
-    id: '/call/$callId',
-    path: '/call/$callId',
-    getParentRoute: () => AuthenticatedChatRoute,
+const AuthenticatedLiveLiveIdIndexRoute =
+  AuthenticatedLiveLiveIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
   } as any)
-const AuthenticatedAdminUsersUserIdRoute =
-  AuthenticatedAdminUsersUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => AuthenticatedAdminUsersRoute,
+const AuthenticatedLiveLiveIdTransmitirRoute =
+  AuthenticatedLiveLiveIdTransmitirRouteImport.update({
+    id: '/transmitir',
+    path: '/transmitir',
+    getParentRoute: () => AuthenticatedLiveLiveIdRoute,
+  } as any)
+const AuthenticatedSettingsDeviceManagementIndexRoute =
+  AuthenticatedSettingsDeviceManagementIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+  } as any)
+const AuthenticatedSettingsDeviceManagementRemovedRoute =
+  AuthenticatedSettingsDeviceManagementRemovedRouteImport.update({
+    id: '/removed',
+    path: '/removed',
+    getParentRoute: () => AuthenticatedSettingsDeviceManagementRoute,
+  } as any)
+const AuthenticatedSettingsTwoFactorIndexRoute =
+  AuthenticatedSettingsTwoFactorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+  } as any)
+const AuthenticatedSettingsTwoFactorSetupRoute =
+  AuthenticatedSettingsTwoFactorSetupRouteImport.update({
+    id: '/setup',
+    path: '/setup',
+    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+  } as any)
+const AuthenticatedSettingsTwoFactorVerifyRoute =
+  AuthenticatedSettingsTwoFactorVerifyRouteImport.update({
+    id: '/verify',
+    path: '/verify',
+    getParentRoute: () => AuthenticatedSettingsTwoFactorRoute,
+  } as any)
+const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
+  id: '/api/public/auth/email-hook',
+  path: '/api/public/auth/email-hook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksDispatchBroadcastsRoute =
+  ApiPublicHooksDispatchBroadcastsRouteImport.update({
+    id: '/api/public/hooks/dispatch-broadcasts',
+    path: '/api/public/hooks/dispatch-broadcasts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSubscriptionRemindersRoute =
+  ApiPublicHooksSubscriptionRemindersRouteImport.update({
+    id: '/api/public/hooks/subscription-reminders',
+    path: '/api/public/hooks/subscription-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
+  id: '/api/public/webhooks/asaas',
+  path: '/api/public/webhooks/asaas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksVeriffDecisionRoute =
+  ApiPublicWebhooksVeriffDecisionRouteImport.update({
+    id: '/api/public/webhooks/veriff-decision',
+    path: '/api/public/webhooks/veriff-decision',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedCreatorOnboardingDocumentosIndexRoute =
   AuthenticatedCreatorOnboardingDocumentosIndexRouteImport.update({
@@ -748,10 +748,10 @@ const AuthenticatedCreatorOnboardingDocumentosIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
-const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
-  AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport.update({
-    id: '/verificando',
-    path: '/verificando',
+const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
+  AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport.update({
+    id: '/aprovado',
+    path: '/aprovado',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
 const AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute =
@@ -760,10 +760,10 @@ const AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRoute =
     path: '/veriff-concluido',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
-const AuthenticatedCreatorOnboardingDocumentosAprovadoRoute =
-  AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport.update({
-    id: '/aprovado',
-    path: '/aprovado',
+const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
+  AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport.update({
+    id: '/verificando',
+    path: '/verificando',
     getParentRoute: () => AuthenticatedCreatorOnboardingDocumentosRoute,
   } as any)
 
@@ -1474,67 +1474,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/termos-e-politicas': {
-      id: '/termos-e-politicas'
-      path: '/termos-e-politicas'
-      fullPath: '/termos-e-politicas'
-      preLoaderRoute: typeof TermosEPoliticasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sobre': {
-      id: '/sobre'
-      path: '/sobre'
-      fullPath: '/sobre'
-      preLoaderRoute: typeof SobreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidade': {
-      id: '/privacidade'
-      path: '/privacidade'
-      fullPath: '/privacidade'
-      preLoaderRoute: typeof PrivacidadeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/politicadereclamacoes': {
-      id: '/politicadereclamacoes'
-      path: '/politicadereclamacoes'
-      fullPath: '/politicadereclamacoes'
-      preLoaderRoute: typeof PoliticadereclamacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/entrar': {
-      id: '/entrar'
-      path: '/entrar'
-      fullPath: '/entrar'
-      preLoaderRoute: typeof EntrarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dmca': {
-      id: '/dmca'
-      path: '/dmca'
-      fullPath: '/dmca'
-      preLoaderRoute: typeof DmcaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contato': {
-      id: '/contato'
-      path: '/contato'
-      fullPath: '/contato'
-      preLoaderRoute: typeof ContatoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/como-funciona': {
-      id: '/como-funciona'
-      path: '/como-funciona'
-      fullPath: '/como-funciona'
-      preLoaderRoute: typeof ComoFuncionaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/centro-e-seguranca': {
-      id: '/centro-e-seguranca'
-      path: '/centro-e-seguranca'
-      fullPath: '/centro-e-seguranca'
-      preLoaderRoute: typeof CentroESegurancaRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1544,11 +1488,256 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/centro-e-seguranca': {
+      id: '/centro-e-seguranca'
+      path: '/centro-e-seguranca'
+      fullPath: '/centro-e-seguranca'
+      preLoaderRoute: typeof CentroESegurancaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/como-funciona': {
+      id: '/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/como-funciona'
+      preLoaderRoute: typeof ComoFuncionaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dmca': {
+      id: '/dmca'
+      path: '/dmca'
+      fullPath: '/dmca'
+      preLoaderRoute: typeof DmcaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politicadereclamacoes': {
+      id: '/politicadereclamacoes'
+      path: '/politicadereclamacoes'
+      fullPath: '/politicadereclamacoes'
+      preLoaderRoute: typeof PoliticadereclamacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos-e-politicas': {
+      id: '/termos-e-politicas'
+      path: '/termos-e-politicas'
+      fullPath: '/termos-e-politicas'
+      preLoaderRoute: typeof TermosEPoliticasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account-status': {
+      id: '/_authenticated/account-status'
+      path: '/account-status'
+      fullPath: '/account-status'
+      preLoaderRoute: typeof AuthenticatedAccountStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/banco': {
+      id: '/_authenticated/banco'
+      path: '/banco'
+      fullPath: '/banco'
+      preLoaderRoute: typeof AuthenticatedBancoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bugreport': {
+      id: '/_authenticated/bugreport'
+      path: '/bugreport'
+      fullPath: '/bugreport'
+      preLoaderRoute: typeof AuthenticatedBugreportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/certificar-perfil': {
+      id: '/_authenticated/certificar-perfil'
+      path: '/certificar-perfil'
+      fullPath: '/certificar-perfil'
+      preLoaderRoute: typeof AuthenticatedCertificarPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat-agendamento': {
+      id: '/_authenticated/chat-agendamento'
+      path: '/chat-agendamento'
+      fullPath: '/chat-agendamento'
+      preLoaderRoute: typeof AuthenticatedChatAgendamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat-configuracoes': {
+      id: '/_authenticated/chat-configuracoes'
+      path: '/chat-configuracoes'
+      fullPath: '/chat-configuracoes'
+      preLoaderRoute: typeof AuthenticatedChatConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/colecoes': {
+      id: '/_authenticated/colecoes'
+      path: '/colecoes'
+      fullPath: '/colecoes'
+      preLoaderRoute: typeof AuthenticatedColecoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/content-leak-report': {
+      id: '/_authenticated/content-leak-report'
+      path: '/content-leak-report'
+      fullPath: '/content-leak-report'
+      preLoaderRoute: typeof AuthenticatedContentLeakReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/creator-hub': {
+      id: '/_authenticated/creator-hub'
+      path: '/creator-hub'
+      fullPath: '/creator-hub'
+      preLoaderRoute: typeof AuthenticatedCreatorHubRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/criar-perfil-gratuito': {
+      id: '/_authenticated/criar-perfil-gratuito'
+      path: '/criar-perfil-gratuito'
+      fullPath: '/criar-perfil-gratuito'
+      preLoaderRoute: typeof AuthenticatedCriarPerfilGratuitoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/feed': {
+      id: '/_authenticated/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/follow': {
+      id: '/_authenticated/follow'
+      path: '/follow'
+      fullPath: '/follow'
+      preLoaderRoute: typeof AuthenticatedFollowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-monetisex-stats': {
+      id: '/_authenticated/my-monetisex-stats'
+      path: '/my-monetisex-stats'
+      fullPath: '/my-monetisex-stats'
+      preLoaderRoute: typeof AuthenticatedMyMonetisexStatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mywallet': {
+      id: '/_authenticated/mywallet'
+      path: '/mywallet'
+      fullPath: '/mywallet'
+      preLoaderRoute: typeof AuthenticatedMywalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/postsarquivados': {
+      id: '/_authenticated/postsarquivados'
+      path: '/postsarquivados'
+      fullPath: '/postsarquivados'
+      preLoaderRoute: typeof AuthenticatedPostsarquivadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/promotion': {
+      id: '/_authenticated/promotion'
+      path: '/promotion'
+      fullPath: '/promotion'
+      preLoaderRoute: typeof AuthenticatedPromotionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/promotions': {
+      id: '/_authenticated/promotions'
+      path: '/promotions'
+      fullPath: '/promotions'
+      preLoaderRoute: typeof AuthenticatedPromotionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/publicacoes-agendadas': {
+      id: '/_authenticated/publicacoes-agendadas'
+      path: '/publicacoes-agendadas'
+      fullPath: '/publicacoes-agendadas'
+      preLoaderRoute: typeof AuthenticatedPublicacoesAgendadasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/publisher': {
+      id: '/_authenticated/publisher'
+      path: '/publisher'
+      fullPath: '/publisher'
+      preLoaderRoute: typeof AuthenticatedPublisherRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/subscriptions': {
+      id: '/_authenticated/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof AuthenticatedSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/vault': {
+      id: '/_authenticated/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof AuthenticatedVaultRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cadastro/': {
@@ -1565,557 +1754,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroConfirmeEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/confirm': {
-      id: '/auth/confirm'
-      path: '/auth/confirm'
-      fullPath: '/auth/confirm'
-      preLoaderRoute: typeof AuthConfirmRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/vault': {
-      id: '/_authenticated/vault'
-      path: '/vault'
-      fullPath: '/vault'
-      preLoaderRoute: typeof AuthenticatedVaultRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/subscriptions': {
-      id: '/_authenticated/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof AuthenticatedSubscriptionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/search': {
-      id: '/_authenticated/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof AuthenticatedSearchRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/publisher': {
-      id: '/_authenticated/publisher'
-      path: '/publisher'
-      fullPath: '/publisher'
-      preLoaderRoute: typeof AuthenticatedPublisherRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/publicacoes-agendadas': {
-      id: '/_authenticated/publicacoes-agendadas'
-      path: '/publicacoes-agendadas'
-      fullPath: '/publicacoes-agendadas'
-      preLoaderRoute: typeof AuthenticatedPublicacoesAgendadasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/promotions': {
-      id: '/_authenticated/promotions'
-      path: '/promotions'
-      fullPath: '/promotions'
-      preLoaderRoute: typeof AuthenticatedPromotionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/promotion': {
-      id: '/_authenticated/promotion'
-      path: '/promotion'
-      fullPath: '/promotion'
-      preLoaderRoute: typeof AuthenticatedPromotionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/postsarquivados': {
-      id: '/_authenticated/postsarquivados'
-      path: '/postsarquivados'
-      fullPath: '/postsarquivados'
-      preLoaderRoute: typeof AuthenticatedPostsarquivadosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mywallet': {
-      id: '/_authenticated/mywallet'
-      path: '/mywallet'
-      fullPath: '/mywallet'
-      preLoaderRoute: typeof AuthenticatedMywalletRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/my-monetisex-stats': {
-      id: '/_authenticated/my-monetisex-stats'
-      path: '/my-monetisex-stats'
-      fullPath: '/my-monetisex-stats'
-      preLoaderRoute: typeof AuthenticatedMyMonetisexStatsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/follow': {
-      id: '/_authenticated/follow'
-      path: '/follow'
-      fullPath: '/follow'
-      preLoaderRoute: typeof AuthenticatedFollowRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/feed': {
-      id: '/_authenticated/feed'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof AuthenticatedFeedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/criar-perfil-gratuito': {
-      id: '/_authenticated/criar-perfil-gratuito'
-      path: '/criar-perfil-gratuito'
-      fullPath: '/criar-perfil-gratuito'
-      preLoaderRoute: typeof AuthenticatedCriarPerfilGratuitoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/creator-hub': {
-      id: '/_authenticated/creator-hub'
-      path: '/creator-hub'
-      fullPath: '/creator-hub'
-      preLoaderRoute: typeof AuthenticatedCreatorHubRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/content-leak-report': {
-      id: '/_authenticated/content-leak-report'
-      path: '/content-leak-report'
-      fullPath: '/content-leak-report'
-      preLoaderRoute: typeof AuthenticatedContentLeakReportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/colecoes': {
-      id: '/_authenticated/colecoes'
-      path: '/colecoes'
-      fullPath: '/colecoes'
-      preLoaderRoute: typeof AuthenticatedColecoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat-configuracoes': {
-      id: '/_authenticated/chat-configuracoes'
-      path: '/chat-configuracoes'
-      fullPath: '/chat-configuracoes'
-      preLoaderRoute: typeof AuthenticatedChatConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat-agendamento': {
-      id: '/_authenticated/chat-agendamento'
-      path: '/chat-agendamento'
-      fullPath: '/chat-agendamento'
-      preLoaderRoute: typeof AuthenticatedChatAgendamentoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/certificar-perfil': {
-      id: '/_authenticated/certificar-perfil'
-      path: '/certificar-perfil'
-      fullPath: '/certificar-perfil'
-      preLoaderRoute: typeof AuthenticatedCertificarPerfilRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bugreport': {
-      id: '/_authenticated/bugreport'
-      path: '/bugreport'
-      fullPath: '/bugreport'
-      preLoaderRoute: typeof AuthenticatedBugreportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/banco': {
-      id: '/_authenticated/banco'
-      path: '/banco'
-      fullPath: '/banco'
-      preLoaderRoute: typeof AuthenticatedBancoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/account-status': {
-      id: '/_authenticated/account-status'
-      path: '/account-status'
-      fullPath: '/account-status'
-      preLoaderRoute: typeof AuthenticatedAccountStatusRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mywallet/': {
-      id: '/_authenticated/mywallet/'
-      path: '/'
-      fullPath: '/mywallet/'
-      preLoaderRoute: typeof AuthenticatedMywalletIndexRouteImport
-      parentRoute: typeof AuthenticatedMywalletRoute
-    }
-    '/_authenticated/em-alta/': {
-      id: '/_authenticated/em-alta/'
-      path: '/em-alta'
-      fullPath: '/em-alta/'
-      preLoaderRoute: typeof AuthenticatedEmAltaIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat/': {
-      id: '/_authenticated/chat/'
-      path: '/'
-      fullPath: '/chat/'
-      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
-      parentRoute: typeof AuthenticatedChatRoute
-    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/settings/two-factor': {
-      id: '/_authenticated/settings/two-factor'
-      path: '/settings/two-factor'
-      fullPath: '/settings/two-factor'
-      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/theme': {
-      id: '/_authenticated/settings/theme'
-      path: '/settings/theme'
-      fullPath: '/settings/theme'
-      preLoaderRoute: typeof AuthenticatedSettingsThemeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/subscription': {
-      id: '/_authenticated/settings/subscription'
-      path: '/settings/subscription'
-      fullPath: '/settings/subscription'
-      preLoaderRoute: typeof AuthenticatedSettingsSubscriptionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/social-media': {
-      id: '/_authenticated/settings/social-media'
-      path: '/settings/social-media'
-      fullPath: '/settings/social-media'
-      preLoaderRoute: typeof AuthenticatedSettingsSocialMediaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/social': {
-      id: '/_authenticated/settings/social'
-      path: '/settings/social'
-      fullPath: '/settings/social'
-      preLoaderRoute: typeof AuthenticatedSettingsSocialRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/security-menu': {
-      id: '/_authenticated/settings/security-menu'
-      path: '/settings/security-menu'
-      fullPath: '/settings/security-menu'
-      preLoaderRoute: typeof AuthenticatedSettingsSecurityMenuRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/security': {
-      id: '/_authenticated/settings/security'
-      path: '/settings/security'
-      fullPath: '/settings/security'
-      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/restrictions': {
-      id: '/_authenticated/settings/restrictions'
-      path: '/settings/restrictions'
-      fullPath: '/settings/restrictions'
-      preLoaderRoute: typeof AuthenticatedSettingsRestrictionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/privacy-options': {
-      id: '/_authenticated/settings/privacy-options'
-      path: '/settings/privacy-options'
-      fullPath: '/settings/privacy-options'
-      preLoaderRoute: typeof AuthenticatedSettingsPrivacyOptionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/privacy-mail': {
-      id: '/_authenticated/settings/privacy-mail'
-      path: '/settings/privacy-mail'
-      fullPath: '/settings/privacy-mail'
-      preLoaderRoute: typeof AuthenticatedSettingsPrivacyMailRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/privacy': {
-      id: '/_authenticated/settings/privacy'
-      path: '/settings/privacy'
-      fullPath: '/settings/privacy'
-      preLoaderRoute: typeof AuthenticatedSettingsPrivacyRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/personal': {
-      id: '/_authenticated/settings/personal'
-      path: '/settings/personal'
-      fullPath: '/settings/personal'
-      preLoaderRoute: typeof AuthenticatedSettingsPersonalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/myprofile': {
-      id: '/_authenticated/settings/myprofile'
-      path: '/settings/myprofile'
-      fullPath: '/settings/myprofile'
-      preLoaderRoute: typeof AuthenticatedSettingsMyprofileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/muted': {
-      id: '/_authenticated/settings/muted'
-      path: '/settings/muted'
-      fullPath: '/settings/muted'
-      preLoaderRoute: typeof AuthenticatedSettingsMutedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/language': {
-      id: '/_authenticated/settings/language'
-      path: '/settings/language'
-      fullPath: '/settings/language'
-      preLoaderRoute: typeof AuthenticatedSettingsLanguageRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/device-management': {
-      id: '/_authenticated/settings/device-management'
-      path: '/settings/device-management'
-      fullPath: '/settings/device-management'
-      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/details': {
-      id: '/_authenticated/settings/details'
-      path: '/settings/details'
-      fullPath: '/settings/details'
-      preLoaderRoute: typeof AuthenticatedSettingsDetailsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/creator': {
-      id: '/_authenticated/settings/creator'
-      path: '/settings/creator'
-      fullPath: '/settings/creator'
-      preLoaderRoute: typeof AuthenticatedSettingsCreatorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/chat-settings': {
-      id: '/_authenticated/settings/chat-settings'
-      path: '/settings/chat-settings'
-      fullPath: '/settings/chat-settings'
-      preLoaderRoute: typeof AuthenticatedSettingsChatSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/change-password': {
-      id: '/_authenticated/settings/change-password'
-      path: '/settings/change-password'
-      fullPath: '/settings/change-password'
-      preLoaderRoute: typeof AuthenticatedSettingsChangePasswordRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/profile/$username': {
-      id: '/_authenticated/profile/$username'
-      path: '/profile/$username'
-      fullPath: '/profile/$username'
-      preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/perfil/$username': {
-      id: '/_authenticated/perfil/$username'
-      path: '/perfil/$username'
-      fullPath: '/perfil/$username'
-      preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mywallet/recarregar': {
-      id: '/_authenticated/mywallet/recarregar'
-      path: '/recarregar'
-      fullPath: '/mywallet/recarregar'
-      preLoaderRoute: typeof AuthenticatedMywalletRecarregarRouteImport
-      parentRoute: typeof AuthenticatedMywalletRoute
-    }
-    '/_authenticated/mywallet/extrato': {
-      id: '/_authenticated/mywallet/extrato'
-      path: '/extrato'
-      fullPath: '/mywallet/extrato'
-      preLoaderRoute: typeof AuthenticatedMywalletExtratoRouteImport
-      parentRoute: typeof AuthenticatedMywalletRoute
-    }
-    '/_authenticated/live/nova': {
-      id: '/_authenticated/live/nova'
-      path: '/live/nova'
-      fullPath: '/live/nova'
-      preLoaderRoute: typeof AuthenticatedLiveNovaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/live/$liveId': {
-      id: '/_authenticated/live/$liveId'
-      path: '/live/$liveId'
-      fullPath: '/live/$liveId'
-      preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/em-alta/$section': {
-      id: '/_authenticated/em-alta/$section'
-      path: '/em-alta/$section'
-      fullPath: '/em-alta/$section'
-      preLoaderRoute: typeof AuthenticatedEmAltaSectionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chat/$threadId': {
-      id: '/_authenticated/chat/$threadId'
-      path: '/$threadId'
-      fullPath: '/chat/$threadId'
-      preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
-      parentRoute: typeof AuthenticatedChatRoute
-    }
-    '/_authenticated/banco/cadastrar': {
-      id: '/_authenticated/banco/cadastrar'
-      path: '/cadastrar'
-      fullPath: '/banco/cadastrar'
-      preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
-      parentRoute: typeof AuthenticatedBancoRoute
-    }
-    '/_authenticated/admin/withdrawals': {
-      id: '/_authenticated/admin/withdrawals'
-      path: '/withdrawals'
-      fullPath: '/admin/withdrawals'
-      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/videocalls': {
-      id: '/_authenticated/admin/videocalls'
-      path: '/videocalls'
-      fullPath: '/admin/videocalls'
-      preLoaderRoute: typeof AuthenticatedAdminVideocallsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/verifications': {
-      id: '/_authenticated/admin/verifications'
-      path: '/verifications'
-      fullPath: '/admin/verifications'
-      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/trophies': {
-      id: '/_authenticated/admin/trophies'
-      path: '/trophies'
-      fullPath: '/admin/trophies'
-      preLoaderRoute: typeof AuthenticatedAdminTrophiesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/transactions': {
-      id: '/_authenticated/admin/transactions'
-      path: '/transactions'
-      fullPath: '/admin/transactions'
-      preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/subscriptions': {
-      id: '/_authenticated/admin/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/admin/subscriptions'
-      preLoaderRoute: typeof AuthenticatedAdminSubscriptionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/stories': {
-      id: '/_authenticated/admin/stories'
-      path: '/stories'
-      fullPath: '/admin/stories'
-      preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/refunds': {
-      id: '/_authenticated/admin/refunds'
-      path: '/refunds'
-      fullPath: '/admin/refunds'
-      preLoaderRoute: typeof AuthenticatedAdminRefundsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/promotions': {
-      id: '/_authenticated/admin/promotions'
-      path: '/promotions'
-      fullPath: '/admin/promotions'
-      preLoaderRoute: typeof AuthenticatedAdminPromotionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/moderation': {
-      id: '/_authenticated/admin/moderation'
-      path: '/moderation'
-      fullPath: '/admin/moderation'
-      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/lives': {
-      id: '/_authenticated/admin/lives'
-      path: '/lives'
-      fullPath: '/admin/lives'
-      preLoaderRoute: typeof AuthenticatedAdminLivesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/leaks': {
-      id: '/_authenticated/admin/leaks'
-      path: '/leaks'
-      fullPath: '/admin/leaks'
-      preLoaderRoute: typeof AuthenticatedAdminLeaksRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/finance': {
-      id: '/_authenticated/admin/finance'
-      path: '/finance'
-      fullPath: '/admin/finance'
-      preLoaderRoute: typeof AuthenticatedAdminFinanceRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/emails': {
-      id: '/_authenticated/admin/emails'
-      path: '/emails'
-      fullPath: '/admin/emails'
-      preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/contacts': {
-      id: '/_authenticated/admin/contacts'
-      path: '/contacts'
-      fullPath: '/admin/contacts'
-      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/bugs': {
-      id: '/_authenticated/admin/bugs'
-      path: '/bugs'
-      fullPath: '/admin/bugs'
-      preLoaderRoute: typeof AuthenticatedAdminBugsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/broadcasts': {
-      id: '/_authenticated/admin/broadcasts'
-      path: '/broadcasts'
-      fullPath: '/admin/broadcasts'
-      preLoaderRoute: typeof AuthenticatedAdminBroadcastsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/audit': {
@@ -2125,95 +1768,382 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/settings/two-factor/': {
-      id: '/_authenticated/settings/two-factor/'
+    '/_authenticated/admin/broadcasts': {
+      id: '/_authenticated/admin/broadcasts'
+      path: '/broadcasts'
+      fullPath: '/admin/broadcasts'
+      preLoaderRoute: typeof AuthenticatedAdminBroadcastsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/bugs': {
+      id: '/_authenticated/admin/bugs'
+      path: '/bugs'
+      fullPath: '/admin/bugs'
+      preLoaderRoute: typeof AuthenticatedAdminBugsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/contacts': {
+      id: '/_authenticated/admin/contacts'
+      path: '/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/emails': {
+      id: '/_authenticated/admin/emails'
+      path: '/emails'
+      fullPath: '/admin/emails'
+      preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/finance': {
+      id: '/_authenticated/admin/finance'
+      path: '/finance'
+      fullPath: '/admin/finance'
+      preLoaderRoute: typeof AuthenticatedAdminFinanceRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/leaks': {
+      id: '/_authenticated/admin/leaks'
+      path: '/leaks'
+      fullPath: '/admin/leaks'
+      preLoaderRoute: typeof AuthenticatedAdminLeaksRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/lives': {
+      id: '/_authenticated/admin/lives'
+      path: '/lives'
+      fullPath: '/admin/lives'
+      preLoaderRoute: typeof AuthenticatedAdminLivesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/moderation': {
+      id: '/_authenticated/admin/moderation'
+      path: '/moderation'
+      fullPath: '/admin/moderation'
+      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/promotions': {
+      id: '/_authenticated/admin/promotions'
+      path: '/promotions'
+      fullPath: '/admin/promotions'
+      preLoaderRoute: typeof AuthenticatedAdminPromotionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/refunds': {
+      id: '/_authenticated/admin/refunds'
+      path: '/refunds'
+      fullPath: '/admin/refunds'
+      preLoaderRoute: typeof AuthenticatedAdminRefundsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/stories': {
+      id: '/_authenticated/admin/stories'
+      path: '/stories'
+      fullPath: '/admin/stories'
+      preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/subscriptions': {
+      id: '/_authenticated/admin/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AuthenticatedAdminSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/transactions': {
+      id: '/_authenticated/admin/transactions'
+      path: '/transactions'
+      fullPath: '/admin/transactions'
+      preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/trophies': {
+      id: '/_authenticated/admin/trophies'
+      path: '/trophies'
+      fullPath: '/admin/trophies'
+      preLoaderRoute: typeof AuthenticatedAdminTrophiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
+      path: '/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/videocalls': {
+      id: '/_authenticated/admin/videocalls'
+      path: '/videocalls'
+      fullPath: '/admin/videocalls'
+      preLoaderRoute: typeof AuthenticatedAdminVideocallsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/withdrawals': {
+      id: '/_authenticated/admin/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/admin/withdrawals'
+      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/banco/cadastrar': {
+      id: '/_authenticated/banco/cadastrar'
+      path: '/cadastrar'
+      fullPath: '/banco/cadastrar'
+      preLoaderRoute: typeof AuthenticatedBancoCadastrarRouteImport
+      parentRoute: typeof AuthenticatedBancoRoute
+    }
+    '/_authenticated/chat/': {
+      id: '/_authenticated/chat/'
       path: '/'
-      fullPath: '/settings/two-factor/'
-      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+      fullPath: '/chat/'
+      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
     }
-    '/_authenticated/settings/device-management/': {
-      id: '/_authenticated/settings/device-management/'
+    '/_authenticated/chat/$threadId': {
+      id: '/_authenticated/chat/$threadId'
+      path: '/$threadId'
+      fullPath: '/chat/$threadId'
+      preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/em-alta/': {
+      id: '/_authenticated/em-alta/'
+      path: '/em-alta'
+      fullPath: '/em-alta/'
+      preLoaderRoute: typeof AuthenticatedEmAltaIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/em-alta/$section': {
+      id: '/_authenticated/em-alta/$section'
+      path: '/em-alta/$section'
+      fullPath: '/em-alta/$section'
+      preLoaderRoute: typeof AuthenticatedEmAltaSectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/live/$liveId': {
+      id: '/_authenticated/live/$liveId'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/live/nova': {
+      id: '/_authenticated/live/nova'
+      path: '/live/nova'
+      fullPath: '/live/nova'
+      preLoaderRoute: typeof AuthenticatedLiveNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mywallet/': {
+      id: '/_authenticated/mywallet/'
       path: '/'
-      fullPath: '/settings/device-management/'
-      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+      fullPath: '/mywallet/'
+      preLoaderRoute: typeof AuthenticatedMywalletIndexRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
     }
-    '/_authenticated/live/$liveId/': {
-      id: '/_authenticated/live/$liveId/'
-      path: '/'
-      fullPath: '/live/$liveId/'
-      preLoaderRoute: typeof AuthenticatedLiveLiveIdIndexRouteImport
-      parentRoute: typeof AuthenticatedLiveLiveIdRoute
+    '/_authenticated/mywallet/extrato': {
+      id: '/_authenticated/mywallet/extrato'
+      path: '/extrato'
+      fullPath: '/mywallet/extrato'
+      preLoaderRoute: typeof AuthenticatedMywalletExtratoRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
     }
-    '/api/public/webhooks/veriff-decision': {
-      id: '/api/public/webhooks/veriff-decision'
-      path: '/api/public/webhooks/veriff-decision'
-      fullPath: '/api/public/webhooks/veriff-decision'
-      preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/mywallet/recarregar': {
+      id: '/_authenticated/mywallet/recarregar'
+      path: '/recarregar'
+      fullPath: '/mywallet/recarregar'
+      preLoaderRoute: typeof AuthenticatedMywalletRecarregarRouteImport
+      parentRoute: typeof AuthenticatedMywalletRoute
     }
-    '/api/public/webhooks/asaas': {
-      id: '/api/public/webhooks/asaas'
-      path: '/api/public/webhooks/asaas'
-      fullPath: '/api/public/webhooks/asaas'
-      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/perfil/$username': {
+      id: '/_authenticated/perfil/$username'
+      path: '/perfil/$username'
+      fullPath: '/perfil/$username'
+      preLoaderRoute: typeof AuthenticatedPerfilUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/subscription-reminders': {
-      id: '/api/public/hooks/subscription-reminders'
-      path: '/api/public/hooks/subscription-reminders'
-      fullPath: '/api/public/hooks/subscription-reminders'
-      preLoaderRoute: typeof ApiPublicHooksSubscriptionRemindersRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/profile/$username': {
+      id: '/_authenticated/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/dispatch-broadcasts': {
-      id: '/api/public/hooks/dispatch-broadcasts'
-      path: '/api/public/hooks/dispatch-broadcasts'
-      fullPath: '/api/public/hooks/dispatch-broadcasts'
-      preLoaderRoute: typeof ApiPublicHooksDispatchBroadcastsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/settings/change-password': {
+      id: '/_authenticated/settings/change-password'
+      path: '/settings/change-password'
+      fullPath: '/settings/change-password'
+      preLoaderRoute: typeof AuthenticatedSettingsChangePasswordRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/auth/email-hook': {
-      id: '/api/public/auth/email-hook'
-      path: '/api/public/auth/email-hook'
-      fullPath: '/api/public/auth/email-hook'
-      preLoaderRoute: typeof ApiPublicAuthEmailHookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/settings/chat-settings': {
+      id: '/_authenticated/settings/chat-settings'
+      path: '/settings/chat-settings'
+      fullPath: '/settings/chat-settings'
+      preLoaderRoute: typeof AuthenticatedSettingsChatSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/two-factor/verify': {
-      id: '/_authenticated/settings/two-factor/verify'
-      path: '/verify'
-      fullPath: '/settings/two-factor/verify'
-      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorVerifyRouteImport
-      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    '/_authenticated/settings/creator': {
+      id: '/_authenticated/settings/creator'
+      path: '/settings/creator'
+      fullPath: '/settings/creator'
+      preLoaderRoute: typeof AuthenticatedSettingsCreatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/two-factor/setup': {
-      id: '/_authenticated/settings/two-factor/setup'
-      path: '/setup'
-      fullPath: '/settings/two-factor/setup'
-      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorSetupRouteImport
-      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    '/_authenticated/settings/details': {
+      id: '/_authenticated/settings/details'
+      path: '/settings/details'
+      fullPath: '/settings/details'
+      preLoaderRoute: typeof AuthenticatedSettingsDetailsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/device-management/removed': {
-      id: '/_authenticated/settings/device-management/removed'
-      path: '/removed'
-      fullPath: '/settings/device-management/removed'
-      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRouteImport
-      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+    '/_authenticated/settings/device-management': {
+      id: '/_authenticated/settings/device-management'
+      path: '/settings/device-management'
+      fullPath: '/settings/device-management'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/live/$liveId/transmitir': {
-      id: '/_authenticated/live/$liveId/transmitir'
-      path: '/transmitir'
-      fullPath: '/live/$liveId/transmitir'
-      preLoaderRoute: typeof AuthenticatedLiveLiveIdTransmitirRouteImport
-      parentRoute: typeof AuthenticatedLiveLiveIdRoute
+    '/_authenticated/settings/language': {
+      id: '/_authenticated/settings/language'
+      path: '/settings/language'
+      fullPath: '/settings/language'
+      preLoaderRoute: typeof AuthenticatedSettingsLanguageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/creator/onboarding/redes-sociais': {
-      id: '/_authenticated/creator/onboarding/redes-sociais'
-      path: '/creator/onboarding/redes-sociais'
-      fullPath: '/creator/onboarding/redes-sociais'
-      preLoaderRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRouteImport
+    '/_authenticated/settings/muted': {
+      id: '/_authenticated/settings/muted'
+      path: '/settings/muted'
+      fullPath: '/settings/muted'
+      preLoaderRoute: typeof AuthenticatedSettingsMutedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/myprofile': {
+      id: '/_authenticated/settings/myprofile'
+      path: '/settings/myprofile'
+      fullPath: '/settings/myprofile'
+      preLoaderRoute: typeof AuthenticatedSettingsMyprofileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/personal': {
+      id: '/_authenticated/settings/personal'
+      path: '/settings/personal'
+      fullPath: '/settings/personal'
+      preLoaderRoute: typeof AuthenticatedSettingsPersonalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/privacy': {
+      id: '/_authenticated/settings/privacy'
+      path: '/settings/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/privacy-mail': {
+      id: '/_authenticated/settings/privacy-mail'
+      path: '/settings/privacy-mail'
+      fullPath: '/settings/privacy-mail'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyMailRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/privacy-options': {
+      id: '/_authenticated/settings/privacy-options'
+      path: '/settings/privacy-options'
+      fullPath: '/settings/privacy-options'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyOptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/restrictions': {
+      id: '/_authenticated/settings/restrictions'
+      path: '/settings/restrictions'
+      fullPath: '/settings/restrictions'
+      preLoaderRoute: typeof AuthenticatedSettingsRestrictionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/security': {
+      id: '/_authenticated/settings/security'
+      path: '/settings/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/security-menu': {
+      id: '/_authenticated/settings/security-menu'
+      path: '/settings/security-menu'
+      fullPath: '/settings/security-menu'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityMenuRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/social': {
+      id: '/_authenticated/settings/social'
+      path: '/settings/social'
+      fullPath: '/settings/social'
+      preLoaderRoute: typeof AuthenticatedSettingsSocialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/social-media': {
+      id: '/_authenticated/settings/social-media'
+      path: '/settings/social-media'
+      fullPath: '/settings/social-media'
+      preLoaderRoute: typeof AuthenticatedSettingsSocialMediaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/subscription': {
+      id: '/_authenticated/settings/subscription'
+      path: '/settings/subscription'
+      fullPath: '/settings/subscription'
+      preLoaderRoute: typeof AuthenticatedSettingsSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/theme': {
+      id: '/_authenticated/settings/theme'
+      path: '/settings/theme'
+      fullPath: '/settings/theme'
+      preLoaderRoute: typeof AuthenticatedSettingsThemeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/two-factor': {
+      id: '/_authenticated/settings/two-factor'
+      path: '/settings/two-factor'
+      fullPath: '/settings/two-factor'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/users/$userId': {
+      id: '/_authenticated/admin/users/$userId'
+      path: '/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminUsersRoute
+    }
+    '/_authenticated/chat/call/$callId': {
+      id: '/_authenticated/chat/call/$callId'
+      path: '/call/$callId'
+      fullPath: '/chat/call/$callId'
+      preLoaderRoute: typeof AuthenticatedChatCallCallIdRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/creator/onboarding/assinatura': {
+      id: '/_authenticated/creator/onboarding/assinatura'
+      path: '/creator/onboarding/assinatura'
+      fullPath: '/creator/onboarding/assinatura'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/creator/onboarding/documentos': {
@@ -2223,26 +2153,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/creator/onboarding/assinatura': {
-      id: '/_authenticated/creator/onboarding/assinatura'
-      path: '/creator/onboarding/assinatura'
-      fullPath: '/creator/onboarding/assinatura'
-      preLoaderRoute: typeof AuthenticatedCreatorOnboardingAssinaturaRouteImport
+    '/_authenticated/creator/onboarding/redes-sociais': {
+      id: '/_authenticated/creator/onboarding/redes-sociais'
+      path: '/creator/onboarding/redes-sociais'
+      fullPath: '/creator/onboarding/redes-sociais'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingRedesSociaisRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/chat/call/$callId': {
-      id: '/_authenticated/chat/call/$callId'
-      path: '/call/$callId'
-      fullPath: '/chat/call/$callId'
-      preLoaderRoute: typeof AuthenticatedChatCallCallIdRouteImport
-      parentRoute: typeof AuthenticatedChatRoute
+    '/_authenticated/live/$liveId/': {
+      id: '/_authenticated/live/$liveId/'
+      path: '/'
+      fullPath: '/live/$liveId/'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdIndexRouteImport
+      parentRoute: typeof AuthenticatedLiveLiveIdRoute
     }
-    '/_authenticated/admin/users/$userId': {
-      id: '/_authenticated/admin/users/$userId'
-      path: '/$userId'
-      fullPath: '/admin/users/$userId'
-      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
-      parentRoute: typeof AuthenticatedAdminUsersRoute
+    '/_authenticated/live/$liveId/transmitir': {
+      id: '/_authenticated/live/$liveId/transmitir'
+      path: '/transmitir'
+      fullPath: '/live/$liveId/transmitir'
+      preLoaderRoute: typeof AuthenticatedLiveLiveIdTransmitirRouteImport
+      parentRoute: typeof AuthenticatedLiveLiveIdRoute
+    }
+    '/_authenticated/settings/device-management/': {
+      id: '/_authenticated/settings/device-management/'
+      path: '/'
+      fullPath: '/settings/device-management/'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+    }
+    '/_authenticated/settings/device-management/removed': {
+      id: '/_authenticated/settings/device-management/removed'
+      path: '/removed'
+      fullPath: '/settings/device-management/removed'
+      preLoaderRoute: typeof AuthenticatedSettingsDeviceManagementRemovedRouteImport
+      parentRoute: typeof AuthenticatedSettingsDeviceManagementRoute
+    }
+    '/_authenticated/settings/two-factor/': {
+      id: '/_authenticated/settings/two-factor/'
+      path: '/'
+      fullPath: '/settings/two-factor/'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    }
+    '/_authenticated/settings/two-factor/setup': {
+      id: '/_authenticated/settings/two-factor/setup'
+      path: '/setup'
+      fullPath: '/settings/two-factor/setup'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorSetupRouteImport
+      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    }
+    '/_authenticated/settings/two-factor/verify': {
+      id: '/_authenticated/settings/two-factor/verify'
+      path: '/verify'
+      fullPath: '/settings/two-factor/verify'
+      preLoaderRoute: typeof AuthenticatedSettingsTwoFactorVerifyRouteImport
+      parentRoute: typeof AuthenticatedSettingsTwoFactorRoute
+    }
+    '/api/public/auth/email-hook': {
+      id: '/api/public/auth/email-hook'
+      path: '/api/public/auth/email-hook'
+      fullPath: '/api/public/auth/email-hook'
+      preLoaderRoute: typeof ApiPublicAuthEmailHookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/dispatch-broadcasts': {
+      id: '/api/public/hooks/dispatch-broadcasts'
+      path: '/api/public/hooks/dispatch-broadcasts'
+      fullPath: '/api/public/hooks/dispatch-broadcasts'
+      preLoaderRoute: typeof ApiPublicHooksDispatchBroadcastsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/subscription-reminders': {
+      id: '/api/public/hooks/subscription-reminders'
+      path: '/api/public/hooks/subscription-reminders'
+      fullPath: '/api/public/hooks/subscription-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSubscriptionRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/asaas': {
+      id: '/api/public/webhooks/asaas'
+      path: '/api/public/webhooks/asaas'
+      fullPath: '/api/public/webhooks/asaas'
+      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/veriff-decision': {
+      id: '/api/public/webhooks/veriff-decision'
+      path: '/api/public/webhooks/veriff-decision'
+      fullPath: '/api/public/webhooks/veriff-decision'
+      preLoaderRoute: typeof ApiPublicWebhooksVeriffDecisionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/creator/onboarding/documentos/': {
       id: '/_authenticated/creator/onboarding/documentos/'
@@ -2251,11 +2251,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosIndexRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
-    '/_authenticated/creator/onboarding/documentos/verificando': {
-      id: '/_authenticated/creator/onboarding/documentos/verificando'
-      path: '/verificando'
-      fullPath: '/creator/onboarding/documentos/verificando'
-      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
+    '/_authenticated/creator/onboarding/documentos/aprovado': {
+      id: '/_authenticated/creator/onboarding/documentos/aprovado'
+      path: '/aprovado'
+      fullPath: '/creator/onboarding/documentos/aprovado'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
     '/_authenticated/creator/onboarding/documentos/veriff-concluido': {
@@ -2265,11 +2265,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVeriffConcluidoRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
-    '/_authenticated/creator/onboarding/documentos/aprovado': {
-      id: '/_authenticated/creator/onboarding/documentos/aprovado'
-      path: '/aprovado'
-      fullPath: '/creator/onboarding/documentos/aprovado'
-      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosAprovadoRouteImport
+    '/_authenticated/creator/onboarding/documentos/verificando': {
+      id: '/_authenticated/creator/onboarding/documentos/verificando'
+      path: '/verificando'
+      fullPath: '/creator/onboarding/documentos/verificando'
+      preLoaderRoute: typeof AuthenticatedCreatorOnboardingDocumentosVerificandoRouteImport
       parentRoute: typeof AuthenticatedCreatorOnboardingDocumentosRoute
     }
   }
