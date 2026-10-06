@@ -133,7 +133,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         pix_key_type: data.pixKeyType ?? null,
         status: "requested",
         is_first_withdrawal: false,
-        provider: isPixMode ? "asaas_platform" : "asaas",
+        provider: "asaas",
       })
       .select("id, amount_cents, fee_cents, net_cents, status, is_first_withdrawal, requested_at")
       .single();
