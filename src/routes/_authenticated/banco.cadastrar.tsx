@@ -51,13 +51,11 @@ function CadastrarBancoPage() {
           kycVerified={kycVerified}
           walletId={statusQuery.data?.walletId ?? ""}
           hasApiKey={statusQuery.data?.hasApiKey ?? false}
+          payoutMode={statusQuery.data?.payoutMode ?? null}
+          key={statusQuery.dataUpdatedAt}
           initial={
             statusQuery.data?.payoutAccount
               ? {
-                  bankName: (statusQuery.data.payoutAccount as any).bank_name,
-                  accountType: (statusQuery.data.payoutAccount as any).account_type,
-                  agency: (statusQuery.data.payoutAccount as any).agency,
-                  accountNumber: (statusQuery.data.payoutAccount as any).account_number,
                   pixKeyType: (statusQuery.data.payoutAccount as any).pix_key_type,
                   pixKey: (statusQuery.data.payoutAccount as any).pix_key,
                 }
