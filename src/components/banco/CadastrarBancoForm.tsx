@@ -116,6 +116,14 @@ export function CadastrarBancoForm({
             desc="Sua parte cai direto na sua conta Asaas a cada venda."
           />
         </div>
+        <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed space-y-1">
+          <p>
+            {mode === "pix"
+              ? "Seus ganhos ficam guardados na conta da plataforma até você sacar. No saque, enviamos um PIX para a sua chave. Você não precisa abrir conta no Asaas."
+              : "Seus ganhos caem direto na sua conta Asaas a cada venda. Você pode sacar por aqui ou pelo painel do Asaas."}
+          </p>
+          <p>Vendas no cartão ficam 15 dias a liberar; no PIX, liberam na hora. Saque mínimo de R$ 50.</p>
+        </div>
       </section>
 
       {mode === "asaas_split" && (
