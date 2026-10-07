@@ -393,10 +393,16 @@ function BancoPage() {
                   Sacar
                 </Button>
 
-                {c.muted && !overviewQuery.isLoading && !isRefreshingAfterWithdrawal ? (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Sem movimentações internacionais
-                  </p>
+                {!overviewQuery.isLoading && !isRefreshingAfterWithdrawal ? (
+                  c.muted ? (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Sem movimentações internacionais
+                    </p>
+                  ) : disabledReason ? (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {disabledReason}
+                    </p>
+                  ) : null
                 ) : null}
               </div>
             );
