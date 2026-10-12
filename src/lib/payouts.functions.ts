@@ -31,6 +31,29 @@ function mapPixKeyType(
   }
 }
 
+function normalizePixKey(key: string, type?: string): string {
+  const k = key.trim();
+  if (type === "cpf" || type === "cnpj") return k.replace(/\D/g, "");
+  if (type === "telefone") {
+    const d = k.replace(/\D/g, "");
+    if (d.length === 10 || d.length === 11) return `+55${d}`;
+    if (d.startsWith("55") && (d.length === 12 || d.length === 13)) return `+${d}`;
+    return k.startsWith("+") ? k : `+${d}`;
+  }
+  return k;
+}
+
+function friendlyAsaasError(msg: string): string {
+  if (/chave informada n[aã]o foi encontrada/i.test(msg))
+    return "A chave PIX não foi encontrada. Confira se ela está cadastrada no seu banco e atualize em Meu Banco.";
+  return msg;
+}
+
+async function adminClient() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -159,7 +182,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         : asaas.decryptApiKey(profile.asaas_api_key_encrypted as string);
       const transfer = await asaas.createPixTransfer(apiKey, {
         value: centsToBrl(amount),
-        pixAddressKey: data.pixKey.trim(),
+        pixAddressKey: normalizePixKey(data.pixKey, data.pixKeyType),
         pixAddressKeyType: mapPixKeyType(data.pixKeyType),
         externalReference: row.id,
         description: "Saque Monetisexy",
@@ -204,19 +227,25 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         update.rejection_reason = transfer.failReason;
       }
 
-      await supabase.from("withdrawals").update(update).eq("id", row.id);
+      const admin = await adminClient();
+      await admin
+        .from("withdrawals")
+        .update(update)
+        .eq("id", row.id)
+        .eq("creator_id", userId);
 
       return { ...row, status: withdrawalStatus, provider_ref: transfer.id };
     } catch (err: any) {
       // Em caso de falha na transferência, o saque deixa de contar como débito.
-      await supabase
+      const msg = friendlyAsaasError(String(err?.message ?? "falha na transferência Asaas"));
+      const admin = await adminClient();
+      const { error: fErr } = await admin
         .from("withdrawals")
-        .update({
-          status: "failed",
-          rejection_reason: String(err?.message ?? "falha na transferência Asaas"),
-        })
-        .eq("id", row.id);
-      throw new Error(err?.message ?? "falha ao criar transferência Asaas");
+        .update({ status: "failed", rejection_reason: msg })
+        .eq("id", row.id)
+        .eq("creator_id", userId);
+      if (fErr) console.error("[withdraw] mark failed error", fErr);
+      throw new Error(msg);
     }
   });
 
@@ -234,10 +263,13 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     if (w.creator_id !== userId) throw new Error("acesso negado");
     if (w.status !== "requested") throw new Error("saque não pode ser cancelado");
 
-    const { error } = await supabase
+    const admin = await adminClient();
+    const { error } = await admin
       .from("withdrawals")
       .update({ status: "rejected", rejection_reason: "cancelado pelo criador" })
-      .eq("id", w.id);
+      .eq("id", w.id)
+      .eq("creator_id", userId)
+      .eq("status", "requested");
     if (error) throw new Error(error.message);
 
     // Status rejeitado remove o saque do cálculo de saldo disponível.
