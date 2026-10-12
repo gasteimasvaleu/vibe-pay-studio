@@ -265,6 +265,45 @@ async function fetchVeriffStatus(sessionId: string): Promise<KycStatus | null> {
 }
 
 /**
+ * Busca nome, nascimento e CPF da decisão Veriff e preenche apenas campos vazios.
+ */
+export async function fillPersonFromVeriff(supabaseAny: any, userId: string) {
+  const apiKey = process.env.VERIFF_API_KEY;
+  const apiSecret = process.env.VERIFF_API_SECRET;
+  if (!apiKey || !apiSecret) return;
+  const { data: prof } = await supabaseAny
+    .from("profiles")
+    .select("veriff_session_id, cpf, full_name, birth_date")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const sessionId = prof?.veriff_session_id;
+  if (!sessionId) return;
+  const { createHmac } = await import("crypto");
+  const signature = createHmac("sha256", apiSecret).update(sessionId).digest("hex");
+  const res = await fetch(`https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`, {
+    headers: { "X-AUTH-CLIENT": apiKey, "X-HMAC-SIGNATURE": signature },
+  });
+  if (!res.ok) return;
+  const payload = (await res.json()) as any;
+  const v = payload?.verification ?? {};
+  const patch: Record<string, string> = {};
+  const fullName = [v.person?.firstName, v.person?.lastName]
+    .map((s: any) => (typeof s === "string" ? s.trim() : ""))
+    .filter(Boolean)
+    .join(" ");
+  if (fullName && !prof.full_name) patch.full_name = fullName;
+  const dob = v.person?.dateOfBirth;
+  if (typeof dob === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dob) && !prof.birth_date)
+    patch.birth_date = dob;
+  const candidates = [v.person?.idNumber, v.document?.number]
+    .map((s: any) => String(s ?? "").replace(/\D/g, ""))
+    .filter((s: string) => s.length === 11);
+  if (candidates[0] && !prof.cpf) patch.cpf = candidates[0];
+  if (Object.keys(patch).length === 0) return;
+  await supabaseAny.from("profiles").update(patch).eq("user_id", userId);
+}
+
+/**
  * Aplica no banco a transição de kyc_status. Se virar 'verified',
  * promove a conta a creator e dispara o email de "free -> paid".
  * O gatilho `ensure_paid_creator_profile` cuida do creator_profile + active_profile_id.
@@ -287,6 +326,11 @@ async function applyKycTransition(
     update.account_type = "creator";
     update.onboarding_completed_at = now;
     verifiedAt = now;
+    try {
+      await fillPersonFromVeriff(supabaseAny, userId);
+    } catch (err) {
+      console.error("[onboarding] fillPersonFromVeriff failed", err);
+    }
   }
   const { error: upErr } = await supabaseAny
     .from("profiles")
