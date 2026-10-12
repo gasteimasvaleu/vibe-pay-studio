@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestWithdrawal } from "@/lib/payouts.functions";
+import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 
 const BRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -98,16 +99,28 @@ export function SacarDialog({
     return null;
   }, [amountCents, saldoLiberadoCents, pixKey]);
 
+  const [needsCpf, setNeedsCpf] = useState(false);
+
   const mutation = useMutation({
-    mutationFn: () =>
-      run({
-        data: {
-          amountCents,
-          pixKey: pixKey!,
-          pixKeyType: pixKeyType ?? undefined,
-        },
-      }),
+    mutationFn: async () => {
+      try {
+        return await run({
+          data: {
+            amountCents,
+            pixKey: pixKey!,
+            pixKeyType: pixKeyType ?? undefined,
+          },
+        });
+      } catch (e: any) {
+        if (/cpf_required/.test(String(e?.message ?? ""))) {
+          setNeedsCpf(true);
+          return { __cpfRequired: true } as any;
+        }
+        throw e;
+      }
+    },
     onSuccess: async (res: any) => {
+      if (res?.__cpfRequired) return;
       const withdrawnAmountCents = amountCents;
       const previousReleasedCents = saldoLiberadoCents;
       const isDone = res?.status === "paid";
@@ -242,6 +255,11 @@ export function SacarDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <CpfPromptDialog
+        open={needsCpf}
+        onOpenChange={setNeedsCpf}
+        onSaved={() => mutation.mutate()}
+      />
     </Dialog>
   );
 }

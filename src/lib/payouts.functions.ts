@@ -110,13 +110,23 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .maybeSingle();
     const isPixMode = pa?.payout_mode === "pix";
 
-    const { data: profile, error: pErr } = await (supabase as any)
-      .from("profiles")
-      .select("asaas_api_key_encrypted, cpf")
-      .eq("user_id", userId)
-      .single();
+    const loadProfile = () =>
+      (supabase as any)
+        .from("profiles")
+        .select("asaas_api_key_encrypted, cpf")
+        .eq("user_id", userId)
+        .single();
+    let { data: profile, error: pErr } = await loadProfile();
     if (isPixMode && !profile?.cpf) {
-      throw new Error("CPF não encontrado no seu cadastro. Conclua a verificação de identidade.");
+      // Tenta recuperar o CPF da verificação Veriff já aprovada.
+      try {
+        const { fillPersonFromVeriff } = await import("@/lib/onboarding.functions");
+        await fillPersonFromVeriff(supabase, userId);
+        ({ data: profile, error: pErr } = await loadProfile());
+      } catch (e) {
+        console.error("[withdraw] fillPersonFromVeriff failed", e);
+      }
+      if (!profile?.cpf) throw new Error("cpf_required");
     }
     if (!isPixMode && (pErr || !profile?.asaas_api_key_encrypted)) {
       throw new Error(
