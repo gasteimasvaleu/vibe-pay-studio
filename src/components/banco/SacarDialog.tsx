@@ -98,15 +98,26 @@ export function SacarDialog({
     return null;
   }, [amountCents, saldoLiberadoCents, pixKey]);
 
+  const [needsCpf, setNeedsCpf] = useState(false);
+
   const mutation = useMutation({
-    mutationFn: () =>
-      run({
-        data: {
-          amountCents,
-          pixKey: pixKey!,
-          pixKeyType: pixKeyType ?? undefined,
-        },
-      }),
+    mutationFn: async () => {
+      try {
+        return await run({
+          data: {
+            amountCents,
+            pixKey: pixKey!,
+            pixKeyType: pixKeyType ?? undefined,
+          },
+        });
+      } catch (e: any) {
+        if (/cpf_required/.test(String(e?.message ?? ""))) {
+          setNeedsCpf(true);
+          return { __cpfRequired: true } as any;
+        }
+        throw e;
+      }
+    },
     onSuccess: async (res: any) => {
       const withdrawnAmountCents = amountCents;
       const previousReleasedCents = saldoLiberadoCents;
