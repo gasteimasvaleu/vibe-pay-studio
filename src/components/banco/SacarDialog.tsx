@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestWithdrawal } from "@/lib/payouts.functions";
+import { CpfPromptDialog } from "@/components/payments/CpfPromptDialog";
 
 const BRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -119,6 +120,7 @@ export function SacarDialog({
       }
     },
     onSuccess: async (res: any) => {
+      if (res?.__cpfRequired) return;
       const withdrawnAmountCents = amountCents;
       const previousReleasedCents = saldoLiberadoCents;
       const isDone = res?.status === "paid";
@@ -253,6 +255,11 @@ export function SacarDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <CpfPromptDialog
+        open={needsCpf}
+        onOpenChange={setNeedsCpf}
+        onSaved={() => mutation.mutate()}
+      />
     </Dialog>
   );
 }
