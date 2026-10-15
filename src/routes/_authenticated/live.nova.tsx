@@ -6,6 +6,7 @@ import { Radio, ArrowLeft, Camera, Mic, ExternalLink, Users, VideoOff } from "lu
 import { startLive } from "@/lib/lives.functions";
 import { stashLiveMedia } from "@/lib/live-media-handoff";
 import { Switch } from "@/components/ui/switch";
+import { usePlatformCommission } from "@/hooks/usePlatformCommission";
 
 export const Route = createFileRoute("/_authenticated/live/nova")({
   head: () => ({
@@ -22,6 +23,7 @@ type Device = { deviceId: string; label: string };
 function NovaLivePage() {
   const navigate = useNavigate();
   const startFn = useServerFn(startLive);
+  const { commission } = usePlatformCommission();
 
   const [title, setTitle] = useState("");
   const [priceReais, setPriceReais] = useState("0,00");
@@ -310,7 +312,8 @@ function NovaLivePage() {
                 className="w-full h-11 rounded-xl border border-border bg-card px-3 text-sm"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Use 0,00 para live gratuita. Comissão da plataforma: 15%.
+                Use 0,00 para live gratuita. Comissão da plataforma:{" "}
+                {commission.national}%.
               </p>
             </div>
 
