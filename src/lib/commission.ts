@@ -2,10 +2,13 @@
 // editável em Configurações do Admin. Este módulo só lê o percentual vigente
 // para o comprador da vez (nacional x internacional).
 //
-// O número fixo em `asaas.server.ts` (PLATFORM_COMMISSION_PCT) continua sendo o
-// reserva usado quando a leitura falha, para nunca travar uma cobrança.
+// Fica aqui (e não em asaas.server.ts) porque é seguro para o navegador:
+// não importa nada de servidor. O valor fixo abaixo é só o reserva usado
+// quando a leitura da configuração falha, para nunca travar uma cobrança.
 import type { supabase as SupabaseClientType } from "@/integrations/supabase/client";
-import { PLATFORM_COMMISSION_PCT } from "@/lib/asaas.server";
+
+export const PLATFORM_COMMISSION_PCT = 15;
+export const CREATOR_SPLIT_PCT = 100 - PLATFORM_COMMISSION_PCT; // 85
 
 const FALLBACK_COMMISSION_PCT = PLATFORM_COMMISSION_PCT;
 
@@ -21,8 +24,8 @@ export function isInternationalCountry(country: string | null | undefined): bool
 
 /**
  * Percentual de comissão que deve ser aplicado a uma compra feita por `buyerId`.
- * Usa o cliente do próprio usuário (RLS permite a leitura) e devolve o valor de
- * reserva quando não consegue ler a configuração.
+ * Usa o cliente do próprio usuário (a leitura de platform_settings é permitida a
+ * quem está logado) e devolve o valor de reserva quando não consegue ler.
  */
 export async function getCommissionPct(
   supabase: SupabaseClientType,

@@ -10,9 +10,9 @@ import {
 
 const ASAAS_BASE = "https://api.asaas.com/v3";
 // Reserva. O percentual vigente é lido de platform_settings (Configurações do Admin)
-// via src/lib/commission.ts e passado a computeCreatorNetCents.
-export const PLATFORM_COMMISSION_PCT = 15;
-export const CREATOR_SPLIT_PCT = 100 - PLATFORM_COMMISSION_PCT; // 85
+// via getCommissionPct() e passado a computeCreatorNetCents.
+export { PLATFORM_COMMISSION_PCT, CREATOR_SPLIT_PCT } from "@/lib/commission";
+import { PLATFORM_COMMISSION_PCT } from "@/lib/commission";
 
 // Tarifas cobradas pelo Asaas (valores padrão, sem promocional).
 // Descontadas 100% do valor líquido do creator via split fixedValue.
