@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getCommissionPct } from "@/lib/commission";
 
 type Plan = "monthly" | "quarterly" | "semiannual";
 
