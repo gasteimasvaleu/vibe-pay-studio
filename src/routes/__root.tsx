@@ -90,6 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Monetisexy — Monetize seu conteúdo adulto com liberdade." },
       { name: "description", content: "A plataforma feita para criadores de conteúdo adulto que querem transformar sua audiência em renda real. Publique, gerencie assinaturas e receba pagamentos com" },
       { name: "author", content: "Monetisexy" },
+      { name: "google-site-verification", content: "JJ0VanBzGKZ3BEtyNYd4wP5wKmAzWVY0S2xIKRaIugU" },
       { property: "og:title", content: "Monetisexy — Monetize seu conteúdo adulto com liberdade." },
       { property: "og:description", content: "A plataforma feita para criadores de conteúdo adulto que querem transformar sua audiência em renda real. Publique, gerencie assinaturas e receba pagamentos com" },
       { property: "og:type", content: "website" },
