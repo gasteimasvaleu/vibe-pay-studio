@@ -13,7 +13,8 @@
 
 1. `public/robots.txt` (allow padrão + sitemap) e `sitemap.xml` das páginas públicas.
 2. Favicon no root (link rel="icon").
-3. Publicar após o ajuste (as tags só mudam no site real ao publicar).
+3. Conectar o Google Search Console: ligar sua conta Google, gerar a marca de verificação do Google, colocá-la na home, publicar, verificar o monetisexy.com e enviar o sitemap.
+4. Publicar após o ajuste (as mudanças só chegam ao site real depois de publicar).
 
 ## Fase 2 — Página pública de descoberta (app)
 
