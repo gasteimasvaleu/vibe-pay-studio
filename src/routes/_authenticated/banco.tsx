@@ -9,6 +9,7 @@ import {
   Banknote,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   Film,
   Gift,
@@ -20,6 +21,11 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
+import {
+  buildStatementCsv,
+  buildStatementPdf,
+  deliverFile,
+} from "@/lib/statement-export";
 import {
   Accordion,
   AccordionContent,
@@ -135,6 +141,29 @@ function BancoPage() {
   const wdSel = useSelection();
   const [txShowHidden, setTxShowHidden] = useState(false);
   const [wdShowHidden, setWdShowHidden] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const exportStatement = async (format: "csv" | "pdf") => {
+    const rows = (txQuery.data ?? []) as any[];
+    if (rows.length === 0) return;
+    setExporting(true);
+    try {
+      const kindLabel = (k: string) => kindMeta(k).label;
+      const payLabel = (m: string | null) =>
+        m ? (PAYMENT_LABEL[m] ?? m) : "—";
+      const stamp = new Date().toISOString().slice(0, 10);
+      const blob =
+        format === "csv"
+          ? buildStatementCsv(rows, kindLabel, payLabel)
+          : await buildStatementPdf(rows, kindLabel, payLabel);
+      await deliverFile(blob, `extrato-monetisexy-${stamp}.${format}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o extrato. Tente novamente.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
@@ -431,6 +460,30 @@ function BancoPage() {
               setTxShowHidden((v) => !v);
             }}
           />
+          {(txQuery.data ?? []).length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                disabled={exporting}
+                onClick={() => void exportStatement("csv")}
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                Baixar CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                disabled={exporting}
+                onClick={() => void exportStatement("pdf")}
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                Baixar PDF
+              </Button>
+            </div>
+          )}
           {txQuery.isLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((i) => (
