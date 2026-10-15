@@ -22,13 +22,18 @@ const FIELDS: {
   hint?: string;
   type: "number" | "toggle";
 }[] = [
-  { key: "commission_pct_national", label: "Comissão nacional (%)", type: "number" },
+  {
+    key: "commission_pct_national",
+    label: "Comissão nacional (%)",
+    hint: "Vale para vendas de compradores no Brasil, a partir da próxima venda.",
+    type: "number",
+  },
   {
     key: "commission_pct_international",
     label: "Comissão internacional (%)",
+    hint: "Vale para vendas de compradores de fora do Brasil.",
     type: "number",
   },
-  { key: "gateway_fee_pct", label: "Taxa gateway (%)", type: "number" },
   { key: "min_ppv_cents", label: "PPV mínimo (centavos)", type: "number" },
   { key: "min_dm_cents", label: "DM paga mínima (centavos)", type: "number" },
   {
@@ -100,13 +105,20 @@ function AdminSettings() {
       <Card className="p-4 space-y-3">
         <h3 className="font-medium">Configurações da plataforma</h3>
         <div className="text-xs text-muted-foreground">
-          Alterações são registradas em auditoria e afetam todos os fluxos que leem
-          esses valores.
+          Alterações são registradas em auditoria. Os percentuais de comissão valem a
+          partir da próxima venda — vendas já feitas não mudam. A taxa cobrada pelo
+          Asaas (PIX e boleto R$ 1,99; cartão 2,99% + R$ 0,49) é fixa e sai do
+          repasse do creator.
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {FIELDS.map((f) => (
             <div key={f.key} className="space-y-1">
               <label className="text-xs text-muted-foreground">{f.label}</label>
+              {f.hint ? (
+                <p className="text-[11px] leading-snug text-muted-foreground/80">
+                  {f.hint}
+                </p>
+              ) : null}
               {f.type === "number" ? (
                 <Input
                   type="number"

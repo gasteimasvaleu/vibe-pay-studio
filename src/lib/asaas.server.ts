@@ -9,8 +9,10 @@ import {
 } from "node:crypto";
 
 const ASAAS_BASE = "https://api.asaas.com/v3";
-export const PLATFORM_COMMISSION_PCT = 15;
-export const CREATOR_SPLIT_PCT = 100 - PLATFORM_COMMISSION_PCT; // 85
+// Reserva. O percentual vigente é lido de platform_settings (Configurações do Admin)
+// via getCommissionPct() e passado a computeCreatorNetCents.
+export { PLATFORM_COMMISSION_PCT, CREATOR_SPLIT_PCT } from "@/lib/commission";
+import { PLATFORM_COMMISSION_PCT } from "@/lib/commission";
 
 // Tarifas cobradas pelo Asaas (valores padrão, sem promocional).
 // Descontadas 100% do valor líquido do creator via split fixedValue.
@@ -53,16 +55,25 @@ export function assertMeetsMinimum(
 
 /**
  * Calcula o valor líquido que deve chegar ao creator após:
- *  - comissão da plataforma (15%)
+ *  - comissão da plataforma (percentual vigente, lido de platform_settings)
  *  - taxa do meio de pagamento cobrada pelo Asaas (integralmente descontada do creator)
+ * `commissionPct` é opcional: quando omitido ou inválido, usa PLATFORM_COMMISSION_PCT.
  * Lança erro se a operação não cobre as taxas ou está abaixo do mínimo do método.
  */
 export function computeCreatorNetCents(
   grossCents: number,
   method: AsaasBillingMethod,
+  commissionPct?: number,
 ): { platformFeeCents: number; gatewayFeeCents: number; netCreatorCents: number } {
   assertMeetsMinimum(grossCents, method);
-  const platformFeeCents = Math.floor((grossCents * PLATFORM_COMMISSION_PCT) / 100);
+  const pct =
+    typeof commissionPct === "number" &&
+    Number.isFinite(commissionPct) &&
+    commissionPct >= 0 &&
+    commissionPct <= 90
+      ? commissionPct
+      : PLATFORM_COMMISSION_PCT;
+  const platformFeeCents = Math.floor((grossCents * pct) / 100);
   const gatewayFeeCents = computeGatewayFeeCents(grossCents, method);
   const netCreatorCents = grossCents - platformFeeCents - gatewayFeeCents;
   if (netCreatorCents <= 0) {

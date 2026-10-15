@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getCommissionPct } from "@/lib/commission";
 
 type Method = "PIX" | "CREDIT_CARD";
 
@@ -285,7 +286,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(pub.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(pub.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
     const { data: existing } = await supabase
@@ -395,7 +396,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(story.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(story.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
     const { data: existing } = await supabase
@@ -518,7 +519,7 @@ export const createChallengeContributionPayment = createServerFn({ method: "POST
 
     const asaas = await loadAsaas();
     const method: Method = "PIX";
-    const { netCreatorCents } = asaas.computeCreatorNetCents(data.tierCents, method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(data.tierCents, method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(method);
 
     const { data: existing } = await supabase
@@ -623,7 +624,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(data.amountCents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(data.amountCents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
     const { data: tip, error } = await supabase
@@ -801,7 +802,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     const periodEnd = new Date(nowMs + months * 30 * 86400_000 + remainingMs).toISOString();
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
     const { data: sub, error: sErr } = await supabase
@@ -939,7 +940,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(msg.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(msg.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
     const { data: unlock, error: uErr } = await supabase
@@ -1012,7 +1013,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(call.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(call.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
         const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
@@ -1071,7 +1072,7 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(req.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(req.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
         const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });
@@ -1170,7 +1171,7 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();
-    const { netCreatorCents } = asaas.computeCreatorNetCents(live.price_cents, data.method);
+    const { netCreatorCents } = asaas.computeCreatorNetCents(live.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
         const __cardArgs = await resolveCardArgs(supabase, userId, data.method, { card: data.card, savedCardId: data.savedCardId });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePlatformCommission } from "@/hooks/usePlatformCommission";
 import {
   AlertCircle,
   ArrowLeft,
@@ -119,6 +120,7 @@ function BancoPage() {
   const [isRefreshingAfterWithdrawal, setIsRefreshingAfterWithdrawal] =
     useState(false);
   const qc = useQueryClient();
+  const { commission } = usePlatformCommission();
   const fetchStatus = useServerFn(getCreatorPayoutStatus);
   const fetchOverview = useServerFn(getCreatorBancoOverview);
   const fetchTransactions = useServerFn(listCreatorTransactions);
@@ -868,8 +870,12 @@ function BancoPage() {
                     Comissão da plataforma
                   </p>
                   <p>
-                    <strong>15%</strong> sobre cada transação (retida pela
-                    Monetisexy).
+                    <strong>{commission.national}%</strong> sobre cada transação
+                    (retida pela Monetisexy)
+                    {commission.international !== commission.national
+                      ? `; ${commission.international}% em vendas para fora do Brasil`
+                      : ""}
+                    .
                   </p>
                 </div>
                 <div>
@@ -904,10 +910,18 @@ function BancoPage() {
                     Exemplo em um PIX de R$ 10,00:
                   </p>
                   <ul className="space-y-0.5">
-                    <li>Plataforma (15%): R$ 1,50</li>
+                    <li>
+                      Plataforma ({commission.national}%):{" "}
+                      {formatBRL(Math.floor((1000 * commission.national) / 100))}
+                    </li>
                     <li>Taxa Asaas (PIX): R$ 1,99</li>
                     <li className="font-semibold text-foreground">
-                      Você recebe: R$ 6,51
+                      Você recebe:{" "}
+                      {formatBRL(
+                        1000 -
+                          Math.floor((1000 * commission.national) / 100) -
+                          199,
+                      )}
                     </li>
                   </ul>
                 </div>

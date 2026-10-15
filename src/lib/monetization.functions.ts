@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getCommissionPct } from "@/lib/commission";
 
 type Plan = "monthly" | "quarterly" | "semiannual";
 
@@ -190,7 +191,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
 
     const asaas = await import("./asaas.server");
     const amountCents = sub.price_cents_paid as number;
-    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, "CREDIT_CARD");
+    const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, "CREDIT_CARD", await getCommissionPct(supabase, userId));
     const cycle =
       sub.plan === "quarterly"
         ? "QUARTERLY"
