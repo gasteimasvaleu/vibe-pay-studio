@@ -3737,6 +3737,8 @@ export type Database = {
               platform_fee_cents: number
             }[]
           }
+      buyer_country_code: { Args: { _buyer: string }; Returns: string }
+      buyer_is_international: { Args: { _buyer: string }; Returns: boolean }
       calc_gateway_fee_cents: {
         Args: {
           _gross_cents: number
@@ -3910,6 +3912,10 @@ export type Database = {
             }
             Returns: Json
           }
+      platform_commission_pct: {
+        Args: { _international?: boolean }
+        Returns: number
+      }
       release_matured_earnings: { Args: never; Returns: number }
       resolve_active_creator_profile: {
         Args: { _user_id: string }
