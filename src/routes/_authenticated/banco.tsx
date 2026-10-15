@@ -437,6 +437,30 @@ function BancoPage() {
               setTxShowHidden((v) => !v);
             }}
           />
+          {(txQuery.data ?? []).length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                disabled={exporting}
+                onClick={() => void exportStatement("csv")}
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                Baixar CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                disabled={exporting}
+                onClick={() => void exportStatement("pdf")}
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                Baixar PDF
+              </Button>
+            </div>
+          )}
           {txQuery.isLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((i) => (
