@@ -1,29 +1,48 @@
-# Trocar o modo de recebimento sem precisar zerar o saldo
+# Plano de crescimento — Monetisexy
 
-## Resposta curta
-Liberar a troca "do jeito simples" causaria problema, porque o dinheiro de cada modo fica em um lugar diferente:
-- **Modo PIX:** o saldo fica na conta da plataforma, e o saque sai de lá.
-- **Modo Asaas:** a parte do creator já caiu na conta Asaas dele, e o saque sai da conta dele.
+## Situação (dados de 15 set a 15 out 2026)
 
-O saque usa sempre o modo **atual** para saber de onde tirar o dinheiro. Depois de trocar:
-- **PIX para Asaas:** o app tentaria sacar o saldo antigo da conta Asaas do creator, mas esse dinheiro está na conta da plataforma. O saque falha, e o saldo fica preso.
-- **Asaas para PIX:** o app pagaria o creator com dinheiro da plataforma, mas esse valor já foi entregue a ele no Asaas. A plataforma pagaria duas vezes.
+- **Domínio já conectado:** monetisexy.com no ar (ação de domínio concluída).
+- **Tráfego:** 24 visitas e 198 pageviews em 30 dias, praticamente só acesso direto (você e a equipe — páginas /admin, /banco, /dashboard). Zero visitas de busca, 1 de Facebook.
+- **Maior bloqueio de crescimento:** a home pública é a tela de login. Quem chega de busca vê "Entre na Monetisexy" e nada indexável — perfis, conteúdo e páginas de descoberta não existem para o Google. Sem página pública, SEO e AI (ChatGPT etc.) não têm o que ranquear.
+- **SEO técnico:** faltam robots.txt, sitemap.xml e favicon (3 achados atuais). Título/descrição/og da home estão OK.
+- **Mercado:** o Privacy domina o Brasil (fechado em ~20% de comissão); comparativos citam FatalFans (15%), FanFever (10%), Espiei (até 85% anunciado). Sites como guiafans.com, reviewpicante.com.br, espiei.com e sexsummit.com.br publicam comparativos que direcionam criadores — e a Monetisexy não aparece neles.
+- **Busca:** "vender conteúdo adulto" (210/mês, dificuldade baixa), "como vender conteudo adulto" (170/mês), "onde vender conteudo adulto" — termos fáceis de ranquear. O diferencial real: 85% para o creator + PIX.
 
-## A versão segura
-1. **Cada venda guarda de onde veio o dinheiro** (modo PIX ou conta Asaas), já no momento da venda.
-2. **O saldo aparece separado por origem** na tela Meu Banco, só quando houver as duas: "Saldo na plataforma" e "Saldo na sua conta Asaas", cada um com o liberado e o a liberar.
-3. **Cada saque tira o dinheiro do lugar certo:** o saldo da plataforma é pago pela plataforma, e o saldo do Asaas sai da conta do creator. Isso vale para qualquer modo que ele esteja usando agora.
-4. **A troca de modo é liberada na hora,** com um aviso: "Seu saldo atual continua disponível para saque. As vendas novas seguem o novo modo."
-5. **Resto abaixo de R$ 50 no modo antigo:** pode ser sacado mesmo abaixo do mínimo, desde que seja todo o resto daquela origem. Assim nenhum valor fica preso.
-6. **Vendas antigas:** são marcadas com a origem pelo modo que o creator usava na época. Hoje ninguém trocou de modo, então isso é seguro.
+## Fase 1 — Fundação técnica (app)
 
-## Como verificar
-- Na conta govitynow: trocar de PIX para Asaas com os R$ 64,22 a liberar. A troca deve funcionar, e o saldo deve continuar aparecendo como "na plataforma".
-- Conferir que um saque desse saldo é feito pela plataforma, mesmo com o modo já em Asaas.
+1. `public/robots.txt` (allow padrão + sitemap) e `sitemap.xml` das páginas públicas.
+2. Favicon no root (link rel="icon").
+3. Publicar após o ajuste (as tags só mudam no site real ao publicar).
 
-## Detalhes técnicos
-- Adicionar `payout_source` (`platform` | `creator_asaas`) às transações, preenchido pelos triggers `*_sync_transaction` a partir de `payout_accounts.payout_mode`. Preencher as transações antigas com o modo atual de cada creator.
-- `creator_wallets`: separar o liberado e o pendente por origem, ou calcular por agregação. Antes, conferir como o gatilho de liberação monta o saldo.
-- `withdrawals`: nova coluna `source`. `requestWithdrawal` escolhe a chave Asaas pela origem, não pelo modo atual, e aceita valor abaixo de R$ 50 quando ele é igual a todo o saldo daquela origem.
-- `saveCreatorPayoutSetup`: remover o bloqueio de saldo zero (linhas ~1344-1368 de `payments.functions.ts`).
-- `banco.tsx` / `SacarDialog.tsx`: mostrar o saldo por origem e escolher a origem no saque.
+## Fase 2 — Página pública de descoberta (app)
+
+4. Home pública em vez de gate de login: hero de monetização, como funciona, comissão 85%, provas, CTAs "Criar perfil" e "Explorar criadores", com login/cadastro acessível em seguida.
+5. Página SEO "Como vender conteúdo adulto no Brasil" (vender conteúdo adulto, comissão, PIX) — texto real, sem invenção.
+6. Diretório público de creators (perfis opt-in, moderado, seguro p/ exibição) com rotas indexáveis por criador — a superfície de descoberta que o Privacy tem.
+7. Head metadata completo (title/description/og por rota, canonical, JSON-LD) nas rotas públicas.
+
+## Fase 3 — Primeiros creators (fora do app)
+
+8. Listar 10–20 criadoras/criadores-alvo (Instagram/X/Telegram) com base no público brasileiro; você aprova a lista.
+9. Mensagem de convite pronta (DM/WhatsApp): por que vale (85% vs 20%, PIX, saque rápido) + um pedido claro de teste e feedback.
+10. Bônus de indicação para creators que trouxerem colegas (programa simples: link rastreável).
+
+## Fase 4 — Onde o público já pesquisa (fora do app)
+
+11. Contato com guiafans, reviewpicante, espiei e sexsummit pedindo inclusão da Monetisexy nos comparativos (mensagem pronta).
+12. Google Search Console configurado e sitemap enviado.
+
+## Fase 5 — Registro
+
+13. Salvar achados em /mnt/documents/marketing/research.md e plano em /mnt/documents/marketing/plan.md com status de cada ação.
+
+## Observações
+
+- **Anúncios pagos:** Google/Meta restringem conteúdo adulto; não recomendado agora. Canais diretos (X, Telegram, comunidades) cabem melhor.
+- Vendas históricas, comissões e o app funcionando não mudam nada neste plano.
+- Não foi possível conferir: indexação atual no Google (Search Console não conectado) e regras de envio dos sites de comparativo (a checagem fina acontece no contato).
+
+## Pergunta de refinamento
+
+Você já tem lista de creators que conhece (ou audiência própria) para a Fase 3, ou a pesquisa de contatos precisa começar do zero?
