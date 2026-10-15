@@ -28,7 +28,7 @@ export function isInternationalCountry(country: string | null | undefined): bool
  * quem está logado) e devolve o valor de reserva quando não consegue ler.
  */
 export async function getCommissionPct(
-  supabase: SupabaseClientType,
+  supabase: typeof SupabaseClientType,
   buyerId: string,
 ): Promise<number> {
   const { data: profile } = await supabase
