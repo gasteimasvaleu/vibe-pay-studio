@@ -141,6 +141,29 @@ function BancoPage() {
   const wdSel = useSelection();
   const [txShowHidden, setTxShowHidden] = useState(false);
   const [wdShowHidden, setWdShowHidden] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const exportStatement = async (format: "csv" | "pdf") => {
+    const rows = (txQuery.data ?? []) as any[];
+    if (rows.length === 0) return;
+    setExporting(true);
+    try {
+      const kindLabel = (k: string) => kindMeta(k).label;
+      const payLabel = (m: string | null) =>
+        m ? (PAYMENT_LABEL[m] ?? m) : "—";
+      const stamp = new Date().toISOString().slice(0, 10);
+      const blob =
+        format === "csv"
+          ? buildStatementCsv(rows, kindLabel, payLabel)
+          : await buildStatementPdf(rows, kindLabel, payLabel);
+      await deliverFile(blob, `extrato-monetisexy-${stamp}.${format}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o extrato. Tente novamente.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const statusQuery = useQuery({
     queryKey: ["payoutStatus"],
