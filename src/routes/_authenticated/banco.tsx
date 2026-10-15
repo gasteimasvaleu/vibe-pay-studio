@@ -9,6 +9,7 @@ import {
   Banknote,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   Film,
   Gift,
@@ -20,6 +21,11 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
+import {
+  buildStatementCsv,
+  buildStatementPdf,
+  deliverFile,
+} from "@/lib/statement-export";
 import {
   Accordion,
   AccordionContent,
