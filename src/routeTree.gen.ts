@@ -11,15 +11,19 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AgenciasRouteImport } from './routes/agencias'
 import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as DmcaRouteImport } from './routes/dmca'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ImprensaRouteImport } from './routes/imprensa'
+import { Route as ParceriasRouteImport } from './routes/parcerias'
 import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
+import { Route as UsoDaMarcaRouteImport } from './routes/uso-da-marca'
 import { Route as AuthenticatedAccountStatusRouteImport } from './routes/_authenticated/account-status'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedBancoRouteImport } from './routes/_authenticated/banco'
@@ -133,6 +137,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgenciasRoute = AgenciasRouteImport.update({
+  id: '/agencias',
+  path: '/agencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CentroESegurancaRoute = CentroESegurancaRouteImport.update({
   id: '/centro-e-seguranca',
   path: '/centro-e-seguranca',
@@ -158,6 +167,16 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImprensaRoute = ImprensaRouteImport.update({
+  id: '/imprensa',
+  path: '/imprensa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParceriasRoute = ParceriasRouteImport.update({
+  id: '/parcerias',
+  path: '/parcerias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
   id: '/politicadereclamacoes',
   path: '/politicadereclamacoes',
@@ -176,6 +195,11 @@ const SobreRoute = SobreRouteImport.update({
 const TermosEPoliticasRoute = TermosEPoliticasRouteImport.update({
   id: '/termos-e-politicas',
   path: '/termos-e-politicas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsoDaMarcaRoute = UsoDaMarcaRouteImport.update({
+  id: '/uso-da-marca',
+  path: '/uso-da-marca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountStatusRoute =
@@ -769,15 +793,19 @@ const AuthenticatedCreatorOnboardingDocumentosVerificandoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agencias': typeof AgenciasRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
+  '/imprensa': typeof ImprensaRoute
+  '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
+  '/uso-da-marca': typeof UsoDaMarcaRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/banco': typeof AuthenticatedBancoRouteWithChildren
@@ -884,15 +912,19 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agencias': typeof AgenciasRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
+  '/imprensa': typeof ImprensaRoute
+  '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
+  '/uso-da-marca': typeof UsoDaMarcaRoute
   '/account-status': typeof AuthenticatedAccountStatusRoute
   '/banco': typeof AuthenticatedBancoRouteWithChildren
   '/bugreport': typeof AuthenticatedBugreportRoute
@@ -994,15 +1026,19 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/agencias': typeof AgenciasRoute
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
+  '/imprensa': typeof ImprensaRoute
+  '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
+  '/uso-da-marca': typeof UsoDaMarcaRoute
   '/_authenticated/account-status': typeof AuthenticatedAccountStatusRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/banco': typeof AuthenticatedBancoRouteWithChildren
@@ -1111,15 +1147,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agencias'
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
     | '/dmca'
     | '/entrar'
+    | '/imprensa'
+    | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
+    | '/uso-da-marca'
     | '/account-status'
     | '/admin'
     | '/banco'
@@ -1226,15 +1266,19 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agencias'
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
     | '/dmca'
     | '/entrar'
+    | '/imprensa'
+    | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
+    | '/uso-da-marca'
     | '/account-status'
     | '/banco'
     | '/bugreport'
@@ -1335,15 +1379,19 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/agencias'
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
     | '/dmca'
     | '/entrar'
+    | '/imprensa'
+    | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
     | '/sobre'
     | '/termos-e-politicas'
+    | '/uso-da-marca'
     | '/_authenticated/account-status'
     | '/_authenticated/admin'
     | '/_authenticated/banco'
@@ -1452,15 +1500,19 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AgenciasRoute: typeof AgenciasRoute
   CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   ContatoRoute: typeof ContatoRoute
   DmcaRoute: typeof DmcaRoute
   EntrarRoute: typeof EntrarRoute
+  ImprensaRoute: typeof ImprensaRoute
+  ParceriasRoute: typeof ParceriasRoute
   PoliticadereclamacoesRoute: typeof PoliticadereclamacoesRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
   TermosEPoliticasRoute: typeof TermosEPoliticasRoute
+  UsoDaMarcaRoute: typeof UsoDaMarcaRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
@@ -1486,6 +1538,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agencias': {
+      id: '/agencias'
+      path: '/agencias'
+      fullPath: '/agencias'
+      preLoaderRoute: typeof AgenciasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/centro-e-seguranca': {
@@ -1523,6 +1582,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/imprensa': {
+      id: '/imprensa'
+      path: '/imprensa'
+      fullPath: '/imprensa'
+      preLoaderRoute: typeof ImprensaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parcerias': {
+      id: '/parcerias'
+      path: '/parcerias'
+      fullPath: '/parcerias'
+      preLoaderRoute: typeof ParceriasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/politicadereclamacoes': {
       id: '/politicadereclamacoes'
       path: '/politicadereclamacoes'
@@ -1549,6 +1622,13 @@ declare module '@tanstack/react-router' {
       path: '/termos-e-politicas'
       fullPath: '/termos-e-politicas'
       preLoaderRoute: typeof TermosEPoliticasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uso-da-marca': {
+      id: '/uso-da-marca'
+      path: '/uso-da-marca'
+      fullPath: '/uso-da-marca'
+      preLoaderRoute: typeof UsoDaMarcaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account-status': {
@@ -2595,15 +2675,19 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AgenciasRoute: AgenciasRoute,
   CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
   ContatoRoute: ContatoRoute,
   DmcaRoute: DmcaRoute,
   EntrarRoute: EntrarRoute,
+  ImprensaRoute: ImprensaRoute,
+  ParceriasRoute: ParceriasRoute,
   PoliticadereclamacoesRoute: PoliticadereclamacoesRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
   TermosEPoliticasRoute: TermosEPoliticasRoute,
+  UsoDaMarcaRoute: UsoDaMarcaRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,

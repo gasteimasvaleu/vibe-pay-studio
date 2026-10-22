@@ -33,9 +33,9 @@ export function Footer() {
                 title="Institucional"
                 links={[
                   ["Sobre", "/sobre"],
-                  ["Imprensa", "#"],
+                  ["Imprensa", "/imprensa"],
                   ["Contato", "/contato"],
-                  ["Uso da Marca", "#"],
+                  ["Uso da Marca", "/uso-da-marca"],
                   ["Ajuda & FAQ", "https://help.monetisexy.com", "_blank"],
                 ]}
               />
@@ -44,8 +44,8 @@ export function Footer() {
                 links={[
                   ["Blog", "https://blog.monetisexy.com", "_blank"],
                   ["Como Funciona", "/como-funciona"],
-                  ["Parcerias", "#"],
-                  ["Agências", "#"],
+                  ["Parcerias", "/parcerias"],
+                  ["Agências", "/agencias"],
                 ]}
               />
               <FooterCol
