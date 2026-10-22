@@ -1,15 +1,22 @@
-# Proteger o disparo dos lembretes de renovação
+# Criar as 4 páginas do rodapé
 
-## Situação atual
-O endereço que dispara os e-mails "sua assinatura expira em breve" não tem um token próprio. Ele aceita qualquer chamada que envie a chave pública do app, e essa chave fica visível no navegador. Na prática, qualquer pessoa poderia disparar o envio. O app evita duplicar e-mails, mas o endereço continua aberto.
+Criar Imprensa, Uso da Marca, Parcerias e Agências no mesmo estilo das páginas Sobre e Contato: mesmo topo e rodapé, botão "Voltar", título grande e seções de texto. O design atual não muda.
 
-## O que fazer
-1. Criar um segredo exclusivo para os lembretes, gerado de forma aleatória e guardado só no servidor.
-2. Fazer o endereço aceitar apenas chamadas que tragam esse segredo, comparado de forma segura.
-3. Atualizar o agendamento diário para enviar o segredo novo.
-4. Aplicar a mesma proteção ao disparo de broadcasts, que usa a mesma checagem.
+## Páginas
+- **/imprensa**: quem somos em poucas linhas, números e fatos sobre a plataforma, kit de imprensa (logo) e e-mail para jornalistas.
+- **/uso-da-marca**: como usar o nome e o logo Monetisexy (o que pode e o que não pode), cores e versões do logo, e o contato para pedir autorização.
+- **/parcerias**: tipos de parceria (marcas, influenciadores, sites de review e comparativos), o que oferecemos e um botão que leva ao formulário de Contato.
+- **/agencias**: o que a agência ganha ao gerenciar creators na plataforma (85% para o creator, saque via PIX, painel de estatísticas) e um botão para falar com a equipe pelo Contato.
 
-## Detalhes técnicos
-- Secret `CRON_SECRET` via generate_secret; header `x-cron-secret`; comparação em tempo constante.
-- Arquivos: `src/routes/api/public/hooks/subscription-reminders.ts`, `dispatch-broadcasts.ts`.
-- Reagendar os jobs pg_cron com o header novo (lendo o segredo do Vault).
+## Rodapé
+Os links "Imprensa", "Uso da Marca", "Parcerias" e "Agências" passam a abrir essas páginas. Os ícones das redes sociais ficam como estão até você mandar os endereços.
+
+## Outros detalhes
+- Cada página ganha título e descrição próprios para o Google e o WhatsApp, e entra na lista de páginas enviada ao Google.
+- Os textos serão escritos por mim. Os e-mails de contato (por exemplo imprensa@monetisexy.com) são sugestões. Me envie os endereços reais e eu troco.
+
+## Technical details
+- New route files: `src/routes/imprensa.tsx`, `uso-da-marca.tsx`, `parcerias.tsx`, `agencias.tsx`, wrapped in `SiteLayout` and using the `sobre.tsx` article structure and semantic tokens.
+- Each `head()` sets title, description, og:title, og:description, og:type, twitter:card, og:url and a canonical link pointing to `https://monetisexy.com/<slug>`.
+- `Footer.tsx`: replace the `#` hrefs with the new paths.
+- `public/sitemap.xml`: add the 4 URLs.
