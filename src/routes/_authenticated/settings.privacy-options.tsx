@@ -9,6 +9,51 @@ import {
   updatePrivacySetting,
   type PrivacySettings,
 } from "@/lib/privacy.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMyPublicListing, setMyPublicListing } from "@/lib/public-directory.functions";
+
+const LISTING_STATUS: Record<string, string> = {
+  pending: "Aguardando aprovação da equipe.",
+  approved: "Seu perfil está na vitrine pública.",
+  rejected: "Seu perfil não foi aprovado para a vitrine. Ajuste foto, capa ou bio e tente de novo.",
+};
+
+function PublicListingToggle() {
+  const getFn = useServerFn(getMyPublicListing);
+  const setFn = useServerFn(setMyPublicListing);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const q = useQuery({ queryKey: ["my-public-listing"], queryFn: () => getFn() });
+  if (!q.data) return null;
+  const { enabled, status } = q.data;
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-bold text-foreground">Mostrar meu perfil na vitrine pública</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Nome, foto, capa, bio e preço aparecem para qualquer pessoa e no Google. Seu conteúdo continua bloqueado.
+          {enabled && ` ${LISTING_STATUS[status] ?? ""}`}
+        </p>
+      </div>
+      <Switch
+        checked={enabled}
+        disabled={busy}
+        aria-label="Mostrar meu perfil na vitrine pública"
+        onCheckedChange={async (v) => {
+          setBusy(true);
+          try {
+            const next = await setFn({ data: { enabled: v } });
+            qc.setQueryData(["my-public-listing"], next);
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/settings/privacy-options")({
   head: () => ({
@@ -129,6 +174,7 @@ function PrivacyOptionsPage() {
             />
           </div>
         ))}
+        <PublicListingToggle />
       </main>
     </div>
   );
