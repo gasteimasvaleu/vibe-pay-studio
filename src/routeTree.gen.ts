@@ -15,12 +15,14 @@ import { Route as AgenciasRouteImport } from './routes/agencias'
 import { Route as CentroESegurancaRouteImport } from './routes/centro-e-seguranca'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as ContatoRouteImport } from './routes/contato'
+import { Route as CreatorsRouteImport } from './routes/creators'
 import { Route as DmcaRouteImport } from './routes/dmca'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ImprensaRouteImport } from './routes/imprensa'
 import { Route as ParceriasRouteImport } from './routes/parcerias'
 import { Route as PoliticadereclamacoesRouteImport } from './routes/politicadereclamacoes'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosEPoliticasRouteImport } from './routes/termos-e-politicas'
 import { Route as UsoDaMarcaRouteImport } from './routes/uso-da-marca'
@@ -51,6 +53,7 @@ import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
+import { Route as CUsernameRouteImport } from './routes/c.$username'
 import { Route as CadastroIndexRouteImport } from './routes/cadastro.index'
 import { Route as CadastroConfirmeEmailRouteImport } from './routes/cadastro.confirme-email'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -58,6 +61,7 @@ import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminBroadcastsRouteImport } from './routes/_authenticated/admin.broadcasts'
 import { Route as AuthenticatedAdminBugsRouteImport } from './routes/_authenticated/admin.bugs'
 import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
+import { Route as AuthenticatedAdminDirectoryRouteImport } from './routes/_authenticated/admin.directory'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin.emails'
 import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin.finance'
 import { Route as AuthenticatedAdminLeaksRouteImport } from './routes/_authenticated/admin.leaks'
@@ -157,6 +161,11 @@ const ContatoRoute = ContatoRouteImport.update({
   path: '/contato',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreatorsRoute = CreatorsRouteImport.update({
+  id: '/creators',
+  path: '/creators',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DmcaRoute = DmcaRouteImport.update({
   id: '/dmca',
   path: '/dmca',
@@ -185,6 +194,11 @@ const PoliticadereclamacoesRoute = PoliticadereclamacoesRouteImport.update({
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
   id: '/privacidade',
   path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SobreRoute = SobreRouteImport.update({
@@ -347,6 +361,11 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
   path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CUsernameRoute = CUsernameRouteImport.update({
+  id: '/c/$username',
+  path: '/c/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CadastroIndexRoute = CadastroIndexRouteImport.update({
   id: '/cadastro/',
   path: '/cadastro/',
@@ -382,6 +401,12 @@ const AuthenticatedAdminContactsRoute =
   AuthenticatedAdminContactsRouteImport.update({
     id: '/contacts',
     path: '/contacts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminDirectoryRoute =
+  AuthenticatedAdminDirectoryRouteImport.update({
+    id: '/directory',
+    path: '/directory',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminEmailsRoute =
@@ -797,12 +822,14 @@ export interface FileRoutesByFullPath {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
+  '/creators': typeof CreatorsRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/imprensa': typeof ImprensaRoute
   '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/uso-da-marca': typeof UsoDaMarcaRoute
@@ -833,12 +860,14 @@ export interface FileRoutesByFullPath {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/c/$username': typeof CUsernameRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/admin/directory': typeof AuthenticatedAdminDirectoryRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -916,12 +945,14 @@ export interface FileRoutesByTo {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
+  '/creators': typeof CreatorsRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/imprensa': typeof ImprensaRoute
   '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/uso-da-marca': typeof UsoDaMarcaRoute
@@ -949,12 +980,14 @@ export interface FileRoutesByTo {
   '/vault': typeof AuthenticatedVaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/c/$username': typeof CUsernameRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro': typeof CadastroIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/admin/directory': typeof AuthenticatedAdminDirectoryRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -1030,12 +1063,14 @@ export interface FileRoutesById {
   '/centro-e-seguranca': typeof CentroESegurancaRoute
   '/como-funciona': typeof ComoFuncionaRoute
   '/contato': typeof ContatoRoute
+  '/creators': typeof CreatorsRoute
   '/dmca': typeof DmcaRoute
   '/entrar': typeof EntrarRoute
   '/imprensa': typeof ImprensaRoute
   '/parcerias': typeof ParceriasRoute
   '/politicadereclamacoes': typeof PoliticadereclamacoesRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos-e-politicas': typeof TermosEPoliticasRoute
   '/uso-da-marca': typeof UsoDaMarcaRoute
@@ -1066,12 +1101,14 @@ export interface FileRoutesById {
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/c/$username': typeof CUsernameRoute
   '/cadastro/confirme-email': typeof CadastroConfirmeEmailRoute
   '/cadastro/': typeof CadastroIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/broadcasts': typeof AuthenticatedAdminBroadcastsRoute
   '/_authenticated/admin/bugs': typeof AuthenticatedAdminBugsRoute
   '/_authenticated/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/_authenticated/admin/directory': typeof AuthenticatedAdminDirectoryRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/_authenticated/admin/leaks': typeof AuthenticatedAdminLeaksRoute
@@ -1151,12 +1188,14 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
+    | '/creators'
     | '/dmca'
     | '/entrar'
     | '/imprensa'
     | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
+    | '/sitemap.xml'
     | '/sobre'
     | '/termos-e-politicas'
     | '/uso-da-marca'
@@ -1187,12 +1226,14 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/callback'
     | '/auth/confirm'
+    | '/c/$username'
     | '/cadastro/confirme-email'
     | '/cadastro/'
     | '/admin/audit'
     | '/admin/broadcasts'
     | '/admin/bugs'
     | '/admin/contacts'
+    | '/admin/directory'
     | '/admin/emails'
     | '/admin/finance'
     | '/admin/leaks'
@@ -1270,12 +1311,14 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
+    | '/creators'
     | '/dmca'
     | '/entrar'
     | '/imprensa'
     | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
+    | '/sitemap.xml'
     | '/sobre'
     | '/termos-e-politicas'
     | '/uso-da-marca'
@@ -1303,12 +1346,14 @@ export interface FileRouteTypes {
     | '/vault'
     | '/auth/callback'
     | '/auth/confirm'
+    | '/c/$username'
     | '/cadastro/confirme-email'
     | '/cadastro'
     | '/admin/audit'
     | '/admin/broadcasts'
     | '/admin/bugs'
     | '/admin/contacts'
+    | '/admin/directory'
     | '/admin/emails'
     | '/admin/finance'
     | '/admin/leaks'
@@ -1383,12 +1428,14 @@ export interface FileRouteTypes {
     | '/centro-e-seguranca'
     | '/como-funciona'
     | '/contato'
+    | '/creators'
     | '/dmca'
     | '/entrar'
     | '/imprensa'
     | '/parcerias'
     | '/politicadereclamacoes'
     | '/privacidade'
+    | '/sitemap.xml'
     | '/sobre'
     | '/termos-e-politicas'
     | '/uso-da-marca'
@@ -1419,12 +1466,14 @@ export interface FileRouteTypes {
     | '/_authenticated/vault'
     | '/auth/callback'
     | '/auth/confirm'
+    | '/c/$username'
     | '/cadastro/confirme-email'
     | '/cadastro/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/broadcasts'
     | '/_authenticated/admin/bugs'
     | '/_authenticated/admin/contacts'
+    | '/_authenticated/admin/directory'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/finance'
     | '/_authenticated/admin/leaks'
@@ -1504,17 +1553,20 @@ export interface RootRouteChildren {
   CentroESegurancaRoute: typeof CentroESegurancaRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
   ContatoRoute: typeof ContatoRoute
+  CreatorsRoute: typeof CreatorsRoute
   DmcaRoute: typeof DmcaRoute
   EntrarRoute: typeof EntrarRoute
   ImprensaRoute: typeof ImprensaRoute
   ParceriasRoute: typeof ParceriasRoute
   PoliticadereclamacoesRoute: typeof PoliticadereclamacoesRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SobreRoute: typeof SobreRoute
   TermosEPoliticasRoute: typeof TermosEPoliticasRoute
   UsoDaMarcaRoute: typeof UsoDaMarcaRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
+  CUsernameRoute: typeof CUsernameRoute
   CadastroConfirmeEmailRoute: typeof CadastroConfirmeEmailRoute
   CadastroIndexRoute: typeof CadastroIndexRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
@@ -1568,6 +1620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContatoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creators': {
+      id: '/creators'
+      path: '/creators'
+      fullPath: '/creators'
+      preLoaderRoute: typeof CreatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dmca': {
       id: '/dmca'
       path: '/dmca'
@@ -1608,6 +1667,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidade'
       fullPath: '/privacidade'
       preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sobre': {
@@ -1820,6 +1886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/c/$username': {
+      id: '/c/$username'
+      path: '/c/$username'
+      fullPath: '/c/$username'
+      preLoaderRoute: typeof CUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cadastro/': {
       id: '/cadastro/'
       path: '/cadastro'
@@ -1867,6 +1940,13 @@ declare module '@tanstack/react-router' {
       path: '/contacts'
       fullPath: '/admin/contacts'
       preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/directory': {
+      id: '/_authenticated/admin/directory'
+      path: '/directory'
+      fullPath: '/admin/directory'
+      preLoaderRoute: typeof AuthenticatedAdminDirectoryRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/emails': {
@@ -2374,6 +2454,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBroadcastsRoute: typeof AuthenticatedAdminBroadcastsRoute
   AuthenticatedAdminBugsRoute: typeof AuthenticatedAdminBugsRoute
   AuthenticatedAdminContactsRoute: typeof AuthenticatedAdminContactsRoute
+  AuthenticatedAdminDirectoryRoute: typeof AuthenticatedAdminDirectoryRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
   AuthenticatedAdminLeaksRoute: typeof AuthenticatedAdminLeaksRoute
@@ -2398,6 +2479,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBroadcastsRoute: AuthenticatedAdminBroadcastsRoute,
   AuthenticatedAdminBugsRoute: AuthenticatedAdminBugsRoute,
   AuthenticatedAdminContactsRoute: AuthenticatedAdminContactsRoute,
+  AuthenticatedAdminDirectoryRoute: AuthenticatedAdminDirectoryRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
   AuthenticatedAdminLeaksRoute: AuthenticatedAdminLeaksRoute,
@@ -2679,17 +2761,20 @@ const rootRouteChildren: RootRouteChildren = {
   CentroESegurancaRoute: CentroESegurancaRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
   ContatoRoute: ContatoRoute,
+  CreatorsRoute: CreatorsRoute,
   DmcaRoute: DmcaRoute,
   EntrarRoute: EntrarRoute,
   ImprensaRoute: ImprensaRoute,
   ParceriasRoute: ParceriasRoute,
   PoliticadereclamacoesRoute: PoliticadereclamacoesRoute,
   PrivacidadeRoute: PrivacidadeRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SobreRoute: SobreRoute,
   TermosEPoliticasRoute: TermosEPoliticasRoute,
   UsoDaMarcaRoute: UsoDaMarcaRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthConfirmRoute: AuthConfirmRoute,
+  CUsernameRoute: CUsernameRoute,
   CadastroConfirmeEmailRoute: CadastroConfirmeEmailRoute,
   CadastroIndexRoute: CadastroIndexRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,

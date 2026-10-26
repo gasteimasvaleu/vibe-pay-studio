@@ -31,6 +31,7 @@ const NAV = [
   { to: "/admin/refunds", label: "Reembolsos", icon: RefreshCcw, exact: false },
   { to: "/admin/moderation", label: "Moderação", icon: ShieldAlert, exact: false },
   { to: "/admin/verifications", label: "Certificações", icon: BadgeCheck, exact: false },
+  { to: "/admin/directory", label: "Vitrine pública", icon: Users, exact: false },
   { to: "/admin/lives", label: "Lives", icon: Radio, exact: false },
   { to: "/admin/stories", label: "Stories", icon: Film, exact: false },
   { to: "/admin/broadcasts", label: "Broadcasts", icon: Send, exact: false },
