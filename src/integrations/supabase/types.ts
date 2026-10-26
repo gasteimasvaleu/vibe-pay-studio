@@ -750,6 +750,9 @@ export type Database = {
           kind: string
           kyc_status: string
           price_monthly: number | null
+          public_listing: boolean
+          public_listing_reviewed_at: string | null
+          public_listing_status: string
           tiktok_handle: string | null
           updated_at: string
           user_id: string
@@ -775,6 +778,9 @@ export type Database = {
           kind: string
           kyc_status?: string
           price_monthly?: number | null
+          public_listing?: boolean
+          public_listing_reviewed_at?: string | null
+          public_listing_status?: string
           tiktok_handle?: string | null
           updated_at?: string
           user_id: string
@@ -800,6 +806,9 @@ export type Database = {
           kind?: string
           kyc_status?: string
           price_monthly?: number | null
+          public_listing?: boolean
+          public_listing_reviewed_at?: string | null
+          public_listing_status?: string
           tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
@@ -3704,6 +3713,10 @@ export type Database = {
           tx_count: number
         }[]
       }
+      admin_review_public_listing: {
+        Args: { _creator_profile_id: string; _status: string }
+        Returns: undefined
+      }
       admin_user_ids: { Args: never; Returns: string[] }
       admin_wallets_snapshot: {
         Args: never
@@ -3916,6 +3929,32 @@ export type Database = {
         Args: { _international?: boolean }
         Returns: number
       }
+      public_creator_by_username: {
+        Args: { _username: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          cover_url: string
+          display_name: string
+          kind: string
+          price_monthly: number
+          updated_at: string
+          username: string
+        }[]
+      }
+      public_creator_directory: {
+        Args: { _limit?: number; _offset?: number; _search?: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          cover_url: string
+          display_name: string
+          kind: string
+          price_monthly: number
+          updated_at: string
+          username: string
+        }[]
+      }
       release_matured_earnings: { Args: never; Returns: number }
       resolve_active_creator_profile: {
         Args: { _user_id: string }
@@ -3937,6 +3976,9 @@ export type Database = {
           kind: string
           kyc_status: string
           price_monthly: number | null
+          public_listing: boolean
+          public_listing_reviewed_at: string | null
+          public_listing_status: string
           tiktok_handle: string | null
           updated_at: string
           user_id: string
