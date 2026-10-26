@@ -50,7 +50,7 @@ export const Route = createFileRoute("/c/$username")({
     <SiteLayout>
       <div className="py-20 text-center">
         <p className="text-muted-foreground">Este perfil não está disponível.</p>
-        <Link to="/creators" className="mt-4 inline-block text-primary">Ver creators</Link>
+        <Link to="/creators" search={{ q: undefined }} className="mt-4 inline-block text-primary">Ver creators</Link>
       </div>
     </SiteLayout>
   ),
