@@ -293,7 +293,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         .order("created_at", { ascending: true })
         .limit(500);
       if (clearedAt) msgQuery = msgQuery.gt("created_at", clearedAt);
-      const { data: msgsRaw, error: mErr } = await msgQuery;
+      const { data: msgsRaw, error: mErr } = (await msgQuery) as { data: any[] | null; error: any };
       if (mErr) throw new Error(mErr.message);
 
       // Filter out messages this user has hidden ("apagar para mim")
