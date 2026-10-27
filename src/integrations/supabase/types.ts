@@ -3690,6 +3690,147 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_public: {
+        Row: {
+          account_type: string | null
+          active_profile_id: string | null
+          active_view: string | null
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          cover_url: string | null
+          created_at: string | null
+          discount_quarterly: number | null
+          discount_semiannual: number | null
+          display_name: string | null
+          free_avatar_url: string | null
+          free_display_name: string | null
+          free_profile_enabled: boolean | null
+          free_username: string | null
+          id: string | null
+          instagram_handle: string | null
+          is_verified: boolean | null
+          last_seen_at: string | null
+          location: string | null
+          onboarding_completed_at: string | null
+          paid_dm_upload_enabled: boolean | null
+          paid_dm_upload_max_cents: number | null
+          paid_dm_upload_min_cents: number | null
+          price_monthly: number | null
+          restrict_friendships: boolean | null
+          restrict_mentions: boolean | null
+          restrict_search: boolean | null
+          restrict_search_br: boolean | null
+          restrict_search_country: boolean | null
+          show_followers: boolean | null
+          tiktok_handle: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
+          video_call_default_minutes: number | null
+          video_call_enabled: boolean | null
+          video_call_price_cents: number | null
+          x_handle: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          active_profile_id?: string | null
+          active_view?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          discount_quarterly?: number | null
+          discount_semiannual?: number | null
+          display_name?: string | null
+          free_avatar_url?: string | null
+          free_display_name?: string | null
+          free_profile_enabled?: boolean | null
+          free_username?: string | null
+          id?: string | null
+          instagram_handle?: string | null
+          is_verified?: never
+          last_seen_at?: string | null
+          location?: string | null
+          onboarding_completed_at?: string | null
+          paid_dm_upload_enabled?: boolean | null
+          paid_dm_upload_max_cents?: number | null
+          paid_dm_upload_min_cents?: number | null
+          price_monthly?: number | null
+          restrict_friendships?: boolean | null
+          restrict_mentions?: boolean | null
+          restrict_search?: boolean | null
+          restrict_search_br?: boolean | null
+          restrict_search_country?: boolean | null
+          show_followers?: boolean | null
+          tiktok_handle?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          video_call_default_minutes?: number | null
+          video_call_enabled?: boolean | null
+          video_call_price_cents?: number | null
+          x_handle?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          active_profile_id?: string | null
+          active_view?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          discount_quarterly?: number | null
+          discount_semiannual?: number | null
+          display_name?: string | null
+          free_avatar_url?: string | null
+          free_display_name?: string | null
+          free_profile_enabled?: boolean | null
+          free_username?: string | null
+          id?: string | null
+          instagram_handle?: string | null
+          is_verified?: never
+          last_seen_at?: string | null
+          location?: string | null
+          onboarding_completed_at?: string | null
+          paid_dm_upload_enabled?: boolean | null
+          paid_dm_upload_max_cents?: number | null
+          paid_dm_upload_min_cents?: number | null
+          price_monthly?: number | null
+          restrict_friendships?: boolean | null
+          restrict_mentions?: boolean | null
+          restrict_search?: boolean | null
+          restrict_search_br?: boolean | null
+          restrict_search_country?: boolean | null
+          show_followers?: boolean | null
+          tiktok_handle?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          video_call_default_minutes?: number | null
+          video_call_enabled?: boolean | null
+          video_call_price_cents?: number | null
+          x_handle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_profile_id_fkey"
+            columns: ["active_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_active_profile_id_fkey"
+            columns: ["active_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_daily_revenue: {
@@ -3808,6 +3949,7 @@ export type Database = {
       }
       is_email_confirmed: { Args: { _email: string }; Returns: boolean }
       is_muted: { Args: { _muter: string; _target: string }; Returns: boolean }
+      is_privileged_writer: { Args: never; Returns: boolean }
       is_restricted: {
         Args: { _creator: string; _subscriber: string }
         Returns: boolean
