@@ -25,7 +25,7 @@ export const publishStory = createServerFn({ method: "POST" })
       .select("account_type")
       .eq("user_id", context.userId)
       .maybeSingle();
-    if (!profile || !["creator", "free_creator"].includes(profile.account_type)) {
+    if (!profile || !["creator", "free_creator"].includes(profile.account_type ?? "")) {
       throw new Error("apenas creators podem publicar stories");
     }
     const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);

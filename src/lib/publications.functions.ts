@@ -965,7 +965,7 @@ export const listComments = createServerFn({ method: "POST" })
         .in("user_id", userIds);
       profileMap = new Map(
         (profiles ?? []).map((p) => [
-          p.user_id,
+          p.user_id as string,
           {
             username: p.username,
             avatar_url: (p as { avatar_url?: string | null }).avatar_url ?? null,

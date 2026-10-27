@@ -81,7 +81,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
     const { data: cp } = await supabase
       .from("creator_profiles")
       .select("id, kind")
-      .eq("user_id", legacyProfile.user_id);
+      .eq("user_id", legacyProfile.user_id as string);
     creatorProfileId =
       (cp ?? []).find((r: any) => r.kind === (isFreeView ? "free" : "paid"))?.id ?? null;
   } else {
