@@ -79,7 +79,9 @@ export function VideoCallHeaderButton({
     },
     onError: (err: Error) => {
       if (err.message === "insufficient_wallet_balance") {
-        toast.error("Saldo insuficiente. Recarregue sua carteira.");
+        toast.error("Saldo insuficiente. Recarregue sua carteira.", {
+          action: { label: "Recarregar", onClick: () => navigate({ to: "/mywallet/recarregar" }) },
+        });
       } else {
         toast.error(err.message ?? "Erro ao iniciar chamada");
       }
