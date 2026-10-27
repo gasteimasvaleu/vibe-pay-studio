@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getCommissionPct } from "@/lib/commission";
 
@@ -305,7 +306,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       if (existing.status === "paid") {
         throw new Error("publicação já desbloqueada");
       }
-      const { error: updErr } = await supabase
+      const { error: updErr } = await (await adminDb())
         .from("publication_unlocks")
         .update({
           amount_cents: pub.price_cents,
@@ -317,7 +318,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       if (updErr) throw new Error(updErr.message);
       unlockId = existing.id;
     } else {
-      const { data: inserted, error: uErr } = await supabase
+      const { data: inserted, error: uErr } = await (await adminDb())
         .from("publication_unlocks")
         .insert({
           publication_id: pub.id,
@@ -345,7 +346,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
       ...__cardArgs.args,
     });
 
-    await supabase
+    await (await adminDb())
       .from("publication_unlocks")
       .update({ provider_ref: payment.id })
       .eq("id", unlockId);
@@ -413,7 +414,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
     let unlockId: string;
     if (existing) {
       if (existing.status === "paid") throw new Error("story já desbloqueado");
-      const { error: updErr } = await supabase
+      const { error: updErr } = await (await adminDb())
         .from("story_unlocks")
         .update({
           amount_cents: story.price_cents,
@@ -425,7 +426,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
       if (updErr) throw new Error(updErr.message);
       unlockId = existing.id;
     } else {
-      const { data: inserted, error: uErr } = await supabase
+      const { data: inserted, error: uErr } = await (await adminDb())
         .from("story_unlocks")
         .insert({
           story_id: story.id,
@@ -454,7 +455,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
       ...__cardArgs.args,
     });
 
-    await supabase
+    await (await adminDb())
       .from("story_unlocks")
       .update({ provider_ref: payment.id })
       .eq("id", unlockId);
@@ -538,7 +539,7 @@ export const createChallengeContributionPayment = createServerFn({ method: "POST
       if (existing.status === "paid") {
         throw new Error("você já contribuiu com este desafio");
       }
-      const { error: updErr } = await supabase
+      const { error: updErr } = await (await adminDb())
         .from("publication_unlocks")
         .update({
           amount_cents: data.tierCents,
@@ -550,7 +551,7 @@ export const createChallengeContributionPayment = createServerFn({ method: "POST
       if (updErr) throw new Error(updErr.message);
       unlockId = existing.id;
     } else {
-      const { data: inserted, error: uErr } = await supabase
+      const { data: inserted, error: uErr } = await (await adminDb())
         .from("publication_unlocks")
         .insert({
           publication_id: pub.id,
@@ -575,7 +576,7 @@ export const createChallengeContributionPayment = createServerFn({ method: "POST
       netCreatorCents,
     });
 
-    await supabase
+    await (await adminDb())
       .from("publication_unlocks")
       .update({ provider_ref: payment.id })
       .eq("id", unlockId);
@@ -631,7 +632,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(data.amountCents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
-    const { data: tip, error } = await supabase
+    const { data: tip, error } = await (await adminDb())
       .from("tips")
       .insert({
         creator_id: data.creatorId,
@@ -658,7 +659,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
       ...__cardArgs.args,
     });
 
-    await supabase.from("tips").update({ provider_ref: payment.id }).eq("id", tip.id);
+    await (await adminDb()).from("tips").update({ provider_ref: payment.id }).eq("id", tip.id);
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
@@ -809,7 +810,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
-    const { data: sub, error: sErr } = await supabase
+    const { data: sub, error: sErr } = await (await adminDb())
       .from("subscriptions")
       .insert({
         creator_id: data.creatorId,
@@ -872,7 +873,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       }
     }
 
-    await supabase
+    await (await adminDb())
       .from("subscriptions")
       .update({
         provider_ref: payment.id,
@@ -947,7 +948,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
     const { netCreatorCents } = asaas.computeCreatorNetCents(msg.price_cents, data.method, await getCommissionPct(supabase, userId));
     const providerTag = providerForMethod(data.method);
 
-    const { data: unlock, error: uErr } = await supabase
+    const { data: unlock, error: uErr } = await (await adminDb())
       .from("chat_message_unlocks")
       .insert({
         message_id: msg.id,
@@ -972,7 +973,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
       netCreatorCents,
       ...__cardArgs.args,
     });
-    await supabase
+    await (await adminDb())
       .from("chat_message_unlocks")
       .update({ provider_ref: payment.id })
       .eq("id", unlock.id);
@@ -1031,7 +1032,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
       netCreatorCents,
       ...__cardArgs.args,
     });
-    await supabase
+    await (await adminDb())
       .from("video_calls")
       .update({ provider: providerTag, provider_ref: payment.id })
       .eq("id", call.id);
@@ -1090,7 +1091,7 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
       netCreatorCents,
       ...__cardArgs.args,
     });
-    await supabase
+    await (await adminDb())
       .from("chat_media_requests")
       .update({ provider: providerTag, provider_ref: payment.id })
       .eq("id", req.id);
@@ -1154,7 +1155,7 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
     if (pending?.id) {
       ticketId = pending.id as string;
     } else {
-      const { data: inserted, error: insErr } = await supabase
+      const { data: inserted, error: insErr } = await (await adminDb())
         .from("live_tickets")
         .insert({
           live_id: live.id,
@@ -1189,7 +1190,7 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
       netCreatorCents,
       ...__cardArgs.args,
     });
-    await supabase
+    await (await adminDb())
       .from("live_tickets")
       .update({ provider: providerTag, provider_ref: payment.id })
       .eq("id", ticketId);

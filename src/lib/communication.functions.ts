@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---- Chat ----
@@ -68,38 +69,6 @@ export const sendMessage = createServerFn({ method: "POST" })
     return row;
   });
 
-export const unlockChatMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { messageId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: msg, error: msgErr } = await supabase
-      .from("chat_messages")
-      .select("id, sender_id, price_cents")
-      .eq("id", data.messageId)
-      .single();
-    if (msgErr || !msg) throw new Error("message not found");
-    if (msg.sender_id === userId) throw new Error("cannot unlock own message");
-    if (!msg.price_cents || msg.price_cents <= 0) throw new Error("message is free");
-
-    const { data: row, error } = await supabase
-      .from("chat_message_unlocks")
-      .insert({
-        message_id: msg.id,
-        buyer_id: userId,
-        creator_id: msg.sender_id,
-        amount_cents: msg.price_cents,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id, status, transaction_id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-// ---- Video Calls ----
-
 export const requestVideoCall = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -127,7 +96,7 @@ export const requestVideoCall = createServerFn({ method: "POST" })
     const duration = Math.max(1, Math.floor(data.durationMinutes ?? creator.video_call_default_minutes ?? 15));
     const price = Math.max(0, Math.floor(creator.video_call_price_cents ?? 0));
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (await adminDb())
       .from("video_calls")
       .insert({
         requester_id: userId,
@@ -158,36 +127,13 @@ export const respondVideoCall = createServerFn({ method: "POST" })
       .single();
     if (cErr || !call) throw new Error("call not found");
     if (call.creator_id !== userId) throw new Error("only creator can respond");
+    if (call.status !== "requested") throw new Error("call can no longer be answered");
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (await adminDb())
       .from("video_calls")
       .update({ status: data.accept ? "accepted" : "declined" })
       .eq("id", data.callId)
       .select("id, status")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-export const payVideoCall = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { callId: string; roomUrl?: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: call, error: cErr } = await supabase
-      .from("video_calls")
-      .select("id, requester_id, payment_status, status")
-      .eq("id", data.callId)
-      .single();
-    if (cErr || !call) throw new Error("call not found");
-    if (call.requester_id !== userId) throw new Error("only requester can pay");
-    if (call.payment_status === "paid") throw new Error("already paid");
-
-    const { data: row, error } = await supabase
-      .from("video_calls")
-      .update({ payment_status: "paid", room_url: data.roomUrl ?? null })
-      .eq("id", data.callId)
-      .select("id, payment_status, room_url, transaction_id")
       .single();
     if (error) throw new Error(error.message);
     return row;
@@ -208,7 +154,7 @@ export const completeVideoCall = createServerFn({ method: "POST" })
       throw new Error("not a participant");
 
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (await adminDb())
       .from("video_calls")
       .update({
         status: "completed",
@@ -280,7 +226,7 @@ export const startPaidVideoCall = createServerFn({ method: "POST" })
       if (dErr) throw new Error(dErr.message);
     }
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (await adminDb())
       .from("video_calls")
       .insert({
         requester_id: userId,
@@ -332,7 +278,7 @@ export const joinVideoCall = createServerFn({ method: "POST" })
       const room = await dailyEnsureRoom(call.id, expSeconds);
       roomUrl = room.url;
       roomName = room.name;
-      await supabase
+      await (await adminDb())
         .from("video_calls")
         .update({
           room_url: roomUrl,
@@ -340,7 +286,7 @@ export const joinVideoCall = createServerFn({ method: "POST" })
         })
         .eq("id", call.id);
     } else if (!call.started_at) {
-      await supabase
+      await (await adminDb())
         .from("video_calls")
         .update({ started_at: new Date().toISOString() })
         .eq("id", call.id);
@@ -383,7 +329,7 @@ export const endVideoCall = createServerFn({ method: "POST" })
     if (call.status === "completed") return { id: call.id, status: "completed" as const };
 
     const now = new Date().toISOString();
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("video_calls")
       .update({ status: "completed", started_at: call.started_at ?? now, ended_at: now })
       .eq("id", data.callId);

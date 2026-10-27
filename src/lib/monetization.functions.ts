@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getCommissionPct } from "@/lib/commission";
 
@@ -79,7 +80,7 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
     const periodEnd = new Date();
     periodEnd.setDate(periodEnd.getDate() + PLAN_DAYS[data.plan]);
 
-    const { data: sub, error } = await supabase
+    const { data: sub, error } = await (await adminDb())
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
@@ -96,21 +97,6 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
     return { id: sub.id, priceCents, plan: data.plan };
-  });
-
-export const activateSubscription = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { subscriptionId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ status: "active", started_at: new Date().toISOString() })
-      .eq("id", data.subscriptionId)
-      .eq("subscriber_id", userId)
-      .eq("status", "pending");
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
 
 export const cancelSubscription = createServerFn({ method: "POST" })
@@ -138,7 +124,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       }
     }
 
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .update({
         auto_renew: false,
@@ -163,7 +149,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
     const { data: sub, error } = await supabase
       .from("subscriptions")
       .select(
-        "id, subscriber_id, creator_id, plan, price_cents_paid, current_period_end, status",
+        "id, subscriber_id, creator_id, creator_profile_id, plan, current_period_end, status",
       )
       .eq("id", data.subscriptionId)
       .eq("subscriber_id", userId)
@@ -190,7 +176,21 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
     if (!walletId) throw new Error("Criador sem carteira configurada");
 
     const asaas = await import("./asaas.server");
-    const amountCents = sub.price_cents_paid as number;
+    // Preço atual do creator, lido do banco — nunca o price_cents_paid gravado.
+    const target = await resolveTargetProfile(supabase, {
+      creatorProfileId: ((sub as any).creator_profile_id as string) ?? undefined,
+      creatorId: sub.creator_id as string,
+    });
+    if (!target || target.kind === "free" || !target.price_monthly || Number(target.price_monthly) <= 0) {
+      throw new Error("Este criador não vende assinatura no momento.");
+    }
+    const monthly = Math.round(Number(target.price_monthly) * 100);
+    const amountCents =
+      sub.plan === "quarterly"
+        ? Math.round(monthly * 3 * (1 - (target.discount_quarterly ?? 0) / 100))
+        : sub.plan === "semiannual"
+          ? Math.round(monthly * 6 * (1 - (target.discount_semiannual ?? 0) / 100))
+          : monthly;
     const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, "CREDIT_CARD", await getCommissionPct(supabase, userId));
     const cycle =
       sub.plan === "quarterly"
@@ -215,7 +215,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
       creditCardToken: card.asaas_card_token as string,
     });
 
-    await supabase
+    await (await adminDb())
       .from("subscriptions")
       .update({
         auto_renew: true,
@@ -375,80 +375,6 @@ export const listMySubscribers = createServerFn({ method: "GET" })
     });
   });
 
-export const tipCreator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string; amountCents: number; message?: string; publicationId?: string }) => {
-    if (!Number.isFinite(data.amountCents) || data.amountCents <= 0) {
-      throw new Error("Valor do mimo inválido.");
-    }
-    return {
-      creatorId: data.creatorId,
-      amountCents: Math.floor(data.amountCents),
-      message: data.message?.slice(0, 500) ?? null,
-      publicationId: data.publicationId ?? null,
-    };
-  })
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    if (userId === data.creatorId) {
-      throw new Error("Você não pode enviar mimo para si mesmo.");
-    }
-
-    const { data: tip, error } = await supabase
-      .from("tips")
-      .insert({
-        sender_id: userId,
-        creator_id: data.creatorId,
-        publication_id: data.publicationId,
-        amount_cents: data.amountCents,
-        message: data.message,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return { id: tip.id };
-  });
-
-export const unlockPublication = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { publicationId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-
-    const { data: pub, error: pubError } = await supabase
-      .from("publications")
-      .select("id, author_id, price_cents")
-      .eq("id", data.publicationId)
-      .maybeSingle();
-
-    if (pubError) throw new Error(pubError.message);
-    if (!pub) throw new Error("Publicação não encontrada.");
-    if (!pub.price_cents || pub.price_cents <= 0) {
-      throw new Error("Esta publicação não é paga.");
-    }
-    if (pub.author_id === userId) {
-      throw new Error("Você é o autor desta publicação.");
-    }
-
-    const { data: unlock, error } = await supabase
-      .from("publication_unlocks")
-      .insert({
-        publication_id: pub.id,
-        buyer_id: userId,
-        amount_cents: pub.price_cents,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return { id: unlock.id };
-  });
-
 /**
  * Seguir um creator. Aceita creatorProfileId (preferido) ou creatorId (legado
  * = perfil pago do usuário).
@@ -518,7 +444,7 @@ export const subscribeFree = createServerFn({ method: "POST" })
     const periodEnd = new Date();
     periodEnd.setFullYear(periodEnd.getFullYear() + 10);
 
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
