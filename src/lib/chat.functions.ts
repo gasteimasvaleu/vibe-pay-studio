@@ -192,7 +192,7 @@ export const searchUsers = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (rows ?? []).map((r) => ({
       userId: r.user_id as string,
-      username: r.username,
+      username: r.username ?? "",
       avatarUrl: null,
     }));
   });
