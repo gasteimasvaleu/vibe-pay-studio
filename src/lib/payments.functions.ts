@@ -1224,6 +1224,7 @@ export const createWalletTopupPayment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
     if (data.amountCents < 1000) throw new Error("recarga mínima é R$ 10,00");
+    if (data.method !== "PIX") throw new Error("Recarga da carteira só por Pix");
     const customerId = await ensureCustomerId(supabase, userId);
 
     const asaas = await loadAsaas();

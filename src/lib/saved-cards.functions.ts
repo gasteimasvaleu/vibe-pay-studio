@@ -254,6 +254,9 @@ export const chargeSavedCardTopUp = createServerFn({ method: "POST" })
     return data;
   })
   .handler(async ({ data, context }) => {
+    // Recarga da carteira só por Pix (cartão viraria saque Pix imediato).
+    throw new Error("Recarga da carteira só por Pix");
+
     const { supabase, userId } = context;
 
     const { data: card, error } = await supabase
