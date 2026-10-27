@@ -87,44 +87,6 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       throw new Error(`valor mínimo de saque: R$ ${(WITHDRAWAL_MIN_CENTS / 100).toFixed(2)}`);
     if (!data.pixKey?.trim()) throw new Error("chave pix obrigatória");
 
-    const { getActiveProfileIdFor } = await import("@/lib/profile-active.server");
-    const activeProfileId = await getActiveProfileIdFor(supabase, userId);
-
-    const [walletRes, activeWithdrawalsRes] = await Promise.all([
-      supabase
-        .from("creator_wallets")
-        .select("released_cents")
-        .eq("user_id", userId)
-        .single(),
-      (activeProfileId
-        ? supabase
-            .from("withdrawals")
-            .select("amount_cents")
-            .eq("creator_profile_id", activeProfileId)
-            .in("status", ["requested", "paid"] as any)
-        : supabase
-            .from("withdrawals")
-            .select("amount_cents")
-            .eq("creator_id", userId)
-            .in("status", ["requested", "paid"] as any)),
-    ]);
-    const wallet = walletRes.data;
-    const wErr = walletRes.error;
-    if (wErr || !wallet) throw new Error("carteira não encontrada");
-    if (activeWithdrawalsRes.error)
-      throw new Error(activeWithdrawalsRes.error.message);
-
-    const activeWithdrawalCents =
-      activeWithdrawalsRes.data?.reduce(
-        (acc, row) => acc + (row.amount_cents ?? 0),
-        0,
-      ) ?? 0;
-    const availableReleasedCents = Math.max(
-      wallet.released_cents - activeWithdrawalCents,
-      0,
-    );
-    if (availableReleasedCents < amount)
-      throw new Error("saldo liberado insuficiente");
 
     const { data: pa } = await (supabase as any)
       .from("payout_accounts")
@@ -157,23 +119,22 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       );
     }
 
+    // Saldo travado e validado no banco (todos os perfis, todos os status em andamento).
+    const { data: newId, error: rpcErr } = await (supabase as any).rpc("request_withdrawal", {
+      _amount_cents: amount,
+      _pix_key: data.pixKey.trim(),
+      _pix_key_type: data.pixKeyType ?? null,
+    });
+    if (rpcErr || !newId) {
+      const m = rpcErr?.message ?? "";
+      throw new Error(/saldo/i.test(m) ? "saldo liberado insuficiente" : m || "falha ao solicitar saque");
+    }
     const { data: row, error } = await supabase
       .from("withdrawals")
-      .insert({
-        creator_id: userId,
-        creator_profile_id: activeProfileId,
-        amount_cents: amount,
-        fee_cents: 0,
-        net_cents: amount,
-        pix_key: data.pixKey.trim(),
-        pix_key_type: data.pixKeyType ?? null,
-        status: "requested",
-        is_first_withdrawal: false,
-        provider: "asaas",
-      })
       .select("id, amount_cents, fee_cents, net_cents, status, is_first_withdrawal, requested_at")
+      .eq("id", newId as string)
       .single();
-    if (error) throw new Error(error.message);
+    if (error || !row) throw new Error(error?.message ?? "saque não encontrado");
 
     try {
       const asaas = await loadAsaas();
