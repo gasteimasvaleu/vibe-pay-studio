@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { signPublicationOutputs, signStrings } from "@/lib/media-sign.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
@@ -113,7 +114,7 @@ export const listVaultPublicationMedia = createServerFn({ method: "GET" })
         });
       }
     }
-    return applyTypeFilter(items, data.mediaType);
+    return signPublicationOutputs(applyTypeFilter(items, data.mediaType));
 
   });
 
@@ -146,7 +147,7 @@ export const listVaultUploads = createServerFn({ method: "GET" })
       mime: r.mime ?? null,
       durationSeconds: r.duration_seconds ?? null,
     }));
-    return applyTypeFilter(items, data.mediaType);
+    return signPublicationOutputs(applyTypeFilter(items, data.mediaType));
   });
 
 // ---------- Chat media (placeholder) ----------
@@ -228,9 +229,9 @@ export const getVaultCounts = createServerFn({ method: "GET" })
       chat: 0,
       all: publications + uploads,
       previews: {
-        all: allPreviews,
-        publications: [...pubPreviews, ...audioCovers].slice(0, 3),
-        uploads: uploadPreviews,
+        all: await signStrings(allPreviews),
+        publications: await signStrings([...pubPreviews, ...audioCovers].slice(0, 3)),
+        uploads: await signStrings(uploadPreviews),
         chat: [] as string[],
       },
     };
@@ -291,6 +292,7 @@ export const listVaultCategories = createServerFn({ method: "GET" })
       createdAt: c.created_at,
       updatedAt: c.updated_at,
     }));
+    for (const c of result) c.previews = await signStrings(c.previews);
     return result;
   });
 
@@ -423,7 +425,7 @@ export const listVaultCategoryItems = createServerFn({ method: "GET" })
         });
       }
     }
-    return applyTypeFilter(items, data.mediaType);
+    return signPublicationOutputs(applyTypeFilter(items, data.mediaType));
   });
 
 const addItemsSchema = z.object({
@@ -476,7 +478,7 @@ export const removeItemFromCategory = createServerFn({ method: "POST" })
 // ---------- Uploads (create/delete metadata) ----------
 const createUploadSchema = z.object({
   storagePath: z.string().min(1),
-  url: z.string().url(),
+  url: z.string().optional(),
   type: z.enum(["image", "video", "audio", "gif"]),
   mime: z.string().optional().nullable(),
   sizeBytes: z.number().int().min(0).optional().nullable(),
@@ -501,7 +503,7 @@ export const createVaultUpload = createServerFn({ method: "POST" })
         user_id: context.userId,
         creator_profile_id: profileId,
         storage_path: data.storagePath,
-        url: data.url,
+        url: data.storagePath,
         type: data.type,
         mime: data.mime ?? null,
         size_bytes: data.sizeBytes ?? null,
@@ -512,7 +514,7 @@ export const createVaultUpload = createServerFn({ method: "POST" })
       .select("id, url, storage_path, type, mime, duration_seconds, created_at")
       .single();
     if (error) throw new Error(error.message);
-    return row;
+    return (await signPublicationOutputs([row as any]))[0] as typeof row;
   });
 
 const deleteUploadSchema = z.object({ id: z.string().uuid() });
