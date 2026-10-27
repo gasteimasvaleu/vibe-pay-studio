@@ -1295,7 +1295,7 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
         story_unlocks: "buyer_id",
         chat_message_unlocks: "buyer_id",
         live_tickets: "buyer_id",
-        tips: "tipper_id",
+        tips: "sender_id",
         subscriptions: "subscriber_id",
         video_calls: "requester_id",
         chat_media_requests: "requester_id",
