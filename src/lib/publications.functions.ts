@@ -3,11 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
+import { signPublicationOutputs } from "@/lib/media-sign.server";
 
 
 const mediaItemSchema = z.object({
   storagePath: z.string().min(1),
-  url: z.string().url(),
+  url: z.string().optional(),
   type: z.enum(["image", "video"]),
   durationSeconds: z.number().int().min(0).max(86400).nullable().optional(),
 });
@@ -15,7 +16,7 @@ const mediaItemSchema = z.object({
 const audioSchema = z
   .object({
     storagePath: z.string().min(1),
-    url: z.string().url(),
+    url: z.string().optional(),
   })
   .nullable()
   .optional();
@@ -23,7 +24,7 @@ const audioSchema = z
 const previewSchema = z
   .object({
     storagePath: z.string().min(1),
-    url: z.string().url(),
+    url: z.string().optional(),
     type: z.enum(["image", "video"]),
   })
   .nullable()
@@ -73,11 +74,11 @@ export const createPublication = createServerFn({ method: "POST" })
         comments_disabled: data.commentsDisabled,
         pinned: data.pinned,
         published_at: publishedAt.toISOString(),
-        audio_url: data.audio?.url ?? null,
+        audio_url: data.audio?.storagePath ?? null,
         audio_storage_path: data.audio?.storagePath ?? null,
         preview_url:
           data.visibility === "paid" || data.visibility === "challenge"
-            ? data.preview?.url ?? null
+            ? data.preview?.storagePath ?? null
             : null,
         preview_storage_path:
           data.visibility === "paid" || data.visibility === "challenge"
@@ -94,7 +95,7 @@ export const createPublication = createServerFn({ method: "POST" })
     const rows = data.media.map((m, index) => ({
       publication_id: pub.id,
       storage_path: m.storagePath,
-      url: m.url,
+      url: m.storagePath,
       type: m.type,
       position: index,
       duration_seconds: m.type === "video" ? m.durationSeconds ?? null : null,
@@ -469,7 +470,7 @@ export const getFeed = createServerFn({ method: "POST" })
           p.visibility === "paid" || p.visibility === "challenge"
             ? (p as { preview_url: string | null }).preview_url ?? null
             : null,
-        audio_url: (p as { audio_url: string | null }).audio_url ?? null,
+        audio_url: isLocked ? null : (p as { audio_url: string | null }).audio_url ?? null,
         media: isLocked && media.length === 0 ? [] : media,
         like_count: likeCounts.get(p.id) ?? 0,
         comment_count: commentCounts.get(p.id) ?? 0,
@@ -483,7 +484,7 @@ export const getFeed = createServerFn({ method: "POST" })
 
     });
 
-    return { items, nextCursor };
+    return { items: await signPublicationOutputs(items), nextCursor };
   });
 
 
@@ -675,7 +676,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
           p.visibility === "paid" || p.visibility === "challenge"
             ? (p as { preview_url: string | null }).preview_url ?? null
             : null,
-        audio_url: (p as { audio_url: string | null }).audio_url ?? null,
+        audio_url: isLocked ? null : (p as { audio_url: string | null }).audio_url ?? null,
         media: isLocked && media.length === 0 ? [] : media,
         like_count: likeCounts.get(p.id) ?? 0,
         comment_count: commentCounts.get(p.id) ?? 0,
@@ -687,7 +688,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
 
     });
 
-    return { items, nextCursor };
+    return { items: await signPublicationOutputs(items), nextCursor };
   });
 
 
@@ -785,7 +786,7 @@ export const getUserPostsGrid = createServerFn({ method: "POST" })
         };
       });
 
-      return { items, nextCursor };
+      return { items: await signPublicationOutputs(items), nextCursor };
     },
   );
 
@@ -858,7 +859,7 @@ export const getUserMediasGrid = createServerFn({ method: "POST" })
       const nextCursor =
         pubRows.length === limit ? pubRows[pubRows.length - 1]!.published_at! : null;
 
-      return { items, nextCursor };
+      return { items: await signPublicationOutputs(items), nextCursor };
     },
   );
 
@@ -1377,7 +1378,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
         };
       });
 
-      return { items, nextCursor };
+      return { items: await signPublicationOutputs(items), nextCursor };
     },
   );
 
@@ -1529,7 +1530,7 @@ export const getScheduledPublications = createServerFn({ method: "POST" })
           })),
       }));
 
-      return { items, nextCursor };
+      return { items: await signPublicationOutputs(items), nextCursor };
     },
   );
 
