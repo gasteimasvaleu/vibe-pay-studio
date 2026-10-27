@@ -151,7 +151,18 @@ async function applyTransferStatus(
   if (status === "paid") update.processed_at = new Date().toISOString();
   if (status === "failed" && failReason) update.rejection_reason = failReason;
 
+  const { data: prev } = await supabaseAdmin
+    .from("withdrawals")
+    .select("status, creator_id")
+    .eq("id", withdrawalId)
+    .maybeSingle();
+
   let q = supabaseAdmin.from("withdrawals").update(update).eq("id", withdrawalId);
+
+  // Um saque pago nunca volta para falha/recusa por evento tardio.
+  if (status === "failed" || status === "rejected") {
+    q = q.neq("status", "paid");
+  }
 
   // Não sobrescrever um saque já finalizado com um status intermediário tardio
   const isIntermediate =
@@ -160,6 +171,17 @@ async function applyTransferStatus(
     q = q.not("status", "in", "(paid,failed,rejected)");
   }
   await q;
+
+  // TRANSFER_DONE sempre vira pago; se o saque estava recusado/falho, alerta o admin.
+  if (status === "paid" && prev && (prev.status === "rejected" || prev.status === "failed")) {
+    await supabaseAdmin.from("audit_logs").insert({
+      action: "withdrawal.paid_after_final_status",
+      actor_id: prev.creator_id,
+      target_table: "withdrawals",
+      target_id: withdrawalId,
+      metadata: { previous_status: prev.status, provider_ref: providerRef, alert: true },
+    });
+  }
 }
 
 
