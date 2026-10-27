@@ -255,7 +255,8 @@ export const chargeSavedCardTopUp = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     // Recarga da carteira só por Pix (cartão viraria saque Pix imediato).
-    throw new Error("Recarga da carteira só por Pix");
+    const TOPUP_CARD_DISABLED = true;
+    if (TOPUP_CARD_DISABLED) throw new Error("Recarga da carteira só por Pix");
 
     const { supabase, userId } = context;
 
