@@ -452,7 +452,7 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
               // processed_at só em estado final; senão o PAYMENT_CONFIRMED seguinte seria ignorado.
               const isFinal =
                 targetStatus === "refunded" || targetStatus === "cancelled";
-              const upd: Record<string, unknown> = { event_type: eventType };
+              const upd: { event_type: string; processed_at?: string } = { event_type: eventType };
               if (isFinal) upd.processed_at = new Date().toISOString();
               const { error: iErr } = await supabaseAdmin
                 .from("payment_intents")
