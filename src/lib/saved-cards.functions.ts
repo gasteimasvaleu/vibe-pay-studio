@@ -23,16 +23,7 @@ async function ensureCustomerId(
 
   const asaas = await loadAsaas();
 
-  // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
-  const existing = await asaas.findCustomerByCpf(cpf);
-  if (existing?.id) {
-    await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
-      .from("profiles")
-      .update({ asaas_customer_id: existing.id })
-      .eq("user_id", userId);
-    return existing.id;
-  }
-
+  // Nunca vincula a um cliente Asaas existente achado por CPF: sempre cria um novo.
   const { data: userRes } = await supabase.auth.getUser();
   const email = userRes?.user?.email ?? null;
   const customer = await asaas.createCustomer({
@@ -41,10 +32,19 @@ async function ensureCustomerId(
     cpfCnpj: cpf,
     externalReference: userId,
   });
-  await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
+  const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
+  const { data: upd, error: upErr } = await admin
     .from("profiles")
     .update({ asaas_customer_id: customer.id })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("asaas_customer_id", null)
+    .select("asaas_customer_id");
+  if (upErr) throw new Error(upErr.message);
+  if (!upd?.length) {
+    const { data: cur } = await admin.from("profiles").select("asaas_customer_id").eq("user_id", userId).single();
+    if (cur?.asaas_customer_id) return cur.asaas_customer_id as string;
+    throw new Error("falha ao vincular cliente de pagamento");
+  }
   return customer.id;
 }
 
@@ -111,6 +111,23 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    // Limite: 5 tentativas/hora por usuário e por IP.
+    {
+      const { getRequestHeader } = await import("@tanstack/react-start/server");
+      const ip =
+        getRequestHeader("cf-connecting-ip") ||
+        (getRequestHeader("x-forwarded-for") ?? "").split(",")[0].trim() ||
+        null;
+      const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+      const { data: allowed, error: rlErr } = await (admin as any).rpc("check_card_tokenize_rate", {
+        _user_id: userId,
+        _ip: ip,
+      });
+      if (rlErr) throw new Error("Não foi possível validar o cadastro do cartão. Tente novamente.");
+      if (!allowed)
+        throw new Error("Muitas tentativas de cadastro de cartão. Tente novamente em 1 hora.");
+    }
+
     // Ensure profile has CPF stored for future charges
     {
       const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -152,43 +169,6 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
 
     const customerId = await ensureCustomerId(supabase, userId);
 
-    // 2) O mesmo cartão pode já estar tokenizado nesse cliente Asaas por outra
-    //    conta do app com o mesmo CPF. Nesse caso reaproveitamos o token.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: shared } = await supabaseAdmin
-      .from("saved_cards")
-      .select("asaas_card_token, brand")
-      .eq("asaas_customer_id", customerId)
-      .eq("last4", last4FromInput)
-      .eq("exp_month", data.expiryMonth)
-      .eq("exp_year", data.expiryYear)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (shared?.asaas_card_token) {
-      const { data: cloned, error: cloneErr } = await supabase
-        .from("saved_cards")
-        .insert({
-          user_id: userId,
-          asaas_customer_id: customerId,
-          asaas_card_token: shared.asaas_card_token,
-          brand: shared.brand ?? null,
-          last4: last4FromInput,
-          holder_name: data.holderName,
-          exp_month: data.expiryMonth,
-          exp_year: data.expiryYear,
-        })
-        .select("id")
-        .single();
-      if (cloneErr) throw new Error(cloneErr.message);
-      return {
-        id: cloned.id as string,
-        last4: last4FromInput,
-        brand: (shared.brand as string | null) ?? null,
-        reused: true,
-      };
-    }
 
     const { data: userRes } = await supabase.auth.getUser();
     const email = userRes?.user?.email ?? "no-reply@monetisexy.app";
