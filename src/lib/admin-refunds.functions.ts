@@ -65,7 +65,7 @@ export const listRefundRequests = createServerFn({ method: "GET" })
 
     const userIds = Array.from(new Set((rows ?? []).map((r: any) => r.user_id as string)));
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("user_id, username, display_name")
       .in("user_id", userIds);
 

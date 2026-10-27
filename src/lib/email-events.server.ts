@@ -33,7 +33,7 @@ async function getDisplayName(
   userId: string,
 ): Promise<string> {
   const { data } = await admin
-    .from("profiles")
+    .from("profiles_public" as any)
     .select("display_name, username")
     .eq("user_id", userId)
     .maybeSingle();

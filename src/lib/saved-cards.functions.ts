@@ -26,7 +26,7 @@ async function ensureCustomerId(
   // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
   const existing = await asaas.findCustomerByCpf(cpf);
   if (existing?.id) {
-    await supabase
+    await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
       .from("profiles")
       .update({ asaas_customer_id: existing.id })
       .eq("user_id", userId);
@@ -41,7 +41,7 @@ async function ensureCustomerId(
     cpfCnpj: cpf,
     externalReference: userId,
   });
-  await supabase
+  await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
     .from("profiles")
     .update({ asaas_customer_id: customer.id })
     .eq("user_id", userId);
@@ -112,10 +112,12 @@ export const tokenizeAndSaveCard = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // Ensure profile has CPF stored for future charges
-    await supabase
-      .from("profiles")
-      .update({ cpf: data.cpf })
-      .eq("user_id", userId);
+    {
+      const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+      const { data: cur } = await (admin as any).from("profiles").select("cpf").eq("user_id", userId).single();
+      if (cur?.cpf && cur.cpf.replace(/\D/g, "") !== data.cpf) throw new Error("O CPF do titular precisa ser o mesmo da sua conta.");
+      if (!cur?.cpf) await (admin as any).from("profiles").update({ cpf: data.cpf }).eq("user_id", userId).is("cpf", null);
+    }
 
     const last4FromInput = data.number.slice(-4);
 

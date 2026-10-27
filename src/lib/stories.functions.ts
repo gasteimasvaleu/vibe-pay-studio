@@ -21,7 +21,7 @@ export const publishStory = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => publishSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("account_type")
       .eq("user_id", context.userId)
       .maybeSingle();

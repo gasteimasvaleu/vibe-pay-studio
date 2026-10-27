@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/settings/details")({
     if (!user) throw redirect({ to: "/entrar" });
 
     const { data: account } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("username, display_name, bio, location, cover_url, avatar_url, active_profile_id, active_view, free_username, free_display_name, free_avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();

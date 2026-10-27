@@ -45,7 +45,7 @@ export function VideoCallHeaderButton({
     queryKey: ["video-call-partner", partnerId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("video_call_enabled, video_call_price_cents, video_call_default_minutes")
         .eq("user_id", partnerId)
         .maybeSingle();

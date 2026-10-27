@@ -27,7 +27,7 @@ export function AppTopBar() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("username")
         .eq("user_id", userData.user.id)
         .maybeSingle();

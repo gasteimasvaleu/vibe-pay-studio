@@ -265,7 +265,7 @@ function ChatThreadView() {
       const user = sessionData.session?.user;
       if (!user) return "subscriber" as const;
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("account_type")
         .eq("user_id", user.id)
         .maybeSingle();

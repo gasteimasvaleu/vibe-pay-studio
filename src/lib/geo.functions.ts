@@ -23,12 +23,12 @@ export const resolveViewerCountry = createServerFn({ method: "GET" })
     if (country) {
       // Best-effort backfill of the caller's own profile.country.
       const { data: existing } = await context.supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("country")
         .eq("user_id", context.userId)
         .maybeSingle();
       if (existing && !existing.country) {
-        await context.supabase
+        await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
           .from("profiles")
           .update({ country })
           .eq("user_id", context.userId);

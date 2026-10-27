@@ -60,7 +60,7 @@ function withinRefundWindow(createdAt: string): boolean {
 async function fetchAuthorsMap(client: any, ids: string[]) {
   if (ids.length === 0) return new Map<string, any>();
   const { data } = await client
-    .from("profiles")
+    .from("profiles_public" as any)
     .select("user_id, username, display_name, avatar_url")
     .in("user_id", ids);
   const m = new Map<string, any>();

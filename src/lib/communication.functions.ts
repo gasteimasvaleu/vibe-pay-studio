@@ -115,7 +115,7 @@ export const requestVideoCall = createServerFn({ method: "POST" })
     if (data.creatorId === userId) throw new Error("cannot call self");
 
     const { data: creator, error: cErr } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select(
         "user_id, video_call_enabled, video_call_price_cents, video_call_default_minutes",
       )
@@ -253,7 +253,7 @@ export const startPaidVideoCall = createServerFn({ method: "POST" })
     if (data.creatorId === userId) throw new Error("cannot call self");
 
     const { data: creator, error: cErr } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("user_id, username, video_call_enabled, video_call_price_cents, video_call_default_minutes")
       .eq("user_id", data.creatorId)
       .single();
@@ -348,7 +348,7 @@ export const joinVideoCall = createServerFn({ method: "POST" })
 
     // Get participant display name.
     const { data: me } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("username")
       .eq("user_id", userId)
       .maybeSingle();

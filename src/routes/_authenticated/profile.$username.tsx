@@ -66,7 +66,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   if (!profile) {
     // Fallback legado: profiles com free_username.
     const { data: legacyProfile, error } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select(
         "user_id, username, display_name, bio, avatar_url, cover_url, account_type, free_username, free_display_name, free_avatar_url",
       )

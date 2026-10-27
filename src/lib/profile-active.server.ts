@@ -64,7 +64,7 @@ export function validateDisplayName(raw: string): { ok: true; value: string } | 
 export async function getProfileAndActiveCreator(supabase: any, userId: string) {
   const [profileRes, creatorsRes] = await Promise.all([
     supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("active_profile_id, account_type, username, display_name, avatar_url, cover_url, bio, location, instagram_handle, tiktok_handle, x_handle, free_avatar_url, free_username, free_display_name")
       .eq("user_id", userId)
       .maybeSingle(),
@@ -98,7 +98,7 @@ export async function getActiveProfileIdFor(
   userId: string,
 ): Promise<string | null> {
   const [{ data: prof }, { data: cps }] = await Promise.all([
-    supabase.from("profiles").select("active_profile_id").eq("user_id", userId).maybeSingle(),
+    supabase.from("profiles_public" as any).select("active_profile_id").eq("user_id", userId).maybeSingle(),
     supabase.from("creator_profiles").select("id, kind").eq("user_id", userId),
   ]);
   const rows = (cps ?? []) as Array<{ id: string; kind: "paid" | "free" }>;

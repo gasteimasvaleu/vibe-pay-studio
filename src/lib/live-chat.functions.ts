@@ -38,7 +38,7 @@ export const getLiveMessages = createServerFn({ method: "GET" })
     let byId = new Map<string, any>();
     if (missing.length) {
       const { data: profs } = await context.supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("id, username, display_name, avatar_url")
         .in("id", missing);
       byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
@@ -81,7 +81,7 @@ export const sendLiveMessage = createServerFn({ method: "POST" })
     // Identity snapshot — denormalized into live_comments so history "photographs"
     // the sender's avatar/username at send time and getLiveMessages avoids a JOIN.
     const { data: prof } = await context.supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("username, display_name, avatar_url")
       .eq("id", context.userId)
       .maybeSingle();

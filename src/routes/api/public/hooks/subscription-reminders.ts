@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/hooks/subscription-reminders")
             continue;
           }
           const { data: creator } = await (supabaseAdmin as any)
-            .from("profiles")
+            .from("profiles_public" as any)
             .select("username, display_name")
             .eq("user_id", sub.creator_id)
             .maybeSingle();

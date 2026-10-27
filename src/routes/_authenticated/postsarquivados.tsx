@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/postsarquivados")({
 
     const [{ data: profile }, { data: creatorProfiles }] = await Promise.all([
       supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("active_profile_id")
         .eq("user_id", user.id)
         .maybeSingle(),

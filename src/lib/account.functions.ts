@@ -29,7 +29,7 @@ export const setActiveProfileView = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const { data: profile, error: readErr } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("account_type, free_profile_enabled")
       .eq("user_id", userId)
       .maybeSingle();
