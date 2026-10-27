@@ -73,16 +73,7 @@ async function ensureCustomerId(
     return profile.asaas_customer_id as string;
   }
 
-  // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
-  const existing = await asaas.findCustomerByCpf(cpf);
-  if (existing?.id) {
-    await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
-      .from("profiles")
-      .update({ asaas_customer_id: existing.id })
-      .eq("user_id", userId);
-    return existing.id;
-  }
-
+  // Nunca vincula a um cliente Asaas existente achado por CPF: sempre cria um novo.
   const { data: userRes } = await supabase.auth.getUser();
   const email = userRes?.user?.email ?? null;
   const customer = await asaas.createCustomer({
@@ -91,10 +82,19 @@ async function ensureCustomerId(
     cpfCnpj: cpf,
     externalReference: userId,
   });
-  await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
+  const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin as any;
+  const { data: upd, error: upErr } = await admin
     .from("profiles")
     .update({ asaas_customer_id: customer.id })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("asaas_customer_id", null)
+    .select("asaas_customer_id");
+  if (upErr) throw new Error(upErr.message);
+  if (!upd?.length) {
+    const { data: cur } = await admin.from("profiles").select("asaas_customer_id").eq("user_id", userId).single();
+    if (cur?.asaas_customer_id) return cur.asaas_customer_id as string;
+    throw new Error("falha ao vincular cliente de pagamento");
+  }
   return customer.id;
 }
 

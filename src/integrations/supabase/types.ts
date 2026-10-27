@@ -259,6 +259,27 @@ export type Database = {
         }
         Relationships: []
       }
+      card_tokenize_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_media_requests: {
         Row: {
           created_at: string
@@ -3907,6 +3928,10 @@ export type Database = {
       can_see_story: { Args: { _story_id: string }; Returns: boolean }
       can_send_email: {
         Args: { _kind: string; _user_id: string }
+        Returns: boolean
+      }
+      check_card_tokenize_rate: {
+        Args: { _ip: string; _user_id: string }
         Returns: boolean
       }
       count_author_media: {
