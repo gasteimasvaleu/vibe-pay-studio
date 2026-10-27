@@ -26,6 +26,6 @@
 6. Listar migrações e arquivos alterados.
 
 ## Riscos / pendências
-- O cliente admin precisa da chave de serviço configurada no servidor (`APP_SUPABASE_SERVICE_ROLE_KEY`); vou confirmar que existe antes de mover gravações. Sem ela, cadastro de cartão e país quebram.
+- A chave de serviço já está salva no projeto; antes de mover as gravações confirmo que ela funciona.
 - Este projeto usa Supabase externo: não consigo logar automaticamente como usuário para testar. Os testes logados precisarão de uma conta de teste sua (ou você roda o script que eu deixar pronto).
 - Quer que eu também feche a leitura aberta de `creator_profiles` (só colunas públicas via view)? Fica fora do escopo pedido; deixo anotado.
