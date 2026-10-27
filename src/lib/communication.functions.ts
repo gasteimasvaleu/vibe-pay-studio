@@ -35,8 +35,8 @@ export const listMessages = createServerFn({ method: "GET" })
   .inputValidator((data: { threadId: string; limit?: number }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: rows, error } = await supabase
-      .from("chat_messages")
+    const { data: rows, error } = await (supabase as any)
+      .from("chat_messages_safe")
       .select("id, thread_id, sender_id, content, price_cents, read_at, created_at")
       .eq("thread_id", data.threadId)
       .order("created_at", { ascending: true })
@@ -54,7 +54,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const content = data.content.trim();
     if (!content) throw new Error("empty message");
-    const priceCents = Math.max(0, Math.floor(data.priceCents ?? 0));
+    // Mensagem paga só pelo fluxo com mídia (chat.functions sendMessage).
+    if ((data.priceCents ?? 0) > 0) throw new Error("mensagem paga precisa de mídia");
+    const priceCents = 0;
     const { data: row, error } = await supabase
       .from("chat_messages")
       .insert({
@@ -63,10 +65,10 @@ export const sendMessage = createServerFn({ method: "POST" })
         content: content.slice(0, 4000),
         price_cents: priceCents,
       })
-      .select("id, thread_id, sender_id, content, price_cents, created_at")
+      .select("id, thread_id, sender_id, price_cents, created_at")
       .single();
     if (error) throw new Error(error.message);
-    return row;
+    return { ...row, content: content.slice(0, 4000) };
   });
 
 export const requestVideoCall = createServerFn({ method: "POST" })
@@ -132,9 +134,21 @@ export const requestVideoCall = createServerFn({ method: "POST" })
     if (insErr || !pending) throw new Error(insErr?.message ?? "falha ao criar chamada");
 
     // Débito atômico (trava o saldo), transação e crédito ao creator ficam no banco.
+    // Todos os 12 argumentos nomeados → resolve só a versão mais nova
+    // pay_with_wallet(text,uuid,uuid,uuid,text,integer,text,uuid,uuid,uuid,uuid,uuid).
     const { error: payErr } = await (supabase as any).rpc("pay_with_wallet", {
       _kind: "video_call",
+      _publication_id: null,
+      _message_id: null,
+      _creator_id: data.creatorId,
+      _plan: null,
+      _amount_cents: price,
+      _message: null,
+      _story_id: null,
       _call_id: pending.id,
+      _request_id: null,
+      _creator_profile_id: null,
+      _live_id: null,
     });
     if (payErr) {
       await db
@@ -145,6 +159,12 @@ export const requestVideoCall = createServerFn({ method: "POST" })
       if (/insufficient/i.test(payErr.message ?? "")) throw new Error("insufficient_wallet_balance");
       throw new Error(payErr.message ?? "falha no pagamento");
     }
+    // pay_with_wallet marca payment_status = paid; a chamada passa a aceita.
+    await db
+      .from("video_calls")
+      .update({ status: "accepted", updated_at: new Date().toISOString() })
+      .eq("id", pending.id)
+      .eq("payment_status", "paid");
 
     const { data: row, error } = await db
       .from("video_calls")
@@ -222,65 +242,6 @@ export const listVideoCalls = createServerFn({ method: "GET" })
       .limit(100);
     if (error) throw new Error(error.message);
     return data ?? [];
-  });
-
-/**
- * Subscriber creates + pays a 1:1 video call using their prepaid wallet.
- * Simplification vs request/respond flow: one atomic step.
- * - Validates creator settings and requester wallet balance
- * - Paid calls are charged via pay_with_wallet (atomic debit + transaction)
- * - Room is created on first join (see joinVideoCall)
- */
-export const startPaidVideoCall = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string; durationMinutes?: number }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    if (data.creatorId === userId) throw new Error("cannot call self");
-
-    const { data: creator, error: cErr } = await supabase
-      .from("profiles_public")
-      .select("user_id, username, video_call_enabled, video_call_price_cents, video_call_default_minutes")
-      .eq("user_id", data.creatorId)
-      .single();
-    if (cErr || !creator) throw new Error("creator not found");
-    if (!creator.video_call_enabled) throw new Error("creator does not accept video calls");
-
-    const duration = Math.max(1, Math.floor(data.durationMinutes ?? creator.video_call_default_minutes ?? 15));
-    const price = Math.max(0, Math.floor(creator.video_call_price_cents ?? 0));
-
-    if (price > 0) {
-      const { data: wallet, error: wErr } = await supabase
-        .from("subscriber_wallets")
-        .select("balance_cents")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (wErr) throw new Error(wErr.message);
-      const balance = wallet?.balance_cents ?? 0;
-      if (balance < price) throw new Error("insufficient_wallet_balance");
-
-      const { error: dErr } = await supabase
-        .from("subscriber_wallets")
-        .update({ balance_cents: balance - price, updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-      if (dErr) throw new Error(dErr.message);
-    }
-
-    const { data: row, error } = await (await adminDb())
-      .from("video_calls")
-      .insert({
-        requester_id: userId,
-        creator_id: data.creatorId,
-        duration_minutes: duration,
-        price_cents: price,
-        status: "accepted",
-        payment_status: price > 0 ? "paid" : "paid",
-        provider: "daily",
-      })
-      .select("id, status, payment_status, duration_minutes, price_cents")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
   });
 
 /**

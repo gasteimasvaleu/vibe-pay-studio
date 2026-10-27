@@ -142,8 +142,8 @@ export const listThreads = createServerFn({ method: "GET" })
       const side = t.user_a === userId ? "a" : "b";
       const clearedAt = side === "a" ? t.cleared_at_a : t.cleared_at_b;
 
-      let lastMsgQuery = supabase
-        .from("chat_messages")
+      let lastMsgQuery = (supabase as any)
+        .from("chat_messages_safe")
         .select("content")
         .eq("thread_id", t.id)
         .order("created_at", { ascending: false })
@@ -286,14 +286,14 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
           ? (threadRow as { cleared_at_a?: string | null } | null)?.cleared_at_a
           : (threadRow as { cleared_at_b?: string | null } | null)?.cleared_at_b;
 
-      let msgQuery = supabase
-        .from("chat_messages")
+      let msgQuery = (supabase as any)
+        .from("chat_messages_safe")
         .select("id, thread_id, sender_id, content, read_at, created_at, price_cents, metadata, deleted_at, reply_to_id")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true })
         .limit(500);
       if (clearedAt) msgQuery = msgQuery.gt("created_at", clearedAt);
-      const { data: msgsRaw, error: mErr } = await msgQuery;
+      const { data: msgsRaw, error: mErr } = (await msgQuery) as { data: any[] | null; error: any };
       if (mErr) throw new Error(mErr.message);
 
       // Filter out messages this user has hidden ("apagar para mim")
@@ -337,9 +337,13 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
         const paidUpload = (m as any).metadata?.paidUpload as ChatPaidUploadMeta | undefined;
         for (const it of media) {
-          if (it?.path) {
-            if (paidUpload) paidDmPaths.push(it.path);
-            else publicationPaths.push(it.path);
+          if (!it?.path) continue;
+          if (paidUpload) {
+            // Arquivo do envio pago fica em <requestId>/...
+            if (paidUpload.requestId && it.path.startsWith(`${paidUpload.requestId}/`)) paidDmPaths.push(it.path);
+          } else if (it.path.split("/")[1] === m.sender_id) {
+            // Só assina arquivos da pasta do próprio remetente.
+            publicationPaths.push(it.path);
           }
         }
         const sr = (m as any).metadata?.storyReply as ChatStoryReply | undefined;
@@ -382,8 +386,8 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         if (m.reply_to_id && !msgById.has(m.reply_to_id)) missingParentIds.add(m.reply_to_id);
       }
       if (missingParentIds.size > 0) {
-        const { data: parents } = await supabase
-          .from("chat_messages")
+        const { data: parents } = await (supabase as any)
+          .from("chat_messages_safe")
           .select("id, sender_id, content, metadata, deleted_at")
           .in("id", Array.from(missingParentIds));
         for (const p of parents ?? []) msgById.set(p.id, p);
@@ -504,6 +508,19 @@ export const sendMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<ChatMessage> => {
     const { supabase, userId } = context;
     const price = data.priceCents ?? 0;
+    for (const it of data.media ?? []) {
+      const seg = it.path.split("/");
+      if (!["posts", "vault", "chat-welcome"].includes(seg[0]) || seg[1] !== userId) {
+        throw new Error("Arquivo inválido");
+      }
+    }
+    const { data: tCheck } = await supabase
+      .from("chat_threads")
+      .select("user_a, user_b")
+      .eq("id", data.threadId)
+      .maybeSingle();
+    if (!tCheck || (tCheck.user_a !== userId && tCheck.user_b !== userId)) throw new Error("Conversa não encontrada");
+    const { supabaseAdmin: msgDb } = await import("@/integrations/supabase/client.server");
     const metadata =
       data.media && data.media.length > 0 ? ({ media: data.media } as unknown as never) : ({} as unknown as never);
 
@@ -527,11 +544,12 @@ export const sendMessage = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await msgDb
       .from("chat_messages")
       .insert({
         thread_id: data.threadId,
         sender_id: userId,
+        creator_profile_id: activeProfileId ?? null,
         content: data.content ?? "",
         price_cents: price,
         reply_to_id: data.replyToId ?? null,
@@ -551,7 +569,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     const mediaOut = (row as { metadata?: { media?: ChatWelcomeMedia[] } }).metadata?.media;
     let signedMedia: ChatWelcomeMedia[] | undefined;
     if (mediaOut && mediaOut.length > 0) {
-      const { data: signed } = await supabase.storage
+      const { data: signed } = await msgDb.storage
         .from("publications")
         .createSignedUrls(mediaOut.map((m) => m.path), 60 * 60);
       const map = new Map<string, string>();
@@ -618,7 +636,8 @@ export const sendStoryReply = createServerFn({ method: "POST" })
       thumbPath: (story.thumb_path ?? story.media_path) as string | null,
     };
 
-    const { data: row, error } = await supabase
+    const { supabaseAdmin: replyDb } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await replyDb
       .from("chat_messages")
       .insert({
         thread_id: threadId as string,
@@ -908,7 +927,7 @@ async function assertMessageInThreadOfUser(
   messageId: string,
 ): Promise<{ id: string; sender_id: string; thread_id: string; created_at: string; content: string; price_cents: number | null; metadata: any }> {
   const { data: m, error } = await supabase
-    .from("chat_messages")
+    .from("chat_messages_safe")
     .select("id, sender_id, thread_id, created_at, content, price_cents, metadata")
     .eq("id", messageId)
     .maybeSingle();
@@ -983,14 +1002,19 @@ export const forwardMessage = createServerFn({ method: "POST" })
     // Do not forward paid/locked media or special cards
     const meta = m.metadata ?? {};
     const forwardMeta: Record<string, unknown> = {};
-    if (Array.isArray(meta.media) && meta.media.length > 0 && !meta.paidUpload) {
+    if (
+      Array.isArray(meta.media) && meta.media.length > 0 && !meta.paidUpload &&
+      meta.media.every((it: any) => typeof it?.path === "string" && it.path.split("/")[1] === userId)
+    ) {
+      // Só encaminha mídia que está na pasta de quem encaminha.
       forwardMeta.media = meta.media;
     }
     const content = m.content ?? "";
     if (!content.trim() && !forwardMeta.media) {
       throw new Error("Nada para encaminhar nesta mensagem");
     }
-    const { error } = await supabase.from("chat_messages").insert({
+    const { supabaseAdmin: fwdDb } = await import("@/integrations/supabase/client.server");
+    const { error } = await (forwardMeta.media ? fwdDb : supabase).from("chat_messages").insert({
       thread_id: data.toThreadId,
       sender_id: userId,
       content,

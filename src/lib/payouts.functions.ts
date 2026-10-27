@@ -136,6 +136,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .single();
     if (error || !row) throw new Error(error?.message ?? "saque não encontrado");
 
+    let createdTransferId: string | null = null;
     try {
       const asaas = await loadAsaas();
       const apiKey = isPixMode
@@ -148,6 +149,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         externalReference: row.id,
         description: "Saque Monetisexy",
       });
+      createdTransferId = transfer.id;
 
       // Modo Só PIX: a chave precisa ser do mesmo CPF da verificação.
       if (isPixMode) {
@@ -200,12 +202,25 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       // Em caso de falha na transferência, o saque deixa de contar como débito.
       const msg = friendlyAsaasError(String(err?.message ?? "falha na transferência Asaas"));
       const admin = await adminClient();
-      const { error: fErr } = await admin
-        .from("withdrawals")
-        .update({ status: "failed", rejection_reason: msg })
-        .eq("id", row.id)
-        .eq("creator_id", userId);
-      if (fErr) console.error("[withdraw] mark failed error", fErr);
+      if (createdTransferId) {
+        // A transferência já existe no Asaas: não marca como falha.
+        // Guarda a referência e deixa o webhook decidir o status final.
+        const { error: rErr } = await admin
+          .from("withdrawals")
+          .update({ provider_ref: createdTransferId })
+          .eq("id", row.id)
+          .eq("creator_id", userId)
+          .eq("status", "requested");
+        if (rErr) console.error("[withdraw] save provider_ref error", rErr);
+      } else {
+        const { error: fErr } = await admin
+          .from("withdrawals")
+          .update({ status: "failed", rejection_reason: msg })
+          .eq("id", row.id)
+          .eq("creator_id", userId)
+          .eq("status", "requested");
+        if (fErr) console.error("[withdraw] mark failed error", fErr);
+      }
       throw new Error(msg);
     }
   });
@@ -217,7 +232,7 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: w, error: wErr } = await supabase
       .from("withdrawals")
-      .select("id, creator_id, amount_cents, status")
+      .select("id, creator_id, amount_cents, status, provider_ref")
       .eq("id", data.withdrawalId)
       .single();
     if (wErr || !w) throw new Error("saque não encontrado");
@@ -225,6 +240,36 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     if (w.status !== "requested") throw new Error("saque não pode ser cancelado");
 
     const admin = await adminClient();
+    if ((w as any).provider_ref) {
+      // Transferência já criada: só cancela se o Asaas confirmar.
+      const transferId = (w as any).provider_ref as string;
+      const { data: pa } = await (supabase as any)
+        .from("payout_accounts")
+        .select("payout_mode")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const asaas = await loadAsaas();
+      let apiKey: string;
+      if (pa?.payout_mode === "pix") {
+        apiKey = asaas.getPlatformApiKey();
+      } else {
+        const { data: prof } = await (admin as any)
+          .from("profiles")
+          .select("asaas_api_key_encrypted")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (!prof?.asaas_api_key_encrypted) throw new Error("não foi possível cancelar no Asaas");
+        apiKey = asaas.decryptApiKey(prof.asaas_api_key_encrypted as string);
+      }
+      try {
+        await asaas.cancelTransfer(apiKey, transferId);
+        const t = await asaas.getTransfer(apiKey, transferId);
+        if (t.status !== "CANCELLED") throw new Error("not cancelled");
+      } catch {
+        throw new Error("O Asaas não confirmou o cancelamento. O saque não foi cancelado.");
+      }
+    }
+
     const { error } = await admin
       .from("withdrawals")
       .update({ status: "rejected", rejection_reason: "cancelado pelo criador" })
