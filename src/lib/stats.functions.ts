@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { signField } from "@/lib/media-sign.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 
@@ -862,6 +863,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
       comments: (a: (typeof items)[number], b: (typeof items)[number]) => b.comments - a.comments,
     };
     items.sort(sorters[data.sort]);
+    await signField(items, (it: any) => it.previewUrl, (it: any, v) => { it.previewUrl = v; });
 
     return {
       items,

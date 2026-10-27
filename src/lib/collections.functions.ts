@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { signField } from "@/lib/media-sign.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type CollectionPubItem = {
@@ -81,7 +82,7 @@ export const listMyBookmarks = createServerFn({ method: "GET" })
     const rows = bms ?? [];
     const ids = rows.map((r: any) => r.publication_id);
     const { pubs, media, authors } = await hydratePublications(supabase, ids);
-    return rows
+    return signField(rows
       .map((r: any) => {
         const p = pubs.get(r.publication_id);
         if (!p) return null;
@@ -99,7 +100,7 @@ export const listMyBookmarks = createServerFn({ method: "GET" })
           created_at: r.created_at,
         } as CollectionPubItem;
       })
-      .filter(Boolean) as CollectionPubItem[];
+      .filter(Boolean) as CollectionPubItem[], (it: any) => it.thumb_url, (it: any, v) => { it.thumb_url = v; });
   });
 
 export const listMyPurchases = createServerFn({ method: "GET" })
@@ -117,7 +118,7 @@ export const listMyPurchases = createServerFn({ method: "GET" })
     const rows = unlocks ?? [];
     const ids = Array.from(new Set(rows.map((r: any) => r.publication_id)));
     const { pubs, media, authors } = await hydratePublications(supabase, ids);
-    return rows
+    return signField(rows
       .map((r: any) => {
         const p = pubs.get(r.publication_id);
         if (!p) return null;
@@ -136,7 +137,7 @@ export const listMyPurchases = createServerFn({ method: "GET" })
           amount_cents: r.amount_cents,
         } as CollectionPubItem;
       })
-      .filter(Boolean) as CollectionPubItem[];
+      .filter(Boolean) as CollectionPubItem[], (it: any) => it.thumb_url, (it: any, v) => { it.thumb_url = v; });
   });
 
 export const listMyChatPurchases = createServerFn({ method: "GET" })
