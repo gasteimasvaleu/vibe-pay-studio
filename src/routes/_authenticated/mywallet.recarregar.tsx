@@ -44,8 +44,8 @@ type Checkout = {
 function RecarregarPage() {
   const router = useRouter();
   const [amount, setAmount] = useState(50);
-  const [method, setMethod] = useState<PaymentMethod>("PIX");
-  const [savedCardId, setSavedCardId] = useState<string | null>(null);
+  const [method] = useState<PaymentMethod>("PIX");
+  const savedCardId: string | null = null;
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTopup = useServerFn(createWalletTopupPayment);

@@ -313,16 +313,6 @@ function MyWalletPage() {
                   <p className="text-xs text-muted-foreground">
                     {c.expMonth}/{c.expYear.slice(-2)}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRechargeAmount(50);
-                      setRechargeCard(c);
-                    }}
-                    className="mt-2 text-xs font-semibold text-primary hover:underline"
-                  >
-                    Recarregar
-                  </button>
                 </div>
               </div>
             ))}
