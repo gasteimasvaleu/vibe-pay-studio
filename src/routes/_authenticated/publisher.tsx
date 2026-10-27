@@ -95,7 +95,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5b3h0cHRrbWh1Z3htZHptcHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTU5NjgsImV4cCI6MjA5OTA5MTk2OH0.JCvkcYD89lRDfvNB5_G03xUqt0K50fFFutHKBvlS_lM";
 // Signed URL de longa duração (1 ano) — bucket é privado.
-const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
+const SIGNED_URL_EXPIRES_IN = 60 * 60; // só para pré-visualização local; o banco guarda o caminho
 const MAX_MEDIA = 10;
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;

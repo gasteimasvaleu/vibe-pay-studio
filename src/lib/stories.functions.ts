@@ -229,7 +229,9 @@ async function signedFor(
   path: string | null,
 ): Promise<string | null> {
   if (!path) return null;
-  const { data } = await supabase.storage
+  void supabase;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.storage
     .from("stories")
     .createSignedUrl(path, SIGNED_URL_TTL);
   return data?.signedUrl ?? null;
@@ -308,7 +310,7 @@ export const getCreatorStories = createServerFn({ method: "GET" })
       const isSelf = s.creator_id === context.userId;
       const unlocked = isSelf || (s.price_cents ?? 0) === 0 || unlockedSet.has(s.id);
       const mediaUrl = unlocked ? await signedFor(context.supabase, s.media_path) : null;
-      const thumbUrl = await signedFor(context.supabase, s.thumb_path ?? s.media_path);
+      const thumbUrl = await signedFor(context.supabase, unlocked ? (s.thumb_path ?? s.media_path) : s.thumb_path);
       const identity = pickIdentity(identityMaps, {
         creator_profile_id: (s as { creator_profile_id: string | null }).creator_profile_id,
         user_id: s.creator_id,
@@ -326,7 +328,7 @@ export const getCreatorStories = createServerFn({ method: "GET" })
         expires_at: s.expires_at,
         media_url: mediaUrl,
         thumb_url: thumbUrl,
-        thumb_path: (s.thumb_path ?? s.media_path) as string | null,
+        thumb_path: (unlocked ? (s.thumb_path ?? s.media_path) : s.thumb_path) as string | null,
         unlocked,
         is_self: isSelf,
         viewed: viewedSet.has(s.id),
