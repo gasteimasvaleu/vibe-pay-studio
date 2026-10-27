@@ -150,6 +150,15 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         description: "Saque Monetisexy",
       });
       createdTransferId = transfer.id;
+      {
+        const adminRef = await adminClient();
+        const { error: refErr } = await adminRef
+          .from("withdrawals")
+          .update({ provider_ref: transfer.id })
+          .eq("id", row.id)
+          .eq("status", "requested");
+        if (refErr) console.error("[withdraw] early provider_ref error", refErr);
+      }
 
       // Modo Só PIX: a chave precisa ser do mesmo CPF da verificação.
       if (isPixMode) {
@@ -195,7 +204,8 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         .from("withdrawals")
         .update(update)
         .eq("id", row.id)
-        .eq("creator_id", userId);
+        .eq("creator_id", userId)
+        .eq("status", "requested");
 
       return { ...row, status: withdrawalStatus, provider_ref: transfer.id };
     } catch (err: any) {
@@ -238,6 +248,17 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     if (wErr || !w) throw new Error("saque não encontrado");
     if (w.creator_id !== userId) throw new Error("acesso negado");
     if (w.status !== "requested") throw new Error("saque não pode ser cancelado");
+    if (!(w as any).provider_ref) {
+      const { data: wr } = await supabase
+        .from("withdrawals")
+        .select("requested_at")
+        .eq("id", w.id)
+        .single();
+      const reqAt = wr?.requested_at ? new Date(wr.requested_at as string).getTime() : Date.now();
+      if (Date.now() - reqAt < 5 * 60 * 1000) {
+        throw new Error("Saque em processamento. Tente cancelar em alguns minutos.");
+      }
+    }
 
     const admin = await adminClient();
     if ((w as any).provider_ref) {
