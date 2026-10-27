@@ -229,6 +229,7 @@ async function recordIntent(
     method: Method;
     referenceTable: string;
     referenceId: string;
+    buyerId: string;
     metadata?: Record<string, unknown>;
     pixQr?: { encodedImage: string; payload: string } | null;
   },
@@ -251,6 +252,7 @@ async function recordIntent(
         referenceTable: args.referenceTable,
         referenceId: args.referenceId,
         ...(args.metadata ?? {}),
+        buyerId: args.buyerId,
       },
     })
     .select("id")
@@ -357,6 +359,7 @@ export const createUnlockPayment = createServerFn({ method: "POST" })
     }
 
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "publication_unlocks",
@@ -466,6 +469,7 @@ export const createStoryUnlockPayment = createServerFn({ method: "POST" })
     }
 
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "story_unlocks",
@@ -584,6 +588,7 @@ export const createChallengeContributionPayment = createServerFn({ method: "POST
     const pixQr = await asaas.getPixQrCode(payment.id);
 
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method,
       referenceTable: "publication_unlocks",
@@ -663,6 +668,7 @@ export const createTipPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "tips",
@@ -885,6 +891,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "subscriptions",
@@ -980,6 +987,7 @@ export const createChatUnlockPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "chat_message_unlocks",
@@ -1039,6 +1047,7 @@ export const createVideoCallPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "video_calls",
@@ -1098,6 +1107,7 @@ export const createPaidDmPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "chat_media_requests",
@@ -1197,6 +1207,7 @@ export const createLiveTicketPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "live_tickets",
@@ -1241,6 +1252,7 @@ export const createWalletTopupPayment = createServerFn({ method: "POST" })
 
     const pixQr = data.method === "PIX" ? await asaas.getPixQrCode(payment.id) : null;
     const intentId = await recordIntent(supabase, {
+      buyerId: userId,
       asaasPayment: payment,
       method: data.method,
       referenceTable: "wallet_topups",
@@ -1274,7 +1286,31 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
       .single();
     if (error || !intent) throw new Error("intent não encontrado");
     // Só o comprador pode consultar/reconciliar o próprio pagamento.
-    if ((intent.metadata as any)?.buyerId !== context.userId) throw new Error("intent não encontrado");
+    const meta = (intent.metadata ?? {}) as any;
+    let ownerOk = meta.buyerId === context.userId;
+    if (!ownerOk && !meta.buyerId && meta.referenceTable && meta.referenceId) {
+      // Pedidos antigos sem buyerId: confere o dono pela compra referenciada.
+      const OWNER_COL: Record<string, string> = {
+        publication_unlocks: "buyer_id",
+        story_unlocks: "buyer_id",
+        chat_message_unlocks: "buyer_id",
+        live_tickets: "buyer_id",
+        tips: "tipper_id",
+        subscriptions: "subscriber_id",
+        video_calls: "requester_id",
+        chat_media_requests: "requester_id",
+      };
+      const col = OWNER_COL[meta.referenceTable as string];
+      if (col) {
+        const { data: ref } = await (supabaseAdmin as any)
+          .from(meta.referenceTable)
+          .select(col)
+          .eq("id", meta.referenceId)
+          .maybeSingle();
+        ownerOk = !!ref && ref[col] === context.userId;
+      }
+    }
+    if (!ownerOk) throw new Error("intent não encontrado");
     if (!intent.asaas_payment_id) return { status: "pending" };
     const asaas = await loadAsaas();
     const payment = await asaas.getPayment(intent.asaas_payment_id);
