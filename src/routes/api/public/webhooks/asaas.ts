@@ -204,7 +204,13 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
           console.error("[asaas webhook] insert event failed", insErr);
         }
         if (insErr && String(insErr.message).toLowerCase().includes("duplicate")) {
-          return new Response("ok", { status: 200 });
+          // Só ignora se o evento já foi processado; senão reprocessa (falha anterior).
+          const { data: prev } = await supabaseAdmin
+            .from("asaas_events")
+            .select("processed_at")
+            .eq("event_id", eventId)
+            .maybeSingle();
+          if (prev?.processed_at) return new Response("ok", { status: 200 });
         }
 
         // ---- Fluxo de Transferências (saques) ----

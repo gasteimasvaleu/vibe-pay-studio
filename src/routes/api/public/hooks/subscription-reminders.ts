@@ -1,4 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "crypto";
+
+function cronAuthorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET ?? "";
+  const got = request.headers.get("x-cron-secret") ?? "";
+  if (!expected || !got) return false;
+  const a = Buffer.from(got);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /**
  * Enviado por pg_cron 1x/dia. Percorre assinaturas com `current_period_end`
@@ -9,12 +19,7 @@ export const Route = createFileRoute("/api/public/hooks/subscription-reminders")
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey") ?? "";
-        const expected =
-          process.env.SUPABASE_PUBLISHABLE_KEY ??
-          process.env.SUPABASE_ANON_KEY ??
-          "";
-        if (!expected || apikey !== expected) {
+        if (!cronAuthorized(request)) {
           return new Response("Unauthorized", { status: 401 });
         }
 
