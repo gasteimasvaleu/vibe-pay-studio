@@ -34,7 +34,7 @@ function resolve(map: Map<string, string>, value: string | null | undefined, buc
 
 type AnyObj = Record<string, any>;
 
-const OWNER_KEYS = ["author_id", "authorId", "user_id", "userId", "creator_id", "creatorId", "owner_id"];
+const OWNER_KEYS = ["author_id", "authorId", "creator_id", "creatorId", "owner_id"];
 
 /** Dono da pasta do arquivo: publications → <área>/<uid>/..., stories → <uid>/... */
 export function pathOwner(path: string, bucket: string): string | null {
