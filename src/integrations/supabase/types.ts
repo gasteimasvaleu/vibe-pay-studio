@@ -364,6 +364,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chat_media_requests_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chat_media_requests_thread_id_fkey"
             columns: ["thread_id"]
             isOneToOne: false
@@ -394,6 +401,13 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_message_hides_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -461,6 +475,13 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_message_unlocks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_safe"
             referencedColumns: ["id"]
           },
           {
@@ -532,6 +553,13 @@ export type Database = {
             columns: ["reply_to_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1304,12 +1332,46 @@ export type Database = {
           },
         ]
       }
-      live_sessions: {
+      live_session_secrets: {
         Row: {
           cf_live_input_id: string | null
           cf_playback_hls: string | null
           cf_webrtc_play_url: string | null
           cf_webrtc_url: string | null
+          created_at: string
+          live_id: string
+          updated_at: string
+        }
+        Insert: {
+          cf_live_input_id?: string | null
+          cf_playback_hls?: string | null
+          cf_webrtc_play_url?: string | null
+          cf_webrtc_url?: string | null
+          created_at?: string
+          live_id: string
+          updated_at?: string
+        }
+        Update: {
+          cf_live_input_id?: string | null
+          cf_playback_hls?: string | null
+          cf_webrtc_play_url?: string | null
+          cf_webrtc_url?: string | null
+          created_at?: string
+          live_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_secrets_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: true
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_sessions: {
+        Row: {
           cover_url: string | null
           created_at: string
           creator_id: string
@@ -1330,10 +1392,6 @@ export type Database = {
           viewers_peak: number
         }
         Insert: {
-          cf_live_input_id?: string | null
-          cf_playback_hls?: string | null
-          cf_webrtc_play_url?: string | null
-          cf_webrtc_url?: string | null
           cover_url?: string | null
           created_at?: string
           creator_id: string
@@ -1354,10 +1412,6 @@ export type Database = {
           viewers_peak?: number
         }
         Update: {
-          cf_live_input_id?: string | null
-          cf_playback_hls?: string | null
-          cf_webrtc_play_url?: string | null
-          cf_webrtc_url?: string | null
           cover_url?: string | null
           created_at?: string
           creator_id?: string
@@ -3710,6 +3764,58 @@ export type Database = {
       }
     }
     Views: {
+      chat_messages_safe: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          creator_profile_id: string | null
+          deleted_at: string | null
+          id: string | null
+          metadata: Json | null
+          price_cents: number | null
+          read_at: string | null
+          reply_to_id: string | null
+          sender_id: string | null
+          thread_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles_search"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_profiles_search: {
         Row: {
           avatar_url: string | null
@@ -3952,6 +4058,7 @@ export type Database = {
         Args: { _kind: string; _user_id: string }
         Returns: boolean
       }
+      chat_mask_metadata: { Args: { md: Json }; Returns: Json }
       check_card_tokenize_rate: {
         Args: { _ip: string; _user_id: string }
         Returns: boolean
@@ -4026,6 +4133,10 @@ export type Database = {
           updated_at: string
           user_agent: string
         }[]
+      }
+      media_path_owned_by: {
+        Args: { _owner: string; _val: string }
+        Returns: boolean
       }
       pay_with_wallet:
         | {
