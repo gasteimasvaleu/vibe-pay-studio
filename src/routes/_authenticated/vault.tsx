@@ -55,7 +55,7 @@ import {
 } from "@/lib/vault.functions";
 
 const BUCKET = "publications";
-const SIGNED_URL_EXPIRES_IN = 60 * 60 * 24 * 365;
+const SIGNED_URL_EXPIRES_IN = 60 * 60; // só para pré-visualização local; o banco guarda o caminho
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 50 * 1024 * 1024;

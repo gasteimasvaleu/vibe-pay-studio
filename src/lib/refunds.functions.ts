@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { signField } from "@/lib/media-sign.server";
 import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -240,7 +241,7 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
       });
     }
 
-    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return signField(items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), (it: any) => it.details?.thumbUrl, (it: any, v) => { it.details.thumbUrl = v; });
   });
 
 export const requestRefund = createServerFn({ method: "POST" })
@@ -388,7 +389,7 @@ export const listMyRefundRequests = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
-    return (rows ?? []).map((r) => {
+    return signField((rows ?? []).map((r) => {
       let details: RefundRequestItem["details"] = null;
       if (r.reference_type === "publication_unlock") {
         const p = pubs.get(r.reference_id as string);
@@ -415,5 +416,5 @@ export const listMyRefundRequests = createServerFn({ method: "GET" })
         resolvedAt: r.resolved_at as string | null,
         details,
       };
-    });
+    }), (it: any) => it.details?.thumbUrl, (it: any, v) => { it.details.thumbUrl = v; });
   });

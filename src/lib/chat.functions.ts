@@ -330,6 +330,10 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
       const paidDmPaths: string[] = [];
       const storyThumbPaths: string[] = [];
       for (const m of msgs ?? []) {
+        // Mensagem paga ainda não desbloqueada: não gera link dos arquivos.
+        const lockedPaid =
+          m.sender_id !== userId && (m.price_cents ?? 0) > 0 && !m.deleted_at && !unlockedSet.has(m.id);
+        if (lockedPaid) continue;
         const media = ((m as any).metadata?.media ?? []) as ChatWelcomeMedia[];
         const paidUpload = (m as any).metadata?.paidUpload as ChatPaidUploadMeta | undefined;
         for (const it of media) {
@@ -342,8 +346,9 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         if (sr?.thumbPath) storyThumbPaths.push(sr.thumbPath);
       }
       const urlByPath = new Map<string, string>();
+      const { supabaseAdmin: signer } = await import("@/integrations/supabase/client.server");
       if (publicationPaths.length > 0) {
-        const { data: signed } = await supabase.storage
+        const { data: signed } = await signer.storage
           .from("publications")
           .createSignedUrls(Array.from(new Set(publicationPaths)), 60 * 60);
         for (const s of signed ?? []) {
@@ -351,7 +356,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
         }
       }
       if (paidDmPaths.length > 0) {
-        const { data: signed } = await supabase.storage
+        const { data: signed } = await signer.storage
           .from("chat-paid-uploads")
           .createSignedUrls(Array.from(new Set(paidDmPaths)), 60 * 60);
         for (const s of signed ?? []) {

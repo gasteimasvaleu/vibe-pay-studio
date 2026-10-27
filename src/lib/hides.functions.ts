@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { signField } from "@/lib/media-sign.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -92,7 +93,7 @@ export const listMyHiddenPublications = createServerFn({ method: "GET" })
       (profiles ?? []).forEach((p: any) => authorMap.set(p.user_id, p));
     }
 
-    return rows
+    return signField(rows
       .map((r: any) => {
         const p = pubMap.get(r.publication_id);
         if (!p) return null;
@@ -109,5 +110,5 @@ export const listMyHiddenPublications = createServerFn({ method: "GET" })
           created_at: r.created_at as string,
         } as HiddenPublicationItem;
       })
-      .filter(Boolean) as HiddenPublicationItem[];
+      .filter(Boolean) as HiddenPublicationItem[], (it: any) => it.thumb_url, (it: any, v) => { it.thumb_url = v; });
   });
