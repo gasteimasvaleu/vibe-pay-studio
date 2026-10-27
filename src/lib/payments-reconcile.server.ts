@@ -99,6 +99,38 @@ export async function applyPaidIntent(
 ): Promise<boolean> {
   if (intent.processed_at) return false;
 
+  // Reserva atômica: só um processo (webhook ou poller) aplica os efeitos.
+  // Reserva com mais de 5 min é considerada abandonada e pode ser retomada.
+  const staleIso = new Date(Date.now() - 5 * 60_000).toISOString();
+  const { data: claimed, error: claimErr } = await supabaseAdmin
+    .from("payment_intents")
+    .update({ processing_started_at: new Date().toISOString() })
+    .eq("id", intent.id)
+    .is("processed_at", null)
+    .or(`processing_started_at.is.null,processing_started_at.lt.${staleIso}`)
+    .select("id");
+  if (claimErr) throw new Error(`claim intent failed: ${claimErr.message ?? claimErr}`);
+  if (!claimed || claimed.length === 0) return false;
+
+  try {
+    return await applyPaidIntentClaimed(supabaseAdmin, intent, providerRef, eventType);
+  } catch (e) {
+    await supabaseAdmin
+      .from("payment_intents")
+      .update({ processing_started_at: null })
+      .eq("id", intent.id)
+      .is("processed_at", null);
+    throw e;
+  }
+}
+
+async function applyPaidIntentClaimed(
+  supabaseAdmin: SupabaseAdminLike,
+  intent: PaidIntent,
+  providerRef: string,
+  eventType: string,
+): Promise<boolean> {
+
   const meta = (intent.metadata ?? {}) as {
     referenceTable?: ReferenceTable;
     referenceId?: string;

@@ -1496,6 +1496,7 @@ export type Database = {
           pix_copy_paste: string | null
           pix_qr_code: string | null
           processed_at: string | null
+          processing_started_at: string | null
           provider: string
           transaction_id: string | null
         }
@@ -1512,6 +1513,7 @@ export type Database = {
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           processed_at?: string | null
+          processing_started_at?: string | null
           provider: string
           transaction_id?: string | null
         }
@@ -1528,6 +1530,7 @@ export type Database = {
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           processed_at?: string | null
+          processing_started_at?: string | null
           provider?: string
           transaction_id?: string | null
         }

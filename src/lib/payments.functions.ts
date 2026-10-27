@@ -1266,7 +1266,6 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { paymentIntentId: string }) => data)
   .handler(async ({ data, context }) => {
-    void context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: intent, error } = await supabaseAdmin
       .from("payment_intents")
@@ -1274,6 +1273,8 @@ export const getPaymentIntentStatus = createServerFn({ method: "GET" })
       .eq("id", data.paymentIntentId)
       .single();
     if (error || !intent) throw new Error("intent não encontrado");
+    // Só o comprador pode consultar/reconciliar o próprio pagamento.
+    if ((intent.metadata as any)?.buyerId !== context.userId) throw new Error("intent não encontrado");
     if (!intent.asaas_payment_id) return { status: "pending" };
     const asaas = await loadAsaas();
     const payment = await asaas.getPayment(intent.asaas_payment_id);

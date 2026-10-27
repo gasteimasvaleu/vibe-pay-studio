@@ -1,4 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "crypto";
+
+function cronAuthorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET ?? "";
+  const got = request.headers.get("x-cron-secret") ?? "";
+  if (!expected || !got) return false;
+  const a = Buffer.from(got);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { BROADCAST_AUDIENCES, resolveAudienceIds } from "@/lib/broadcast-audience.server";
@@ -7,9 +17,7 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-broadcasts")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = request.headers.get("apikey") ?? "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
-        if (!token || token !== expected) {
+        if (!cronAuthorized(request)) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
@@ -38,6 +46,14 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-broadcasts")({
         const results: { jobId: string; sent: number; failed: number; status: string }[] = [];
 
         for (const job of jobs ?? []) {
+          // Reserva atômica: só quem muda scheduled → running envia.
+          const { data: claimed } = await supabaseAdmin
+            .from("broadcast_jobs")
+            .update({ status: "running", updated_at: new Date().toISOString() })
+            .eq("id", job.id)
+            .eq("status", "scheduled")
+            .select("id");
+          if (!claimed || claimed.length === 0) continue;
           try {
             const filters = (job.filters ?? {}) as Record<string, unknown>;
             const audiences = Array.isArray(filters.audiences)
@@ -59,10 +75,6 @@ export const Route = createFileRoute("/api/public/hooks/dispatch-broadcasts")({
 
             const recipientIds = Array.from(ids).filter((id) => id !== job.creator_id).slice(0, 1000);
 
-            await supabaseAdmin
-              .from("broadcast_jobs")
-              .update({ status: "running", updated_at: new Date().toISOString() })
-              .eq("id", job.id);
 
             let sent = 0;
             let failed = 0;
