@@ -93,23 +93,63 @@ export const requestVideoCall = createServerFn({ method: "POST" })
     if (cErr || !creator) throw new Error("creator not found");
     if (!creator.video_call_enabled) throw new Error("creator does not accept video calls");
 
-    const duration = Math.max(1, Math.floor(data.durationMinutes ?? creator.video_call_default_minutes ?? 15));
+    // Preço e duração vêm só do banco (configuração do creator).
+    const duration = Math.max(1, Math.floor(creator.video_call_default_minutes ?? 15));
     const price = Math.max(0, Math.floor(creator.video_call_price_cents ?? 0));
+    const db = await adminDb();
 
-    const { data: row, error } = await (await adminDb())
+    if (price <= 0) {
+      const { data: row, error } = await db
+        .from("video_calls")
+        .insert({
+          requester_id: userId,
+          creator_id: data.creatorId,
+          duration_minutes: duration,
+          price_cents: 0,
+          status: "accepted",
+          payment_status: "paid",
+          provider: "daily",
+        })
+        .select("id, status, payment_status, duration_minutes, price_cents")
+        .single();
+      if (error) throw new Error(error.message);
+      return row;
+    }
+
+    const { data: pending, error: insErr } = await db
       .from("video_calls")
       .insert({
         requester_id: userId,
         creator_id: data.creatorId,
-        scheduled_at: data.scheduledAt ?? null,
         duration_minutes: duration,
         price_cents: price,
-        status: "requested",
+        status: "pending_payment",
         payment_status: "pending",
-        provider: "manual",
-        notes: data.notes?.slice(0, 1000) ?? null,
+        provider: "daily",
       })
-      .select("id, status, payment_status, price_cents, duration_minutes, scheduled_at")
+      .select("id")
+      .single();
+    if (insErr || !pending) throw new Error(insErr?.message ?? "falha ao criar chamada");
+
+    // Débito atômico (trava o saldo), transação e crédito ao creator ficam no banco.
+    const { error: payErr } = await (supabase as any).rpc("pay_with_wallet", {
+      _kind: "video_call",
+      _call_id: pending.id,
+    });
+    if (payErr) {
+      await db
+        .from("video_calls")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("id", pending.id)
+        .eq("status", "pending_payment");
+      if (/insufficient/i.test(payErr.message ?? "")) throw new Error("insufficient_wallet_balance");
+      throw new Error(payErr.message ?? "falha no pagamento");
+    }
+
+    const { data: row, error } = await db
+      .from("video_calls")
+      .select("id, status, payment_status, duration_minutes, price_cents")
+      .eq("id", pending.id)
       .single();
     if (error) throw new Error(error.message);
     return row;
@@ -188,7 +228,7 @@ export const listVideoCalls = createServerFn({ method: "GET" })
  * Subscriber creates + pays a 1:1 video call using their prepaid wallet.
  * Simplification vs request/respond flow: one atomic step.
  * - Validates creator settings and requester wallet balance
- * - Debits subscriber_wallets, marks call as accepted+paid
+ * - Paid calls are charged via pay_with_wallet (atomic debit + transaction)
  * - Room is created on first join (see joinVideoCall)
  */
 export const startPaidVideoCall = createServerFn({ method: "POST" })
