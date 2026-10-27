@@ -286,67 +286,15 @@ function ChatThreadView() {
   useEffect(() => {
     const channel = supabase
       .channel(`chat-thread-${threadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter: `thread_id=eq.${threadId}`,
-        },
-        (payload) => {
-          const m = payload.new as {
-            id: string;
-            thread_id: string;
-            sender_id: string;
-            content: string;
-            read_at: string | null;
-            created_at: string;
-            price_cents: number | null;
-            metadata: unknown;
-            reply_to_id?: string | null;
-          };
-          const meta = m.metadata as { media?: unknown[]; storyReply?: unknown } | null;
-          const hasMedia =
-            !!meta && Array.isArray(meta.media) && (meta.media as unknown[]).length > 0;
-          const hasStoryReply = !!meta && !!meta.storyReply;
-          if (hasMedia || hasStoryReply || m.reply_to_id) {
-            // Needs server-signed URLs or reply preview enrichment; refetch.
-            queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });
-            return;
-          }
-
-
-          queryClient.setQueryData<ThreadData>(
-            ["chat", "messages", threadId],
-            (old) => {
-              if (!old) return old;
-              if (old.messages.some((x) => x.id === m.id)) return old;
-              const price = m.price_cents ?? 0;
-              const mine = m.sender_id === meId;
-              const newMsg: ChatMessage = {
-                id: m.id,
-                threadId: m.thread_id,
-                senderId: m.sender_id,
-                content: m.content,
-                readAt: m.read_at,
-                createdAt: m.created_at,
-                priceCents: price > 0 ? price : null,
-                unlocked: price <= 0 || mine,
-                metadata: null,
-              };
-              return { ...old, messages: [...old.messages, newMsg] };
-            },
-          );
-        },
-      )
+      // Mensagens não trafegam pelo realtime (o conteúdo pago vazaria no payload).
+      // Qualquer mensagem nova/alterada atualiza a conversa; o app busca pelo servidor.
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
-          table: "chat_messages",
-          filter: `thread_id=eq.${threadId}`,
+          table: "chat_threads",
+          filter: `id=eq.${threadId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["chat", "messages", threadId] });

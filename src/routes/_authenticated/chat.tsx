@@ -103,7 +103,7 @@ function ChatLayout() {
       .channel("chat-threads-updates")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "chat_messages" },
+        { event: "*", schema: "public", table: "chat_threads" },
         () => {
           queryClient.invalidateQueries({ queryKey: ["chat", "threads"] });
           if (activeThreadId) {
@@ -111,13 +111,6 @@ function ChatLayout() {
               queryKey: ["chat", "messages", activeThreadId],
             });
           }
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "chat_threads" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["chat", "threads"] });
         },
       )
       .subscribe();
