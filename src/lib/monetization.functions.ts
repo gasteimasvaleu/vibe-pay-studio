@@ -274,7 +274,7 @@ export const listMySubscriptions = createServerFn({ method: "GET" })
             .in("id", cpIds)
         : Promise.resolve({ data: [] as any[] }),
       supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, display_name, avatar_url, account_type")
         .in("user_id", creatorIds),
     ]);
@@ -319,7 +319,7 @@ export const listMySubscribers = createServerFn({ method: "GET" })
 
     // Resolve o creator_profile ativo.
     const [profRes, cpRes] = await Promise.all([
-      supabase.from("profiles_public" as any).select("active_profile_id").eq("user_id", userId).maybeSingle(),
+      supabase.from("profiles_public").select("active_profile_id").eq("user_id", userId).maybeSingle(),
       supabase.from("creator_profiles").select("id, kind").eq("user_id", userId),
     ]);
     const cps = ((cpRes.data ?? []) as any[]);
@@ -354,7 +354,7 @@ export const listMySubscribers = createServerFn({ method: "GET" })
 
     const ids = Array.from(new Set(rows.map(r => r.subscriber_id as string)));
     const { data: profs } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", ids);
     const byId = Object.fromEntries((profs ?? []).map(p => [p.user_id as string, p]));

@@ -21,11 +21,11 @@ export const publishStory = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => publishSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("account_type")
       .eq("user_id", context.userId)
       .maybeSingle();
-    if (!profile || !["creator", "free_creator"].includes(profile.account_type)) {
+    if (!profile || !["creator", "free_creator"].includes(profile.account_type ?? "")) {
       throw new Error("apenas creators podem publicar stories");
     }
     const activeProfileId = await getActiveProfileIdFor(context.supabase, context.userId);

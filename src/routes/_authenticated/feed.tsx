@@ -54,7 +54,7 @@ export const Route = createFileRoute("/_authenticated/feed")({
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("account_type, username, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle();

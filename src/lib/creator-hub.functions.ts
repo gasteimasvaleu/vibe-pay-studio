@@ -47,7 +47,7 @@ async function loadActorMap(
   const uniq = Array.from(new Set(userIds.filter((v): v is string => !!v)));
   if (!uniq.length) return new Map();
   const { data } = await supabase
-    .from("profiles_public" as any)
+    .from("profiles_public")
     .select("user_id, username, avatar_url, free_avatar_url, free_username")
     .in("user_id", uniq);
   const map = new Map<string, { username: string | null; avatar_url: string | null }>();

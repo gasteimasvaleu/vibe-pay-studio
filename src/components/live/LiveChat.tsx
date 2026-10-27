@@ -46,7 +46,7 @@ export function LiveChat({
       const u = data.user;
       if (!u || cancelled) return;
       const { data: p } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("username, display_name, avatar_url")
         .eq("id", u.id)
         .maybeSingle();

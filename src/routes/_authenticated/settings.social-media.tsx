@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/settings/social-media")({
     const user = sessionData.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("instagram_handle, tiktok_handle, x_handle, active_profile_id")
       .eq("user_id", user.id)
       .maybeSingle();

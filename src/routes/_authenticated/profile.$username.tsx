@@ -66,7 +66,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
   if (!profile) {
     // Fallback legado: profiles com free_username.
     const { data: legacyProfile, error } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select(
         "user_id, username, display_name, bio, avatar_url, cover_url, account_type, free_username, free_display_name, free_avatar_url",
       )
@@ -81,7 +81,7 @@ async function fetchProfileByUsername(username: string): Promise<ProfileData> {
     const { data: cp } = await supabase
       .from("creator_profiles")
       .select("id, kind")
-      .eq("user_id", legacyProfile.user_id);
+      .eq("user_id", legacyProfile.user_id as string);
     creatorProfileId =
       (cp ?? []).find((r: any) => r.kind === (isFreeView ? "free" : "paid"))?.id ?? null;
   } else {

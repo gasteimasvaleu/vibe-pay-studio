@@ -44,7 +44,7 @@ export async function resolveCreatorIdentities(
       : Promise.resolve({ data: [] as any[] }),
     userIds.length > 0
       ? supabase
-          .from("profiles_public" as any)
+          .from("profiles_public")
           .select("user_id, username, display_name, avatar_url")
           .in("user_id", userIds)
       : Promise.resolve({ data: [] as any[] }),

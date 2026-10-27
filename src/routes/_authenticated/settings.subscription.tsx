@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/settings/subscription")({
     if (!user) throw redirect({ to: "/entrar" });
 
     const { data: profile } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("price_monthly, discount_quarterly, discount_semiannual")
       .eq("user_id", user.id)
       .maybeSingle();

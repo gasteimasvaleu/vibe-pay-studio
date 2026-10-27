@@ -20,7 +20,7 @@ export const createPromotion = createServerFn({ method: "POST" })
     if (!profileId) throw new Error("Perfil de criador ativo não encontrado.");
 
     const { data: profile, error: profileErr } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("price_monthly")
       .eq("user_id", userId)
       .maybeSingle();

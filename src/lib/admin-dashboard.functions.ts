@@ -114,7 +114,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
           .select("id", { count: "exact", head: true })
           .in("status", ["open", "reviewing"]),
         supabase
-          .from("profiles_public" as any)
+          .from("profiles_public")
           .select("user_id", { count: "exact", head: true }),
       ]);
 
@@ -204,7 +204,7 @@ export const listAdminTransactions = createServerFn({ method: "GET" })
     const usersMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (ids.size > 0) {
       const { data: profs } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, avatar_url")
         .in("user_id", Array.from(ids));
       (profs ?? []).forEach((p: any) => {
@@ -347,7 +347,7 @@ export const listAdminWithdrawals = createServerFn({ method: "GET" })
     const profs: Record<string, any> = {};
     if (ids.length > 0) {
       const { data: p } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, display_name, avatar_url")
         .in("user_id", ids);
       (p ?? []).forEach((r: any) => (profs[r.user_id] = r));
@@ -447,7 +447,7 @@ export const listAdminReports = createServerFn({ method: "GET" })
     const profs: Record<string, any> = {};
     if (reporterIds.length > 0) {
       const { data: p } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, avatar_url")
         .in("user_id", reporterIds);
       (p ?? []).forEach((r: any) => (profs[r.user_id] = r));

@@ -81,7 +81,7 @@ export const getMyCreatorProfilesWithActive = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const [profRes, cpRes] = await Promise.all([
       supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("active_profile_id, account_type, free_profile_enabled")
         .eq("user_id", userId)
         .maybeSingle(),

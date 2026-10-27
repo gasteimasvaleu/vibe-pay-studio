@@ -120,7 +120,7 @@ export const listThreads = createServerFn({ method: "GET" })
     );
 
     const { data: profiles } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, avatar_url")
       .in("user_id", partnerIds);
     const profileMap = new Map(
@@ -184,15 +184,15 @@ export const searchUsers = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<PartnerProfile[]> => {
     const { supabase, userId } = context;
     const { data: rows, error } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username")
       .ilike("username", `%${data.query}%`)
       .neq("user_id", userId)
       .limit(20);
     if (error) throw new Error(error.message);
     return (rows ?? []).map((r) => ({
-      userId: r.user_id,
-      username: r.username,
+      userId: r.user_id as string,
+      username: r.username ?? "",
       avatarUrl: null,
     }));
   });
@@ -251,7 +251,7 @@ export const getThreadWithPartner = createServerFn({ method: "POST" })
       const partnerId = thread.user_a === userId ? thread.user_b : thread.user_a;
 
       const { data: profile } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, avatar_url, active_profile_id")
         .eq("user_id", partnerId)
         .maybeSingle();
@@ -769,7 +769,7 @@ export const getPaidDmSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PaidDmSettings> => {
     const { supabase, userId } = context;
     const { data, error } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("paid_dm_upload_enabled, paid_dm_upload_min_cents, paid_dm_upload_max_cents")
       .eq("user_id", userId)
       .maybeSingle();
@@ -1043,7 +1043,7 @@ export const listForwardTargets = createServerFn({ method: "GET" })
       new Set(threads.map((t) => (t.user_a === userId ? t.user_b : t.user_a))),
     );
     const { data: profiles } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, avatar_url")
       .in("user_id", partnerIds);
     const pmap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
