@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Square, ArrowLeft, Camera, ExternalLink, Mic, Radio, RefreshCcw, VideoOff } from "lucide-react";
-import { getLive, endLive, pingLive } from "@/lib/lives.functions";
+import { getLive, endLive, pingLive, getLiveIngest } from "@/lib/lives.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { openOverlay, closeOverlay } from "@/hooks/useFullscreenOverlay";
@@ -112,6 +112,7 @@ function TransmitirPage() {
   
 
   const getLiveFn = useServerFn(getLive);
+  const getIngestFn = useServerFn(getLiveIngest);
   const endFn = useServerFn(endLive);
   const pingFn = useServerFn(pingLive);
 
@@ -148,12 +149,12 @@ function TransmitirPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("live_sessions")
-        .select("cf_webrtc_url")
-        .eq("id", liveId)
-        .maybeSingle();
-      setWhipUrl((data as any)?.cf_webrtc_url ?? null);
+      try {
+        const r = await getIngestFn({ data: { liveId } });
+        setWhipUrl(r.whipUrl ?? null);
+      } catch {
+        setWhipUrl(null);
+      }
     })();
   }, [liveId]);
 
