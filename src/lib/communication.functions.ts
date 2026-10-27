@@ -69,38 +69,6 @@ export const sendMessage = createServerFn({ method: "POST" })
     return row;
   });
 
-export const unlockChatMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { messageId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: msg, error: msgErr } = await supabase
-      .from("chat_messages")
-      .select("id, sender_id, price_cents")
-      .eq("id", data.messageId)
-      .single();
-    if (msgErr || !msg) throw new Error("message not found");
-    if (msg.sender_id === userId) throw new Error("cannot unlock own message");
-    if (!msg.price_cents || msg.price_cents <= 0) throw new Error("message is free");
-
-    const { data: row, error } = await (await adminDb())
-      .from("chat_message_unlocks")
-      .insert({
-        message_id: msg.id,
-        buyer_id: userId,
-        creator_id: msg.sender_id,
-        amount_cents: msg.price_cents,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id, status, transaction_id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-// ---- Video Calls ----
-
 export const requestVideoCall = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -165,30 +133,6 @@ export const respondVideoCall = createServerFn({ method: "POST" })
       .update({ status: data.accept ? "accepted" : "declined" })
       .eq("id", data.callId)
       .select("id, status")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-export const payVideoCall = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { callId: string; roomUrl?: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: call, error: cErr } = await supabase
-      .from("video_calls")
-      .select("id, requester_id, payment_status, status")
-      .eq("id", data.callId)
-      .single();
-    if (cErr || !call) throw new Error("call not found");
-    if (call.requester_id !== userId) throw new Error("only requester can pay");
-    if (call.payment_status === "paid") throw new Error("already paid");
-
-    const { data: row, error } = await (await adminDb())
-      .from("video_calls")
-      .update({ payment_status: "paid", room_url: data.roomUrl ?? null })
-      .eq("id", data.callId)
-      .select("id, payment_status, room_url, transaction_id")
       .single();
     if (error) throw new Error(error.message);
     return row;

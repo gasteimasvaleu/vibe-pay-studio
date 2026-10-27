@@ -278,36 +278,6 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
 
 // ---- Subscriber wallet ----
 
-export const topupSubscriberWallet = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { amountCents: number; provider?: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const amount = Math.floor(data.amountCents);
-    if (amount <= 0) throw new Error("valor inválido");
-
-    // Cria transação de wallet_topup 'paid' → trigger credita a wallet do assinante
-    const { data: tx, error } = await supabase
-      .from("transactions")
-      .insert({
-        kind: "wallet_topup",
-        status: "paid",
-        buyer_id: userId,
-        amount_cents_gross: amount,
-        platform_fee_cents: 0,
-        net_cents: amount,
-        commission_pct_applied: 0,
-        payment_method: (data.provider === "pix" ? "pix" : "manual") as any,
-        provider: data.provider ?? "manual",
-      })
-      .select("id, amount_cents_gross, status")
-      .single();
-    if (error) throw new Error(error.message);
-    return tx;
-  });
-
-// ---- Promotions ----
-
 export const createPromotion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(

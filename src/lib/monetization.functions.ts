@@ -99,21 +99,6 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
     return { id: sub.id, priceCents, plan: data.plan };
   });
 
-export const activateSubscription = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { subscriptionId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { error } = await (await adminDb())
-      .from("subscriptions")
-      .update({ status: "active", started_at: new Date().toISOString() })
-      .eq("id", data.subscriptionId)
-      .eq("subscriber_id", userId)
-      .eq("status", "pending");
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
 export const cancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { subscriptionId: string }) => data)
@@ -374,80 +359,6 @@ export const listMySubscribers = createServerFn({ method: "GET" })
         currentPeriodEnd: (r.current_period_end as string) ?? null,
       };
     });
-  });
-
-export const tipCreator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { creatorId: string; amountCents: number; message?: string; publicationId?: string }) => {
-    if (!Number.isFinite(data.amountCents) || data.amountCents <= 0) {
-      throw new Error("Valor do mimo inválido.");
-    }
-    return {
-      creatorId: data.creatorId,
-      amountCents: Math.floor(data.amountCents),
-      message: data.message?.slice(0, 500) ?? null,
-      publicationId: data.publicationId ?? null,
-    };
-  })
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    if (userId === data.creatorId) {
-      throw new Error("Você não pode enviar mimo para si mesmo.");
-    }
-
-    const { data: tip, error } = await (await adminDb())
-      .from("tips")
-      .insert({
-        sender_id: userId,
-        creator_id: data.creatorId,
-        publication_id: data.publicationId,
-        amount_cents: data.amountCents,
-        message: data.message,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return { id: tip.id };
-  });
-
-export const unlockPublication = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { publicationId: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-
-    const { data: pub, error: pubError } = await supabase
-      .from("publications")
-      .select("id, author_id, price_cents")
-      .eq("id", data.publicationId)
-      .maybeSingle();
-
-    if (pubError) throw new Error(pubError.message);
-    if (!pub) throw new Error("Publicação não encontrada.");
-    if (!pub.price_cents || pub.price_cents <= 0) {
-      throw new Error("Esta publicação não é paga.");
-    }
-    if (pub.author_id === userId) {
-      throw new Error("Você é o autor desta publicação.");
-    }
-
-    const { data: unlock, error } = await (await adminDb())
-      .from("publication_unlocks")
-      .insert({
-        publication_id: pub.id,
-        buyer_id: userId,
-        amount_cents: pub.price_cents,
-        status: "paid",
-        provider: "manual",
-      })
-      .select("id")
-      .single();
-
-    if (error) throw new Error(error.message);
-    return { id: unlock.id };
   });
 
 /**
