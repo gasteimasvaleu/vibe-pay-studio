@@ -157,7 +157,7 @@ export const listMyChatPurchases = createServerFn({ method: "GET" })
     const creatorIds = Array.from(new Set(rows.map((r: any) => r.creator_id)));
     const [{ data: msgs }, creators] = await Promise.all([
       msgIds.length
-        ? supabase.from("chat_messages").select("id, thread_id, content").in("id", msgIds)
+        ? (supabase as any).from("chat_messages_safe").select("id, thread_id, content").in("id", msgIds)
         : Promise.resolve({ data: [] as any[] }),
       fetchAuthorsMap(supabase, creatorIds),
     ]);

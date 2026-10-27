@@ -47,7 +47,9 @@ async function insertSystemMessage(
   content: string,
   metadata: Record<string, unknown>,
 ): Promise<ChatMessage> {
-  const { data: row, error } = await supabase
+  void supabase;
+  // Mensagens com cartões/mídia só são gravadas pelo servidor.
+  const { data: row, error } = await (await adminDb())
     .from("chat_messages")
     .insert({
       thread_id: threadId,
@@ -528,7 +530,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
             }
           }
         }
-        const { error: mErr } = await supabase.from("chat_messages").insert({
+        const { error: mErr } = await (await adminDb()).from("chat_messages").insert({
           thread_id: threadId as string,
           sender_id: userId,
           creator_profile_id: activeProfileId,

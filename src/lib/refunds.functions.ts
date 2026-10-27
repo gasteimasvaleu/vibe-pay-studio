@@ -142,7 +142,7 @@ export const listMyRefundablePurchases = createServerFn({ method: "GET" })
     const [{ pubs, media }, { data: msgs }, authors] = await Promise.all([
       hydratePublications(supabase, pubIds),
       msgIds.length
-        ? supabase.from("chat_messages").select("id, thread_id, content").in("id", msgIds)
+        ? (supabase as any).from("chat_messages_safe").select("id, thread_id, content").in("id", msgIds)
         : Promise.resolve({ data: [] as any[] }),
       fetchAuthorsMap(supabase, creatorIds),
     ]);
@@ -385,7 +385,7 @@ export const listMyRefundRequests = createServerFn({ method: "GET" })
     const [{ pubs, media }, { data: msgs }] = await Promise.all([
       hydratePublications(supabase, pubIds),
       msgIds.length
-        ? supabase.from("chat_messages").select("id, content").in("id", msgIds)
+        ? (supabase as any).from("chat_messages_safe").select("id, content").in("id", msgIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
