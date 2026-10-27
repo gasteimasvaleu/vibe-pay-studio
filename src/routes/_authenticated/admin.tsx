@@ -28,6 +28,7 @@ const NAV = [
   { to: "/admin/subscriptions", label: "Assinaturas", icon: CreditCard, exact: false },
   { to: "/admin/promotions", label: "Promoções", icon: Tag, exact: false },
   { to: "/admin/withdrawals", label: "Saques", icon: Banknote, exact: false },
+  { to: "/admin/wallets", label: "Carteiras bloqueadas", icon: ShieldAlert, exact: false },
   { to: "/admin/refunds", label: "Reembolsos", icon: RefreshCcw, exact: false },
   { to: "/admin/moderation", label: "Moderação", icon: ShieldAlert, exact: false },
   { to: "/admin/verifications", label: "Certificações", icon: BadgeCheck, exact: false },
