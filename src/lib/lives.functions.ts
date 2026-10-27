@@ -45,7 +45,7 @@ async function expireStaleLives(
   const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
   let q = admin
     .from("live_sessions")
-    .update({ status: "ended", ended_at: cutoff, cf_webrtc_url: null })
+    .update({ status: "ended", ended_at: cutoff })
     .eq("status", "live")
     .lt("updated_at", cutoff);
   if (scope?.creatorId) q = q.eq("creator_id", scope.creatorId);
@@ -101,15 +101,20 @@ export const startLive = createServerFn({ method: "POST" })
         cover_url: data.coverUrl,
         status: "live",
         started_at: new Date().toISOString(),
-        cf_live_input_id: input.uid,
-        cf_webrtc_url: webrtcIngest,
-        cf_webrtc_play_url: webrtcPlay,
-        cf_playback_hls: hls,
         followers_only: data.followersOnly,
       })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+
+    const { error: sErr } = await (admin as any).from("live_session_secrets").insert({
+      live_id: row.id,
+      cf_live_input_id: input.uid,
+      cf_webrtc_url: webrtcIngest,
+      cf_webrtc_play_url: webrtcPlay,
+      cf_playback_hls: hls,
+    });
+    if (sErr) throw new Error(sErr.message);
 
     return {
       liveId: row.id as string,
@@ -126,18 +131,24 @@ export const endLive = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const { data: live } = await admin
       .from("live_sessions")
-      .select("id, creator_id, cf_live_input_id, status")
+      .select("id, creator_id, status")
       .eq("id", data.liveId)
       .maybeSingle();
     if (!live) throw new Error("live não encontrada");
+    const { data: sec } = await (admin as any)
+      .from("live_session_secrets")
+      .select("cf_live_input_id")
+      .eq("live_id", live.id)
+      .maybeSingle();
+    const inputId: string | null = sec?.cf_live_input_id ?? null;
     if (live.creator_id !== userId) throw new Error("apenas o criador pode encerrar");
     if (live.status === "ended") return { ok: true };
 
     // Destrói o input no CF (silenciosamente)
-    if (live.cf_live_input_id) {
+    if (inputId) {
       try {
         const cf = await import("@/lib/cloudflare-stream.server");
-        await cf.deleteLiveInput(live.cf_live_input_id);
+        await cf.deleteLiveInput(inputId);
       } catch (e) {
         console.warn("[endLive] delete input falhou", e);
       }
@@ -148,9 +159,12 @@ export const endLive = createServerFn({ method: "POST" })
       .update({
         status: "ended",
         ended_at: new Date().toISOString(),
-        cf_webrtc_url: null,
       })
       .eq("id", live.id);
+    await (admin as any)
+      .from("live_session_secrets")
+      .update({ cf_webrtc_url: null, cf_webrtc_play_url: null, cf_playback_hls: null })
+      .eq("live_id", live.id);
     return { ok: true };
   });
 
@@ -273,7 +287,7 @@ export const getLive = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: live, error } = await supabase
       .from("live_sessions")
-      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, cf_live_input_id, cf_webrtc_url, cf_webrtc_play_url, cf_playback_hls, followers_only")
+      .select("id, creator_id, creator_profile_id, title, description, price_cents, cover_url, status, started_at, ended_at, viewers_peak, total_views, likes_count, followers_only")
       .eq("id", data.liveId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -325,12 +339,17 @@ export const getLive = createServerFn({ method: "GET" })
     // WHEP para live WHIP na Cloudflare Stream: usar a URL do próprio Live Input
     // (`webRTCPlayback.url`, salva em `cf_webrtc_play_url`). O caminho por videoUid
     // só existe para o VOD gerado após o fim da live.
+    // Nunca entregar a URL de ingest (WHIP) ao espectador.
     let whepUrl: string | null = null;
-    if (canWatch && live.status === "live") {
-      whepUrl =
-        ((live as any).cf_webrtc_play_url as string | null) ??
-        ((live as any).cf_webrtc_url as string | null) ??
-        null;
+    let hlsUrl: string | null = null;
+    if (canWatch) {
+      const { data: sec } = await (admin as any)
+        .from("live_session_secrets")
+        .select("cf_webrtc_play_url, cf_playback_hls")
+        .eq("live_id", live.id)
+        .maybeSingle();
+      if (live.status === "live") whepUrl = (sec?.cf_webrtc_play_url as string | null) ?? null;
+      hlsUrl = (sec?.cf_playback_hls as string | null) ?? null;
     }
 
     return {
@@ -352,7 +371,7 @@ export const getLive = createServerFn({ method: "GET" })
       totalViews: (live.total_views as number) ?? 0,
       likesCount: (live.likes_count as number) ?? 0,
       whepUrl,
-      hlsUrl: canWatch ? ((live.cf_playback_hls as string | null) ?? null) : null,
+      hlsUrl,
 
       creator: {
         username: (src as any).username ?? "",
@@ -382,4 +401,25 @@ export const registerLiveView = createServerFn({ method: "POST" })
       })
       .eq("id", data.liveId);
     return { ok: true };
+  });
+
+/* ---------- URL de ingest (só o dono da live) ---------- */
+export const getLiveIngest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { liveId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const admin = await loadAdmin();
+    const { data: live } = await admin
+      .from("live_sessions")
+      .select("id, creator_id, status")
+      .eq("id", data.liveId)
+      .maybeSingle();
+    if (!live || live.creator_id !== context.userId) throw new Error("sem acesso");
+    if (live.status !== "live") return { whipUrl: null as string | null };
+    const { data: sec } = await (admin as any)
+      .from("live_session_secrets")
+      .select("cf_webrtc_url")
+      .eq("live_id", live.id)
+      .maybeSingle();
+    return { whipUrl: (sec?.cf_webrtc_url as string | null) ?? null };
   });
