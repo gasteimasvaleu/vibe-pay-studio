@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
@@ -101,7 +102,7 @@ export const createCallInvite = createServerFn({ method: "POST" })
     const expiresAt = new Date(Date.now() + INVITE_TTL_MIN * 60 * 1000).toISOString();
     const activeProfileId = await getActiveProfileIdFor(supabase, userId);
 
-    const { data: call, error: cErr } = await supabase
+    const { data: call, error: cErr } = await (await adminDb())
       .from("video_calls")
       .insert({
         requester_id: partnerId,
@@ -153,7 +154,7 @@ export const cancelCallInvite = createServerFn({ method: "POST" })
     if (call.status !== "pending_payment" || call.payment_status === "paid") {
       throw new Error("Convite não pode mais ser cancelado");
     }
-    const { error: uErr } = await supabase
+    const { error: uErr } = await (await adminDb())
       .from("video_calls")
       .update({ status: "cancelled", updated_at: nowIso() })
       .eq("id", data.callId);
@@ -167,7 +168,7 @@ export const expireStaleInvites = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const partnerId = await partnerIdOf(supabase, userId, data.threadId);
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("video_calls")
       .update({ status: "expired", updated_at: nowIso() })
       .eq("status", "pending_payment")
@@ -251,7 +252,7 @@ export const createPaidDmRequest = createServerFn({ method: "POST" })
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const creatorActiveProfileId = await getActiveProfileIdFor(supabase, creatorId);
-    const { data: req, error } = await supabase
+    const { data: req, error } = await (await adminDb())
       .from("chat_media_requests")
       .insert({
         thread_id: data.threadId,
@@ -282,7 +283,7 @@ export const cancelPaidDmRequest = createServerFn({ method: "POST" })
     if (!req) throw new Error("Solicitação não encontrada");
     if (req.requester_id !== userId) throw new Error("Sem permissão");
     if (req.status !== "pending_payment") throw new Error("Solicitação não pode ser cancelada");
-    const { error: uErr } = await supabase
+    const { error: uErr } = await (await adminDb())
       .from("chat_media_requests")
       .update({ status: "cancelled", updated_at: nowIso() })
       .eq("id", data.requestId);
@@ -319,7 +320,7 @@ export const markPaidDmDelivered = createServerFn({ method: "POST" })
     if (req.requester_id !== userId) throw new Error("Sem permissão");
     if (req.status !== "paid") throw new Error("Solicitação não está paga");
 
-    const { error: uErr } = await supabase
+    const { error: uErr } = await (await adminDb())
       .from("chat_media_requests")
       .update({
         status: "delivered",

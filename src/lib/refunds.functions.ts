@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type RefundableItem = {
@@ -324,7 +325,7 @@ export const requestRefund = createServerFn({ method: "POST" })
       asaasPaymentId = tx?.provider_ref ?? null;
     }
 
-    const { data: req, error } = await supabase
+    const { data: req, error } = await (await adminDb())
       .from("refund_requests")
       .insert({
         user_id: userId,
@@ -348,7 +349,7 @@ export const cancelRefundRequest = createServerFn({ method: "POST" })
   .inputValidator((data: { requestId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("refund_requests")
       .update({ status: "cancelled" })
       .eq("id", data.requestId)

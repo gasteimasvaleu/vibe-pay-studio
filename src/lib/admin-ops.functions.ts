@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertAdmin(supabase: any, userId: string) {
@@ -185,7 +186,7 @@ export const endVideoCall = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("video_calls")
       .update({ status: "completed", ended_at: new Date().toISOString() })
       .eq("id", data.callId);
@@ -238,7 +239,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       patch.status = "cancelled";
       patch.current_period_end = new Date().toISOString();
     }
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .update(patch)
       .eq("id", data.subscriptionId);

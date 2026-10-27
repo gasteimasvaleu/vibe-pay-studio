@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { adminDb } from "@/lib/admin-db";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getCommissionPct } from "@/lib/commission";
 
@@ -79,7 +80,7 @@ export const subscribeToCreator = createServerFn({ method: "POST" })
     const periodEnd = new Date();
     periodEnd.setDate(periodEnd.getDate() + PLAN_DAYS[data.plan]);
 
-    const { data: sub, error } = await supabase
+    const { data: sub, error } = await (await adminDb())
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
@@ -103,7 +104,7 @@ export const activateSubscription = createServerFn({ method: "POST" })
   .inputValidator((data: { subscriptionId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .update({ status: "active", started_at: new Date().toISOString() })
       .eq("id", data.subscriptionId)
@@ -138,7 +139,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       }
     }
 
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .update({
         auto_renew: false,
@@ -215,7 +216,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
       creditCardToken: card.asaas_card_token as string,
     });
 
-    await supabase
+    await (await adminDb())
       .from("subscriptions")
       .update({
         auto_renew: true,
@@ -394,7 +395,7 @@ export const tipCreator = createServerFn({ method: "POST" })
       throw new Error("Você não pode enviar mimo para si mesmo.");
     }
 
-    const { data: tip, error } = await supabase
+    const { data: tip, error } = await (await adminDb())
       .from("tips")
       .insert({
         sender_id: userId,
@@ -433,7 +434,7 @@ export const unlockPublication = createServerFn({ method: "POST" })
       throw new Error("Você é o autor desta publicação.");
     }
 
-    const { data: unlock, error } = await supabase
+    const { data: unlock, error } = await (await adminDb())
       .from("publication_unlocks")
       .insert({
         publication_id: pub.id,
@@ -518,7 +519,7 @@ export const subscribeFree = createServerFn({ method: "POST" })
     const periodEnd = new Date();
     periodEnd.setFullYear(periodEnd.getFullYear() + 10);
 
-    const { error } = await supabase
+    const { error } = await (await adminDb())
       .from("subscriptions")
       .insert({
         subscriber_id: userId,
