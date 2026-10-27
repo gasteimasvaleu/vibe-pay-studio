@@ -149,7 +149,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
     const { data: sub, error } = await supabase
       .from("subscriptions")
       .select(
-        "id, subscriber_id, creator_id, plan, price_cents_paid, current_period_end, status",
+        "id, subscriber_id, creator_id, creator_profile_id, plan, current_period_end, status",
       )
       .eq("id", data.subscriptionId)
       .eq("subscriber_id", userId)
@@ -176,7 +176,21 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
     if (!walletId) throw new Error("Criador sem carteira configurada");
 
     const asaas = await import("./asaas.server");
-    const amountCents = sub.price_cents_paid as number;
+    // Preço atual do creator, lido do banco — nunca o price_cents_paid gravado.
+    const target = await resolveTargetProfile(supabase, {
+      creatorProfileId: ((sub as any).creator_profile_id as string) ?? undefined,
+      creatorId: sub.creator_id as string,
+    });
+    if (!target || target.kind === "free" || !target.price_monthly || Number(target.price_monthly) <= 0) {
+      throw new Error("Este criador não vende assinatura no momento.");
+    }
+    const monthly = Math.round(Number(target.price_monthly) * 100);
+    const amountCents =
+      sub.plan === "quarterly"
+        ? Math.round(monthly * 3 * (1 - (target.discount_quarterly ?? 0) / 100))
+        : sub.plan === "semiannual"
+          ? Math.round(monthly * 6 * (1 - (target.discount_semiannual ?? 0) / 100))
+          : monthly;
     const { netCreatorCents } = asaas.computeCreatorNetCents(amountCents, "CREDIT_CARD", await getCommissionPct(supabase, userId));
     const cycle =
       sub.plan === "quarterly"
