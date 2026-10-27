@@ -116,7 +116,37 @@ export const approveRefund = createServerFn({ method: "POST" })
     if (reqError) throw new Error(reqError.message);
     if (!req) throw new Error("pedido não encontrado ou já resolvido");
 
-    const asaasPaymentId = req.asaas_payment_id as string | null;
+    // Nunca confiar em valor/cobrança/transação gravados no pedido:
+    // recarrega a compra real e confirma que pertence a quem pediu.
+    const tableMap: Record<string, { table: string; owner: string; amount: string }> = {
+      publication_unlock: { table: "publication_unlocks", owner: "buyer_id", amount: "amount_cents" },
+      chat_message_unlock: { table: "chat_message_unlocks", owner: "buyer_id", amount: "amount_cents" },
+      subscription: { table: "subscriptions", owner: "subscriber_id", amount: "price_cents_paid" },
+      tip: { table: "tips", owner: "sender_id", amount: "amount_cents" },
+    };
+    const ref = tableMap[req.reference_type as string];
+    if (!ref) throw new Error("tipo de compra inválido");
+    const table = ref.table;
+    const { data: purchase, error: pErr } = await (supabaseAdmin as any)
+      .from(ref.table)
+      .select(`id, ${ref.owner}, ${ref.amount}, transaction_id, provider_ref, status`)
+      .eq("id", req.reference_id as string)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!purchase) throw new Error("compra referenciada não encontrada");
+    if (purchase[ref.owner] !== req.user_id) throw new Error("compra não pertence a quem pediu o reembolso");
+    const txId = (purchase.transaction_id as string | null) ?? null;
+    const realAmountCents = Number(purchase[ref.amount] ?? 0);
+    let asaasPaymentId: string | null = (purchase.provider_ref as string | null) ?? null;
+    if (txId) {
+      const { data: tx } = await (supabaseAdmin as any)
+        .from("transactions")
+        .select("provider_ref, buyer_id")
+        .eq("id", txId)
+        .maybeSingle();
+      if (tx && tx.buyer_id !== req.user_id) throw new Error("transação não pertence a quem pediu");
+      asaasPaymentId = asaasPaymentId ?? tx?.provider_ref ?? null;
+    }
     if (!asaasPaymentId) throw new Error("ID do pagamento Asaas não encontrado");
 
     let refundResult: any;
@@ -125,14 +155,6 @@ export const approveRefund = createServerFn({ method: "POST" })
     } catch (e) {
       throw new Error(`falha ao estornar no Asaas: ${e instanceof Error ? e.message : String(e)}`);
     }
-
-    const tableMap: Record<string, string> = {
-      publication_unlock: "publication_unlocks",
-      chat_message_unlock: "chat_message_unlocks",
-      subscription: "subscriptions",
-      tip: "tips",
-    };
-    const table = tableMap[req.reference_type as string];
 
     if (table) {
       const newStatus = table === "subscriptions" ? "cancelled" : "refunded";
@@ -143,11 +165,11 @@ export const approveRefund = createServerFn({ method: "POST" })
       if (updateError) throw new Error(updateError.message);
     }
 
-    if (req.transaction_id) {
+    if (txId) {
       const { error: txError } = await supabaseAdmin
         .from("transactions")
         .update({ status: "refunded" })
-        .eq("id", req.transaction_id as string);
+        .eq("id", txId);
       if (txError) throw new Error(txError.message);
     }
 
@@ -165,7 +187,7 @@ export const approveRefund = createServerFn({ method: "POST" })
     await logAudit(supabaseAdmin, userId, "refund_approved", data.requestId, {
       referenceType: req.reference_type,
       referenceId: req.reference_id,
-      amountCents: req.amount_cents,
+      amountCents: realAmountCents,
       asaasPaymentId,
       asaasRefundStatus: refundResult.status,
     });
