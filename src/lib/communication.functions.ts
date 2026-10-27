@@ -127,6 +127,7 @@ export const respondVideoCall = createServerFn({ method: "POST" })
       .single();
     if (cErr || !call) throw new Error("call not found");
     if (call.creator_id !== userId) throw new Error("only creator can respond");
+    if (call.status !== "requested") throw new Error("call can no longer be answered");
 
     const { data: row, error } = await (await adminDb())
       .from("video_calls")
