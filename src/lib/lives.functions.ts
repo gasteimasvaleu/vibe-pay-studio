@@ -75,7 +75,7 @@ export const startLive = createServerFn({ method: "POST" })
 
     // Pega perfil ativo do criador
     const { data: profileRow } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("active_profile_id")
       .eq("user_id", userId)
       .maybeSingle();
@@ -193,7 +193,7 @@ export const listActiveLives = createServerFn({ method: "GET" })
       profileIds.length
         ? admin.from("creator_profiles").select("id, username, display_name, avatar_url").in("id", profileIds)
         : Promise.resolve({ data: [] as any[] }),
-      admin.from("profiles_public" as any).select("user_id, username, display_name, avatar_url").in("user_id", creatorIds),
+      admin.from("profiles_public").select("user_id, username, display_name, avatar_url").in("user_id", creatorIds),
     ]);
     const profMap = new Map((profs.data ?? []).map((p: any) => [p.id, p]));
     const userMap = new Map((users.data ?? []).map((p: any) => [p.user_id, p]));
@@ -318,7 +318,7 @@ export const getLive = createServerFn({ method: "GET" })
       live.creator_profile_id
         ? admin.from("creator_profiles").select("username, display_name, avatar_url").eq("id", live.creator_profile_id).maybeSingle()
         : Promise.resolve({ data: null } as any),
-      admin.from("profiles_public" as any).select("username, display_name, avatar_url").eq("user_id", live.creator_id).maybeSingle(),
+      admin.from("profiles_public").select("username, display_name, avatar_url").eq("user_id", live.creator_id).maybeSingle(),
     ]);
     const src = prof.data ?? legacy.data ?? {};
 

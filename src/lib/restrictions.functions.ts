@@ -31,7 +31,7 @@ export const listRestrictedSubscribers = createServerFn({ method: "GET" })
 
     const ids = rows.map((r) => r.subscriber_id);
     const { data: profiles } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", ids);
     const map = new Map((profiles ?? []).map((p) => [p.user_id, p]));
@@ -136,7 +136,7 @@ export const searchSubscribersToRestrict = createServerFn({ method: "POST" })
     if (eligible.length === 0) return [];
 
     const { data: profiles, error: profErr } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", eligible)
       .ilike("username", `%${data.q}%`)

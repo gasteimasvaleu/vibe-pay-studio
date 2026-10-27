@@ -74,7 +74,7 @@ export const createIdentityVerificationSession = createServerFn({ method: "POST"
 
     // Fetch user's name to prefill Veriff person data (opcional; Veriff aceita nomes vazios).
     const { data: profile } = await context.supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("username")
       .eq("user_id", context.userId)
       .maybeSingle();
@@ -477,7 +477,7 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
       if (!data.handle) throw new Error("handle_required");
 
       const { data: taken, error: takenErr } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id")
         .or(`username.eq.${data.handle},free_username.eq.${data.handle}`)
         .neq("user_id", userId)
@@ -561,7 +561,7 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
     if (!data.handle) throw new Error("handle_required");
 
     const { data: taken, error: takenErr } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id")
       .eq("username", data.handle)
       .neq("user_id", userId)

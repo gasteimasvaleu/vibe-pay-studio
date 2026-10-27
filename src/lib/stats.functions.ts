@@ -294,7 +294,7 @@ export const listExtrato = createServerFn({ method: "GET" })
     let profiles: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
     if (buyerIds.length) {
       const { data: profs } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, display_name, avatar_url")
         .in("user_id", buyerIds);
       profiles = Object.fromEntries((profs ?? []).map(p => [p.user_id as string, {
@@ -430,7 +430,7 @@ export const getTopAssinantes = createServerFn({ method: "GET" })
 
     if (!ranking.length) return [];
     const { data: profs } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", ranking.map(r => r.buyer_id));
     const byId = Object.fromEntries((profs ?? []).map(p => [p.user_id as string, p]));
@@ -501,7 +501,7 @@ export const getAssinantesList = createServerFn({ method: "GET" })
 
     const ids = Array.from(new Set(period.map(s => s.subscriber_id as string)));
     const profsRes = ids.length
-      ? await supabase.from("profiles_public" as any)
+      ? await supabase.from("profiles_public")
           .select("user_id, username, display_name, avatar_url")
           .in("user_id", ids)
       : { data: [] as { user_id: string; username: string | null; display_name: string | null; avatar_url: string | null }[] };
@@ -795,7 +795,7 @@ export const getEngajamentoPublicacoes = createServerFn({ method: "GET" })
       .gte("created_at", data.from).lte("created_at", data.to);
     if (error) throw new Error(error.message);
     const { data: profileRow } = await supabase
-      .from("profiles_public" as any).select("username").eq("user_id", userId).maybeSingle();
+      .from("profiles_public").select("username").eq("user_id", userId).maybeSingle();
     const authorUsername = (profileRow?.username as string | null) ?? null;
     const list = pubs ?? [];
     const ids = list.map(p => p.id as string);

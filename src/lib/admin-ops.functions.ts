@@ -31,7 +31,7 @@ async function hydrateProfiles(supabase: any, ids: (string | null | undefined)[]
   const clean = Array.from(new Set(ids.filter(Boolean) as string[]));
   if (clean.length === 0) return {} as Record<string, any>;
   const { data } = await supabase
-    .from("profiles_public" as any)
+    .from("profiles_public")
     .select("user_id, username, display_name, avatar_url")
     .in("user_id", clean);
   const map: Record<string, any> = {};

@@ -89,7 +89,7 @@ export const createCallInvite = createServerFn({ method: "POST" })
     const partnerId = await partnerIdOf(supabase, userId, data.threadId);
 
     const { data: me, error: meErr } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("account_type")
       .eq("user_id", userId)
       .maybeSingle();
@@ -236,7 +236,7 @@ export const createPaidDmRequest = createServerFn({ method: "POST" })
     if (creatorId === userId) throw new Error("Não pode solicitar envio pago para si mesmo");
 
     const { data: creator, error: cErr } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("paid_dm_upload_enabled, paid_dm_upload_min_cents, paid_dm_upload_max_cents")
       .eq("user_id", creatorId)
       .maybeSingle();
@@ -451,7 +451,7 @@ export const sendBroadcast = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const { data: me } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("account_type")
       .eq("user_id", userId)
       .maybeSingle();

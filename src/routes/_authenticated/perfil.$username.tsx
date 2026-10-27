@@ -128,7 +128,7 @@ export const Route = createFileRoute("/_authenticated/perfil/$username")({
     let profile: any = creatorProfile;
     if (!profile) {
       const { data: legacyProfile } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select(
           "user_id, username, display_name, bio, location, avatar_url, cover_url, instagram_handle, tiktok_handle, x_handle, account_type, price_monthly, discount_quarterly, discount_semiannual, show_followers, restrict_friendships",
         )

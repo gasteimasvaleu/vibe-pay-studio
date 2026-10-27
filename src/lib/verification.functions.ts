@@ -166,7 +166,7 @@ export const listVerificationRequests = createServerFn({ method: "GET" })
     const [{ data: profs }, { data: cps }] = await Promise.all([
       userIds.length
         ? supabase
-            .from("profiles_public" as any)
+            .from("profiles_public")
             .select("user_id, username, display_name, avatar_url")
             .in("user_id", userIds)
         : Promise.resolve({ data: [] as any[] }),

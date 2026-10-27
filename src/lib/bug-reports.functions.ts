@@ -107,7 +107,7 @@ export const listAdminBugReports = createServerFn({ method: "GET" })
     const profs: Record<string, any> = {};
     if (ids.length) {
       const { data: p } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, display_name, avatar_url")
         .in("user_id", ids);
       (p ?? []).forEach((r: any) => (profs[r.user_id] = r));

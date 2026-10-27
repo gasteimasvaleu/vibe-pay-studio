@@ -146,7 +146,7 @@ function useActiveProfileMode() {
       const uid = auth.user?.id;
       if (!uid) return { activeView: "creator" as const, canSwitch: false };
       const { data } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("active_view, account_type, free_profile_enabled")
         .eq("user_id", uid)
         .maybeSingle();

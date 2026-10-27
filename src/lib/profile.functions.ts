@@ -151,7 +151,7 @@ export const checkUsernameAvailability = createServerFn({ method: "POST" })
     const { activeCreator } = await getProfileAndActiveCreator(supabase, userId);
 
     const [profilesRes, creatorProfilesRes] = await Promise.all([
-      supabase.from("profiles_public" as any).select("user_id, username").eq("username", check.value).maybeSingle(),
+      supabase.from("profiles_public").select("user_id, username").eq("username", check.value).maybeSingle(),
       supabase.from("creator_profiles").select("id, user_id, username").eq("username", check.value).maybeSingle(),
     ]);
     if (profilesRes.error) throw new Error(profilesRes.error.message);
@@ -199,7 +199,7 @@ export const updateProfileIdentity = createServerFn({ method: "POST" })
 
 
     const [existingProfileRes, existingCreatorRes] = await Promise.all([
-      supabase.from("profiles_public" as any).select("user_id").eq("username", userCheck.value).maybeSingle(),
+      supabase.from("profiles_public").select("user_id").eq("username", userCheck.value).maybeSingle(),
       supabase.from("creator_profiles").select("user_id, id").eq("username", userCheck.value).maybeSingle(),
     ]);
     if (existingProfileRes.error) throw new Error(existingProfileRes.error.message);

@@ -86,7 +86,7 @@ export const listMyHiddenPublications = createServerFn({ method: "GET" })
     const authorMap = new Map<string, any>();
     if (authorIds.length) {
       const { data: profiles } = await client
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, display_name, avatar_url")
         .in("user_id", authorIds);
       (profiles ?? []).forEach((p: any) => authorMap.set(p.user_id, p));

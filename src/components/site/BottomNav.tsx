@@ -15,7 +15,7 @@ export function BottomNav() {
         return { account_type: "subscriber", active_view: "creator", free_profile_enabled: false } as const;
       }
       const { data } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("account_type, active_view, free_profile_enabled")
         .eq("user_id", userData.user.id)
         .maybeSingle();

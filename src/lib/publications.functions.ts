@@ -557,7 +557,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
         .in("publication_id", ids)
         .order("position", { ascending: true }),
       client
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username")
         .eq("user_id", data.userId)
         .maybeSingle(),
@@ -960,7 +960,7 @@ export const listComments = createServerFn({ method: "POST" })
     let profileMap = new Map<string, { username: string | null; avatar_url: string | null }>();
     if (userIds.length) {
       const { data: profiles } = await supabase
-        .from("profiles_public" as any)
+        .from("profiles_public")
         .select("user_id, username, avatar_url")
         .in("user_id", userIds);
       profileMap = new Map(
@@ -1025,7 +1025,7 @@ export const addComment = createServerFn({ method: "POST" })
     if (error || !row) throw new Error(error?.message ?? "Falha ao comentar");
 
     const { data: profile } = await supabase
-      .from("profiles_public" as any)
+      .from("profiles_public")
       .select("username, avatar_url")
       .eq("user_id", userId)
       .maybeSingle();
@@ -1296,7 +1296,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           .in("publication_id", ids)
           .order("position", { ascending: true }),
         client
-          .from("profiles_public" as any)
+          .from("profiles_public")
           .select("user_id, username")
           .eq("user_id", currentUserId)
           .maybeSingle(),

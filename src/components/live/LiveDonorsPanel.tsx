@@ -37,7 +37,7 @@ async function fetchDonors(liveId: string): Promise<Donor[]> {
   const ids = Array.from(totals.keys());
   if (ids.length === 0) return [];
   const { data: profs } = await supabase
-    .from("profiles_public" as any)
+    .from("profiles_public")
     .select("id, username, display_name, avatar_url")
     .in("id", ids);
   const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
