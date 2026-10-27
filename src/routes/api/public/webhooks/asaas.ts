@@ -131,7 +131,8 @@ async function markStatus(
     q = q.eq("status", "pending_payment");
   }
 
-  await q;
+  const { error } = await q;
+  if (error) throw new Error(`markStatus ${table}: ${error.message}`);
 }
 
 
@@ -170,7 +171,8 @@ async function applyTransferStatus(
   if (isIntermediate) {
     q = q.not("status", "in", "(paid,failed,rejected)");
   }
-  await q;
+  const { error: wErr } = await q;
+  if (wErr) throw new Error(`withdrawal update: ${wErr.message}`);
 
   // TRANSFER_DONE sempre vira pago; se o saque estava recusado/falho, alerta o admin.
   if (status === "paid" && prev && (prev.status === "rejected" || prev.status === "failed")) {
@@ -447,22 +449,23 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
               );
             }
             if (intent) {
-              await supabaseAdmin
+              // processed_at só em estado final; senão o PAYMENT_CONFIRMED seguinte seria ignorado.
+              const isFinal =
+                targetStatus === "refunded" || targetStatus === "cancelled";
+              const upd: Record<string, unknown> = { event_type: eventType };
+              if (isFinal) upd.processed_at = new Date().toISOString();
+              const { error: iErr } = await supabaseAdmin
                 .from("payment_intents")
-                .update({
-                  processed_at: new Date().toISOString(),
-                  event_type: eventType,
-                })
+                .update(upd)
                 .eq("id", intent.id);
+              if (iErr) throw new Error(`intent update: ${iErr.message}`);
             }
           } else if (intent) {
-            await supabaseAdmin
+            const { error: iErr } = await supabaseAdmin
               .from("payment_intents")
-              .update({
-                processed_at: new Date().toISOString(),
-                event_type: eventType,
-              })
+              .update({ event_type: eventType })
               .eq("id", intent.id);
+            if (iErr) throw new Error(`intent update: ${iErr.message}`);
           }
 
           await supabaseAdmin
