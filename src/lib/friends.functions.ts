@@ -90,7 +90,7 @@ export const listPublicFriends = createServerFn({ method: "GET" })
     const ids = (rows ?? []).map((r) => r.friend_id as string);
     if (ids.length === 0) return [];
     const { data: profs } = await context.supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", ids);
     const byId = new Map((profs ?? []).map((p) => [p.user_id as string, p]));
@@ -131,7 +131,7 @@ export const listMyIncomingFriends = createServerFn({ method: "GET" })
     const ids = (rows ?? []).map((r) => r.owner_id as string);
     if (ids.length === 0) return [];
     const { data: profs } = await context.supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("user_id, username, display_name, avatar_url, account_type")
       .in("user_id", ids);
     const byId = new Map((profs ?? []).map((p) => [p.user_id as string, p]));

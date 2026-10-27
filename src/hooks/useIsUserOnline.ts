@@ -22,7 +22,7 @@ export function useIsUserOnline(userId: string | null | undefined): boolean {
     async function check() {
       const [{ data: profile }, { data: statusRow }] = await Promise.all([
         supabase
-          .from("profiles")
+          .from("profiles_public" as any)
           .select("last_seen_at")
           .eq("id", userId as string)
           .maybeSingle(),

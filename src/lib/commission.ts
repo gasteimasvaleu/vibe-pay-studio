@@ -32,7 +32,7 @@ export async function getCommissionPct(
   buyerId: string,
 ): Promise<number> {
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("profiles_public" as any)
     .select("country")
     .eq("user_id", buyerId)
     .maybeSingle();

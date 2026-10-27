@@ -54,7 +54,7 @@ function PromotionPage() {
       const user = sessionData.session?.user;
       if (!user) return;
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("price_monthly")
         .eq("user_id", user.id)
         .maybeSingle();

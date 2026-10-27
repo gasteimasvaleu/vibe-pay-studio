@@ -33,7 +33,7 @@ export function TopNav() {
 
       const [{ data: prof }, { data: cps }] = await Promise.all([
         supabase
-          .from("profiles")
+          .from("profiles_public" as any)
           .select("avatar_url, free_avatar_url, active_view, active_profile_id, account_type")
           .eq("user_id", userId)
           .maybeSingle(),

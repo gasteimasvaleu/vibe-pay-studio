@@ -21,7 +21,7 @@ export const getLastSeen = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<{ lastSeenAt: string | null }> => {
     const { supabase } = context;
     const { data: row, error } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("last_seen_at")
       .eq("user_id", data.userId)
       .maybeSingle();

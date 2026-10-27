@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/creator-hub")({
     const user = data.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("account_type, active_profile_id")
       .eq("user_id", user.id)
       .maybeSingle();

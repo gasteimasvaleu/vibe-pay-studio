@@ -328,7 +328,7 @@ export const createPromotion = createServerFn({ method: "POST" })
     if (data.durationDays < 1) throw new Error("duração inválida");
 
     const { data: profile, error: pErr } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("price_monthly")
       .eq("user_id", userId)
       .single();

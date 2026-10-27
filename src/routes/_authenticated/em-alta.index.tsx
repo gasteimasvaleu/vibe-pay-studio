@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/em-alta/")({
     const user = data.session?.user;
     if (!user) throw redirect({ to: "/entrar" });
     const { data: profile } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("username, avatar_url, account_type")
       .eq("user_id", user.id)
       .maybeSingle();

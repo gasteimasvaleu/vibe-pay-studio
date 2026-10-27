@@ -166,7 +166,7 @@ export async function ensureCurrentUserProfile(preferred?: {
   const user = userData.user;
 
   const { data: existing, error: existingError } = await supabase
-    .from("profiles")
+    .from("profiles_public" as any)
     .select("id")
     .eq("user_id", user.id)
     .maybeSingle();

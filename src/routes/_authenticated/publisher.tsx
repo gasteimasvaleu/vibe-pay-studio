@@ -235,7 +235,7 @@ function ActiveProfileBadge() {
       if (!uid) return null;
       const [{ data: prof }, { data: cps }] = await Promise.all([
         supabase
-          .from("profiles")
+          .from("profiles_public" as any)
           .select("active_view, active_profile_id, free_profile_enabled, account_type, username, avatar_url")
           .eq("user_id", uid)
           .maybeSingle(),

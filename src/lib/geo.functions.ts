@@ -23,7 +23,7 @@ export const resolveViewerCountry = createServerFn({ method: "GET" })
     if (country) {
       // Best-effort backfill of the caller's own profile.country.
       const { data: existing } = await context.supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("country")
         .eq("user_id", context.userId)
         .maybeSingle();

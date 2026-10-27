@@ -25,7 +25,7 @@ export const listMuted = createServerFn({ method: "GET" })
 
     const ids = rows.map((r) => r.muted_id);
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("profiles_public" as any)
       .select("user_id, username, display_name, avatar_url")
       .in("user_id", ids);
     const map = new Map((profiles ?? []).map((p) => [p.user_id, p]));

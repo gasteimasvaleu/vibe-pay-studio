@@ -73,7 +73,7 @@ function CriarPerfilGratuitoPage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
       const { data: p } = await supabase
-        .from("profiles")
+        .from("profiles_public" as any)
         .select("account_type, free_username")
         .eq("user_id", userData.user.id)
         .maybeSingle();
