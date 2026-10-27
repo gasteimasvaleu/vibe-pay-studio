@@ -125,7 +125,8 @@ export const moderatePublication = createServerFn({ method: "POST" })
     await requireRole(supabase, userId, "moderator").catch(async () => {
       await requireRole(supabase, userId, "admin");
     });
-    const { data: row, error } = await supabase
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await db
       .from("publications")
       .update({ moderation_status: data.status, moderation_note: data.note ?? null })
       .eq("id", data.publicationId)
@@ -147,7 +148,8 @@ export const approveWithdrawal = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireRole(supabase, userId, "admin");
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await supabase
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await db
       .from("withdrawals")
       .update({
         status: "paid",
@@ -179,7 +181,8 @@ export const rejectWithdrawal = createServerFn({ method: "POST" })
     if (wErr || !w) throw new Error("saque não encontrado");
     if (w.status === "paid") throw new Error("saque já foi pago");
 
-    const { error } = await supabase
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db
       .from("withdrawals")
       .update({
         status: "rejected",
@@ -255,7 +258,9 @@ export const setKycStatus = createServerFn({ method: "POST" })
       throw new Error("apenas admin pode aprovar/reprovar KYC");
     }
 
-    const { data: row, error } = await supabase
+    // Colunas de KYC são protegidas: grava pelo servidor depois da checagem acima.
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await db
       .from("profiles")
       .update({
         kyc_status: data.status,

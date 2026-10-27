@@ -290,7 +290,8 @@ export const banUser = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     if (data.userId === userId) throw new Error("não é possível banir a si mesmo");
-    const { error } = await supabase
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db
       .from("profiles")
       .update({
         banned_at: new Date().toISOString(),
@@ -310,7 +311,8 @@ export const unbanUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const { error } = await supabase
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db
       .from("profiles")
       .update({ banned_at: null, ban_reason: null })
       .eq("user_id", data.userId);
