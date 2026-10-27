@@ -26,7 +26,7 @@ async function computeProfileWallet(
       .from("withdrawals")
       .select("amount_cents, status")
       .eq("creator_profile_id", profileId)
-      .in("status", ["requested", "paid"] as any),
+      .in("status", ["requested", "in_review", "approved", "paid"] as any),
   ]);
   if (txRes.error) throw new Error(txRes.error.message);
   if (wRes.error) throw new Error(wRes.error.message);
@@ -48,9 +48,24 @@ async function computeProfileWallet(
     (acc: number, r: any) => acc + (r.amount_cents ?? 0),
     0,
   );
-  const releasedTotal = Math.max(
-    releasedNational + releasedIntl - reservedWithdrawalCents,
+  // Teto: disponível do usuário inteiro (carteira menos saques de todos os perfis),
+  // mesma regra da função request_withdrawal no banco.
+  const [cwRes, allWRes] = await Promise.all([
+    supabase.from("creator_wallets").select("released_cents").eq("user_id", userId).maybeSingle(),
+    supabase
+      .from("withdrawals")
+      .select("amount_cents")
+      .eq("creator_id", userId)
+      .in("status", ["requested", "in_review", "approved", "paid"] as any),
+  ]);
+  const userAvailable = Math.max(
+    Number(cwRes.data?.released_cents ?? 0) -
+      (allWRes.data ?? []).reduce((a: number, r: any) => a + (r.amount_cents ?? 0), 0),
     0,
+  );
+  const releasedTotal = Math.min(
+    Math.max(releasedNational + releasedIntl - reservedWithdrawalCents, 0),
+    userAvailable,
   );
   // preserva proporção do split ao aplicar os saques
   const histTotal = releasedNational + releasedIntl;

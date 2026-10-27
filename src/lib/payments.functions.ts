@@ -1366,7 +1366,7 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
         .from("withdrawals")
         .select("amount_cents")
         .eq("creator_id", userId)
-        .in("status", ["requested", "paid"] as any);
+        .in("status", ["requested", "in_review", "approved", "paid"] as any);
       const withdrawn = (wds ?? []).reduce((a, r) => a + (r.amount_cents ?? 0), 0);
       if (total - withdrawn > 0)
         throw new Error("Para trocar o modo de recebimento, saque todo o seu saldo antes.");

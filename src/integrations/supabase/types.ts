@@ -4099,6 +4099,10 @@ export type Database = {
         }[]
       }
       release_matured_earnings: { Args: never; Returns: number }
+      request_withdrawal: {
+        Args: { _amount_cents: number; _pix_key: string; _pix_key_type: string }
+        Returns: string
+      }
       resolve_active_creator_profile: {
         Args: { _user_id: string }
         Returns: {
