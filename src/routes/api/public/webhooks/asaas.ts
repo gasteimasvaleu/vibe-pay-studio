@@ -390,6 +390,25 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
             const { applyPaidIntent } = await import("@/lib/payments-reconcile.server");
             await applyPaidIntent(supabaseAdmin, intent, paymentId, eventType);
           } else if (targetStatus && meta.referenceTable) {
+            if (
+              meta.referenceTable === "wallet_topups" &&
+              (targetStatus === "refunded" || targetStatus === "partially_refunded") &&
+              eventType !== "PAYMENT_REFUND_DENIED"
+            ) {
+              // Estorno/chargeback de recarga: debita o saldo (ou registra dívida e bloqueia).
+              const pay: any = payload.payment ?? {};
+              const refunds: any[] = Array.isArray(pay.refunds) ? pay.refunds : [];
+              const refundedBrl =
+                targetStatus === "partially_refunded"
+                  ? Number(pay.refundedValue ?? refunds.reduce((a, r) => a + Number(r?.value ?? 0), 0) ?? 0)
+                  : 0; // 0 = valor total da recarga
+              const { error: revErr } = await (supabaseAdmin as any).rpc("reverse_wallet_topup", {
+                _provider_ref: paymentId,
+                _amount_cents: Math.round(refundedBrl * 100),
+                _event: eventType,
+              });
+              if (revErr) throw new Error(`reverse_wallet_topup: ${revErr.message}`);
+            }
             if (meta.referenceTable !== "wallet_topups" && meta.referenceId) {
               await markStatus(
                 supabaseAdmin,
