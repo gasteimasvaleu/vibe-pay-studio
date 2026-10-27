@@ -181,7 +181,7 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!card) throw new Error("Cartão salvo não encontrado");
 
-    const { data: creator } = await supabase
+    const { data: creator } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
       .from("profiles")
       .select("asaas_wallet_id")
       .eq("user_id", sub.creator_id as string)

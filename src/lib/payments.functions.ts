@@ -75,7 +75,7 @@ async function ensureCustomerId(
   // Reaproveita cliente Asaas de outra conta com o mesmo CPF (evita duplicidade no gateway)
   const existing = await asaas.findCustomerByCpf(cpf);
   if (existing?.id) {
-    await supabase
+    await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
       .from("profiles")
       .update({ asaas_customer_id: existing.id })
       .eq("user_id", userId);
@@ -90,7 +90,7 @@ async function ensureCustomerId(
     cpfCnpj: cpf,
     externalReference: userId,
   });
-  await supabase
+  await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
     .from("profiles")
     .update({ asaas_customer_id: customer.id })
     .eq("user_id", userId);
@@ -114,10 +114,14 @@ export const saveBuyerCpf = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .single();
 
-    const { error: upErr } = await supabase
+    const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+    const { data: cur } = await (admin as any).from("profiles").select("cpf").eq("user_id", userId).single();
+    if (cur?.cpf && cur.cpf.replace(/\D/g, "") !== data.cpf) throw new Error("CPF já cadastrado. Fale com o suporte para alterar.");
+    const { error: upErr } = cur?.cpf ? { error: null } : await (admin as any)
       .from("profiles")
       .update({ cpf: data.cpf })
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .is("cpf", null);
     if (upErr) throw new Error(upErr.message);
 
     if (profile?.asaas_customer_id) {
@@ -146,7 +150,7 @@ async function getCreatorWallet(
     .eq("user_id", creatorId)
     .maybeSingle();
   if (pa?.payout_mode === "pix") return null;
-  const { data, error } = await supabase
+  const { data, error } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
     .from("profiles")
     .select("asaas_wallet_id")
     .eq("user_id", creatorId)
@@ -726,7 +730,7 @@ export const createSubscriptionPayment = createServerFn({ method: "POST" })
       pricing = cp ?? pricing;
     }
 
-    const { data: creator, error } = await supabase
+    const { data: creator, error } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
       .from("profiles")
       .select("price_monthly, discount_quarterly, discount_semiannual, asaas_wallet_id")
       .eq("user_id", data.creatorId)
@@ -1384,7 +1388,7 @@ export const saveCreatorPayoutSetup = createServerFn({ method: "POST" })
         updatePayload.asaas_api_key_encrypted = asaas.encryptApiKey(data.apiKey.trim());
         hasApiKey = true;
       }
-      const { error: updErr } = await supabase
+      const { error: updErr } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
         .from("profiles")
         .update(updatePayload)
         .eq("user_id", userId);

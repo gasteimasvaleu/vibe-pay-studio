@@ -28,7 +28,7 @@ export const resolveViewerCountry = createServerFn({ method: "GET" })
         .eq("user_id", context.userId)
         .maybeSingle();
       if (existing && !existing.country) {
-        await context.supabase
+        await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
           .from("profiles")
           .update({ country })
           .eq("user_id", context.userId);

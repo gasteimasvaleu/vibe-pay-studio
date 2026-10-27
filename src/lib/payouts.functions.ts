@@ -144,7 +144,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       // Tenta recuperar o CPF da verificação Veriff já aprovada.
       try {
         const { fillPersonFromVeriff } = await import("@/lib/onboarding.functions");
-        await fillPersonFromVeriff(supabase, userId);
+        await fillPersonFromVeriff((await import("@/integrations/supabase/client.server")).supabaseAdmin, userId);
         ({ data: profile, error: pErr } = await loadProfile());
       } catch (e) {
         console.error("[withdraw] fillPersonFromVeriff failed", e);

@@ -193,7 +193,9 @@ export async function ensureCurrentUserProfile(preferred?: {
     "usuario";
 
   const username = await resolveAvailableUsername(fallbackName);
-  const accountType = preferred?.accountType ?? metadata.account_type ?? "subscriber";
+  const requested = preferred?.accountType ?? metadata.account_type ?? "subscriber";
+  // "creator" só é liberado pelo servidor após a verificação de identidade.
+  const accountType: AccountType = requested === "creator" ? "subscriber" : requested;
 
   const { error } = await supabase.from("profiles").insert({
     account_type: accountType,

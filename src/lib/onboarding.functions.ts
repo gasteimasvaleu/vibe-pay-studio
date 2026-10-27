@@ -129,7 +129,7 @@ export const createIdentityVerificationSession = createServerFn({ method: "POST"
         };
       }
 
-      const { error } = await context.supabase
+      const { error } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
         .from("profiles")
         .update({
           veriff_session_id: session.id,
@@ -369,7 +369,7 @@ export const getKycStatus = createServerFn({ method: "GET" })
       const next = await fetchVeriffStatus(sessionId);
       if (next && next !== status) {
         const { verifiedAt: newVerifiedAt } = await applyKycTransition(
-          context.supabase,
+          (await import("@/integrations/supabase/client.server")).supabaseAdmin,
           context.userId,
           next,
         );
@@ -578,7 +578,8 @@ export const createFreeCreatorProfile = createServerFn({ method: "POST" })
     if (cpTakenErr) throw new Error(cpTakenErr.message);
     if (cpTaken) throw new Error("handle_taken");
 
-    const { error: upErr } = await supabase
+    if (current?.account_type && !["subscriber", "free_creator"].includes(current.account_type)) throw new Error("account_type_locked");
+    const { error: upErr } = await ((await import("@/integrations/supabase/client.server")).supabaseAdmin as any)
       .from("profiles")
       .update({
         username: data.handle,
