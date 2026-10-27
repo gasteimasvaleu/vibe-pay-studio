@@ -57,3 +57,13 @@ export async function signStrings(values: string[], bucket = "publications"): Pr
   const map = await signPaths(bucket, values);
   return values.map((v) => resolve(map, v, bucket)).filter((v): v is string => !!v);
 }
+
+/** Re-signs a single string field on each object (e.g. thumb_url). */
+export async function signField<T extends AnyObj>(items: T[], get: (it: T) => string | null | undefined, set: (it: T, v: string | null) => void, bucket = "publications"): Promise<T[]> {
+  const map = await signPaths(bucket, items.map(get));
+  for (const it of items) {
+    const v = get(it);
+    if (typeof v === "string") set(it, resolve(map, v, bucket));
+  }
+  return items;
+}
