@@ -52,6 +52,7 @@ async function creditWalletTopup(
   buyerId: string,
   amountCents: number,
   providerRef: string,
+  paymentMethod: "pix" | "credit_card" | "boleto" = "pix",
 ) {
   // dedupe: if a transaction with this provider_ref already exists, skip
   const { data: existing } = await supabaseAdmin
@@ -70,10 +71,17 @@ async function creditWalletTopup(
     platform_fee_cents: 0,
     net_cents: amountCents,
     commission_pct_applied: 0,
-    payment_method: "pix",
+    payment_method: paymentMethod,
     provider: "asaas",
     provider_ref: providerRef,
   });
+}
+
+function mapBillingType(t?: string | null): "pix" | "credit_card" | "boleto" {
+  const v = String(t ?? "").toUpperCase();
+  if (v === "CREDIT_CARD") return "credit_card";
+  if (v === "BOLETO") return "boleto";
+  return "pix";
 }
 
 /**
@@ -112,11 +120,18 @@ export async function applyPaidIntent(
 
   if (meta.referenceTable === "wallet_topups") {
     if (meta.buyerId && meta.amountCents) {
+      const { data: pi } = await supabaseAdmin
+        .from("payment_intents")
+        .select("method, payload")
+        .eq("id", intent.id)
+        .maybeSingle();
+      const billing = (pi as any)?.payload?.billingType ?? (pi as any)?.payload?.payment?.billingType ?? (pi as any)?.method;
       await creditWalletTopup(
         supabaseAdmin,
         meta.buyerId,
         meta.amountCents,
         providerRef,
+        mapBillingType(billing),
       );
     }
   } else if (meta.referenceId) {

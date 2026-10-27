@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PixCheckout } from "@/components/payments/PixCheckout";
-import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import type { PaymentMethod } from "@/components/payments/PaymentModal";
 import { createWalletTopupPayment } from "@/lib/payments.functions";
 import { chargeSavedCardTopUp } from "@/lib/saved-cards.functions";
@@ -45,8 +44,8 @@ type Checkout = {
 function RecarregarPage() {
   const router = useRouter();
   const [amount, setAmount] = useState(50);
-  const [method, setMethod] = useState<PaymentMethod>("PIX");
-  const [savedCardId, setSavedCardId] = useState<string | null>(null);
+  const [method] = useState<PaymentMethod>("PIX");
+  const savedCardId: string | null = null;
   const [loading, setLoading] = useState(false);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const createTopup = useServerFn(createWalletTopupPayment);
@@ -169,13 +168,13 @@ function RecarregarPage() {
                 Método de pagamento
               </h2>
               <div className="mt-3">
-                <PaymentMethodPicker
-                  value={method}
-                  onChange={setMethod}
-                  amountCents={amountCents}
-                  savedCardId={savedCardId}
-                  onSavedCardChange={setSavedCardId}
-                />
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground">
+                  <QrCode className="h-5 w-5" />
+                  <span>PIX</span>
+                  <span className="ml-auto text-xs font-normal text-muted-foreground">
+                    Recarga da carteira só por Pix
+                  </span>
+                </div>
               </div>
               {belowMin && (
                 <p className="mt-2 text-xs text-destructive">

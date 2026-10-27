@@ -2925,16 +2925,31 @@ export type Database = {
       subscriber_wallets: {
         Row: {
           balance_cents: number
+          blocked_at: string | null
+          blocked_reason: string | null
+          debt_cents: number
+          reviewed_at: string | null
+          reviewed_by: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           balance_cents?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          debt_cents?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           balance_cents?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          debt_cents?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3879,6 +3894,10 @@ export type Database = {
         Args: { _creator_profile_id: string; _status: string }
         Returns: undefined
       }
+      admin_unblock_wallet: {
+        Args: { _note: string; _user_id: string }
+        Returns: undefined
+      }
       admin_user_ids: { Args: never; Returns: string[] }
       admin_wallets_snapshot: {
         Args: never
@@ -4167,6 +4186,10 @@ export type Database = {
       }
       resolve_active_profile: { Args: { _user_id: string }; Returns: string }
       resolve_available_username: { Args: { desired: string }; Returns: string }
+      reverse_wallet_topup: {
+        Args: { _amount_cents: number; _event: string; _provider_ref: string }
+        Returns: Json
+      }
       revoke_all_other_sessions: { Args: never; Returns: number }
       revoke_session: { Args: { p_session_id: string }; Returns: undefined }
     }

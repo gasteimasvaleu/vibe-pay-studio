@@ -59,6 +59,9 @@ export function translatePaymentError(err: unknown, fallback = "Erro ao processa
   if (raw === "insufficient_funds") {
     return "Saldo insuficiente na carteira.";
   }
+  if (raw === "wallet_blocked" || /wallet_blocked/.test(raw)) {
+    return "Sua carteira está em revisão. Fale com o suporte.";
+  }
 
   if (raw === "plan_downgrade_not_allowed") {
     return "Você já tem uma assinatura ativa com esse plano ou maior. Escolha um plano maior para fazer upgrade.";
