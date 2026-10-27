@@ -159,6 +159,12 @@ export const requestVideoCall = createServerFn({ method: "POST" })
       if (/insufficient/i.test(payErr.message ?? "")) throw new Error("insufficient_wallet_balance");
       throw new Error(payErr.message ?? "falha no pagamento");
     }
+    // pay_with_wallet marca payment_status = paid; a chamada passa a aceita.
+    await db
+      .from("video_calls")
+      .update({ status: "accepted", updated_at: new Date().toISOString() })
+      .eq("id", pending.id)
+      .eq("payment_status", "paid");
 
     const { data: row, error } = await db
       .from("video_calls")

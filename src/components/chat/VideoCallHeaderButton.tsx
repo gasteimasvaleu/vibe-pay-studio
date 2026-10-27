@@ -6,7 +6,7 @@ import { Video, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  startPaidVideoCall,
+  requestVideoCall,
   listActiveCallsWith,
 } from "@/lib/communication.functions";
 import {
@@ -38,7 +38,7 @@ export function VideoCallHeaderButton({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const startFn = useServerFn(startPaidVideoCall);
+  const startFn = useServerFn(requestVideoCall);
   const listCallsFn = useServerFn(listActiveCallsWith);
 
   const { data: partner } = useQuery<CreatorInfo>({
