@@ -4,6 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveCreatorIdentities, pickIdentity } from "@/lib/creator-identity";
 import { getActiveProfileIdFor } from "@/lib/profile-active.server";
 import { signPublicationOutputs } from "@/lib/media-sign.server";
+import { buildSubscribedKeys, isSubscribedTo, type SubscriptionRow } from "@/lib/subscriber-access";
+
+async function loadSubscribedKeys(
+  client: any,
+  userId: string,
+  page: Array<{ author_id: string; visibility: string }>,
+): Promise<Set<string>> {
+  const authors = Array.from(
+    new Set(page.filter((p) => p.visibility === "subscribers").map((p) => p.author_id)),
+  );
+  if (authors.length === 0) return new Set();
+  const { data } = await client
+    .from("subscriptions")
+    .select("creator_id, creator_profile_id, status, current_period_end")
+    .eq("subscriber_id", userId)
+    .eq("status", "active")
+    .in("creator_id", authors);
+  return buildSubscribedKeys((data ?? []) as SubscriptionRow[]);
+}
 
 
 const mediaItemSchema = z.object({
