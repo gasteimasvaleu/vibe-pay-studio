@@ -166,6 +166,7 @@ function formatAudioTime(sec: number) {
 type Toggles = {
   paid: { enabled: boolean; priceCents: number | null };
   challenge: { enabled: boolean; goalCents: number | null; tiersCents: number[] };
+  subscribersOnly: boolean;
   expires24h: boolean;
   schedule: { enabled: boolean; at: string | null };
   commentsDisabled: boolean;
@@ -297,6 +298,7 @@ function PublisherPage() {
   const [toggles, setToggles] = useState<Toggles>({
     paid: { enabled: false, priceCents: null },
     challenge: { enabled: false, goalCents: null, tiersCents: [] },
+    subscribersOnly: false,
     expires24h: false,
     schedule: { enabled: false, at: null },
     commentsDisabled: false,
@@ -850,13 +852,15 @@ function PublisherPage() {
     const readyMedia = media.filter((m) => m.status === "ready" && m.storagePath && m.publicUrl);
     if (readyMedia.length === 0) return;
     if (audio.status === "recording" || audio.status === "uploading") return;
-    const visibility: "public" | "paid" | "challenge" = toggles.paid.enabled
+    const visibility: "public" | "paid" | "challenge" | "subscribers" = toggles.paid.enabled
       ? "paid"
       : toggles.challenge.enabled
         ? "challenge"
-        : "public";
+        : toggles.subscribersOnly
+          ? "subscribers"
+          : "public";
     if (
-      (visibility === "paid" || visibility === "challenge") &&
+      (visibility === "paid" || visibility === "challenge" || visibility === "subscribers") &&
       (!preview || preview.status !== "ready")
     ) {
       toast.error("Adicione uma mídia de prévia");
@@ -886,7 +890,7 @@ function PublisherPage() {
             ? { storagePath: audio.storagePath, url: audio.publicUrl }
             : null,
         preview:
-          (visibility === "paid" || visibility === "challenge") &&
+          (visibility === "paid" || visibility === "challenge" || visibility === "subscribers") &&
           preview &&
           preview.status === "ready" &&
           preview.storagePath &&
@@ -903,14 +907,20 @@ function PublisherPage() {
 
   // Handlers for switches
   const onPaidChange = (v: boolean) => {
-    if (v) setPaidOpen(true);
+    if (v) {
+      setToggles((t) => ({ ...t, subscribersOnly: false }));
+      setPaidOpen(true);
+    }
     else {
       setToggles((t) => ({ ...t, paid: { enabled: false, priceCents: null } }));
       void clearPreview();
     }
   };
   const onChallengeChange = (v: boolean) => {
-    if (v) setChallengeOpen(true);
+    if (v) {
+      setToggles((t) => ({ ...t, subscribersOnly: false }));
+      setChallengeOpen(true);
+    }
     else {
       setToggles((t) => ({
         ...t,
@@ -1520,7 +1530,7 @@ function StepCompose({
         </DndContext>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-          {(toggles.paid.enabled || toggles.challenge.enabled) && (
+          {(toggles.paid.enabled || toggles.challenge.enabled || toggles.subscribersOnly) && (
             <button
               type="button"
               onClick={onEditPreview}
@@ -1722,6 +1732,23 @@ function StepCompose({
           }
           checked={toggles.challenge.enabled}
           onChange={onChallengeChange}
+        />
+        <ToggleRow
+          icon={<Lock className="h-5 w-5" />}
+          label="Só para assinantes"
+          checked={toggles.subscribersOnly}
+          onChange={(v) =>
+            setToggles((t) =>
+              v
+                ? {
+                    ...t,
+                    subscribersOnly: true,
+                    paid: { enabled: false, priceCents: null },
+                    challenge: { enabled: false, goalCents: null, tiersCents: [] },
+                  }
+                : { ...t, subscribersOnly: false },
+            )
+          }
         />
         <ToggleRow
           icon={<Clock className="h-5 w-5" />}
