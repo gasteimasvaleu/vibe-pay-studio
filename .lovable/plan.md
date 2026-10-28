@@ -1,41 +1,29 @@
-# Assinaturas: o que existe hoje e como deixar sem renovação automática
+# Posts só para assinantes
 
-## Resposta às suas perguntas
+## O que muda para o creator
+- No publicador aparece uma nova opção: **"Só para assinantes"**, ao lado de "Pago" e "Desafio". Só dá para escolher uma das três.
+- Pode colocar uma prévia, como nos posts pagos.
+- O que já foi publicado não muda: posts grátis continuam visíveis para todos.
 
-**1. A assinatura renova sozinha?**
-Hoje, na maioria dos casos, não renova. Mas existe uma exceção no app:
-- Pix, boleto ou cartão digitado na hora: vale só pelo ciclo escolhido (mensal, trimestral ou semestral). Perto do vencimento o fã recebe um lembrete por e-mail e paga de novo se quiser.
-- **Cartão salvo:** o app cria uma cobrança recorrente no Asaas, e a assinatura **renova sozinha**.
-- Na tela "Minhas assinaturas" existe o botão **"Reativar renovação automática"**, que liga a recorrência.
-- No banco, hoje nenhuma assinatura está com renovação automática ligada.
+## O que muda para o fã
+- **Assinante ativo** (dentro do ciclo pago) vê o post completo, sem pagar nada a mais.
+- **Quem não assina** vê o post borrado com a prévia e um botão **"Assinar para ver"**, que leva à assinatura desse creator.
+- Quando a assinatura vence, o post volta a ficar bloqueado.
+- Posts pagos e desafios continuam cobrando de todo mundo, inclusive do assinante.
 
-**2. O que o assinante ganha hoje?**
-Pouca coisa:
-- Responder os stories do creator pelo chat. Só assinante consegue.
-- Nenhum acesso extra a posts. Os posts não são liberados pela assinatura.
-
-**3. Assinei e o creator publicou algo pago. Tenho que pagar?**
-Sim. Post pago (e desafio) só libera para quem pagou por ele, mesmo para assinante.
-
-**4. Assinante vê os posts não pagos?**
-Sim.
-
-**5. Quem não é assinante também vê os posts não pagos?**
-Sim, qualquer pessoa logada vê os posts não pagos. Hoje não existe "post só para assinantes". Stories grátis também aparecem para todos.
-
-## O que vou mudar (para garantir que nunca renove sozinha)
-1. Ao assinar com cartão salvo, deixar de criar a cobrança recorrente no Asaas. A assinatura passa a valer só pelo ciclo pago, como no Pix.
-2. Tirar o botão "Reativar renovação automática" da tela "Minhas assinaturas" e desligar essa função no servidor.
-3. Manter o lembrete por e-mail antes do vencimento e o botão de renovar manualmente.
-4. Ajustar os textos que falam em "renovação automática", como a descrição do e-mail de cobrança Pix.
-5. Conferir no banco se ainda existe alguma cobrança recorrente ativa no Asaas e cancelar, se houver. Hoje nenhuma aparece ligada.
-
-Não vou mexer no que o assinante vê. Se quiser que a assinatura libere posts (por exemplo "posts só para assinantes"), isso fica para um plano separado.
+## Onde a regra vale
+O feed, o perfil do creator, as coleções salvas e as publicações agendadas. A liberação é conferida no servidor e no banco, então ninguém vê a mídia só mexendo na tela.
 
 ## Detalhes técnicos
-- `src/lib/payments.functions.ts` (createSubscriptionPayment): remover o bloco `createAsaasSubscription`; sempre `auto_renew: false`, `asaas_subscription_id: null`.
-- `src/lib/monetization.functions.ts`: `reactivateSubscription` passa a recusar com erro.
-- `src/routes/_authenticated/subscriptions.tsx`: remover o botão e o diálogo de reativar.
-- Webhook `asaas.ts`: manter o tratamento de assinaturas recorrentes antigas para não quebrar cobranças em andamento.
-- `email-templates.meta.ts`: ajustar o texto.
-- Teste: um teste que garante que `auto_renew` é sempre false ao criar a assinatura.
+- Migration:
+  - Incluir `'subscribers'` no check de `publications.visibility`.
+  - Atualizar `can_see_publication`: libera quando `visibility='subscribers'` e existe uma `subscriptions` com subscriber = auth.uid(), creator = author, status `active` e `current_period_end > now()`. Quando o post tem `creator_profile_id`, a assinatura também precisa ser daquele perfil.
+- `src/lib/publications.functions.ts`:
+  - Aceitar `"subscribers"` no schema.
+  - Buscar as assinaturas ativas do usuário para os autores da página.
+  - Em `isUnlocked`, nas 3 listagens e na de post único, liberar o post quando o usuário é assinante.
+  - Para quem não assina, mandar só a prévia, com a mesma regra de URLs assinadas usada nos posts pagos.
+- `src/routes/_authenticated/publisher.tsx`: novo toggle, que não pode ficar ligado junto com Pago ou Desafio, e a prévia também habilitada para esse tipo.
+- `src/components/feed/PublicationCard.tsx`: selo "Assinantes" e o botão "Assinar para ver" levando ao fluxo de assinatura que já existe.
+- `colecoes.tsx` e `publicacoes-agendadas.tsx`: tratar o novo tipo nos rótulos.
+- Teste: um teste para a regra de liberação, com assinante ativo vendo, assinatura vencida bloqueada e quem não assina bloqueado.
