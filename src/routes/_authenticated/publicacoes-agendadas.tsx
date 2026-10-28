@@ -201,7 +201,9 @@ function ScheduledPostsPage() {
                           ? "Pago"
                           : item.visibility === "challenge"
                             ? "Desafio"
-                            : "Público"}
+                            : item.visibility === "subscribers"
+                              ? "Assinantes"
+                              : "Público"}
                       </span>
                       {item.price_cents ? (
                         <span>
