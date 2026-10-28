@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Lock,
+  Users,
   Minus,
   Mic,
   Pencil,
@@ -1734,7 +1735,7 @@ function StepCompose({
           onChange={onChallengeChange}
         />
         <ToggleRow
-          icon={<Lock className="h-5 w-5" />}
+          icon={<Users className="h-5 w-5" />}
           label="Só para assinantes"
           checked={toggles.subscribersOnly}
           onChange={(v) =>
