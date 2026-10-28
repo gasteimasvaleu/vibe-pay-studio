@@ -396,6 +396,7 @@ function LockedOverlay({
   hasPreview?: boolean;
 }) {
   const isChallenge = item.visibility === "challenge";
+  const isSubscribers = item.visibility === "subscribers";
   const cents = isChallenge ? item.challenge_cents : item.price_cents;
   const goal = item.challenge_cents ?? 0;
   const raised = item.challenge_raised_cents ?? 0;
@@ -405,6 +406,28 @@ function LockedOverlay({
       ? "Contribuir mesmo assim"
       : "Aceitar desafio"
     : "Desbloquear";
+
+  if (isSubscribers) {
+    return (
+      <>
+        <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-sm border border-white/25 grid place-items-center text-white/90 pointer-events-none">
+          <Lock className="h-4 w-4" />
+        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3">
+          <span className="rounded-md bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+            Só para assinantes
+          </span>
+          <Link
+            to="/perfil/$username"
+            params={{ username: item.author_username ?? "" }}
+            className="inline-flex items-center gap-2 px-6 h-11 rounded-md bg-primary text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-95"
+          >
+            Assinar para ver
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
