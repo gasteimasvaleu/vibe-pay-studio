@@ -118,7 +118,7 @@ function PublicationRow({
             <Play className="h-5 w-5 text-white fill-white" />
           </div>
         )}
-        {(item.visibility === "paid" || item.visibility === "challenge") && !item.thumb_url && (
+        {(item.visibility === "paid" || item.visibility === "challenge" || item.visibility === "subscribers") && !item.thumb_url && (
           <div className="absolute inset-0 grid place-items-center">
             <Lock className="h-4 w-4 text-muted-foreground" />
           </div>
