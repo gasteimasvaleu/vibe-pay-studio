@@ -32,7 +32,7 @@ const previewSchema = z
 
 const createPublicationSchema = z.object({
   caption: z.string().max(2000).optional().nullable(),
-  visibility: z.enum(["public", "paid", "challenge"]),
+  visibility: z.enum(["public", "paid", "challenge", "subscribers"]),
   priceCents: z.number().int().min(0).nullable().optional(),
   challengeCents: z.number().int().min(0).nullable().optional(),
   challengeTiersCents: z.array(z.number().int().min(100)).max(8).optional(),
@@ -77,11 +77,11 @@ export const createPublication = createServerFn({ method: "POST" })
         audio_url: data.audio?.storagePath ?? null,
         audio_storage_path: data.audio?.storagePath ?? null,
         preview_url:
-          data.visibility === "paid" || data.visibility === "challenge"
+          data.visibility === "paid" || data.visibility === "challenge" || data.visibility === "subscribers"
             ? data.preview?.storagePath ?? null
             : null,
         preview_storage_path:
-          data.visibility === "paid" || data.visibility === "challenge"
+          data.visibility === "paid" || data.visibility === "challenge" || data.visibility === "subscribers"
             ? data.preview?.storagePath ?? null
             : null,
       })
@@ -188,7 +188,7 @@ export type FeedItem = {
   author_avatar_url: string | null;
   author_profile_kind: "paid" | "free" | null;
   caption: string | null;
-  visibility: "public" | "paid" | "challenge";
+  visibility: "public" | "paid" | "challenge" | "subscribers";
   price_cents: number | null;
   challenge_cents: number | null;
   challenge_raised_cents: number | null;
@@ -417,6 +417,7 @@ export const getFeed = createServerFn({ method: "POST" })
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
     const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
+    const subscribedKeys = await loadSubscribedKeys(client, currentUserId, page);
     const challengeRaised = new Map<string, number>();
     const challengeCount = new Map<string, number>();
     (challengeContribRows ?? []).forEach((r) => {
@@ -432,7 +433,11 @@ export const getFeed = createServerFn({ method: "POST" })
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
-      const isUnlocked = isOwner || p.visibility === "public" || unlockedSet.has(p.id);
+      const isUnlocked =
+        isOwner ||
+        p.visibility === "public" ||
+        unlockedSet.has(p.id) ||
+        (p.visibility === "subscribers" && isSubscribedTo(subscribedKeys, p));
       const isLocked = !isUnlocked;
       const media = (mediaRows ?? [])
         .filter((m) => m.publication_id === p.id)
@@ -467,7 +472,7 @@ export const getFeed = createServerFn({ method: "POST" })
         published_at: p.published_at!,
         locked: isLocked,
         preview_url:
-          p.visibility === "paid" || p.visibility === "challenge"
+          p.visibility === "paid" || p.visibility === "challenge" || p.visibility === "subscribers"
             ? (p as { preview_url: string | null }).preview_url ?? null
             : null,
         audio_url: isLocked ? null : (p as { audio_url: string | null }).audio_url ?? null,
@@ -623,6 +628,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
     const likedSet = new Set((myLikeRows ?? []).map((r) => r.publication_id));
     const savedSet = new Set((mySavedRows ?? []).map((r) => r.publication_id));
     const unlockedSet = new Set((unlockRows ?? []).map((r) => r.publication_id));
+    const subscribedKeys = await loadSubscribedKeys(client, currentUserId, page);
     const challengeRaised = new Map<string, number>();
     const challengeCount = new Map<string, number>();
     (challengeContribRows ?? []).forEach((r) => {
@@ -638,7 +644,11 @@ export const getUserPublications = createServerFn({ method: "POST" })
 
     const items: FeedItem[] = page.map((p) => {
       const isOwner = p.author_id === currentUserId;
-      const isUnlocked = isOwner || p.visibility === "public" || unlockedSet.has(p.id);
+      const isUnlocked =
+        isOwner ||
+        p.visibility === "public" ||
+        unlockedSet.has(p.id) ||
+        (p.visibility === "subscribers" && isSubscribedTo(subscribedKeys, p));
       const isLocked = !isUnlocked;
       const media = (mediaRows ?? [])
         .filter((m) => m.publication_id === p.id)
@@ -673,7 +683,7 @@ export const getUserPublications = createServerFn({ method: "POST" })
         published_at: p.published_at!,
         locked: isLocked,
         preview_url:
-          p.visibility === "paid" || p.visibility === "challenge"
+          p.visibility === "paid" || p.visibility === "challenge" || p.visibility === "subscribers"
             ? (p as { preview_url: string | null }).preview_url ?? null
             : null,
         audio_url: isLocked ? null : (p as { audio_url: string | null }).audio_url ?? null,
@@ -1364,7 +1374,7 @@ export const getArchivedPublications = createServerFn({ method: "POST" })
           published_at: p.published_at!,
           locked: false,
           preview_url:
-            p.visibility === "paid" || p.visibility === "challenge"
+            p.visibility === "paid" || p.visibility === "challenge" || p.visibility === "subscribers"
               ? (p as { preview_url: string | null }).preview_url ?? null
               : null,
           audio_url: (p as { audio_url: string | null }).audio_url ?? null,
@@ -1457,7 +1467,7 @@ const getScheduledSchema = z.object({
 export type ScheduledPublicationItem = {
   id: string;
   caption: string | null;
-  visibility: "public" | "paid" | "challenge";
+  visibility: "public" | "paid" | "challenge" | "subscribers";
   price_cents: number | null;
   scheduled_at: string;
   media: Array<{ id: string; url: string; type: "image" | "video"; position: number }>;
